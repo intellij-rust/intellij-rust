@@ -33,6 +33,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.customBuild.CustomBuildConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallGrcov
@@ -45,6 +46,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != CoverageExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration ||
+            profile is CustomBuildConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
         return !profile.hasRemoteTarget && !isBuildConfiguration(profile) && getBuildConfiguration(profile) != null
     }

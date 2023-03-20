@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.customBuild.CustomBuildConfiguration
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run Valgrind"
 
@@ -17,6 +18,7 @@ class RsValgrindRunner : RsExecutableRunner(ValgrindExecutor.EXECUTOR_ID, ERROR_
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (profile !is CargoCommandConfiguration) return false
+        if (profile is CustomBuildConfiguration) return false
         return RsValgrindConfigurationExtension.isEnabledFor(profile) && super.canRun(executorId, profile)
     }
 

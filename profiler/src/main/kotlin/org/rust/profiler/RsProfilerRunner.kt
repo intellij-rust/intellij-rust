@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.profiler.clion.ProfilerExecutor
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.customBuild.CustomBuildConfiguration
 import org.rust.profiler.dtrace.RsDTraceConfigurationExtension
 import org.rust.profiler.perf.RsPerfConfigurationExtension
 
@@ -19,6 +20,8 @@ class RsProfilerRunner : RsExecutableRunner(ProfilerExecutor.EXECUTOR_ID, ERROR_
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (profile !is CargoCommandConfiguration) return false
+        if (profile is CustomBuildConfiguration) return false
+
         return (RsDTraceConfigurationExtension.isEnabledFor() || RsPerfConfigurationExtension.isEnabledFor(profile)) &&
             super.canRun(executorId, profile)
     }

@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.customBuild.CustomBuildConfiguration
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 import org.rust.clion.valgrind.RsValgrindConfigurationExtension
 
@@ -22,6 +23,7 @@ class RsValgrindRunnerLegacy : RsAsyncRunner(ValgrindExecutor.EXECUTOR_ID, ERROR
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (profile !is CargoCommandConfiguration) return false
+        if (profile is CustomBuildConfiguration) return false
         return RsValgrindConfigurationExtension.isEnabledFor(profile) && super.canRun(executorId, profile)
     }
 
