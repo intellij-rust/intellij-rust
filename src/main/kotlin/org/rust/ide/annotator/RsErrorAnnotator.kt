@@ -63,6 +63,7 @@ import org.rust.lang.core.CompilerFeature.Companion.RAW_REF_OP
 import org.rust.lang.core.CompilerFeature.Companion.SLICE_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.START
 import org.rust.lang.core.FeatureAvailability.*
+import org.rust.lang.core.completion.isFnLikeTrait
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
@@ -529,6 +530,18 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (item !is RsTraitItem && item !is RsTraitAlias) {
             RsDiagnostic.NotTraitError(o, item).addToHolder(holder)
         }
+
+        if (item.isFnLikeTrait && !o.parenthesized) {
+            CompilerFeature.UNBOXED_CLOSURES.check(holder, o, o,
+                "The precise format of `Fn`-family traits' type parameters is subject to change",
+                CompilerFeature.UNBOXED_CLOSURES.addFeatureFix(o))
+        }
+
+        if (!item.isFnLikeTrait && o.parenthesized) {
+            CompilerFeature.UNBOXED_CLOSURES.check(holder, o, o,
+                "Parenthetical notation is only stable when used with `Fn`-family traits",
+                CompilerFeature.UNBOXED_CLOSURES.addFeatureFix(o))
+        }
     }
 
     private fun checkDotExpr(holder: RsAnnotationHolder, o: RsDotExpr) {
@@ -909,6 +922,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkImplBothCopyAndDrop(holder, impl, trait)
         checkTraitImplOrphanRules(holder, impl)
         checkImplForCopy(holder, impl, trait)
+        checkImplFnFamilyTrait(holder, traitRef, trait)
         val traitName = trait.name ?: return
 
         fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
@@ -1078,7 +1092,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkImplForCopy(holder: RsAnnotationHolder, impl: RsImplItem,trait: RsTraitItem) {
+    private fun checkImplForCopy(holder: RsAnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
         if (trait != trait.knownItems.Copy) return
         val type = impl.typeReference ?: return
         type.normType.let {
@@ -1092,6 +1106,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 || it is TyPointer) return
         }
         RsDiagnostic.ImplCopyForWrongTypeError(type).addToHolder(holder)
+    }
+
+    private fun checkImplFnFamilyTrait(holder: RsAnnotationHolder, traitRef: RsTraitRef, trait: RsTraitItem) {
+        if (trait.isFnLikeTrait && CompilerFeature.UNBOXED_CLOSURES.availability(traitRef) != AVAILABLE) {
+            RsDiagnostic.ManualImplementationOfFnTraitError(traitRef, trait.name ?: "").addToHolder(holder)
+        }
     }
 
     private fun checkTypeAlias(holder: RsAnnotationHolder, ta: RsTypeAlias) {
