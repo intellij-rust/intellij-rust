@@ -8,11 +8,15 @@ package org.rust.ide.ssr
 import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.structuralsearch.StructuralSearchProfile
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
 import com.intellij.structuralsearch.plugin.ui.Configuration
@@ -22,6 +26,7 @@ import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsLifetime
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.openapiext.isFeatureEnabled
 
 class RsStructuralSearchProfile : StructuralSearchProfile() {
@@ -51,6 +56,25 @@ class RsStructuralSearchProfile : StructuralSearchProfile() {
     override fun isIdentifier(element: PsiElement?): Boolean = element?.node?.elementType == IDENTIFIER
 
     override fun createCompiledPattern(): CompiledPattern = RsCompiledPattern()
+
+    override fun createPatternTree(
+        text: String,
+        context: PatternTreeContext,
+        fileType: LanguageFileType,
+        language: Language,
+        contextId: String?,
+        project: Project,
+        physical: Boolean
+    ): Array<PsiElement> {
+        var patternTree = super.createPatternTree(text, context, fileType, language, contextId, project, physical)
+        if (patternTree.firstOrNull() is PsiErrorElement
+            || patternTree.size > 1 && patternTree[0] is LeafPsiElement && patternTree[1] is PsiErrorElement) {
+            val factory = RsPsiFactory(project)
+            patternTree = factory.createBlockExpr(text).firstChild.children
+        }
+//        for (element in patternTree) print(DebugUtil.psiToString(element, false))
+        return patternTree
+    }
 
     companion object {
         const val TYPED_VAR_PREFIX: String = "_____"
