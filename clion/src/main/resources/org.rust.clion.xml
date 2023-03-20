@@ -16,6 +16,9 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <programRunner id="CustomBuildCLionDebugRunner"
+                       implementation="org.rust.clion.debugger.runconfig.CustomBuildCLionDebugRunner"
+                       order="before RsCLionDebugRunner"/>
         <programRunner id="RsCLionDebugRunner"
                        implementation="org.rust.clion.debugger.runconfig.RsCLionDebugRunner"
                        order="before RsDebugRunner"/>

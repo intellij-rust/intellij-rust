@@ -21,6 +21,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <xdebugger.settings implementation="org.rust.debugger.settings.RsDebuggerSettings"/>
 
+        <programRunner id="CustomBuildDebugRunner"
+                       implementation="org.rust.debugger.runconfig.CustomBuildDebugRunner"/>
         <programRunner id="RsDebugRunner"
                        implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
         <programRunner id="RsDebugRunnerLegacy"
