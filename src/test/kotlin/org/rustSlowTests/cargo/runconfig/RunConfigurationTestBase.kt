@@ -29,6 +29,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
+import org.rust.cargo.runconfig.customBuild.CustomBuildRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 
 abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
@@ -57,6 +58,10 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
     protected fun createTestRunConfigurationFromContext(
         location: Location<PsiElement>? = null
     ): CargoCommandConfiguration = createRunConfigurationFromContext(CargoTestRunConfigurationProducer(), location)
+
+    protected fun createCustomBuildRunConfigurationFromContext(
+        location: Location<PsiElement>? = null
+    ): CargoCommandConfiguration = createRunConfigurationFromContext(CustomBuildRunConfigurationProducer(), location)
 
     private fun createRunConfigurationFromContext(
         producer: RunConfigurationProducer<CargoCommandConfiguration>,

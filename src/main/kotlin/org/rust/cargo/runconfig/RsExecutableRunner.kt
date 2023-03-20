@@ -17,17 +17,21 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 abstract class RsExecutableRunner(
@@ -63,7 +67,7 @@ abstract class RsExecutableRunner(
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
         if (state !is CargoRunStateBase) return null
 
-        val artifacts = environment.artifacts.orEmpty()
+        val artifacts = getArtifacts(state)
         val artifact = artifacts.firstOrNull()
         val binaries = artifact?.executables.orEmpty()
 
@@ -88,11 +92,12 @@ abstract class RsExecutableRunner(
                 .firstOrNull { it.origin == PackageOrigin.WORKSPACE }
         }
 
-        val runCargoCommand = state.prepareCommandLine().copy(emulateTerminal = false)
-        val workingDirectory = pkg?.rootDirectory
-            ?.takeIf { runCargoCommand.command == "test" }
-            ?: runCargoCommand.workingDirectory
-        val environmentVariables = runCargoCommand.environmentVariables.run { with(envs + pkg?.env.orEmpty()) }
+        val runCargoCommand = modifyFinalCommand(state)
+        val workingDirectory = getWorkingDirectory(pkg, runCargoCommand)
+        val additionalEnvVars = getAdditionalEnvVars(state, pkg) ?: return null
+        val environmentVariables = runCargoCommand.environmentVariables.run {
+            with(envs + pkg?.env.orEmpty() + additionalEnvVars)
+        }
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
         val runExecutable = state.toolchain.createGeneralCommandLine(
             binaries.single().toPath(),
@@ -107,6 +112,21 @@ abstract class RsExecutableRunner(
         )
 
         return showRunContent(state, environment, runExecutable)
+    }
+
+    protected open fun modifyFinalCommand(state: CargoRunStateBase) =
+        state.prepareCommandLine().copy(emulateTerminal = false)
+
+    protected open fun getArtifacts(state: CargoRunStateBase): List<CompilerArtifactMessage> {
+        return state.environment.artifacts.orEmpty()
+            .filter { it.target.cleanKind != CargoMetadata.TargetKind.CUSTOM_BUILD }
+    }
+
+    protected open fun getAdditionalEnvVars(
+        state: CargoRunStateBase,
+        pkg: CargoWorkspace.Package?
+    ): Map<String, String>? {
+        return mapOf()
     }
 
     protected open fun showRunContent(
@@ -127,6 +147,15 @@ abstract class RsExecutableRunner(
 
     open fun processInvalidToolchain(project: Project, toolchainError: BuildResult.ToolchainError) {
         project.showErrorDialog(toolchainError.message)
+    }
+
+    private fun getWorkingDirectory(
+        pkg: CargoWorkspace.Package?,
+        runCargoCommand: CargoCommandLine
+    ): Path {
+        return pkg?.rootDirectory
+            ?.takeIf { runCargoCommand.command == "test" }
+            ?: runCargoCommand.workingDirectory
     }
 
     private fun Project.showErrorDialog(@Suppress("UnstableApiUsage") @DialogMessage message: String) {

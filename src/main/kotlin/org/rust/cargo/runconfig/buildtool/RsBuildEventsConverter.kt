@@ -105,6 +105,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
             }
             CargoMetadata.TargetKind.TEST -> true
             CargoMetadata.TargetKind.LIB -> rustcArtifact.profile.test
+            CargoMetadata.TargetKind.CUSTOM_BUILD -> true
             else -> false
         }
         if (!isSuitableTarget || context.isTestBuild && !rustcArtifact.profile.test) return true
