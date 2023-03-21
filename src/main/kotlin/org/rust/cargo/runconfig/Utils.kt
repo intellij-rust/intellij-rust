@@ -51,7 +51,7 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
         CargoCommandConfigurationType.getInstance().factory
     )
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
-    configuration.setFromCmd(cargoCommandLine.copy(emulateTerminal = configuration.emulateTerminal))
+    configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings
 }
 
@@ -76,6 +76,18 @@ fun Project.buildProject() {
 
     for (cargoProject in cargoProjects.allProjects) {
         CargoCommandLine.forProject(cargoProject, "build", arguments).run(cargoProject, saveConfiguration = false)
+    }
+}
+
+fun Project.cleanProject() {
+    checkIsDispatchThread()
+
+    // Initialize run content manager
+    RunContentManager.getInstance(this)
+
+    for (cargoProject in cargoProjects.allProjects) {
+        CargoCommandLine.forProject(cargoProject, "clean", emulateTerminal = false)
+            .run(cargoProject, saveConfiguration = false)
     }
 }
 

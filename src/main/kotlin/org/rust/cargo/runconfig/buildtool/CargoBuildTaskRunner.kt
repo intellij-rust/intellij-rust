@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.task.*
 import com.intellij.task.impl.ProjectModelBuildTaskImpl
+import com.intellij.util.PlatformUtils
 import org.jetbrains.concurrency.*
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
@@ -34,6 +35,7 @@ import org.rust.cargo.runconfig.buildProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -94,6 +96,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
 
     override fun canRun(projectTask: ProjectTask): Boolean =
         when (projectTask) {
+            is ModuleFilesBuildTask -> false
             is ModuleBuildTask ->
                 projectTask.module.cargoProjectRoot != null
             is ProjectModelBuildTask<*> -> {
@@ -114,14 +117,13 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             val buildConfiguration = getBuildConfiguration(selectedConfiguration) ?: return emptyList()
             val environment = createBuildEnvironment(buildConfiguration) ?: return emptyList()
             val buildableElement = CargoBuildConfiguration(buildConfiguration, environment)
-            return listOf(ProjectModelBuildTaskImpl(buildableElement, false))
+            return listOf(ProjectModelBuildTaskImpl(buildableElement, task.isIncrementalBuild))
         }
 
         val cargoProjects = project.cargoProjects.allProjects
         if (cargoProjects.isEmpty()) return emptyList()
 
-        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
-            ?: return emptyList()
+        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID) ?: return emptyList()
         val runner = ProgramRunner.findRunnerById(CargoCommandRunner.RUNNER_ID) ?: return emptyList()
 
         val additionalArguments = buildList {
@@ -152,8 +154,31 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             return resolvedPromise(TaskRunnerResults.ABORTED)
         }
 
+        val buildConfiguration = task.buildableElement as CargoBuildConfiguration
+
+        if (!task.isIncrementalBuild) {
+            val cargoProject = with(buildConfiguration.configuration) {
+                findCargoProject(project, command, workingDirectory)
+            }
+            if (cargoProject != null) {
+                val result = try {
+                    val cleanFuture = CargoBuildManager.clean(cargoProject)
+                    if (cleanFuture.get()) {
+                        TaskRunnerResults.SUCCESS
+                    } else {
+                        TaskRunnerResults.FAILURE
+                    }
+                } catch (e: ExecutionException) {
+                    TaskRunnerResults.FAILURE
+                }
+                if (result.hasErrors()) {
+                    resolvedPromise(result)
+                }
+            }
+        }
+
         val result = try {
-            val buildFuture = CargoBuildManager.build(task.buildableElement as CargoBuildConfiguration)
+            val buildFuture = CargoBuildManager.build(buildConfiguration)
             val buildResult = buildFuture.get()
             when {
                 buildResult.canceled -> TaskRunnerResults.ABORTED

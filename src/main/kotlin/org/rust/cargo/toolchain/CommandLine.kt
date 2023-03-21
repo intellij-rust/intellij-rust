@@ -11,6 +11,9 @@ import com.intellij.execution.RunManagerEx
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.notification.NotificationType
 import org.rust.RsBundle
@@ -26,6 +29,8 @@ import org.rust.ide.notifications.RsNotifications
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
 abstract class RsCommandLineBase {
     abstract val command: String
@@ -44,6 +49,37 @@ abstract class RsCommandLineBase {
         saveConfiguration: Boolean = true,
         executor: Executor = DefaultRunExecutor.getRunExecutorInstance()
     ) {
+        runInner(cargoProject, presentableName, saveConfiguration, executor) { configuration, finalExecutor ->
+            ProgramRunnerUtil.executeConfiguration(configuration, finalExecutor)
+            CompletableFuture.completedFuture(true)
+        }
+    }
+
+    fun runAsync(
+        cargoProject: CargoProject,
+        presentableName: String = command,
+        saveConfiguration: Boolean = true,
+        executor: Executor = DefaultRunExecutor.getRunExecutorInstance()
+    ): Future<Boolean> = runInner(cargoProject, presentableName, saveConfiguration, executor) { configuration, finalExecutor ->
+        val environment = ExecutionEnvironmentBuilder.create(finalExecutor, configuration).build()
+        val promise = CompletableFuture<Boolean>()
+        ProgramRunnerUtil.executeConfigurationAsync(environment, true, true) { descriptor ->
+            descriptor.processHandler?.addProcessListener(object : ProcessListener {
+                override fun processTerminated(event: ProcessEvent) {
+                    promise.complete(event.exitCode == 0)
+                }
+            })
+        }
+        promise
+    }
+
+    private fun <T> runInner(
+        cargoProject: CargoProject,
+        presentableName: String = command,
+        saveConfiguration: Boolean = true,
+        executor: Executor = DefaultRunExecutor.getRunExecutorInstance(),
+        doRun: (RunnerAndConfigurationSettings, Executor) -> Future<T>
+    ): Future<T> {
         val project = cargoProject.project
         val configurationName = when {
             project.cargoProjects.allProjects.size > 1 -> "$presentableName [${cargoProject.presentableName}]"
@@ -66,7 +102,7 @@ abstract class RsCommandLineBase {
             executor
         }
 
-        ProgramRunnerUtil.executeConfiguration(configuration, finalExecutor)
+        return doRun(configuration, finalExecutor)
     }
 }
 
@@ -130,6 +166,7 @@ data class CargoCommandLine(
                     CargoWorkspace.TargetKind.Test -> listOf("--test", target.name)
                     CargoWorkspace.TargetKind.ExampleBin, is CargoWorkspace.TargetKind.ExampleLib ->
                         listOf("--example", target.name)
+
                     CargoWorkspace.TargetKind.Bench -> listOf("--bench", target.name)
                     is CargoWorkspace.TargetKind.Lib -> {
                         if (isDoctest) {
@@ -138,6 +175,7 @@ data class CargoCommandLine(
                             listOf("--lib")
                         }
                     }
+
                     CargoWorkspace.TargetKind.CustomBuild,
                     CargoWorkspace.TargetKind.Unknown -> emptyList()
                 }
@@ -172,6 +210,7 @@ data class CargoCommandLine(
             cargoProject: CargoProject,
             command: String,
             additionalArguments: List<String> = emptyList(),
+            emulateTerminal: Boolean = emulateTerminalDefault,
             toolchain: String? = null,
             channel: RustChannel = RustChannel.DEFAULT,
             environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
@@ -179,6 +218,7 @@ data class CargoCommandLine(
             command,
             workingDirectory = cargoProject.workingDirectory,
             additionalArguments = additionalArguments,
+            emulateTerminal = emulateTerminal,
             toolchain = toolchain,
             channel = channel,
             environmentVariables = environmentVariables

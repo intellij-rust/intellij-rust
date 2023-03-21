@@ -1,4 +1,4 @@
-<idea-plugin package="org.rust.clion" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin package="org.rust.clion">
     <!--suppress PluginXmlValidity -->
     <dependencies>
         <plugin id="com.intellij.clion"/>
@@ -25,6 +25,8 @@
 
         <programRunner implementation="org.rust.clion.valgrind.RsValgrindRunner"/>
         <programRunner implementation="org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy"/>
+
+        <projectTaskRunner implementation="org.rust.clion.cargo.CargoCleanTaskRunner"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.rust">

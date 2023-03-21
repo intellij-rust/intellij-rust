@@ -32,6 +32,7 @@ import com.intellij.ui.SystemNotifications
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.ParsedCommand
@@ -109,10 +110,14 @@ object CargoBuildManager {
         }
     }
 
+    fun clean(project: CargoProject): Future<Boolean> =
+        CargoCommandLine.forProject(project, "clean", emulateTerminal = false)
+            .runAsync(project, saveConfiguration = false)
+
     private fun execute(
         context: CargoBuildContext,
         doExecute: CargoBuildContext.() -> Unit
-    ): CompletableFuture<CargoBuildResult> {
+    ): Future<CargoBuildResult> {
         context.environment.notifyProcessStartScheduled()
         val processCreationLock = Any()
 

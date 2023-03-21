@@ -109,6 +109,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             cargoProject,
             "fmt",
             listOf("--all", "--") + arguments,
+            false,
             toolchain,
             settingsState.channel,
             EnvironmentVariablesData.create(settingsState.envs, true)
