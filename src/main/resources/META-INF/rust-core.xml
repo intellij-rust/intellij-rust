@@ -1274,6 +1274,7 @@
         <!--suppress PluginXmlValidity -->
         <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsProjectUsagesCollector"/>
         <statistics.collectorExtension implementation="org.rust.ide.statistics.CargoCommandUsagesCollector"/>
+        <statistics.collectorExtension implementation="org.rust.ide.statistics.CargoCommandTypeCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCounterUsagesCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsConvertJsonToStructUsagesCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCodeVisionUsageCollector"/>
