@@ -7,9 +7,11 @@ package org.rust.toml.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.intellij.lang.annotations.Language
+import org.rust.SkipTestWrapping
 import org.rust.ide.intentions.RsIntentionTestBase
 import kotlin.reflect.KClass
 
+@SkipTestWrapping
 abstract class CargoTomlIntentionTestBase(intentionClass: KClass<out IntentionAction>) : RsIntentionTestBase(intentionClass) {
     protected fun doAvailableTest(
         @Language("TOML") before: String,

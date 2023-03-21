@@ -484,7 +484,9 @@ private class WorkspaceImpl(
                         val dependencyPackage = newIdToPackage[dep.pkg.id] ?: return@mapNotNull null
                         dep.withPackage(dependencyPackage)
                     })
-                    pkg.dependencies.add(pkgToAddDependency)
+                    if (pkg.origin != STDLIB && pkg.origin != STDLIB_DEPENDENCY) {
+                        pkg.dependencies.add(pkgToAddDependency)
+                    }
                 }
             }
         }

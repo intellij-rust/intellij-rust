@@ -151,6 +151,7 @@ class AddImportForPatternIntentionTest : RsIntentionTestBase(AddImportForPattern
     ) = checkAutoImportWithMultipleChoice(expectedElements, choice = null) {
         InlineFile(before.trimIndent()).withCaret()
         launchAction()
+        testWrappingUnwrapper?.unwrap()
         myFixture.checkResult(replaceCaretMarker(before.trimIndent()))
     }
 }

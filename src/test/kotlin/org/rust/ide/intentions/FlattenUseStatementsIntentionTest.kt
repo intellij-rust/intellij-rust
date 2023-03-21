@@ -5,6 +5,9 @@
 
 package org.rust.ide.intentions
 
+import org.rust.SkipTestWrapping
+
+@SkipTestWrapping
 class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatementsIntention::class) {
     fun `test use statement with alias`() = doAvailableTest("""
         use std::collections::{

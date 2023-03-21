@@ -14,13 +14,18 @@ import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.junit.Assert.assertEquals
 
-fun CodeInsightTestFixture.checkPreviewAndLaunchAction(intention: IntentionAction, preview: String?) {
+fun CodeInsightTestFixture.checkPreviewAndLaunchAction(
+    intention: IntentionAction,
+    preview: String?,
+    isWrappingActive: Boolean = false,
+) {
     val actualPreview = getIntentionPreviewText(intention)
     check(actualPreview != null) {
         "No intention preview for `${intention.getClassName()}`. " +
             "Either support preview or pass `previewExpected = false`"
     }
     launchAction(intention)
+    if (isWrappingActive && preview != null) return //TODO support custom preview with test wrapping
     val expectedPreview = preview?.trimIndent() ?: file.text
     assertEquals(
         "Intention `${intention.getClassName()}` produced different result when invoked in preview mode",

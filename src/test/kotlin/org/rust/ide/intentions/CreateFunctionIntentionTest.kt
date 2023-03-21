@@ -6,6 +6,7 @@
 package org.rust.ide.intentions
 
 import org.rust.ProjectDescriptor
+import org.rust.SkipTestWrapping
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.intentions.createFromUsage.CreateFunctionIntention
 
@@ -113,6 +114,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
+    @SkipTestWrapping
     fun `test create function in an existing file`() = doAvailableTestWithFileTreeComplete("""
         //- main.rs
             mod foo;
@@ -137,6 +139,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             }
     """)
 
+    @SkipTestWrapping
     fun `test create function in an existing file in other crate`() = doAvailableTestWithFileTreeComplete("""
     //- main.rs
         fn main() {
@@ -723,6 +726,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
+    @SkipTestWrapping
     fun `test create method for struct in other crate`() = doAvailableTestWithFileTreeComplete("""
     //- main.rs
         fn main(s: test_package::S) {

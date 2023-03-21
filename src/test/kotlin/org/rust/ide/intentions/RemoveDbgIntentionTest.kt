@@ -42,13 +42,13 @@ class RemoveDbgIntentionTest : RsIntentionTestBase(RemoveDbgIntention::class) {
         fn f1(a: usize, b: usize) {}
 
         fn test() {
-            f1(1 + dbg!((3 + 1/*caret*/) * 2)), dbg!(10));
+            f1(1 + dbg!((3 + 1/*caret*/) * 2), dbg!(10));
         }
     """, """
         fn f1(a: usize, b: usize) {}
 
         fn test() {
-            f1(1 + ((3 + 1/*caret*/) * 2)), dbg!(10));
+            f1(1 + ((3 + 1/*caret*/) * 2), dbg!(10));
         }
     """)
 
