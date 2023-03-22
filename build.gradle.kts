@@ -1,5 +1,4 @@
 import groovy.xml.XmlParser
-import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -639,78 +638,6 @@ project(":ml-completion") {
         implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.4.1")
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
-    }
-}
-
-task("runPrettyPrintersTests") {
-    doLast {
-        val hostPlatform = DefaultNativePlatform.host()
-        val archName = when {
-            hostPlatform.architecture.isAmd64 -> "x64"
-            hostPlatform.architecture.isArm -> "aarch64"
-            else -> error("Unsupported architecture")
-        }
-
-        val lldbPath = when {
-            // TODO: Use `lldb` Python module from CLion distribution
-            isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
-            isFamily(FAMILY_UNIX) -> {
-                // BACKCOMPAT: 2022.3
-                if (platformVersion >= 231) {
-                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/$archName/lib/python3.8/site-packages"
-                } else {
-                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
-                }
-            }
-            isFamily(FAMILY_WINDOWS) -> "" // `python36._pth` is used below instead
-            else -> error("Unsupported OS")
-        }
-        val runCommand = "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath"
-        if (isFamily(FAMILY_WINDOWS)) {
-            val lldbBundlePath = "$projectDir\\deps\\${clionVersion.replaceFirst("CL", "clion")}\\bin\\lldb\\win\\x64"
-            // Add path to bundled `lldb` Python module to `._pth` file (which overrides `sys.path`)
-            // TODO: Drop when this is implemented on CLion side
-            "cmd /C echo ../lib/site-packages>> bin/python36._pth".execute(lldbBundlePath)
-            // Create symlink to allow `lldb` Python module perform `import _lldb` inside
-            // TODO: Drop when this is implemented on CLion side
-            "cmd /C mklink $lldbBundlePath\\lib\\site-packages\\lldb\\_lldb.pyd $lldbBundlePath\\bin\\liblldb.dll".execute()
-
-            // Add path to bundled Python 3 to `Settings_windows.toml` (it is not added statically since it requires $projectDir)
-            "cmd /C echo python = \"${lldbBundlePath.replace("\\", "/")}/bin/python.exe\">> Settings_windows.toml".execute("pretty_printers_tests")
-            // Use UTF-8 to properly decode test output in `lldb_batchmode.py`
-            "cmd /C set PYTHONIOENCODING=utf8 & $runCommand".execute("pretty_printers_tests")
-        } else {
-            // TODO: Remove after CLion snapshot builds provide these files with required permissions
-            if (isFamily(FAMILY_MAC)) {
-                val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")
-                lldbMacBinDir.resolve("lldb").setExecutable(true)
-                lldbMacBinDir.resolve("LLDBFrontend").setExecutable(true)
-                lldbMacBinDir.resolve("LLDB.framework").resolve("LLDB").setExecutable(true)
-            }
-
-            runCommand.execute("pretty_printers_tests")
-        }
-
-        val gdbBinary = when {
-            isFamily(FAMILY_MAC) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/mac/bin/gdb"
-            isFamily(FAMILY_UNIX) -> {
-                // BACKCOMPAT: 2022.3
-                if (platformVersion >= 231) {
-                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/$archName/bin/gdb"
-                } else {
-                    "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/bin/gdb"
-                }
-            }
-            isFamily(FAMILY_WINDOWS) -> {
-                println("GDB pretty-printers tests are not supported yet for Windows")
-                return@doLast
-            }
-            else -> error("Unsupported OS")
-        }
-        // TODO: Remove after CLion snapshot builds provide this file with required permissions
-        File(gdbBinary).setExecutable(true)
-
-        "cargo run --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
     }
 }
 

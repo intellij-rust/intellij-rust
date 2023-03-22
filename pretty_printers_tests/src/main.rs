@@ -1,15 +1,9 @@
-#[macro_use]
-extern crate serde_derive;
-extern crate test_runner;
-extern crate toml;
-
 use std::fs;
-use std::fs::read_dir;
-use std::path::Path;
 
-use test_runner::{Config, TestResult};
+use serde::Deserialize;
+
+use test_runner::{compile_tests, Config, TestResult};
 use test_runner::create_test_runner;
-use test_runner::Debugger;
 use test_runner::GDBConfig;
 use test_runner::LLDBConfig;
 use test_runner::TestRunner;
@@ -25,7 +19,6 @@ panic!("Unsupported platform");
 
 #[derive(Deserialize)]
 struct Settings {
-    test_dir: String,
     pretty_printers_path: String,
     print_stdout: bool,
     lldb: Option<LLDBSettings>,
@@ -33,80 +26,67 @@ struct Settings {
 
 #[derive(Deserialize)]
 struct LLDBSettings {
-    python: String,
     lldb_batchmode: String,
 }
 
 /// Expects "lldb" or "gdb as the first argument
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().collect();
-    let debugger = args.get(1).expect("You need to choose a debugger (lldb or gdb)").clone().to_lowercase();
-    let debugger_path = args.get(2);
+    let debugger: &str = args.get(1).expect("You need to choose a debugger (lldb or gdb)");
 
-    if debugger == "lldb" {
-        let lldb_python = debugger_path.unwrap_or(&String::from("./")).clone();
-        test(Debugger::LLDB, lldb_python)
-    } else if debugger == "gdb" {
-        let gdb_binary = args.get(2).unwrap_or(&String::from("gdb")).clone();
-        test(Debugger::GDB, gdb_binary)
-    } else {
-        panic!("Invalid debugger");
-    }
-}
-
-fn test(debugger: Debugger, path: String) -> Result<(), ()> {
-    let settings = fs::read_to_string(SETTINGS).expect(&format!("Cannot read {}", SETTINGS));
-    let settings: Settings = toml::from_str(&settings).expect(&format!("Invalid {}", SETTINGS));
+    let settings_content = fs::read_to_string(SETTINGS).expect(&format!("Cannot read {}", SETTINGS));
+    let settings: Settings = toml::from_str(&settings_content).expect(&format!("Invalid {}", SETTINGS));
 
     let config = match debugger {
-        Debugger::LLDB => {
+        "lldb" => {
             let lldb_settings = settings.lldb.expect(&format!("No LLDB settings in {}", SETTINGS));
-            Config::LLDB(LLDBConfig {
-                test_dir: settings.test_dir.clone(),
-                pretty_printers_path: settings.pretty_printers_path,
-                print_stdout: settings.print_stdout,
-                lldb_python: path,
-                lldb_batchmode: lldb_settings.lldb_batchmode,
-                python: lldb_settings.python,
-            })
-        },
+            let python = args.get(2).unwrap_or(&String::from("python3")).clone();
+            let lldb_python = args.get(3).unwrap_or(&String::from("./")).clone();
 
-        Debugger::GDB => {
-            Config::GDB(GDBConfig {
-                test_dir: settings.test_dir.clone(),
+            Config::LLDB(LLDBConfig {
                 pretty_printers_path: settings.pretty_printers_path,
                 print_stdout: settings.print_stdout,
-                gdb: path,
+                lldb_python,
+                lldb_batchmode: lldb_settings.lldb_batchmode,
+                python,
             })
         }
+        "gdb" => {
+            let gdb = args.get(2).unwrap_or(&String::from("gdb")).clone();
+            Config::GDB(GDBConfig {
+                pretty_printers_path: settings.pretty_printers_path,
+                print_stdout: settings.print_stdout,
+                gdb,
+            })
+        }
+        _ => panic!("Invalid debugger")
     };
+    test(&config)
+}
 
-    let src_dir = Path::new(&settings.test_dir);
-    let src_paths: Vec<_> = read_dir(src_dir)
-        .unwrap_or_else(|_| panic!("Tests not found!"))
-        .map(|file| file.unwrap().path())
-        .map(|path| fs::canonicalize(path))
-        .map(|canonical_path| canonical_path.unwrap().as_os_str().to_owned())
-        .collect();
-
+fn test(config: &Config) -> Result<(), ()> {
     let mut status = Ok(());
+    let tests = compile_tests().unwrap_or_else(|e| {
+        println!("{}", e);
+        status = Err(());
+        vec![]
+    });
 
-    for path in src_paths {
-        let path = Path::new(&path);
-        let test_runner: Box<dyn TestRunner> = create_test_runner(&config, path);
+    for test in tests {
+        let test_name = &test.name;
+        let test_runner: Box<dyn TestRunner> = create_test_runner(config, &test);
         let result = test_runner.run();
-        let path_string = path.file_name().unwrap().to_str().unwrap();
 
         match result {
             TestResult::Ok => {
-                println!("{}: passed", path_string);
+                println!("{}: passed", test_name);
             },
             TestResult::Skipped(reason) => {
-                println!("{}: skipped", path_string);
+                println!("{}: skipped", test_name);
                 println!("{}", reason);
             },
             TestResult::Err(reason) => {
-                println!("{}: failed", path_string);
+                println!("{}: failed", test_name);
                 println!("{}", reason);
                 status = Err(());
             },
