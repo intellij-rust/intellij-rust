@@ -1,0 +1,123 @@
+const FOO: bool = {
+    let mut _0: bool;                    // return place in scope 0 at src/main.rs:1:12: 1:16
+    let mut _1: bool;                    // in scope 0 at src/main.rs:2:5: 2:47
+    let mut _2: bool;                    // in scope 0 at src/main.rs:2:5: 2:39
+    let mut _3: bool;                    // in scope 0 at src/main.rs:2:6: 2:30
+    let mut _4: bool;                    // in scope 0 at src/main.rs:2:15: 2:30
+    let mut _5: bool;                    // in scope 0 at src/main.rs:2:51: 2:74
+    let mut _6: bool;                    // in scope 0 at src/main.rs:2:52: 2:65
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:5: 2:47
+        StorageLive(_2);                 // scope 0 at src/main.rs:2:5: 2:39
+        StorageLive(_3);                 // scope 0 at src/main.rs:2:6: 2:30
+        switchInt(const false) -> [false: bb11, otherwise: bb10]; // scope 0 at src/main.rs:2:6: 2:30
+    }
+
+    bb1: {
+        _0 = const true;                 // scope 0 at src/main.rs:2:5: 2:74
+        goto -> bb3;                     // scope 0 at src/main.rs:2:5: 2:74
+    }
+
+    bb2: {
+        StorageLive(_5);                 // scope 0 at src/main.rs:2:51: 2:74
+        StorageLive(_6);                 // scope 0 at src/main.rs:2:52: 2:65
+        switchInt(const false) -> [false: bb19, otherwise: bb20]; // scope 0 at src/main.rs:2:52: 2:65
+    }
+
+    bb3: {
+        StorageDead(_5);                 // scope 0 at src/main.rs:2:73: 2:74
+        StorageDead(_1);                 // scope 0 at src/main.rs:2:73: 2:74
+        return;                          // scope 0 at src/main.rs:1:1: 3:3
+    }
+
+    bb4: {
+        _1 = const false;                // scope 0 at src/main.rs:2:5: 2:47
+        goto -> bb6;                     // scope 0 at src/main.rs:2:5: 2:47
+    }
+
+    bb5: {
+        _1 = const true;                 // scope 0 at src/main.rs:2:5: 2:47
+        goto -> bb6;                     // scope 0 at src/main.rs:2:5: 2:47
+    }
+
+    bb6: {
+        StorageDead(_2);                 // scope 0 at src/main.rs:2:46: 2:47
+        switchInt(move _1) -> [false: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:5: 2:74
+    }
+
+    bb7: {
+        _2 = const true;                 // scope 0 at src/main.rs:2:5: 2:39
+        goto -> bb9;                     // scope 0 at src/main.rs:2:5: 2:39
+    }
+
+    bb8: {
+        _2 = const true;                 // scope 0 at src/main.rs:2:5: 2:39
+        goto -> bb9;                     // scope 0 at src/main.rs:2:5: 2:39
+    }
+
+    bb9: {
+        StorageDead(_3);                 // scope 0 at src/main.rs:2:38: 2:39
+        switchInt(move _2) -> [false: bb4, otherwise: bb5]; // scope 0 at src/main.rs:2:5: 2:47
+    }
+
+    bb10: {
+        _3 = const true;                 // scope 0 at src/main.rs:2:6: 2:30
+        goto -> bb12;                    // scope 0 at src/main.rs:2:6: 2:30
+    }
+
+    bb11: {
+        StorageLive(_4);                 // scope 0 at src/main.rs:2:15: 2:30
+        switchInt(const true) -> [false: bb13, otherwise: bb14]; // scope 0 at src/main.rs:2:15: 2:30
+    }
+
+    bb12: {
+        StorageDead(_4);                 // scope 0 at src/main.rs:2:29: 2:30
+        switchInt(move _3) -> [false: bb8, otherwise: bb7]; // scope 0 at src/main.rs:2:5: 2:39
+    }
+
+    bb13: {
+        _4 = const false;                // scope 0 at src/main.rs:2:15: 2:30
+        goto -> bb15;                    // scope 0 at src/main.rs:2:15: 2:30
+    }
+
+    bb14: {
+        _4 = const false;                // scope 0 at src/main.rs:2:15: 2:30
+        goto -> bb15;                    // scope 0 at src/main.rs:2:15: 2:30
+    }
+
+    bb15: {
+        _3 = move _4;                    // scope 0 at src/main.rs:2:6: 2:30
+        goto -> bb12;                    // scope 0 at src/main.rs:2:6: 2:30
+    }
+
+    bb16: {
+        _5 = const false;                // scope 0 at src/main.rs:2:51: 2:74
+        goto -> bb18;                    // scope 0 at src/main.rs:2:51: 2:74
+    }
+
+    bb17: {
+        _5 = const true;                 // scope 0 at src/main.rs:2:51: 2:74
+        goto -> bb18;                    // scope 0 at src/main.rs:2:51: 2:74
+    }
+
+    bb18: {
+        StorageDead(_6);                 // scope 0 at src/main.rs:2:73: 2:74
+        _0 = move _5;                    // scope 0 at src/main.rs:2:5: 2:74
+        goto -> bb3;                     // scope 0 at src/main.rs:2:5: 2:74
+    }
+
+    bb19: {
+        _6 = const false;                // scope 0 at src/main.rs:2:52: 2:65
+        goto -> bb21;                    // scope 0 at src/main.rs:2:52: 2:65
+    }
+
+    bb20: {
+        _6 = const true;                 // scope 0 at src/main.rs:2:52: 2:65
+        goto -> bb21;                    // scope 0 at src/main.rs:2:52: 2:65
+    }
+
+    bb21: {
+        switchInt(move _6) -> [false: bb16, otherwise: bb17]; // scope 0 at src/main.rs:2:51: 2:74
+    }
+}

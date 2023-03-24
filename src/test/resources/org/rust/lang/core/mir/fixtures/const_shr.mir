@@ -1,0 +1,18 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+    let mut _1: (i32, bool);             // in scope 0 at src/main.rs:1:18: 1:24
+
+    bb0: {
+        _1 = CheckedShr(const 2_i32, const 1_i32); // scope 0 at src/main.rs:1:18: 1:24
+        assert(!move (_1.1: bool), "attempt to shift right by `{}`, which would overflow", const 1_i32) -> [success: bb1, unwind: bb2]; // scope 0 at src/main.rs:1:18: 1:24
+    }
+
+    bb1: {
+        _0 = move (_1.0: i32);           // scope 0 at src/main.rs:1:18: 1:24
+        return;                          // scope 0 at src/main.rs:1:1: 1:25
+    }
+
+    bb2 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:25
+    }
+}
