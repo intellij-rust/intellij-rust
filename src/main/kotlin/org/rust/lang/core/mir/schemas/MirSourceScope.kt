@@ -5,11 +5,11 @@
 
 package org.rust.lang.core.mir.schemas
 
-data class MirSourceInfo(
+data class MirSourceScope(
     val span: MirSpan,
-    val scope: MirSourceScope,
+    val parentScope: MirSourceScope?,
 ) {
     companion object {
-        val fake = MirSourceInfo(MirSpan.Fake, MirSourceScope.fake)
+        val fake = MirSourceScope(MirSpan.Fake, null)
     }
 }

@@ -9,4 +9,7 @@ package org.rust.lang.core.mir.schemas
 data class MirScalarInt(
     val data: Long,
     val size: Byte,
-)
+) {
+    // TODO there are some checks, maybe it'll be needed later
+    fun toBits() = data
+}

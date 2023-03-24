@@ -5,9 +5,12 @@
 
 package org.rust.lang.core.mir.building
 
+import org.rust.lang.core.mir.schemas.MirPlace
 import org.rust.lang.core.types.regions.Scope
 
-class IfThenScope(
+class BreakableScope(
     val scope: Scope,
-    val elseDrops: DropTree,
+    val breakDestination: MirPlace,
+    val breakDrops: DropTree,
+    val continueDrops: DropTree?,
 )

@@ -5,7 +5,13 @@
 
 package org.rust.lang.core.mir.schemas
 
-interface MirSwitchTargets<BB : MirBasicBlock> {
+interface MirSwitchTargets<BB : MirBasicBlock> : Iterable<Pair<Long, BB>> {
     val values: List<Long>
     val targets: List<BB>
+
+    val otherwise: BB get() = targets.last()
+
+    override fun iterator(): Iterator<Pair<Long, BB>> {
+        return (values.asSequence() zip targets.asSequence()).iterator()
+    }
 }

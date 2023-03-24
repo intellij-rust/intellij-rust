@@ -7,6 +7,7 @@ package org.rust.lang.core.mir
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
@@ -53,6 +54,16 @@ class MirBuildTest : RsTestBase() {
     fun `test const boolean long logical`() = doTest()
     fun `test unit type`() = doTest()
     fun `test three element tuple with tuples`() = doTest()
+    fun `test loop break`() = doTest()
+    fun `test block with let`() = doTest()
+    fun `test block with 3 lets`() = doTest()
+    fun `test let mut and assign`() = doTest()
+    fun `test immutable move`() = doTest()
+    fun `test mutable move`() = doTest()
+    fun `test immutable borrow`() = doTest()
+    fun `test empty function`() = doTest()
+    fun `test empty function with return ty`() = doTest()
+    fun `test mutable borrow`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
@@ -74,6 +85,18 @@ class MirBuildTest : RsTestBase() {
         val builtMir = MirBuilder.build(myFixture.file as RsFile).single()
         val builtMirStr = MirPrettyPrinter(mir = builtMir).print()
         UsefulTestCase.assertSameLinesWithFile(expectedFilePath, builtMirStr)
+    }
+
+    @Suppress("unused")
+    private fun test(
+        @Language("Rust") code: String,
+        mir: String,
+        fileName: String = "main.rs"
+    ) {
+        InlineFile(code, fileName)
+        val builtMir = MirBuilder.build(myFixture.file as RsFile).single()
+        val buildMirStr = MirPrettyPrinter(mir = builtMir).print()
+        TestCase.assertEquals(mir, buildMirStr)
     }
 
     companion object {

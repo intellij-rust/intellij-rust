@@ -5,9 +5,9 @@
 
 package org.rust.lang.core.mir.building
 
-import org.rust.lang.core.types.regions.Scope
+import org.rust.lang.core.mir.schemas.MirLocal
 
-class IfThenScope(
-    val scope: Scope,
-    val elseDrops: DropTree,
-)
+sealed class PlaceBase {
+    data class Local(val local: MirLocal) : PlaceBase()
+    // TODO: upvar
+}

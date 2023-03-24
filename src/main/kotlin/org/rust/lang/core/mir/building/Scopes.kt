@@ -5,13 +5,16 @@
 
 package org.rust.lang.core.mir.building
 
+import org.rust.lang.core.types.regions.Scope
+
 class Scopes {
     var ifThenScope: IfThenScope? = null
     val unwindDrops = DropTree()
 
-    private val stack = mutableListOf<Scope>()
+    private val breakableScopes = mutableListOf<BreakableScope>()
+    private val stack = mutableListOf<MirScope>()
 
-    fun push(scope: Scope) {
+    fun push(scope: MirScope) {
         stack.add(scope)
     }
 
@@ -19,15 +22,31 @@ class Scopes {
         stack.removeLast()
     }
 
-    fun last(): Scope {
+    fun topmost(): Scope {
+        return stack.last().scope
+    }
+
+    fun last(): MirScope {
         return stack.last()
     }
 
     fun scopeIndex(scope: Scope): Int {
-        return stack.indexOf(scope)
+        return stack.indexOfLast { it.scope == scope }
     }
 
-    fun scopes(): Sequence<Scope> {
-        return stack.asSequence()
+    fun scopes(reversed: Boolean = false): Sequence<MirScope> {
+        return if (reversed) stack.asReversed().asSequence() else stack.asSequence()
+    }
+
+    fun pushBreakable(scope: BreakableScope) {
+        breakableScopes.add(scope)
+    }
+
+    fun popBreakable() {
+        breakableScopes.removeLast()
+    }
+
+    fun reversedBreakableScopes(): Sequence<BreakableScope> {
+        return breakableScopes.asReversed().asSequence()
     }
 }

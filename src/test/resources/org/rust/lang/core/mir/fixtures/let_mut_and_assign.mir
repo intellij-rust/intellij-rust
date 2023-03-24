@@ -1,0 +1,17 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+    let mut _1: i32;                     // in scope 0 at src/main.rs:2:9: 2:14
+    scope 1 {
+        debug a => _1;                   // in scope 1 at src/main.rs:2:9: 2:14
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:9: 2:14
+        _1 = const 42_i32;               // scope 0 at src/main.rs:2:17: 2:19
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:2:9: 2:14
+        _1 = const 43_i32;               // scope 1 at src/main.rs:3:5: 3:11
+        _0 = _1;                         // scope 1 at src/main.rs:4:5: 4:6
+        StorageDead(_1);                 // scope 0 at src/main.rs:5:1: 5:2
+        return;                          // scope 0 at src/main.rs:1:1: 5:3
+    }
+}

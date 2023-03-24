@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.mir.schemas
 
-import org.rust.lang.core.mir.building.ThirExpr
+import org.rust.lang.core.thir.ThirExpr
 
 sealed class MirCategory {
     object Place : MirCategory() {
@@ -21,10 +21,31 @@ sealed class MirCategory {
     companion object {
         fun of(element: ThirExpr): MirCategory? {
             return when (element) {
-                is ThirExpr.Literal -> Constant
-                is ThirExpr.Unary, is ThirExpr.Binary, is ThirExpr.Tuple -> Rvalue(MirRvalueFunc.AS_RVALUE)
-                is ThirExpr.Scope -> null
-                is ThirExpr.Block, is ThirExpr.If, is ThirExpr.Logical -> Rvalue(MirRvalueFunc.INTO)
+                is ThirExpr.VarRef -> {
+                    Place
+                }
+                is ThirExpr.Literal -> {
+                    Constant
+                }
+                is ThirExpr.Unary,
+                is ThirExpr.Binary,
+                is ThirExpr.Assign,
+                is ThirExpr.Tuple -> {
+                    Rvalue(MirRvalueFunc.AS_RVALUE)
+                }
+                is ThirExpr.Block,
+                is ThirExpr.If,
+                is ThirExpr.Adt,
+                is ThirExpr.Logical,
+                is ThirExpr.Loop,
+                is ThirExpr.Borrow,
+                is ThirExpr.NeverToAny,
+                is ThirExpr.Break -> {
+                    Rvalue(MirRvalueFunc.INTO)
+                }
+                is ThirExpr.Scope -> {
+                    null
+                }
             }
         }
     }

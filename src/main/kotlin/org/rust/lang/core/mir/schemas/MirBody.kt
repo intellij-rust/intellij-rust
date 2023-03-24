@@ -5,10 +5,30 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.psi.ext.RsElement
+
 interface MirBody {
+    val sourceElement: RsElement
     val basicBlocks: List<MirBasicBlock>
     val localDecls: List<MirLocal>
-    val source: MirSourceInfo
+    val span: MirSpan
+    val sourceScopes: List<MirSourceScope>
+    val argCount: Int
+    val varDebugInfo: List<MirVarDebugInfo>
+
+    val startBlock: MirBasicBlock get() = basicBlocks.first()
+    val outermostScope: MirSourceScope get() = sourceScopes.first()
+    val returnLocal: MirLocal get() = localDecls.first()
+
+    val sourceScopesTree: Map<MirSourceScope, List<MirSourceScope>>
+        get() = buildMap<MirSourceScope, MutableList<MirSourceScope>> {
+            sourceScopes.forEach { scope ->
+                scope.parentScope?.let { parent ->
+                    val children = getOrPut(parent) { mutableListOf() }
+                    children.add(scope)
+                }
+            }
+        }
 
     fun returnPlace(): MirLocal = localDecls.first()
 
