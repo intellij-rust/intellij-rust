@@ -16,6 +16,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("warnings", true),
     Lint("absolute_paths_not_starting_with_crate", false),
     Lint("ambiguous_associated_items", false),
+    Lint("ambiguous_glob_reexports", false),
     Lint("anonymous_parameters", false),
     Lint("arithmetic_overflow", false),
     Lint("array_into_iter", false),
