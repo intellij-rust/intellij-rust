@@ -52,7 +52,7 @@ class CreateStructIntentionTest : RsIntentionTestBase(CreateStructIntention::cla
             Foo/*caret*/ {};
         }
     """, """
-        struct Foo;
+        struct Foo {}
 
         fn main() {
             Foo {};

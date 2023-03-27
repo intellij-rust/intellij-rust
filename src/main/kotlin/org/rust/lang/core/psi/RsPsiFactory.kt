@@ -197,9 +197,12 @@ class RsPsiFactory(
         return createFromText("struct S($fieldsText)") ?: error("Failed to create tuple fields")
     }
 
-    @Suppress("unused")
-    fun createEnum(text: String): RsEnumItem =
+    private fun createEnum(text: String): RsEnumItem =
         createFromText(text)
+            ?: error("Failed to create enum from text: `$text`")
+
+    fun createEnumVariant(text: String): RsEnumVariant =
+        createEnum("enum E { $text }").variants.singleOrNull()
             ?: error("Failed to create enum from text: `$text`")
 
     fun createStruct(text: String): RsStructItem =

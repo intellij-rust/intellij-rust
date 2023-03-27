@@ -1,0 +1,6 @@
+enum E {
+    <spot>A,</spot>
+}
+fn main() {
+    let x = E::A;
+}
