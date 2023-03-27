@@ -5,9 +5,11 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.fixes.RemoveStructLiteralFieldFix
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -570,7 +572,11 @@ class RsTypeInferenceWalker(
         if (element is RsStructItem && element.kind == RsStructKind.UNION
             && expr.structLiteralBody.structLiteralFieldList.size != 1
         ) {
-            ctx.addDiagnostic(RsDiagnostic.UnionExprWithWrongFieldCount(expr))
+            val fixes = mutableListOf<LocalQuickFix>()
+            for (e in expr.structLiteralBody.structLiteralFieldList) {
+                fixes.add(RemoveStructLiteralFieldFix(e))
+            }
+            ctx.addDiagnostic(RsDiagnostic.UnionExprWithWrongFieldCount(expr, fixes))
         }
 
         // Handle struct update syntax { ..expression }

@@ -1729,11 +1729,15 @@ sealed class RsDiagnostic(
         )
     }
 
-    class UnionExprWithWrongFieldCount(element: PsiElement) : RsDiagnostic(element) {
+    class UnionExprWithWrongFieldCount(
+        element: PsiElement,
+        private val fixes: List<LocalQuickFix>
+    ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0784,
-            "Union expressions should have exactly one field"
+            "Union expressions should have exactly one field",
+            fixes = fixes.toQuickFixInfo(),
         )
     }
 }

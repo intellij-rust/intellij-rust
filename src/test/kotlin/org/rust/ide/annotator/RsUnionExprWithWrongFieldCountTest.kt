@@ -29,4 +29,28 @@ class RsUnionExprWithWrongFieldCountTest : RsAnnotatorTestBase(RsErrorAnnotator:
              _ = /*error descr="Union expressions should have exactly one field [E0784]"*/U { ..u }/*error**/;
         }
     """)
+
+    fun `test E0784 fix by removing first field`() = checkFixByText("Remove `a: 0`", """
+        union U { a: u8, b: u16 }
+        fn main() {
+            _ = /*error descr="Union expressions should have exactly one field [E0784]"*/U { a: 0, b: 1 }/*caret*//*error**/;
+        }
+    """, """
+        union U { a: u8, b: u16 }
+        fn main() {
+            _ = U { b: 1 }/*caret*/;
+        }
+    """)
+
+    fun `test E0784 fix by removing last field`() = checkFixByText("Remove `b: 1`", """
+        union U { a: u8, b: u16 }
+        fn main() {
+            _ = /*error descr="Union expressions should have exactly one field [E0784]"*/U { a: 0, b: 1 }/*caret*//*error**/;
+        }
+    """, """
+        union U { a: u8, b: u16 }
+        fn main() {
+            _ = U { a: 0 }/*caret*/;
+        }
+    """)
 }
