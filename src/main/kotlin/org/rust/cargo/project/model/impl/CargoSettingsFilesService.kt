@@ -118,7 +118,7 @@ class CargoSettingsFilesService(private val project: Project) {
             for (targetDirName in IMPLICIT_TARGET_DIRS) {
                 val dir = root.findFileByRelativePath(targetDirName) ?: continue
                 for (file in VfsUtil.collectChildrenRecursively(dir)) {
-                    if (file.fileType == RsFileType) {
+                    if (!file.isDirectory && file.fileType == RsFileType) {
                         out += file
                     }
                 }

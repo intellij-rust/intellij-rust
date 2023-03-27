@@ -131,6 +131,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileModification("examples/example.rs", triggered = false)
         testProject.checkFileModification("benches/bench.rs", triggered = false)
         testProject.checkFileModification("tests/test.rs", triggered = false)
+        testProject.checkFileModification("tests/this-is-a-dir.rs/not-a-test.rs", triggered = false)
         testProject.checkFileModification("subproject/src/lib.rs", triggered = false)
         testProject.checkFileModification("subproject/src/main.rs", triggered = false)
         testProject.checkFileModification("subproject/src/bin/bin.rs", triggered = false)
@@ -501,6 +502,9 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         }
         dir("tests") {
             rust("test.rs", "")
+            dir("this-is-a-dir.rs") {
+                rust("not-a-test.rs", "")
+            }
         }
         rust("build.rs", """
             fn main() {}
