@@ -584,6 +584,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("unnecessary_safety_doc", false),
     Lint("unnecessary_self_imports", false),
     Lint("unnecessary_sort_by", false),
+    Lint("unnecessary_struct_initialization", false),
     Lint("unnecessary_to_owned", false),
     Lint("unnecessary_unwrap", false),
     Lint("unnecessary_wraps", false),
