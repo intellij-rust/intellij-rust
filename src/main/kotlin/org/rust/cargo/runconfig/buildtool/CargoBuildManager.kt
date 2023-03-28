@@ -115,7 +115,6 @@ object CargoBuildManager {
             args.removeAt(packageIndex + 1)
             args.removeAt(packageIndex)
             val compileParams = CompileParams(listOf(BuildTargetIdentifier(targetName)))
-            compileParams.originId = "someTestId"
             compileParams.arguments = args
             return bspService.compileSolution(compileParams)
         }

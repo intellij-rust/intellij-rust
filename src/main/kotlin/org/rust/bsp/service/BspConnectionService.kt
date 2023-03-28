@@ -6,6 +6,7 @@
 package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.CompileParams
+import ch.epfl.scala.bsp4j.RunParams
 import ch.epfl.scala.bsp4j.SourcesParams
 import com.intellij.openapi.components.Service
 import org.rust.bsp.BspClient
@@ -27,5 +28,5 @@ interface BspConnectionService {
     fun getProjectData(): CargoWorkspaceData
 
     fun compileSolution(params:CompileParams): CompletableFuture<CargoBuildResult>
-    fun runSolution(): CompletableFuture<CargoBuildResult>
+    fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>
 }

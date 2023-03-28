@@ -113,9 +113,16 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
                 0 //TODO Find proper started time
             );
         }
+
     }
-    override fun runSolution(): CompletableFuture<CargoBuildResult> {
-        return CompletableFuture();
+    override fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult> {
+        return getBspServer().buildTargetRun(params).thenApply {
+            return@thenApply CargoBuildResult(
+                it.statusCode == StatusCode.OK,
+                it.statusCode == StatusCode.CANCELLED,
+                0 //TODO Find proper started time
+            );
+        }
     }
 
     private fun executeDisconnectActionAndReturnThrowableIfFailed(disconnectAction: () -> Unit): Throwable? =
