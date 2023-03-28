@@ -131,6 +131,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileModification("examples/example.rs", triggered = false)
         testProject.checkFileModification("benches/bench.rs", triggered = false)
         testProject.checkFileModification("tests/test.rs", triggered = false)
+        testProject.checkFileModification("tests/this-is-a-dir.rs/not-a-test.rs", triggered = false)
         testProject.checkFileModification("subproject/src/lib.rs", triggered = false)
         testProject.checkFileModification("subproject/src/main.rs", triggered = false)
         testProject.checkFileModification("subproject/src/bin/bin.rs", triggered = false)
@@ -232,6 +233,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileDeletion("examples/example.rs", triggered = true)
         testProject.checkFileDeletion("benches/bench.rs", triggered = true)
         testProject.checkFileDeletion("tests/test.rs", triggered = true)
+        testProject.checkFileDeletion("tests/this-is-a-dir.rs/not-a-test.rs", triggered = false)
         testProject.checkFileDeletion("subproject/src/main.rs", triggered = true)
         testProject.checkFileDeletion("subproject/src/lib.rs", triggered = true)
         testProject.checkFileDeletion("subproject/examples/example.rs", triggered = true)
@@ -320,6 +322,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         testProject.checkFileCreation("examples/example.rs", triggered = true)
         testProject.checkFileCreation("benches/bench.rs", triggered = true)
         testProject.checkFileCreation("tests/test.rs", triggered = true)
+        testProject.checkFileCreation("tests/this-is-a-dir.rs/not-a-test.rs", triggered = false)
         testProject.checkFileCreation("subproject/src/main.rs", triggered = true)
         testProject.checkFileCreation("subproject/src/lib.rs", triggered = true)
         testProject.checkFileCreation("subproject/examples/example.rs", triggered = true)
@@ -501,6 +504,9 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
         }
         dir("tests") {
             rust("test.rs", "")
+            dir("this-is-a-dir.rs") {
+                rust("not-a-test.rs", "")
+            }
         }
         rust("build.rs", """
             fn main() {}

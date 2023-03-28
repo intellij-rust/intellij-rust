@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
@@ -76,6 +77,16 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
 
             if (fn.isActuallyUnsafe) {
                 annotateUnsafeCall(o, holder)
+            }
+        }
+
+        if (o.fieldLookup != null) {
+            val type = o.expr.type
+            if (type !is TyAdt) return
+            val item = type.item
+            if (item !is RsStructItem) return
+            if (item.kind == RsStructKind.UNION && !o.expr.isInUnsafeContext) {
+                RsDiagnostic.UnsafeError(o, "Access to union field is unsafe and requires unsafe function or block").addToHolder(holder)
             }
         }
     }
