@@ -42,7 +42,7 @@ class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     companion object {
         private val CONDITIONALLY_DISABLED_CODE_SEVERITY = HighlightSeverity(
             "CONDITIONALLY_DISABLED_CODE",
-            HighlightSeverity.INFORMATION.myVal + 3
+            HighlightSeverity.INFORMATION.myVal + 1
         )
     }
 }
