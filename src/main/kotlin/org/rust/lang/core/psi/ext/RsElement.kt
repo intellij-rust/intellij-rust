@@ -200,6 +200,25 @@ fun RsElement.deleteWithSurroundingCommaAndWhitespace() {
     deleteWithSurroundingComma()
 }
 
+/**
+ * Delete the element along with a neighbour plus signs.
+ * Same as deleteWithSurroundingComma but for "+" instead of ",".
+ *
+ * It's useful for removing parts of trait bounds.
+ */
+fun RsElement.deleteWithSurroundingPlus() {
+    val followingPlus = getNextNonCommentSibling()
+    if (followingPlus?.elementType == RsElementTypes.PLUS) {
+        followingPlus?.delete()
+    } else {
+        val precedingPlus = getPrevNonCommentSibling()
+        if (precedingPlus?.elementType == RsElementTypes.PLUS) {
+            precedingPlus?.delete()
+        }
+    }
+    delete()
+}
+
 private val PsiElement.isWhitespaceOrComment
     get(): Boolean = this is PsiWhiteSpace || this is PsiComment
 
