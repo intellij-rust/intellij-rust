@@ -1276,6 +1276,40 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
     """)
 
+    fun `test reserved keywords`() = doTest("""
+        macro_rules! foo {
+            ($ i:ident) => { fn foo () { let _ = stringify!($ i); } };
+        }
+
+        foo!(abstract);
+        foo!(become);
+        foo!(do);
+        foo!(final);
+        foo!(override);
+        foo!(priv);
+        foo!(typeof);
+        foo!(unsized);
+        foo!(virtual);
+    """, """
+        fn foo () { let _ = stringify!(abstract); }
+    """, """
+        fn foo () { let _ = stringify!(become); }
+    """, """
+        fn foo () { let _ = stringify!(do); }
+    """, """
+        fn foo () { let _ = stringify!(final); }
+    """, """
+        fn foo () { let _ = stringify!(override); }
+    """, """
+        fn foo () { let _ = stringify!(priv); }
+    """, """
+        fn foo () { let _ = stringify!(typeof); }
+    """, """
+        fn foo () { let _ = stringify!(unsized); }
+    """, """
+        fn foo () { let _ = stringify!(virtual); }
+    """)
+
     companion object {
         // BACKCOMPAT: Rust 1.62
         private val RUST_1_63 = "1.63.0".parseSemVer()
