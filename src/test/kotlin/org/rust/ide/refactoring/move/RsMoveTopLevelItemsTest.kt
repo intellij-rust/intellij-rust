@@ -3021,4 +3021,19 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- inner/foo/mod.rs
         fn func() {}
     """)
+
+    fun `test don't add mod decl when created file is crate root`() = doTestCreateFile("lib.rs", """
+    //- main.rs
+        fn main() {
+            func();
+        }
+        fn func/*caret*/() {}
+    """, """
+    //- main.rs
+        fn main() {
+            test_package::func();
+        }
+    //- lib.rs
+        pub fn func() {}
+    """)
 }

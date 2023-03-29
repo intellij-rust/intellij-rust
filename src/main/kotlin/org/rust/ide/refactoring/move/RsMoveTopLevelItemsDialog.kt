@@ -263,6 +263,7 @@ private fun createNewRustFile(filePath: Path, project: Project, crateRoot: RsMod
 
 /** Finds parent mod of [file] and adds mod declaration to it */
 private fun attachFileToParentMod(file: RsFile, project: Project, crateRoot: RsMod?): Boolean {
+    if (file.isCrateRoot) return true
     val (parentModOwningDirectory, modName) = if (file.name == RsConstants.MOD_RS_FILE) {
         file.parent?.parent to file.parent?.name
     } else {
