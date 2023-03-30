@@ -231,6 +231,19 @@ class TokenTreeParserTest : RsTestBase() {
           IDENT   bar 2
     """)
 
+    fun `test reserved keywords`() = doTest("abstract become do final override priv typeof unsized virtual", """
+        SUBTREE $
+          IDENT   abstract 0
+          IDENT   become 1
+          IDENT   do 2
+          IDENT   final 3
+          IDENT   override 4
+          IDENT   priv 5
+          IDENT   typeof 6
+          IDENT   unsized 7
+          IDENT   virtual 8
+    """)
+
     fun doTest(code: String, expected: String) {
         val subtree = project.createRustPsiBuilder(code).parseSubtree().subtree
         assertEquals(subtree, FlatTree.fromSubtree(subtree).toTokenTree())
