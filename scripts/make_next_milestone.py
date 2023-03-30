@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 
 from common import env, get_patch_version
 from github_connect import get_latest_milestones, create_milestone
-
-RELEASE_MANAGER_RE = re.compile("Release manager: @(\\w+)")
+from release_managers_common import release_managers, RELEASE_MANAGER_RE
 
 
 def main():
@@ -31,13 +30,6 @@ def main():
     if prev_milestone is not None and prev_milestone["due_on"] is not None:
         date = datetime.strptime(prev_milestone["due_on"], "%Y-%m-%dT%H:%M:%SZ") + timedelta(weeks=2)
         due_on = "%04d-%02d-%02dT%02d:%02d:%02dZ" % (date.year, date.month, date.day, date.hour, date.minute, date.second)
-
-    release_managers = [
-        "mchernyavsky",
-        "vlad20012",
-        "dima74",
-        "ozkriff"
-    ]
 
     for m in milestones:
         if len(release_managers) == 1:
