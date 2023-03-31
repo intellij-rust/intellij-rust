@@ -10,35 +10,76 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.descendants
+import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.siblings
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.RsFunctionSignatureConfig
+import org.rust.ide.refactoring.extractFunction.ControlFlow.TryOperatorInfo
 import org.rust.ide.utils.findElementAtIgnoreWhitespaceAfter
 import org.rust.ide.utils.findStatementsOrExprInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.rawType
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.ty.TyTuple
-import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildList
+import org.rust.stdext.mapToSet
 
-class ReturnValue(val exprText: String?, val type: Ty) {
+/**
+ * `let (a, b) = extracted();`
+ *      ~~~~~~ [exprText]
+ * [type] = TyTuple(i32, i32)
+ */
+class OutputVariables(val exprText: String?, val type: Ty) {
     companion object {
-        fun direct(expr: RsExpr): ReturnValue =
-            ReturnValue(null, expr.type)
+        fun direct(expr: RsExpr): OutputVariables =
+            OutputVariables(null, expr.type.unitIfNever())
 
-        fun namedValue(value: RsPatBinding): ReturnValue =
-            ReturnValue(value.referenceName, value.type)
+        fun namedValue(value: RsPatBinding): OutputVariables =
+            OutputVariables(value.referenceName, value.type.unitIfNever())
 
-        fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue = ReturnValue(
+        fun tupleNamedValue(value: List<RsPatBinding>): OutputVariables = OutputVariables(
             value.joinToString(", ", postfix = ")", prefix = "(") { it.referenceName },
             TyTuple(value.map { it.type })
         )
     }
+}
+
+/**
+ * | Extracted control-flow       | Extracted type | Resulted return type       | Resulted invocation                                   |
+ * |------------------------------|----------------|----------------------------|-------------------------------------------------------|
+ * | None                         | stmt           | ()                         | f();                                                  |
+ * | None                         | expr           | T                          | let x = f();                                          |
+ * | only return/break/continue   | stmt           | bool                       | if f() return;                                        |
+ * | only return/break/continue   | expr           | Option<T>                  | let x = match f() { Some(v) => v, None => return };   |
+ * | only return/break with value | stmt           | Option<E>                  | if let Some(v) = f() { return v; }                    |
+ * | only return/break with value | expr           | Result<T, E>               | let x = match f() { Ok(v) => v, Err(v) => return v }; |
+ * | only ? operator              | stmt           | Result<(), E> / Option<()> | f()?;                                                 |
+ * | only ? operator              | expr           | Result<T, E> / Option<T>   | let x = f()?;                                         |
+ */
+enum class ReturnKind {
+    VALUE,                // () or T
+    BOOL,                 // bool
+    OPTION_CONTROL_FLOW,  // Option<E>
+    OPTION_VALUE,         // Option<T>
+    RESULT,               // Result<T, E>
+    TRY_OPERATOR,         // Result or Option
+}
+
+class ControlFlow(
+    /** "return", "break", "break 'label", "continue" or "continue 'label" */
+    val text: String,
+    /**
+     * `return;` - TyUnit
+     * `return 1;` - i32
+     */
+    val type: Ty,
+    val tryOperatorInfo: TryOperatorInfo?,
+) {
+    class TryOperatorInfo(val successVariant: String, val generateType: (String) -> String)
 }
 
 class Parameter private constructor(
@@ -121,7 +162,9 @@ class Parameter private constructor(
 class RsExtractFunctionConfig private constructor(
     function: RsFunction,
     val elements: List<PsiElement>,
-    val returnValue: ReturnValue? = null,
+    val outputVariables: OutputVariables,
+    val controlFlow: ControlFlow?,
+    val returnKind: ReturnKind,
     var name: String = "",
     var visibilityLevelPublic: Boolean = false,
     val isAsync: Boolean = false,
@@ -146,8 +189,8 @@ class RsExtractFunctionConfig private constructor(
     private val parameterTypes: List<Ty>
         get() = parameters.mapNotNull { it.type }
 
-    private val returnType: Ty
-        get() = returnValue?.type ?: TyUnit.INSTANCE
+    val parametersAndReturnTypes: List<Ty>
+        get() = parameterTypes + listOfNotNull(outputVariables.type, controlFlow?.type)
 
     private fun typeParameterBounds(): Map<Ty, Set<Ty>> =
         function.typeParameters.associate { typeParameter ->
@@ -162,7 +205,7 @@ class RsExtractFunctionConfig private constructor(
     override fun typeParameters(): List<RsTypeParameter> {
         val bounds = typeParameterBounds()
         val paramAndReturnTypes = mutableSetOf<Ty>()
-        (parameterTypes + returnType).forEach {
+        parametersAndReturnTypes.forEach {
             paramAndReturnTypes.addAll(it.types())
             paramAndReturnTypes.addAll(it.dependTypes(bounds))
         }
@@ -184,10 +227,21 @@ class RsExtractFunctionConfig private constructor(
             append("unsafe ")
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
-        if (returnValue != null && returnValue.type !is TyUnit) {
-            append(" -> ${returnValue.type.renderInsertionSafe()}")
-        }
+        renderReturnType()?.let { append(" -> $it") }
         append(whereClausesText)
+    }
+
+    private fun renderReturnType(): String? {
+        val outputVariablesType = outputVariables.type.renderInsertionSafe()
+        val controlFlowType = controlFlow?.type?.renderInsertionSafe()
+        return when (returnKind) {
+            ReturnKind.VALUE -> outputVariablesType.takeIf { it != "()" }
+            ReturnKind.BOOL -> "bool"
+            ReturnKind.OPTION_CONTROL_FLOW -> "Option<$controlFlowType>"
+            ReturnKind.OPTION_VALUE -> "Option<$outputVariablesType>"
+            ReturnKind.RESULT -> "Result<$outputVariablesType, $controlFlowType>"
+            ReturnKind.TRY_OPERATOR -> controlFlow!!.tryOperatorInfo!!.generateType(outputVariablesType)
+        }
     }
 
     val functionText: String
@@ -207,13 +261,13 @@ class RsExtractFunctionConfig private constructor(
                 } else {
                     ""
                 }
-                val returnExprText = returnValue?.exprText.orEmpty()
+                val outputVariablesText = outputVariables.exprText.orEmpty()
 
                 val bodyContent = buildList {
                     addAll(unselectedParamsTexts)
                     add(elementsText)
-                    if (returnExprText.isNotEmpty()) {
-                        add(returnExprText)
+                    if (outputVariablesText.isNotEmpty()) {
+                        add(outputVariablesText)
                     }
                 }
 
@@ -268,14 +322,15 @@ class RsExtractFunctionConfig private constructor(
                         .any { ref -> ref.element.textOffset > end }
                 }
 
-            val returnValue = when (innerBindings.size) {
+            val outputVariables = when (innerBindings.size) {
                 0 -> when {
-                    last is RsExpr -> ReturnValue.direct(last)
-                    last is RsExprStmt && last.isTailStmt -> ReturnValue.direct(last.expr)
-                    else -> null
+                    last is RsExpr -> OutputVariables.direct(last)
+                    last is RsExprStmt && last.isTailStmt -> OutputVariables.direct(last.expr)
+                    else -> OutputVariables(exprText = null, type = TyUnit.INSTANCE)
                 }
-                1 -> ReturnValue.namedValue(innerBindings[0])
-                else -> ReturnValue.tupleNamedValue(innerBindings)
+
+                1 -> OutputVariables.namedValue(innerBindings[0])
+                else -> OutputVariables.tupleNamedValue(innerBindings)
             }
             val selfParameter = fn.selfParameter
             if (fn.owner.isImplOrTrait && selfParameter != null) {
@@ -314,14 +369,71 @@ class RsExtractFunctionConfig private constructor(
                 }
             }
 
+            val controlFlow = extractControlFlow(elements)
             return RsExtractFunctionConfig(
                 fn,
                 elements,
-                returnValue = returnValue,
+                outputVariables = outputVariables,
+                controlFlow = controlFlow,
+                returnKind = determineReturnKind(outputVariables, controlFlow),
                 parameters = parameters,
                 isAsync = isAsync,
                 isUnsafe = fn.isUnsafe
             )
+        }
+
+        private fun extractControlFlow(extractedElements: List<PsiElement>): ControlFlow? {
+            val (controlFlowOwner, controlFlowElements) = findControlFlowElements(extractedElements) ?: return null
+            // Mixing return/break/continue is not supported
+            if (controlFlowElements.mapToSet { it.elementType }.size != 1) return null
+            val controlFlowText = when (val element = controlFlowElements.first()) {
+                is RsLabelReferenceOwner -> {
+                    val label = element.label?.let { " ${it.text}" } ?: ""
+                    "${element.operator.text}$label"
+                }
+                is RsRetExpr -> "return"
+                is RsTryExpr -> "?"
+                else -> error("unreachable")
+            }
+
+            val type = when (controlFlowOwner) {
+                is RsFunction -> controlFlowOwner.rawReturnType
+                is RsLambdaExpr -> controlFlowOwner.returnType ?: return null
+                else -> (controlFlowOwner as? RsExpr)?.type ?: return null
+            }.unitIfNever()
+
+            val tryOperatorInfo = if (controlFlowText == "?") {
+                createTryOperatorInfo(controlFlowOwner, type) ?: return null
+            } else {
+                null
+            }
+
+            return ControlFlow(controlFlowText, type, tryOperatorInfo)
+        }
+
+        private fun createTryOperatorInfo(context: PsiElement, type: Ty): TryOperatorInfo? {
+            val knownItems = context.ancestorOrSelf<RsElement>()?.knownItems ?: return null
+            if (type !is TyAdt) return null
+            return when (type.item) {
+                knownItems.Option -> TryOperatorInfo("Some") { "Option<$it>" }
+                knownItems.Result -> {
+                    val errorType = type.typeArguments.getOrNull(1)?.renderInsertionSafe() ?: "_"
+                    TryOperatorInfo("Ok") { "Result<$it, $errorType>" }
+                }
+                else -> null
+            }
+        }
+
+        private fun determineReturnKind(returnValue: OutputVariables?, controlFlow: ControlFlow?): ReturnKind {
+            if (controlFlow?.text == "?") return ReturnKind.TRY_OPERATOR
+
+            val returnValueType = returnValue?.type?.takeIf { it !is TyUnit }
+            val controlFlowType = controlFlow?.type?.takeIf { it !is TyUnit }
+            return when {
+                controlFlow == null -> ReturnKind.VALUE
+                returnValueType == null -> if (controlFlowType == null) ReturnKind.BOOL else ReturnKind.OPTION_CONTROL_FLOW
+                else -> if (controlFlowType == null) ReturnKind.OPTION_VALUE else ReturnKind.RESULT
+            }
         }
     }
 }
@@ -352,3 +464,48 @@ fun Ty.dependTypes(boundMap: Map<Ty, Set<Ty>>): Set<Ty> {
 
     return types
 }
+
+private fun Ty.unitIfNever(): Ty = if (this is TyNever) TyUnit.INSTANCE else this
+
+data class ControlFlowElements(val controlFlowOwner: PsiElement?, val controlFlowElements: List<PsiElement>)
+
+fun findControlFlowElements(extractedElements: List<PsiElement>): ControlFlowElements? {
+    val (controlFlowOwners, controlFlowElements) = extractedElements
+        .flatMap { extractedElement ->
+            extractedElement.controlFlowElements().mapNotNull {
+                val owner = it.findControlFlowOwner()
+                if (owner != null && extractedElement.isAncestor(owner)) return@mapNotNull null
+                owner to it
+            }
+        }
+        .unzip()
+
+    val controlFlowOwner = controlFlowOwners
+        .toHashSet().also { if (it.size != 1) return null }
+        .single()
+    return ControlFlowElements(controlFlowOwner, controlFlowElements)
+}
+
+private fun PsiElement.controlFlowElements(): Sequence<PsiElement> =
+    descendants { it !is RsFunctionOrLambda }
+        .filter { it is RsRetExpr || it is RsBreakExpr || it is RsContExpr || it is RsTryExpr }
+
+/**
+ * `fn func() { return; }` - [RsFunction]
+ * `|| { return; }` - [RsLambdaExpr]
+ * `loop { break; }` - [RsLooplikeExpr]
+ * `'label: { break 'label; }` - [RsBlockExpr]
+ */
+private fun PsiElement.findControlFlowOwner(): PsiElement? =
+    when (this) {
+        is RsRetExpr, is RsTryExpr -> ancestorStrict<RsFunctionOrLambda>()
+        is RsLabelReferenceOwner -> {
+            val label = label
+            if (label == null) {
+                ancestorStrict<RsLooplikeExpr>()
+            } else {
+                label.reference.resolve()?.parent
+            }
+        }
+        else -> null
+    }

@@ -20,11 +20,13 @@ import org.rust.ide.presentation.PsiRenderingOptions
 import org.rust.ide.presentation.RsPsiRenderer
 import org.rust.ide.presentation.renderTypeReference
 import org.rust.ide.refactoring.RsRenameProcessor
+import org.rust.ide.surroundWith.addStatement
 import org.rust.ide.utils.GenericConstraints
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTys
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.RsCachedImplItem
+import org.rust.lang.core.types.ty.TyUnit
 import org.rust.openapiext.runWriteCommandAction
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
@@ -54,8 +56,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             replaceOldStatementsWithCallExpr(config, psiFactory)
             val parameters = config.valueParameters.filter { it.isSelected }
             renameFunctionParameters(extractedFunction, parameters.map { it.name })
-            val types = (parameters.map { it.type } + config.returnValue?.type).filterNotNull()
-            importTypeReferencesFromTys(extractedFunction, types)
+            importTypeReferencesFromTys(extractedFunction, config.parametersAndReturnTypes)
         }
     }
 
@@ -67,6 +68,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         val owner = config.function.owner
 
         val function = psiFactory.createFunction(config.functionText)
+        adjustControlFlow(config, function)
         val psiParserFacade = PsiParserFacade.getInstance(project)
         return when {
             owner is RsAbstractableOwner.Impl && !owner.isInherent -> {
@@ -81,6 +83,70 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
                 config.function.addAfter(function, config.function.addAfter(newline, end)) as? RsFunction
             }
         }
+    }
+
+    private fun adjustControlFlow(config: RsExtractFunctionConfig, function: RsFunction) {
+        val factory = RsPsiFactory(function.project)
+        val block = function.block!!
+        val syntaxTailStmt = block.syntaxTailStmt
+        val (_, controlFlowElements) = findControlFlowElements(listOf(block)) ?: return
+
+        when (config.returnKind) {
+            ReturnKind.VALUE -> Unit
+            ReturnKind.BOOL -> {
+                controlFlowElements.replaceEachWithReturn(factory) { "true" }
+                syntaxTailStmt?.addSemicolonIfNeeded()
+                block.addStatement(factory.createStatement("false"))
+            }
+            ReturnKind.OPTION_CONTROL_FLOW -> {
+                controlFlowElements.replaceEachWithReturn(factory) { "Some($it)" }
+                syntaxTailStmt?.addSemicolonIfNeeded()
+                block.addStatement(factory.createStatement("None"))
+            }
+            ReturnKind.OPTION_VALUE -> {
+                controlFlowElements.replaceEachWithReturn(factory) { "None" }
+                syntaxTailStmt?.wrapWith("Some")
+            }
+            ReturnKind.RESULT -> {
+                controlFlowElements.replaceEachWithReturn(factory) { "Err($it)" }
+                syntaxTailStmt?.wrapWith("Ok")
+            }
+            ReturnKind.TRY_OPERATOR -> {
+                val constructor = config.controlFlow!!.tryOperatorInfo!!.successVariant
+                val syntaxTailExpr = syntaxTailStmt?.expr
+                when {
+                    syntaxTailExpr is RsTryExpr && syntaxTailStmt.semicolon == null -> {
+                        syntaxTailExpr.replace(syntaxTailExpr.expr)
+                    }
+                    config.outputVariables.type is TyUnit -> {
+                        syntaxTailStmt?.addSemicolonIfNeeded()
+                        block.addStatement(factory.createStatement("$constructor(())"))
+                    }
+                    else -> syntaxTailStmt?.wrapWith(constructor)
+                }
+            }
+        }
+    }
+
+    private fun List<PsiElement>.replaceEachWithReturn(factory: RsPsiFactory, getValue: (String?) -> String) {
+        for (element in this) {
+            if (element is RsTryExpr) continue
+            val oldValue = element.getControlFlowValue()?.text
+            val newValue = getValue(oldValue)
+            element.replace(factory.createExpression("return $newValue"))
+        }
+    }
+
+    private fun PsiElement.getControlFlowValue(): PsiElement? =
+        when (this) {
+            is RsRetExpr -> expr
+            is RsBreakExpr -> expr
+            else -> null
+        }
+
+    private fun RsExprStmt.wrapWith(constructor: String) {
+        val exprNew = RsPsiFactory(project).createExpression("$constructor($text)")
+        expr.replace(exprNew)
     }
 
     /**
@@ -141,44 +207,41 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         }
     }
 
-    private fun replaceOldStatementsWithCallExpr(config: RsExtractFunctionConfig, psiFactory: RsPsiFactory) {
-        val stmt = StringBuilder()
-        if (config.returnValue?.exprText != null) {
-            stmt.append("let ${config.returnValue.exprText} = ")
+    private fun replaceOldStatementsWithCallExpr(config: RsExtractFunctionConfig, factory: RsPsiFactory) {
+        val call = generateFunctionCallFull(config)
+
+        for (element in config.elements.dropLast(1)) {
+            element.delete()
         }
-        val firstParameter = config.parameters.firstOrNull()
-        stmt.append(if (firstParameter != null && firstParameter.isSelf) {
-            "self.${config.name}(${config.argumentsText})"
-        } else {
-            val type = when (config.function.owner) {
-                is RsAbstractableOwner.Impl,
-                is RsAbstractableOwner.Trait -> "Self"
-                else -> null
-            }
-            "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
-        })
-        if (config.isAsync) {
-            stmt.append(".await")
+        when (val last = config.elements.last()) {
+            is RsExpr -> last.replace(factory.createExpression(call.removeSuffix(";")))
+            is RsStmt -> last.replace(factory.createStatement(call))
         }
-        config.elements.forEachIndexed { index, psiElement ->
-            if (index == config.elements.lastIndex) {
-                when (psiElement) {
-                    is RsExpr -> psiElement.replace(psiFactory.createExpression(stmt.toString()))
-                    is RsExprStmt -> {
-                        val needsSemicolon = config.returnValue == null || config.returnValue.exprText != null
-                        if (needsSemicolon) {
-                            stmt.append(";")
-                        }
-                        psiElement.replace(psiFactory.createStatement(stmt.toString()))
-                    }
-                    is RsStmt -> {
-                        stmt.append(";")
-                        psiElement.replace(psiFactory.createStatement(stmt.toString()))
-                    }
-                }
-            } else {
-                psiElement.delete()
-            }
+    }
+
+    private fun generateFunctionCallFull(config: RsExtractFunctionConfig): String {
+        val call = generateFunctionCall(config)
+        val letPrefix = config.outputVariables.exprText?.let { "let $it = " } ?: ""
+        val needSemicolon = letPrefix != ""
+            || config.outputVariables.type is TyUnit && (config.controlFlow == null || config.returnKind == ReturnKind.TRY_OPERATOR)
+        val controlFlow = config.controlFlow?.text
+        return when (config.returnKind) {
+            ReturnKind.VALUE -> "$letPrefix$call"
+            ReturnKind.BOOL -> "if $call { $controlFlow; }"
+            ReturnKind.OPTION_CONTROL_FLOW -> "if let Some(value) = $call {\n$controlFlow value;\n}"
+            ReturnKind.OPTION_VALUE -> "${letPrefix}match $call {\nSome(value) => value,\nNone => $controlFlow,\n}"
+            ReturnKind.RESULT -> "${letPrefix}match $call {\nOk(value) => value,\nErr(value) => $controlFlow value,\n}"
+            ReturnKind.TRY_OPERATOR -> "${letPrefix}$call?"
+        } + if (needSemicolon) ";" else ""
+    }
+
+    private fun generateFunctionCall(config: RsExtractFunctionConfig): String {
+        val self = when {
+            config.parameters.firstOrNull()?.isSelf == true -> "self."
+            config.function.owner.isImplOrTrait -> "Self::"
+            else -> ""
         }
+        val await = if (config.isAsync) ".await" else ""
+        return "$self${config.name}(${config.argumentsText})$await"
     }
 }
