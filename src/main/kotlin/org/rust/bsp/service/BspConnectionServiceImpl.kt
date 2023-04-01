@@ -6,14 +6,12 @@
 package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.*
-import com.google.common.hash.HashCode
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.profiler.model.Transformation
 import com.intellij.project.stateStore
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -27,6 +25,7 @@ import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.stdext.HashCode
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Proxy
@@ -105,7 +104,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     }
 
 
-    override fun compileSolution(params :CompileParams): CompletableFuture<CargoBuildResult> {
+    override fun compileSolution(params: CompileParams): CompletableFuture<CargoBuildResult> {
         return getBspServer().buildTargetCompile(params).thenApply {
             return@thenApply CargoBuildResult(
                 it.statusCode == StatusCode.OK,
@@ -115,6 +114,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         }
 
     }
+
     override fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult> {
         return getBspServer().buildTargetRun(params).thenApply {
             return@thenApply CargoBuildResult(
@@ -226,11 +226,13 @@ fun calculateProjectDetailsWithCapabilities(
     errorCallback: (Throwable) -> Unit
 ): CargoWorkspaceData {
     val projectBazelTargets = queryForBazelTargets(server).get()
-    val bspWorkspaceRoot = projectBazelTargets.targets.find { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI}
+    val bspWorkspaceRoot = projectBazelTargets.targets.find { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
     projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
-    val projectWorkspaceData = queryForWorkspaceData(server).get()
 
-    val projectPackages = createPackage(projectWorkspaceData, projectBazelTargets)
+    val rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
+    val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
+
+    val projectPackages = createPackages(projectWorkspaceData, projectBazelTargets)
     val dependencies = createDependencies(projectWorkspaceData, projectBazelTargets)
     val rawPackages = createRawDependencies(projectWorkspaceData, projectBazelTargets)
     val workspaceRoot = bspWorkspaceRoot?.baseDirectory
@@ -238,8 +240,13 @@ fun calculateProjectDetailsWithCapabilities(
     return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot, true)
 }
 
-private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions?
-{
+private fun collectRustBspTargets(bspTargets: List<BuildTarget>): List<BuildTarget> {
+    return bspTargets.filter {
+        BuildTargetDataKind.RUST in it.languageIds
+    }
+}
+
+private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions? {
     if (cfgOptions == null)
         return null;
     val name = cfgOptions.nameOptions?.toSet()
@@ -248,10 +255,9 @@ private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions?
         return null;
     return CfgOptions(keyValueOptions, name)
 }
-private fun resolveEdition(edition: String?): CargoWorkspace.Edition
-{
-    return when (edition)
-    {
+
+private fun resolveEdition(edition: String?): CargoWorkspace.Edition {
+    return when (edition) {
         "2015" -> CargoWorkspace.Edition.EDITION_2015
         "2018" -> CargoWorkspace.Edition.EDITION_2018
         "2021" -> CargoWorkspace.Edition.EDITION_2021
@@ -259,10 +265,8 @@ private fun resolveEdition(edition: String?): CargoWorkspace.Edition
     }
 }
 
-private fun resolveTargetKind(targetKind: String?): CargoWorkspace.TargetKind
-{
-    return when (targetKind)
-    {
+private fun resolveTargetKind(targetKind: String?): CargoWorkspace.TargetKind {
+    return when (targetKind?.lowercase()) {
         "application" -> CargoWorkspace.TargetKind.Bin
         "test" -> CargoWorkspace.TargetKind.Test
         "library" -> CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB)
@@ -270,10 +274,8 @@ private fun resolveTargetKind(targetKind: String?): CargoWorkspace.TargetKind
     }
 }
 
-private fun resolveOrigin(targetKind: String?): PackageOrigin
-{
-    return when (targetKind)
-    {
+private fun resolveOrigin(targetKind: String?): PackageOrigin {
+    return when (targetKind?.lowercase()) {
         "stdlib" -> PackageOrigin.STDLIB
         "workspace" -> PackageOrigin.WORKSPACE
         "dep" -> PackageOrigin.DEPENDENCY
@@ -282,36 +284,79 @@ private fun resolveOrigin(targetKind: String?): PackageOrigin
     }
 }
 
-fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): List<CargoWorkspaceData.Package>
-{
-    val idToWorkspace = projectWorkspaceData.packages.associateBy { it.id.uri }
-    val packages = emptyList<CargoWorkspaceData.Package>().toMutableList()
-    for (project in projectBazelTargets.targets) {
-        val id = project.id.uri
-        if (id !in idToWorkspace)
-            continue;
-        val workspace = idToWorkspace[id]!!
-        var targets = idToWorkspace[id]?.targets?.map { CargoWorkspaceData.Target(it.crateRootUrl, it.name, resolveTargetKind(it.kind), resolveEdition(it.edition), it.isDoctest, it.requiredFeatures) }
-        if (targets.isNullOrEmpty())
-            targets = emptyList()
-        val origin = resolveOrigin(workspace.origin)
-        val edition = resolveEdition(workspace.edition)
-        val features = workspace.features.associate { Pair(it.name, it.deps) }
-        val enabledFeatures = workspace.enabledFeatures.toSet()
-        val cfgOptions = createCfgOptions(workspace.cfgOptions)
-        val env = workspace.env.associate { Pair(it.name, it.value) }
-        var procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null;
-        if (workspace.procMacroArtifact != null)
-            procMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(Path(workspace.procMacroArtifact.path), org.rust.stdext.HashCode.fromHexString(workspace.procMacroArtifact.path))
-        packages.add(CargoWorkspaceData.Package(id, project.baseDirectory, project.displayName, workspace.version, targets, workspace.source, origin, edition, features, enabledFeatures, cfgOptions, env, workspace.outDirUrl, procMacroArtifact))
+fun createPackages(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): List<CargoWorkspaceData.Package> {
+    val bspBuildTargets = projectBazelTargets.targets.associateBy { it.id.uri }
+    return projectWorkspaceData.packages.map { rustPackage ->
+        val rustBuildTargets = rustPackage.targets.map { "${rustPackage.id.uri}:${it.name}" }
+        val associatedBuildTargets = bspBuildTargets.entries.filter { it.key in rustBuildTargets }.map { it.value }
+        val associatedBuildTarget = associatedBuildTargets.firstOrNull()
+        CargoWorkspaceData.Package(
+            id = rustPackage.id.uri,
+            contentRootUrl = associatedBuildTarget?.baseDirectory ?: "MISSING PACKAGE PATH!!!",
+            name = rustPackage.id.uri,
+            version = rustPackage.version,
+            targets = rustPackage.targets.map { target ->
+                CargoWorkspaceData.Target(
+                    target.crateRootUrl,
+                    target.name,
+                    resolveTargetKind(target.kind),
+                    resolveEdition(target.edition),
+                    target.isDoctest,
+                    target.requiredFeatures
+                )
+            },
+            source = rustPackage.source,
+            origin = resolveOrigin(rustPackage.origin),
+            edition = resolveEdition(rustPackage.edition),
+            features = rustPackage.features.associate { feature -> Pair(feature.name, feature.deps) },
+            enabledFeatures = rustPackage.enabledFeatures.toSet(),
+            cfgOptions = createCfgOptions(rustPackage.cfgOptions),
+            env = rustPackage.env.associate { envVar -> Pair(envVar.name, envVar.value) },
+            outDirUrl = rustPackage.outDirUrl,
+            procMacroArtifact = rustPackage.procMacroArtifact?.let {
+                CargoWorkspaceData.ProcMacroArtifact(
+                    Path(it.path),
+                    HashCode.fromHexString(it.path)
+                )
+            }
+        )
     }
-    return packages
 }
 
-private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind
-{
-    return when (dependencyType)
-    {
+//fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): List<CargoWorkspaceData.Package> {
+//    val idToWorkspace = projectWorkspaceData.packages.associateBy { it.id.uri }
+//    val packages = emptyList<CargoWorkspaceData.Package>().toMutableList()
+//    for (project in projectBazelTargets.targets) {
+//        val id = project.id.uri
+//        if (id !in idToWorkspace)
+//            continue
+//        val workspace = idToWorkspace[id]!!
+//        var targets = idToWorkspace[id]?.targets?.map { CargoWorkspaceData.Target(it.crateRootUrl, it.name, resolveTargetKind(it.kind), resolveEdition(it.edition), it.isDoctest, it.requiredFeatures) }
+//        if (targets.isNullOrEmpty())
+//            targets = emptyList()
+//        val origin = resolveOrigin(workspace.origin)
+//        val edition = resolveEdition(workspace.edition)
+//        val features = workspace.features.associate { Pair(it.name, it.deps) }
+//        val enabledFeatures = workspace.enabledFeatures.toSet()
+//        val cfgOptions = createCfgOptions(workspace.cfgOptions)
+//        val env = workspace.env.associate { Pair(it.name, it.value) }
+//        var procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null;
+//        if (workspace.procMacroArtifact != null)
+//            procMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(Path(workspace.procMacroArtifact.path), org.rust.stdext.HashCode.fromHexString(workspace.procMacroArtifact.path))
+//        packages.add(
+//            CargoWorkspaceData.Package(
+//                id, project.baseDirectory, project.displayName,
+//                workspace.version, targets, workspace.source,
+//                origin, edition, features, enabledFeatures,
+//                cfgOptions, env, workspace.outDirUrl, procMacroArtifact
+//            )
+//        )
+//    }
+//    return packages
+//}
+
+private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind {
+    return when (dependencyType) {
         "build" -> CargoWorkspace.DepKind.Build
         "development" -> CargoWorkspace.DepKind.Development
         "normal" -> CargoWorkspace.DepKind.Normal
@@ -320,8 +365,7 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind
     }
 }
 
-fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult):  Map<PackageId, Set<CargoWorkspaceData.Dependency>>
-{
+fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): Map<PackageId, Set<CargoWorkspaceData.Dependency>> {
     val dependencies = projectWorkspaceData.dependencies.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.target, it.name, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
     val dependencyMap = emptyMap<PackageId, MutableSet<CargoWorkspaceData.Dependency>>().toMutableMap()
     for (target in projectBazelTargets.targets) {
@@ -334,10 +378,10 @@ fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTa
         dependencyMap[pair.first]?.add(pair.second)
     }
     return dependencyMap
+//    return emptyMap()
 }
 
-fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): Map<PackageId, List<CargoMetadata.RawDependency>>
-{
+fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): Map<PackageId, List<CargoMetadata.RawDependency>> {
     val dependencies = projectWorkspaceData.rawDependencies.map { Pair(it.packageId, CargoMetadata.RawDependency(it.name, null, it.kind, it.target, it.isOptional, it.isUses_default_features, it.features)) }
     val rawMap = emptyMap<PackageId, MutableList<CargoMetadata.RawDependency>>().toMutableMap()
     for (target in projectBazelTargets.targets) {
@@ -350,11 +394,12 @@ fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBaze
         rawMap[pair.first]?.add(pair.second);
     }
     return rawMap
+//    return emptyMap()
 }
 
 
-fun queryForWorkspaceData(server: BspServer): CompletableFuture<RustWorkspaceResult> {
-    return server.rustWorkspace()
+fun queryForWorkspaceData(server: BspServer, params: List<BuildTargetIdentifier>): CompletableFuture<RustWorkspaceResult> {
+    return server.rustWorkspace(RustWorkspaceParams(params))
 }
 
 fun queryForBazelTargets(server: BspServer): CompletableFuture<WorkspaceBuildTargetsResult> {

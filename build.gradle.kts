@@ -196,7 +196,7 @@ allprojects {
 
     dependencies {
         compileOnly(kotlin("stdlib-jdk8"))
-        implementation("com.github.zpp-This-is-fine:build-server-protocol:1c9277a35d101dbf07a910a23f496201b26418cd")
+        implementation("com.github.zpp-This-is-fine:build-server-protocol:rust-workspace")
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
