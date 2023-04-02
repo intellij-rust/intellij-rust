@@ -19,6 +19,8 @@ class CratesLocalIndexWaker : CargoProjectsService.CargoProjectsListener {
             if (index is CratesLocalIndexServiceImpl) {
                 index.recoverIfNeeded()
             }
+
+            CratesLocalIndexUpdater.getInstance().updateCratesIoGitIndex()
         }
     }
 }
