@@ -8,6 +8,7 @@ package org.rust.bsp.service
 import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.intellij.codeInsight.intention.impl.reuseFragmentEditorIndent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -233,8 +234,8 @@ fun calculateProjectDetailsWithCapabilities(
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
 
     val projectPackages = createPackages(projectWorkspaceData, projectBazelTargets)
-    val dependencies = createDependencies(projectWorkspaceData, projectBazelTargets)
-    val rawPackages = createRawDependencies(projectWorkspaceData, projectBazelTargets)
+    val dependencies = createDependencies(projectWorkspaceData)
+    val rawPackages = createRawDependencies(projectWorkspaceData)
     val workspaceRoot = bspWorkspaceRoot?.baseDirectory
 
     return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot, true)
@@ -323,38 +324,6 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult, projectBazelTarget
     }
 }
 
-//fun createPackage(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): List<CargoWorkspaceData.Package> {
-//    val idToWorkspace = projectWorkspaceData.packages.associateBy { it.id.uri }
-//    val packages = emptyList<CargoWorkspaceData.Package>().toMutableList()
-//    for (project in projectBazelTargets.targets) {
-//        val id = project.id.uri
-//        if (id !in idToWorkspace)
-//            continue
-//        val workspace = idToWorkspace[id]!!
-//        var targets = idToWorkspace[id]?.targets?.map { CargoWorkspaceData.Target(it.crateRootUrl, it.name, resolveTargetKind(it.kind), resolveEdition(it.edition), it.isDoctest, it.requiredFeatures) }
-//        if (targets.isNullOrEmpty())
-//            targets = emptyList()
-//        val origin = resolveOrigin(workspace.origin)
-//        val edition = resolveEdition(workspace.edition)
-//        val features = workspace.features.associate { Pair(it.name, it.deps) }
-//        val enabledFeatures = workspace.enabledFeatures.toSet()
-//        val cfgOptions = createCfgOptions(workspace.cfgOptions)
-//        val env = workspace.env.associate { Pair(it.name, it.value) }
-//        var procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact? = null;
-//        if (workspace.procMacroArtifact != null)
-//            procMacroArtifact = CargoWorkspaceData.ProcMacroArtifact(Path(workspace.procMacroArtifact.path), org.rust.stdext.HashCode.fromHexString(workspace.procMacroArtifact.path))
-//        packages.add(
-//            CargoWorkspaceData.Package(
-//                id, project.baseDirectory, project.displayName,
-//                workspace.version, targets, workspace.source,
-//                origin, edition, features, enabledFeatures,
-//                cfgOptions, env, workspace.outDirUrl, procMacroArtifact
-//            )
-//        )
-//    }
-//    return packages
-//}
-
 private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind {
     return when (dependencyType) {
         "build" -> CargoWorkspace.DepKind.Build
@@ -365,36 +334,38 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind {
     }
 }
 
-fun createDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): Map<PackageId, Set<CargoWorkspaceData.Dependency>> {
-    val dependencies = projectWorkspaceData.dependencies.map { Pair<PackageId, CargoWorkspaceData.Dependency>(it.source, CargoWorkspaceData.Dependency(it.target, it.name, it.depKinds.map { it2 -> CargoWorkspace.DepKindInfo(resolveDependency(it2.kind), it2.target) })) }
-    val dependencyMap = emptyMap<PackageId, MutableSet<CargoWorkspaceData.Dependency>>().toMutableMap()
-    for (target in projectBazelTargets.targets) {
-        dependencyMap[target.id.uri] = emptySet<CargoWorkspaceData.Dependency>().toMutableSet()
-    }
-    for (pair in dependencies) {
-        if (pair.first !in dependencyMap) {
-            continue
+fun createDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, Set<CargoWorkspaceData.Dependency>> {
+    return projectWorkspaceData.dependencies
+        .groupBy { it.source }
+        .mapValues { (_, deps) ->
+            deps.map { dep ->
+                CargoWorkspaceData.Dependency(
+                    dep.target,
+                    dep.name,
+                    dep.depKinds.map { kind ->
+                        CargoWorkspace.DepKindInfo(resolveDependency(kind.kind), kind.target)
+                    }
+                )
+            }.toSet()
         }
-        dependencyMap[pair.first]?.add(pair.second)
-    }
-    return dependencyMap
-//    return emptyMap()
 }
 
-fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): Map<PackageId, List<CargoMetadata.RawDependency>> {
-    val dependencies = projectWorkspaceData.rawDependencies.map { Pair(it.packageId, CargoMetadata.RawDependency(it.name, null, it.kind, it.target, it.isOptional, it.isUses_default_features, it.features)) }
-    val rawMap = emptyMap<PackageId, MutableList<CargoMetadata.RawDependency>>().toMutableMap()
-    for (target in projectBazelTargets.targets) {
-        rawMap[target.id.uri] = emptyList<CargoMetadata.RawDependency>().toMutableList()
-    }
-    for (pair in dependencies) {
-        if (pair.first !in rawMap) {
-            continue
+fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, List<CargoMetadata.RawDependency>> {
+    return projectWorkspaceData.rawDependencies
+        .groupBy { it.packageId }
+        .mapValues { (_, deps) ->
+            deps.map { dep ->
+                CargoMetadata.RawDependency(
+                    dep.name,
+                    dep.rename,
+                    dep.kind,
+                    dep.target,
+                    dep.isOptional,
+                    dep.isUses_default_features,
+                    dep.features
+                )
+            }
         }
-        rawMap[pair.first]?.add(pair.second);
-    }
-    return rawMap
-//    return emptyMap()
 }
 
 
