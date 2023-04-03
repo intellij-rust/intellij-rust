@@ -16,15 +16,24 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
 import com.intellij.structuralsearch.plugin.ui.Configuration
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.template.RsContextType
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsLifetime
+import org.rust.openapiext.isFeatureEnabled
 
 class RsStructuralSearchProfile : StructuralSearchProfile() {
-    override fun isMyLanguage(language: Language): Boolean = language == RsLanguage
-    override fun getDefaultFileType(fileType: LanguageFileType?): LanguageFileType = fileType ?: RsFileType
+    override fun isMyLanguage(language: Language): Boolean {
+        if (!isFeatureEnabled(RsExperiments.SSR)) return false
+        return language == RsLanguage
+    }
+
+    override fun getDefaultFileType(fileType: LanguageFileType?): LanguageFileType? {
+        if (!isFeatureEnabled(RsExperiments.SSR)) return null
+        return fileType ?: RsFileType
+    }
 
     override fun getTemplateContextTypeClass(): Class<out TemplateContextType> = RsContextType::class.java
 
@@ -34,7 +43,10 @@ class RsStructuralSearchProfile : StructuralSearchProfile() {
 
     override fun createMatchingVisitor(globalVisitor: GlobalMatchingVisitor): PsiElementVisitor = RsMatchingVisitor(globalVisitor)
 
-    override fun getPredefinedTemplates(): Array<Configuration> = RsPredefinedConfigurations.createPredefinedTemplates()
+    override fun getPredefinedTemplates(): Array<Configuration> {
+        if (!isFeatureEnabled(RsExperiments.SSR)) return arrayOf()
+        return RsPredefinedConfigurations.createPredefinedTemplates()
+    }
 
     override fun isIdentifier(element: PsiElement?): Boolean = element?.node?.elementType == IDENTIFIER
 
