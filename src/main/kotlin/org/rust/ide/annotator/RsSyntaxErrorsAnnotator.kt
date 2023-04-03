@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
@@ -16,10 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.text.SemVer
 import org.rust.cargo.util.parseSemVer
-import org.rust.ide.fixes.AddTypeFix
-import org.rust.ide.fixes.RemoveElementFix
-import org.rust.ide.fixes.RemovePolyBoundFix
-import org.rust.ide.fixes.SubstituteTextFix
+import org.rust.ide.fixes.*
+import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_KEYWORDS
 import org.rust.lang.core.CompilerFeature.Companion.C_VARIADIC
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
@@ -62,6 +61,9 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsPatRange -> checkPatRange(holder, element)
             is RsTraitType -> checkTraitType(holder, element)
             is RsUnderscoreExpr -> checkUnderscoreExpr(holder, element)
+            else -> {
+                checkReservedKeyword(holder, element)
+            }
         }
     }
 }
@@ -502,6 +504,19 @@ private fun checkUnderscoreExpr(holder: AnnotationHolder, element: RsUnderscoreE
 
     if (!isAllowed) {
         deny(element, holder, "In expressions, `_` can only be used on the left-hand side of an assignment")
+    }
+}
+
+private fun checkReservedKeyword(holder: AnnotationHolder, item: PsiElement) {
+    if (item.elementTypeOrNull == RsElementTypes.IDENTIFIER && item.text in RESERVED_KEYWORDS) {
+        val parent = item.parent
+        val fixes = mutableListOf<LocalQuickFix>()
+
+        if (parent is RsNameIdentifierOwner && parent.nameIdentifier == item) {
+            fixes += EscapeKeywordFix(item, isKeyword = false)
+        }
+
+        RsDiagnostic.ReservedIdentifierIsUsed(item, fixes).addToHolder(holder)
     }
 }
 
