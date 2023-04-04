@@ -963,7 +963,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub use dep_lib_target::st/*caret*/
     """)
 
-    fun `test complete with identifier escaping`() = doSingleCompletion("""
+    fun `test complete with identifier escaping (keyword)`() = doSingleCompletion("""
         fn r#else() {}
         fn main() {
             els/*caret*/
@@ -974,6 +974,19 @@ class RsCompletionTest : RsCompletionTestBase() {
             r#else()/*caret*/
         }
     """)
+
+    fun `test complete with identifier escaping (reserved keyword)`() = doSingleCompletion("""
+        fn r#become() {}
+        fn main() {
+            bec/*caret*/
+        }
+    """, """
+        fn r#become() {}
+        fn main() {
+            r#become()/*caret*/
+        }
+    """)
+
 
     fun `test complete lifetime`() = doSingleCompletion("""
         fn foo<'aaaaaa>(x:&'a/*caret*/ str) {}

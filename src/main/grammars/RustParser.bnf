@@ -89,7 +89,6 @@
         TYPE_KW   = 'type'
 
         SHEBANG_LINE = 'shebang_line'
-        RESERVED_KEYWORD = 'reserved_keyword'
     ]
 
     elementType("(Fn|Anon|Lambda|Path)Parameter") = ValueParameter

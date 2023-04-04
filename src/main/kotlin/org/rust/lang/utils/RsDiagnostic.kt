@@ -1752,6 +1752,18 @@ sealed class RsDiagnostic(
             fixes = fixes.toQuickFixInfo(),
         )
     }
+
+    class ReservedIdentifierIsUsed(
+        element: PsiElement,
+        private val fixes: List<LocalQuickFix>
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "`${element.text}` is reserved keyword",
+            fixes = fixes.toQuickFixInfo(),
+        )
+    }
 }
 
 enum class RsErrorCode {

@@ -137,6 +137,6 @@ val RS_MOD_OR_FILE = tokenSetOf(MOD_ITEM, RsFileStub.Type)
  * but rustc's macro parser treats them as identifiers
  */
 val RS_IDENTIFIER_TOKENS = TokenSet.orSet(
-    tokenSetOf(IDENTIFIER, BOOL_LITERAL, RESERVED_KEYWORD),
+    tokenSetOf(IDENTIFIER, BOOL_LITERAL),
     RS_KEYWORDS
 )

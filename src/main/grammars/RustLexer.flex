@@ -189,9 +189,6 @@ EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }
 
-  "abstract"|"become"|"do"|"final"|"override"|"priv"|"typeof"|"unsized"|"virtual"
-                                  { return RESERVED_KEYWORD; }
-
   "true"|"false"                  { return BOOL_LITERAL; }
   "as"                            { return AS; }
   "box"                           { return BOX; }
