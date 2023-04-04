@@ -1343,6 +1343,9 @@
         <experimentalFeature id="org.rust.cargo.features.settings.gutter" percentOfUsers="0">
             <description>Show settings gutter icon near [features] section in `Cargo.toml` where you can enable or disable all features</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.ssr" percentOfUsers="0">
+            <description>Enable experimental support for structural search and replace in Rust (requires restart)</description>
+        </experimentalFeature>
 
         <advancedSetting
             id="org.rust.convert.json.to.struct"
