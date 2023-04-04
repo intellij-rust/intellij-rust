@@ -1,4 +1,4 @@
-#![feature(once_cell)]
+#![feature(lazy_cell)]
 
 #[macro_use]
 extern crate rustc_macros;
