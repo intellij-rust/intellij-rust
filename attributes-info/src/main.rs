@@ -1,3 +1,4 @@
+mod formatter;
 mod compiler_features;
 
 const COMPILER_FEATURES_PATH: &str = "src/main/resources/compiler-info/compiler-features.json";

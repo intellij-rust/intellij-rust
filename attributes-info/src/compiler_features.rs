@@ -7,6 +7,8 @@ use version_check::Version;
 
 use rustc_feature::{ACCEPTED_FEATURES, ACTIVE_FEATURES, Feature, Features, REMOVED_FEATURES, STABLE_REMOVED_FEATURES, State};
 
+use crate::formatter::MyFormatter;
+
 #[derive(Serialize, Deserialize)]
 struct FeatureInfo {
     name: String,
@@ -21,34 +23,6 @@ impl FeatureInfo {
             state: state_str(f),
             since: f.since.to_string()
         }
-    }
-}
-
-struct MyFormatter {
-    pretty_formatter: PrettyFormatter<'static>
-}
-
-impl MyFormatter {
-    fn new() -> Self {
-        MyFormatter { pretty_formatter: PrettyFormatter::new() }
-    }
-}
-
-impl Formatter for MyFormatter {
-    fn begin_array<W: ?Sized + Write>(&mut self, writer: &mut W) -> io::Result<()> {
-        self.pretty_formatter.begin_array(writer)
-    }
-
-    fn end_array<W: ?Sized + Write>(&mut self, writer: &mut W) -> io::Result<()> {
-        self.pretty_formatter.end_array(writer)
-    }
-
-    fn begin_array_value<W: ?Sized + Write>(&mut self, writer: &mut W, first: bool) -> io::Result<()> {
-        self.pretty_formatter.begin_array_value(writer, first)
-    }
-
-    fn end_array_value<W: ?Sized + Write>(&mut self, writer: &mut W) -> io::Result<()> {
-        self.pretty_formatter.end_array_value(writer)
     }
 }
 
