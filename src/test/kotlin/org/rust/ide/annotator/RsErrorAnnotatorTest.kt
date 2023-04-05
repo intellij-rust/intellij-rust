@@ -1878,7 +1878,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             type Output;
             fn call_once(self, args: Args) -> Self::Output;
         }
-        impl FnOnce<()> for Foo {
+        impl /*error descr="Manual implementations of `FnOnce` are experimental [E0183]"*/FnOnce<()>/*error**/ for Foo {
             type Output = ();
             fn call_once(self, (): ()) {}
         }
@@ -4612,5 +4612,70 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         async fn func5() {
             func5().await;
         }
+    """)
+
+    @MockRustcVersion("1.68.0")
+    fun `test error Fn trait manual implementation and Fn trait type parameters is subject to change`() = checkErrors("""
+        #[lang = "fn_once"]
+        trait FnOnce<Args> {
+            type Output;
+            fn call_once(self, args: Args) -> Self::Output;
+        }
+
+        struct MyStruct {
+            foo: i32,
+        }
+
+        impl /*error descr="Manual implementations of `FnOnce` are experimental [E0183]"*//*error descr="The precise format of `Fn`-family traits' type parameters is subject to change [E0658]"*/FnOnce<()>/*error**//*error**/ for MyStruct {}
+    """)
+
+    @MockRustcVersion("1.68.0")
+    fun `test error Fn trait manual implementation - parenthetical notation`() = checkErrors("""
+        #[lang = "fn_once"]
+        trait FnOnce<Args> {
+            type Output;
+            fn call_once(self, args: Args) -> Self::Output;
+        }
+
+        struct MyStruct {
+            foo: i32,
+        }
+
+        impl /*error descr="Manual implementations of `FnOnce` are experimental [E0183]"*/FnOnce(())/*error**/ for MyStruct {}
+    """)
+
+    @MockRustcVersion("1.68.0-nightly")
+    fun `test Fn trait manual implementation`() = checkErrors("""
+        #![feature(unboxed_closures)]
+
+        #[lang = "fn_once"]
+        trait FnOnce<Args> {
+            type Output;
+            fn call_once(self, args: Args) -> Self::Output;
+        }
+
+        struct MyClosure {
+            foo: i32,
+        }
+
+        impl FnOnce(()) for MyClosure {}
+    """)
+
+    @MockRustcVersion("1.68.0")
+    fun `test error parenthetical notation for non Fn trait`() = checkErrors("""
+        trait MyTrait {}
+
+        fn foo<T>() where T: /*error descr="Parenthetical notation is only stable when used with `Fn`-family traits [E0658]"*/MyTrait(u8) -> u8/*error**/  {}
+    """)
+
+    @MockRustcVersion("1.68.0")
+    fun `test error`() = checkErrors("""
+        #[lang = "fn_once"]
+        trait FnOnce<Args> {
+            type Output;
+            fn call_once(self, args: Args) -> Self::Output;
+        }
+
+        fn foo<T, E>(f: T) where T: FnOnce() -> E {}
     """)
 }
