@@ -652,13 +652,13 @@ open class PsiSubstitutingPsiRenderer(
             is RsTypeParameter -> when (val s = typeSubst(resolved)) {
                 is RsPsiSubstitution.Value.Present -> when (s.value) {
                     is RsPsiSubstitution.TypeValue.InAngles -> {
-                        super.appendTypeReference(sb, s.value.value)
+                        appendTypeReferenceInPathContext(sb, s.value.value, path)
                         true
                     }
                     is RsPsiSubstitution.TypeValue.FnSugar -> false
                 }
                 is RsPsiSubstitution.Value.DefaultValue -> {
-                    super.appendTypeReference(sb, s.value.value)
+                    appendTypeReferenceInPathContext(sb, s.value.value, path)
                     true
                 }
                 else -> false
@@ -667,7 +667,7 @@ open class PsiSubstitutingPsiRenderer(
                 is RsPsiSubstitution.Value.Present -> {
                     when (s.value) {
                         is RsExpr -> appendConstExpr(sb, s.value)
-                        is RsTypeReference -> appendTypeReference(sb, s.value)
+                        is RsTypeReference -> appendTypeReferenceInPathContext(sb, s.value, path)
                     }
                     true
                 }
@@ -681,6 +681,16 @@ open class PsiSubstitutingPsiRenderer(
         }
         if (!replaced) {
             super.appendPathWithoutArgs(sb, path)
+        }
+    }
+
+    private fun appendTypeReferenceInPathContext(sb: StringBuilder, type: RsTypeReference, path: RsPath) {
+        if (type !is RsPathType && path.context is RsPath) {
+            sb.append('<')
+            super.appendTypeReference(sb, type)
+            sb.append('>')
+        } else {
+            super.appendTypeReference(sb, type)
         }
     }
 
@@ -747,6 +757,7 @@ class ImportingPsiRenderer(
             val resolved = path.reference?.resolve()
             val tryImportPath2 = resolved !is RsTypeParameter
                 && resolved !is RsConstParameter
+                && (resolved !is RsAbstractable || !resolved.owner.isImplOrTrait)
                 && resolved !is RsMacroDefinitionBase
                 && resolved !is RsMod
             if (tryImportPath2 && resolved is RsQualifiedNamedElement) {

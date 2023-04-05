@@ -1858,6 +1858,45 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test escape path type qualifier during substitution`() = doTest("""
+        trait Trait {
+            type T;
+        }
+        impl Trait for () {
+            type T = ();
+        }
+
+        trait Foo<X: Trait> {
+            fn foo1(t: X::T);
+            fn foo2(t: X);
+        }
+        impl Foo<()> for () { /*caret*/ }
+    """, listOf(
+        ImplementMemberSelection("foo1(t: X::T)", byDefault = true),
+        ImplementMemberSelection("foo2(t: X)", byDefault = true),
+    ), """
+        trait Trait {
+            type T;
+        }
+        impl Trait for () {
+            type T = ();
+        }
+
+        trait Foo<X: Trait> {
+            fn foo1(t: X::T);
+            fn foo2(t: X);
+        }
+        impl Foo<()> for () {
+            fn foo1(t: <()>::T) {
+                todo!()
+            }
+
+            fn foo2(t: ()) {
+                todo!()
+            }
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
     private fun doTest(
