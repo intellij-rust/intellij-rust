@@ -61,6 +61,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsPatRange -> checkPatRange(holder, element)
             is RsTraitType -> checkTraitType(holder, element)
             is RsUnderscoreExpr -> checkUnderscoreExpr(holder, element)
+            is RsWherePred -> checkWherePred(holder, element)
             else -> {
                 checkReservedKeyword(holder, element)
             }
@@ -504,6 +505,17 @@ private fun checkUnderscoreExpr(holder: AnnotationHolder, element: RsUnderscoreE
 
     if (!isAllowed) {
         deny(element, holder, "In expressions, `_` can only be used on the left-hand side of an assignment")
+    }
+}
+
+private fun checkWherePred(holder: AnnotationHolder, boundPred: RsWherePred) {
+    if (boundPred.forLifetimes?.lifetimeParameterList.orEmpty().isNotEmpty()) {
+        for (bound in boundPred.typeParamBounds?.polyboundList.orEmpty()) {
+            if (bound.forLifetimes?.lifetimeParameterList.orEmpty().isNotEmpty()) {
+                val fixes = listOf(RemovePolyBoundFix(bound))
+                RsDiagnostic.NestedQuantificationOfLifetimeBoundsError(bound, fixes).addToHolder(holder)
+            }
+        }
     }
 }
 

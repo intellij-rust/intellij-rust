@@ -24,5 +24,11 @@
         </option>
       </scope>
     </inspection_tool>
+    <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <searchConfiguration name="Anonymous LocalQuickFix" suppressId="intellij_rust_anonymous_LocalQuickFix" problemDescriptor="Anonymous LocalQuickFix creates the risk of accidentally capturing a variable. Please, extract the quick-fix to a named class" text="object : $LocalQuickFix$ {}" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="LocalQuickFix" regexp="com\.intellij\.codeInspection\.LocalQuickFix" withinHierarchy="true" target="true" within="" contains="" />
+      </searchConfiguration>
+    </inspection_tool>
   </profile>
 </component>
