@@ -564,7 +564,7 @@
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Path statements"
-                         enabledByDefault="true" level="WEAK WARNING"
+                         enabledByDefault="false" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsPathStatementsInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
