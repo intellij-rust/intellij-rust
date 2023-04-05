@@ -83,12 +83,17 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
     private fun buildStruct(project: Project, ctx: Context): RsStructItem? {
         val factory = RsPsiFactory(project)
         val visibility = getVisibility(ctx.targetMod, ctx.call.containingMod)
-        val fields = ctx.call.valueArgumentList.exprList.joinToString(separator = ", ") {
-            "$visibility${it.type.renderInsertionSafe(includeLifetimeArguments = true)}"
-        }
-        return factory.tryCreateStruct("${visibility}struct ${ctx.name}($fields);")
+        val fields = generateFields(ctx.call, visibility)
+        return factory.tryCreateStruct("${visibility}struct ${ctx.name}$fields;")
     }
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
         IntentionPreviewInfo.EMPTY
+
+    companion object {
+        fun generateFields(call: RsCallExpr, visibility: String): String =
+            call.valueArgumentList.exprList.joinToString(separator = ", ", prefix = "(", postfix = ")") {
+                "$visibility${it.type.renderInsertionSafe(includeLifetimeArguments = true)}"
+            }
+    }
 }

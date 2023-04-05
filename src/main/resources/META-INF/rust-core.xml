@@ -562,6 +562,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsRedundantSemicolonsInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Path statements"
+                         enabledByDefault="false" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsPathStatementsInspection"/>
+
         <localInspection language="Rust" groupName="Rust"
                          displayName="Assert Equal"
                          enabledByDefault="true" level="WEAK WARNING"
@@ -1077,6 +1082,11 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateTupleStructIntention</className>
+            <category>Rust</category>
+            <language>Rust</language>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.createFromUsage.CreateEnumVariantIntention</className>
             <category>Rust</category>
             <language>Rust</language>
         </intentionAction>

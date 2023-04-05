@@ -86,27 +86,28 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
 
     private fun buildStruct(project: Project, ctx: Context): RsStructItem? {
         val factory = RsPsiFactory(project)
-        val fieldList = ctx.structLiteral.structLiteralBody.structLiteralFieldList
         val visibility = getVisibility(ctx.targetMod, ctx.structLiteral.containingMod)
-
-        val fieldsJoined = fieldList.joinToString(separator = ",\n") {
-            val name = it.referenceName
-            val expr = it.expr
-            val type = when {
-                expr != null -> expr.type
-                else -> it.resolveToBinding()?.type ?: TyUnknown
-            }
-
-            "$visibility$name: ${type.renderInsertionSafe(includeLifetimeArguments = true)}"
-        }
-        val suffix = when {
-            fieldsJoined.isEmpty() -> ";"
-            else -> " {\n$fieldsJoined\n}"
-        }
-
-        return factory.tryCreateStruct("${visibility}struct ${ctx.name}$suffix")
+        val fields = generateFields(ctx.structLiteral, visibility)
+        return factory.tryCreateStruct("${visibility}struct ${ctx.name}$fields")
     }
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
         IntentionPreviewInfo.EMPTY
+
+    companion object {
+        fun generateFields(structLiteral: RsStructLiteral, visibility: String): String {
+            val fieldList = structLiteral.structLiteralBody.structLiteralFieldList
+            val fieldsJoined = fieldList.joinToString(separator = ",\n") {
+                val name = it.referenceName
+                val expr = it.expr
+                val type = when {
+                    expr != null -> expr.type
+                    else -> it.resolveToBinding()?.type ?: TyUnknown
+                }
+
+                "$visibility$name: ${type.renderInsertionSafe(includeLifetimeArguments = true)}"
+            }
+            return " {\n$fieldsJoined\n}"
+        }
+    }
 }
