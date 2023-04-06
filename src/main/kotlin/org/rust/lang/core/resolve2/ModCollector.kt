@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiAnchor
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.util.containers.map2Array
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
@@ -515,10 +514,14 @@ private fun RsItemsOwner.getOrBuildStub(): StubElement<out RsItemsOwner>? {
 }
 
 fun RsFileBase.getOrBuildFileStub(): RsFileStub? {
-    val virtualFile = viewProvider.virtualFile
-    val stubTree = greenStubTree ?: StubTreeLoader.getInstance().readOrBuild(project, virtualFile, this)
-    val stub = stubTree?.root as? RsFileStub
-    if (stub == null) RESOLVE_LOG.error("No stub for file ${virtualFile.path}")
+    val greenStubTree = greenStubTree
+    val stub = when {
+        greenStubTree != null -> greenStubTree.root
+        this is RsFile -> calcStubTree().root
+        // We don't attach [stub] to PSI for [RsReplCodeFragment]
+        else -> RsFileStub.Type.builder.buildStubTree(this)
+    } as? RsFileStub
+    if (stub == null) RESOLVE_LOG.error("No stub for file ${viewProvider.virtualFile.path}")
     return stub
 }
 
