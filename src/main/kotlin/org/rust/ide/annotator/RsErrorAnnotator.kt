@@ -433,6 +433,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkTraitType(holder: RsAnnotationHolder, traitType: RsTraitType) {
+        checkTraitObjectBounds(holder, traitType)
+
         if (!traitType.isImpl) return
         val invalidContext = traitType
             .ancestors
@@ -465,6 +467,16 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.NestedImplTraitNotAllowed(traitType).addToHolder(holder)
         }
 
+    }
+
+    private fun checkTraitObjectBounds(holder: RsAnnotationHolder, traitType: RsTraitType) {
+        if (traitType.isImpl) return
+        val regularTraits = traitType.polyboundList
+            .filter { it.bound.traitRef?.resolveToTrait()?.isAuto == false }
+
+        if (regularTraits.size > 1) {
+            RsDiagnostic.OnlyAutoTraitsInTraitObjectError(regularTraits[1]).addToHolder(holder)
+        }
     }
 
     private fun checkEnumItem(holder: RsAnnotationHolder, o: RsEnumItem) {
