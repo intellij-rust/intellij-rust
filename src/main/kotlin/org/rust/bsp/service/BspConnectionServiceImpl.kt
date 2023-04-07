@@ -233,12 +233,12 @@ fun calculateProjectDetailsWithCapabilities(
     val rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
 
-    val projectPackages = createPackages(projectWorkspaceData, projectBazelTargets)
+    val projectPackages = createPackages(projectWorkspaceData)
     val dependencies = createDependencies(projectWorkspaceData)
-    val rawPackages = createRawDependencies(projectWorkspaceData)
+    val rawDependencies = createRawDependencies(projectWorkspaceData)
     val workspaceRoot = bspWorkspaceRoot?.baseDirectory
 
-    return CargoWorkspaceData(projectPackages, dependencies, rawPackages, workspaceRoot, true)
+    return CargoWorkspaceData(projectPackages, dependencies, rawDependencies, workspaceRoot, true)
 }
 
 private fun collectRustBspTargets(bspTargets: List<BuildTarget>): List<BuildTarget> {
@@ -285,15 +285,12 @@ private fun resolveOrigin(targetKind: String?): PackageOrigin {
     }
 }
 
-fun createPackages(projectWorkspaceData: RustWorkspaceResult, projectBazelTargets: WorkspaceBuildTargetsResult): List<CargoWorkspaceData.Package> {
-    val bspBuildTargets = projectBazelTargets.targets.associateBy { it.id.uri }
+fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspaceData.Package> {
     return projectWorkspaceData.packages.map { rustPackage ->
-        val rustBuildTargets = rustPackage.targets.map { "${rustPackage.id.uri}:${it.name}" }
-        val associatedBuildTargets = bspBuildTargets.entries.filter { it.key in rustBuildTargets }.map { it.value }
-        val associatedBuildTarget = associatedBuildTargets.firstOrNull()
+        val associatedTarget = rustPackage.targets.firstOrNull()
         CargoWorkspaceData.Package(
             id = rustPackage.id.uri,
-            contentRootUrl = associatedBuildTarget?.baseDirectory ?: "MISSING PACKAGE PATH!!!",
+            contentRootUrl = associatedTarget?.packageRootUrl ?: "MISSING PACKAGE PATH!!!",
             name = rustPackage.id.uri,
             version = rustPackage.version,
             targets = rustPackage.targets.map { target ->
