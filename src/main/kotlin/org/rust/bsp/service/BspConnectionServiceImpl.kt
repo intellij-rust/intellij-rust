@@ -9,6 +9,8 @@ import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.codeInsight.intention.impl.reuseFragmentEditorIndent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +28,7 @@ import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.lang.core.crate.impl.CrateGraphServiceImpl
 import org.rust.stdext.HashCode
 import java.io.InputStream
 import java.io.OutputStream
@@ -285,9 +288,15 @@ private fun resolveOrigin(targetKind: String?): PackageOrigin {
     }
 }
 
+private val LOG: Logger = logger<BspConnectionServiceImpl>()
+
 fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspaceData.Package> {
     return projectWorkspaceData.packages.map { rustPackage ->
         val associatedTarget = rustPackage.targets.firstOrNull()
+        if (associatedTarget == null) {
+            // This should never happen, but if it does, we should log it.
+            LOG.error("Rust package is empty!")
+        }
         CargoWorkspaceData.Package(
             id = rustPackage.id.uri,
             contentRootUrl = associatedTarget?.packageRootUrl ?: "MISSING PACKAGE PATH!!!",
@@ -295,12 +304,12 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
             version = rustPackage.version,
             targets = rustPackage.targets.map { target ->
                 CargoWorkspaceData.Target(
-                    target.crateRootUrl,
-                    target.name,
-                    resolveTargetKind(target.kind),
-                    resolveEdition(target.edition),
-                    target.isDoctest,
-                    target.requiredFeatures
+                    crateRootUrl = target.crateRootUrl,
+                    name = target.name,
+                    kind = resolveTargetKind(target.kind),
+                    edition = resolveEdition(target.edition),
+                    doctest = target.isDoctest,
+                    requiredFeatures = target.requiredFeatures
                 )
             },
             source = rustPackage.source,
@@ -313,8 +322,8 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
             outDirUrl = rustPackage.outDirUrl,
             procMacroArtifact = rustPackage.procMacroArtifact?.let {
                 CargoWorkspaceData.ProcMacroArtifact(
-                    Path(it.path),
-                    HashCode.fromHexString(it.path)
+                    path = Path(it.path),
+                    hash = HashCode.fromHexString(it.path)
                 )
             }
         )
