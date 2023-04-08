@@ -61,6 +61,7 @@ data class CargoWorkspaceData(
         val env: Map<String, String>,
         val outDirUrl: String?,
         val procMacroArtifact: ProcMacroArtifact? = null,
+        val allTargets: Collection<Target> = targets,
     )
 
     data class Target(

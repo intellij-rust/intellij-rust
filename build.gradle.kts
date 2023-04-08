@@ -196,7 +196,7 @@ allprojects {
 
     dependencies {
         compileOnly(kotlin("stdlib-jdk8"))
-        implementation("com.github.zpp-This-is-fine:build-server-protocol:rust-easter")
+        implementation("com.github.zpp-This-is-fine:build-server-protocol:rust-easter-egg")
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 

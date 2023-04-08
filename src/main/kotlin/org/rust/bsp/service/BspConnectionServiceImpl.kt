@@ -306,16 +306,8 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
             contentRootUrl = associatedTarget?.packageRootUrl ?: "MISSING PACKAGE PATH!!!",
             name = rustPackage.id.uri,
             version = rustPackage.version,
-            targets = rustPackage.targets.map { target ->
-                CargoWorkspaceData.Target(
-                    crateRootUrl = target.crateRootUrl,
-                    name = target.name,
-                    kind = resolveTargetKind(target.kind),
-                    edition = resolveEdition(target.edition),
-                    doctest = target.isDoctest,
-                    requiredFeatures = target.requiredFeatures
-                )
-            },
+            targets = rustPackage.targets.map(::resolveTarget),
+            allTargets = rustPackage.allTargets.map(::resolveTarget),
             source = rustPackage.source,
             origin = resolveOrigin(rustPackage.origin),
             edition = resolveEdition(rustPackage.edition),
@@ -332,6 +324,17 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
             }
         )
     }
+}
+
+private fun resolveTarget(target: RustTarget): CargoWorkspaceData.Target {
+    return CargoWorkspaceData.Target(
+        crateRootUrl = target.crateRootUrl,
+        name = target.name,
+        kind = resolveTargetKind(target.kind),
+        edition = resolveEdition(target.edition),
+        doctest = target.isDoctest,
+        requiredFeatures = target.requiredFeatures
+    )
 }
 
 private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind {
