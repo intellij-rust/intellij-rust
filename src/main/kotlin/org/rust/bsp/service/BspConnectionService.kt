@@ -7,12 +7,10 @@ package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.CompileParams
 import ch.epfl.scala.bsp4j.RunParams
-import ch.epfl.scala.bsp4j.SourcesParams
 import com.intellij.openapi.components.Service
 import org.rust.bsp.BspClient
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
-import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.util.concurrent.CompletableFuture
 
 @Service
@@ -29,4 +27,6 @@ interface BspConnectionService {
 
     fun compileSolution(params:CompileParams): CompletableFuture<CargoBuildResult>
     fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>
+
+    fun hasBspServer(): Boolean
 }

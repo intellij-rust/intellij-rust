@@ -32,6 +32,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
 import org.rust.bsp.BspConstants
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.ProcessProgressListener
@@ -395,7 +396,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
             cacheIf = { !projectDirectory.resolve(".cargo").exists() }
         ) { cargo.getCfgOption(childContext.project, projectDirectory) }
 
-        val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
+        val useBSP: Boolean = childContext.project.service<BspConnectionService>().hasBspServer()
         val cfgOptions = when (cfgOptionsResult) {
             is RsResult.Ok -> cfgOptionsResult.ok
             is RsResult.Err -> {

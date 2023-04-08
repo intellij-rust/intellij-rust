@@ -156,7 +156,7 @@ class Cargo(
 
         //TODO: replace fetchBuildScriptsInfo with something more bsp specific
 
-        val useBSP: Boolean = File(projectDirectory.toFile(), BspConstants.BSP_WORKSPACE).exists()
+        val useBSP: Boolean = owner.service<BspConnectionService>().hasBspServer()
         if (useBSP) {
             return try {
                 //TODO make returned status depend on bsp outcome

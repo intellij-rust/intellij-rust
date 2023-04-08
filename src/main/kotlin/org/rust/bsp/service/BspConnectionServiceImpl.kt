@@ -211,6 +211,10 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     private fun String.toVirtualFile(): VirtualFile? =
         VirtualFileManager.getInstance().findFileByNioPath(Path(this))
+
+    override fun hasBspServer(): Boolean {
+        return getBspConnectionDetailsFile() != null
+    }
 }
 
 interface BspServer : BuildServer, RustBuildServer
