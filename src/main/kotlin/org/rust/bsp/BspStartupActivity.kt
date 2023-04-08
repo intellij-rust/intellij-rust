@@ -1,8 +1,6 @@
 package org.rust.bsp
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -24,6 +22,10 @@ class BspStartupActivity : StartupActivity.DumbAware {
     }
 
     private fun collectProject(project: Project) {
-        runBackgroundableTask("Connecting with BSP", project, true) {project.service<BspConnectionService>().connect()}
+        runBackgroundableTask("Connecting with BSP", project, true) {
+            if (project.service<BspConnectionService>().hasBspServer()) {
+                project.service<BspConnectionService>().connect()
+            }
+        }
     }
 }
