@@ -30,6 +30,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.lang.core.psi.ext.getChildModule
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
 
@@ -41,6 +42,7 @@ class RsMoveFilesOrDirectoriesDialog(
 ) : MoveFilesOrDirectoriesDialog(project, filesOrDirectoriesToMove, initialTargetDirectory) {
 
     init {
+        check(!isUnitTestMode)
         title = "Move (Rust)"
     }
 
@@ -63,7 +65,14 @@ class RsMoveFilesOrDirectoriesDialog(
             val doneCallback = Runnable { close(DialogWrapper.OK_EXIT_CODE) }
             val searchForReferences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE
 
-            doPerformMove(targetDirectory, searchForReferences, doneCallback)
+            doPerformMove(
+                project,
+                filesOrDirectoriesToMove,
+                moveCallback,
+                targetDirectory,
+                searchForReferences,
+                doneCallback
+            )
         } catch (e: Exception) {
             if (e !is IncorrectOperationException) {
                 logger<RsMoveFilesOrDirectoriesDialog>().error(e)
@@ -72,59 +81,68 @@ class RsMoveFilesOrDirectoriesDialog(
         }
     }
 
-    // also used by tests
-    fun doPerformMove(targetDirectory: PsiDirectory, searchForReferences: Boolean, doneCallback: Runnable) {
-        fun runDefaultProcessor() {
-            MoveFilesOrDirectoriesProcessor(
+    private fun showError(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
+        val title = RefactoringBundle.message("error.title")
+        CommonRefactoringUtil.showErrorMessage(title, message, "refactoring.moveFile", project)
+    }
+
+    companion object {
+        // also used by tests
+        fun doPerformMove(
+            project: Project,
+            filesOrDirectoriesToMove: Array<out PsiElement>,
+            moveCallback: MoveCallback?,
+            targetDirectory: PsiDirectory,
+            searchForReferences: Boolean,
+            doneCallback: Runnable
+        ) {
+            fun runDefaultProcessor() {
+                MoveFilesOrDirectoriesProcessor(
+                    project,
+                    filesOrDirectoriesToMove,
+                    targetDirectory,
+                    /* searchForReferences = */ false,
+                    /* searchInComments = */ true,
+                    /* searchInNonJavaFiles = */ true,
+                    moveCallback,
+                    doneCallback
+                ).run()
+            }
+
+            if (!searchForReferences) {
+                runDefaultProcessor()
+                return
+            }
+
+            val crateRoot = filesOrDirectoriesToMove.first().adjustForMove()?.crateRoot
+                ?: error("One of moved file is not included in module tree")
+            val targetMod = targetDirectory.getOwningMod(crateRoot)
+            if (targetMod == null) {
+                if (askShouldMoveIfNoNewParentMod(project)) {
+                    runDefaultProcessor()
+                }
+                return
+            }
+
+            RsMoveFilesOrDirectoriesProcessor(
                 project,
                 filesOrDirectoriesToMove,
                 targetDirectory,
-                /* searchForReferences = */ false,
-                /* searchInComments = */ true,
-                /* searchInNonJavaFiles = */ true,
+                targetMod,
                 moveCallback,
                 doneCallback
             ).run()
         }
 
-        if (!searchForReferences) {
-            runDefaultProcessor()
-            return
+        private fun askShouldMoveIfNoNewParentMod(project: Project): Boolean {
+            val result = showOkCancelDialog(
+                "Move",
+                "File will not be included in module tree after move. Continue?",
+                Messages.getOkButton(),
+                project = project
+            )
+            return result == Messages.OK
         }
-
-        val crateRoot = filesOrDirectoriesToMove.first().adjustForMove()?.crateRoot
-            ?: error("One of moved file is not included in module tree")
-        val targetMod = targetDirectory.getOwningMod(crateRoot)
-        if (targetMod == null) {
-            if (askShouldMoveIfNoNewParentMod()) {
-                runDefaultProcessor()
-            }
-            return
-        }
-
-        RsMoveFilesOrDirectoriesProcessor(
-            project,
-            filesOrDirectoriesToMove,
-            targetDirectory,
-            targetMod,
-            moveCallback,
-            doneCallback
-        ).run()
-    }
-
-    private fun askShouldMoveIfNoNewParentMod(): Boolean {
-        val result = showOkCancelDialog(
-            "Move",
-            "File will not be included in module tree after move. Continue?",
-            Messages.getOkButton(),
-            project = project
-        )
-        return result == Messages.OK
-    }
-
-    private fun showError(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
-        val title = RefactoringBundle.message("error.title")
-        CommonRefactoringUtil.showErrorMessage(title, message, "refactoring.moveFile", project)
     }
 }
 
