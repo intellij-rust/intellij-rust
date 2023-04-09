@@ -37,7 +37,7 @@ class RsInlineFunctionDialog(
     override fun ignoreOccurrence(reference: PsiReference): Boolean =
         reference.element.ancestorStrict<RsUseItem>() == null
 
-    public override fun doAction() {
+    override fun doAction() {
         val inlineThisOnly = allowInlineThisOnly || isInlineThisOnly
         val removeDefinition = myRbInlineAll.isSelected && function.isWritable
         val processor = RsInlineFunctionProcessor(project, function, refElement, inlineThisOnly, removeDefinition)
