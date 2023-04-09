@@ -6,6 +6,8 @@
 package org.rust.ide.refactoring.inlineFunction
 
 import junit.framework.ComparisonFailure
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.refactoring.RsInlineTestBase
 
 class RsInlineFunctionTest2 : RsInlineTestBase() {
@@ -418,6 +420,38 @@ class RsInlineFunctionTest2 : RsInlineTestBase() {
     """, """
         fn main() {
             let a = (2 + 2).abs;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test call used as try expr (return value is Some)`() = doTest("""
+        fn test() -> Option<i32> {
+            let x = foo()?;
+            Some(x)
+        }
+        fn /*caret*/foo() -> Option<i32> {
+            Some(0)
+        }
+    """, """
+        fn test() -> Option<i32> {
+            let x = 0;
+            Some(x)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test call used as try expr (return value is Ok)`() = doTest("""
+        fn test() -> Result<i32, ()> {
+            let x = foo()?;
+            Ok(x)
+        }
+        fn /*caret*/foo() -> Result<i32, ()> {
+            Ok(0)
+        }
+    """, """
+        fn test() -> Result<i32, ()> {
+            let x = 0;
+            Ok(x)
         }
     """)
 
