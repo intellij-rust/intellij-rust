@@ -302,9 +302,9 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
             LOG.error("Rust package is empty!")
         }
         CargoWorkspaceData.Package(
-            id = rustPackage.id.uri,
+            id = rustPackage.id,
             contentRootUrl = associatedTarget?.packageRootUrl ?: "MISSING PACKAGE PATH!!!",
-            name = rustPackage.id.uri,
+            name = rustPackage.id,
             version = rustPackage.version,
             targets = rustPackage.targets.map(::resolveTarget),
             allTargets = rustPackage.allTargets.map(::resolveTarget),
