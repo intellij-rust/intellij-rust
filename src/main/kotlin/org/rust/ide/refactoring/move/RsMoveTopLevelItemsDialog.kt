@@ -60,6 +60,7 @@ class RsMoveTopLevelItemsDialog(
     private var searchForReferences: Boolean = true
 
     init {
+        check(!isUnitTestMode)
         super.init()
         title = "Move Module Items"
         validateButtons()
@@ -138,7 +139,7 @@ class RsMoveTopLevelItemsDialog(
             .filterIsInstance<RsMoveMemberInfo>()
             .mapToSet { it.member }
 
-    public override fun doAction() {
+    override fun doAction() {
         // we want that file creation is undo together with actual move
         CommandProcessor.getInstance().executeCommand(
             project,
@@ -151,53 +152,45 @@ class RsMoveTopLevelItemsDialog(
     private fun doActionUndoCommand() {
         val itemsToMove = getSelectedItems()
         val targetFilePath = targetFileChooser.text.toPath()
-        val targetMod = getOrCreateTargetMod(targetFilePath) ?: return
+        val targetMod = getOrCreateTargetMod(targetFilePath, project, sourceMod.crateRoot) ?: return
         try {
             val processor = RsMoveTopLevelItemsProcessor(project, itemsToMove, targetMod, searchForReferences)
             invokeRefactoring(processor)
         } catch (e: Exception) {
-            if (isUnitTestMode) throw e
             if (e !is IncorrectOperationException) {
                 Logger.getInstance(RsMoveTopLevelItemsDialog::class.java).error(e)
             }
-            showErrorMessage(e.message)
+            project.showErrorMessage(e.message)
         }
     }
 
-    private fun getOrCreateTargetMod(targetFilePath: Path): RsMod? {
-        if (isUnitTestMode) {
-            val sourceFile = sourceMod.containingFile
-            return sourceFile.getUserData(MOVE_TARGET_MOD_KEY)
-                ?: doGetOrCreateTargetMod(sourceFile.getUserData(MOVE_TARGET_FILE_PATH_KEY)!!)!!
-        }
-        return doGetOrCreateTargetMod(targetFilePath)
-    }
-
-    private fun doGetOrCreateTargetMod(targetFilePath: Path): RsMod? {
-        val targetFile = LocalFileSystem.getInstance().findFileByNioFile(targetFilePath)
-        return if (targetFile != null) {
-            targetFile.toPsiFile(project) as? RsMod
-                ?: run {
-                    showErrorMessage("Target file must be a Rust file")
-                    null
-                }
-        } else {
-            try {
-                createNewRustFile(targetFilePath, project, sourceMod.crateRoot, this)
+    companion object {
+        fun getOrCreateTargetMod(targetFilePath: Path, project: Project, crateRoot: RsMod?): RsMod? {
+            val targetFile = LocalFileSystem.getInstance().findFileByNioFile(targetFilePath)
+            return if (targetFile != null) {
+                targetFile.toPsiFile(project) as? RsMod
                     ?: run {
-                        showErrorMessage("Can't create new Rust file or attach it to module tree")
+                        project.showErrorMessage("Target file must be a Rust file")
                         null
                     }
-            } catch (e: Exception) {
-                showErrorMessage("Error during creating new Rust file: ${e.message}")
-                null
+            } else {
+                try {
+                    createNewRustFile(targetFilePath, project, crateRoot, this)
+                        ?: run {
+                            project.showErrorMessage("Can't create new Rust file or attach it to module tree")
+                            null
+                        }
+                } catch (e: Exception) {
+                    project.showErrorMessage("Error during creating new Rust file: ${e.message}")
+                    null
+                }
             }
         }
-    }
 
-    private fun showErrorMessage(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
-        val title = RefactoringBundle.message("error.title")
-        CommonRefactoringUtil.showErrorMessage(title, message, null, project)
+        private fun Project.showErrorMessage(@DialogMessage message: String?) {
+            val title = RefactoringBundle.message("error.title")
+            CommonRefactoringUtil.showErrorMessage(title, message, null, this)
+        }
     }
 }
 
