@@ -9,6 +9,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -24,6 +25,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
@@ -42,6 +44,11 @@ class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
         val tab = ContentFactory.getInstance()
             .createContent(toolwindowPanel, "", false)
         toolWindow.contentManager.addContent(tab)
+
+        val useBSP: Boolean = project.service<BspConnectionService>().hasBspServer()
+        if (useBSP) {
+            toolWindow.stripeTitle = "Rust"
+        }
     }
 
     override fun isApplicable(project: Project): Boolean {
