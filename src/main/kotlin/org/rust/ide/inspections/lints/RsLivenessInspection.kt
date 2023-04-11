@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.RemoveParameterFix
 import org.rust.ide.fixes.RemoveVariableFix
 import org.rust.ide.fixes.RenameFix
@@ -33,8 +34,13 @@ class RsLivenessInspection : RsLintInspection() {
 
                 // Don't analyze functions with unresolved macro calls
                 val hasUnresolvedMacroCall = func.descendantsWithMacrosOfType<RsMacroCall>().any { macroCall ->
-                    val macro = macroCall.resolveToMacro()
-                    macro == null || (!macro.hasRustcBuiltinMacro && macroCall.expansion == null)
+                    val macroDef = macroCall.resolveToMacro() ?: return@any true
+                    val hasRustcBuiltinMacro = macroDef.hasRustcBuiltinMacro
+                    if (hasRustcBuiltinMacro) return@any false
+                    if (macroCall.macroArgument == null && macroDef.containingCrate.origin == PackageOrigin.STDLIB) {
+                        return@any false
+                    }
+                    macroCall.expansion == null
                 }
                 if (hasUnresolvedMacroCall) return
 
