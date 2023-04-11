@@ -195,7 +195,7 @@ jobs:
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
             ORG_GRADLE_PROJECT_compileNativeCode: false
             DEFAULT_EDITION_FOR_TESTS: ${{ matrix.default-edition-for-tests }}
-            EVCXR_REPL_VERSION: 0.13.0
+            EVCXR_REPL_VERSION: 0.14.2
 
         steps:
             - uses: actions/checkout@v3
