@@ -1072,7 +1072,7 @@
         <externalIconProvider key="Cargo"
                               implementationClass="org.rust.cargo.project.model.impl.CargoExternalSystemIconProvider"/>
 
-        <toolWindow id="Cargo"
+        <toolWindow id="Rust"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
                     icon="/icons/tool-window.svg"/>
