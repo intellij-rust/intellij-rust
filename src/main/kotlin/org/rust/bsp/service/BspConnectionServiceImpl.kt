@@ -275,9 +275,10 @@ private fun resolveEdition(edition: String?): CargoWorkspace.Edition {
 
 private fun resolveTargetKind(targetKind: String?): CargoWorkspace.TargetKind {
     return when (targetKind?.lowercase()) {
-        "application" -> CargoWorkspace.TargetKind.Bin
+        "bin" -> CargoWorkspace.TargetKind.Bin
         "test" -> CargoWorkspace.TargetKind.Test
-        "library" -> CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB)
+        "rlib" -> CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB)
+        "proc-macro" -> CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.PROC_MACRO)
         else -> CargoWorkspace.TargetKind.Unknown
     }
 }
