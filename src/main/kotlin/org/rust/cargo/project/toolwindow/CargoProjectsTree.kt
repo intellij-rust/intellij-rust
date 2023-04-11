@@ -31,7 +31,7 @@ open class CargoProjectsTree : SimpleTree() {
     init {
         isRootVisible = false
         showsRootHandles = true
-        emptyText.text = "There are no Cargo projects to display."
+        emptyText.text = "There are no Rust projects to display."
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         @Suppress("LeakingThis")
         addMouseListener(object : MouseAdapter() {
