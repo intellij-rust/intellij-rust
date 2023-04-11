@@ -29,6 +29,47 @@ class RsReservedKeywordAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotat
         }
     """)
 
+    fun `test annotate reserved keyword in declarative macros`() = checkByText("""
+        #![feature(decl_macro)]
+
+        #[macro_export]
+        macro_rules! m {
+            (final $ x:ident) => { fn $ x() {} };
+            (override $ x:ident) => { m!(final $ x) };
+        }
+
+        macro m2(priv $ x:ident) {
+            m!(final $ x)
+        }
+
+        fn main() {
+            m!(final foo);
+            m!(override bar);
+            m2!(priv baz);
+            <error descr="`do` is reserved keyword">do</error>!();
+            dbg!(<error descr="`abstract` is reserved keyword">abstract</error>);
+            println!("Hello! {}", <error descr="`become` is reserved keyword">become</error>);
+        }
+    """)
+
+    fun `test annotate reserved keyword in attributes`() = checkByText("""
+        #![feature(do)] // Should be annotated
+
+        #[<error descr="`final` is reserved keyword">final</error>]
+        fn foo() {}
+
+        #[proc_macro(virtual)]
+        fn bar() {}
+
+
+        #[derive(typeof)] // Should be annotated
+        struct Struct {
+            #[<error descr="`unsized` is reserved keyword">unsized</error>] field1: (),
+            #[helper(virtual)] field2: (),
+            #[helper { abstract }] field3: (),
+        }
+    """)
+
     fun `test escape reserved keyword fix 1`() = checkFixByText("Escape reserved keyword", """
         fn foo() {
             let <error descr="`final` is reserved keyword">final/*caret*/</error> = 123;

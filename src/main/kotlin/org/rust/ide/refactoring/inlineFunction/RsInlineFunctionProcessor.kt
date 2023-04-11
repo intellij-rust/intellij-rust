@@ -30,6 +30,7 @@ import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.inference
@@ -552,7 +553,9 @@ private class InsertFunctionBody(
         val statement = bodyStatements.singleOrNull() as? RsExprStmt ?: return false
         if (statement.semicolon != null || statement.textContains('\n')) return false
 
-        functionCall.replaceWithAddingParentheses(statement.expr, factory)
+        functionCall
+            .replaceWithAddingParentheses(statement.expr, factory)
+            .unwrapTryExprIfPossible()
         return true
     }
 
@@ -652,7 +655,9 @@ private class InsertFunctionBody(
         } else {
             factory.createExpression("()") to bodyStatements.last()
         }
-        val functionCallReplaced = functionCall.replaceWithAddingParentheses(returnValue, factory)
+        val functionCallReplaced = functionCall
+            .replaceWithAddingParentheses(returnValue, factory)
+            .unwrapTryExprIfPossible()
 
         if (lastBodyStatement == null) return true
         val containingStatement = functionCallReplaced.findOrCreateContainingStatement() ?: return false
@@ -766,4 +771,22 @@ private fun RsElement.renameUsages(name: String, scope: RsElement) {
 private fun PsiElement.replaceWithRange(first: PsiElement, last: PsiElement) {
     parent.addRangeBefore(first, last, this)
     delete()
+}
+
+// `Some(0)?` -> `0`
+//  ~~~~~~~ [this]
+private fun PsiElement.unwrapTryExprIfPossible(): PsiElement {
+    val parent = parent as? RsTryExpr ?: return this
+    if (this !is RsCallExpr) return this
+    val value = valueArgumentList.exprList.singleOrNull() ?: return this
+    val path = (expr as? RsPathExpr)?.path ?: return this
+    val variant = path.reference?.resolve() as? RsEnumVariant ?: return this
+    val target = variant.parentEnum
+    val isSome = variant.name == "Some" && target == knownItems.Option
+    val isOk = variant.name == "Ok" && target == knownItems.Result
+    return if (isSome || isOk) {
+        parent.replace(value)
+    } else {
+        this
+    }
 }

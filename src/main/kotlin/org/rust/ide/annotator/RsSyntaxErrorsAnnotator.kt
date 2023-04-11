@@ -521,6 +521,17 @@ private fun checkWherePred(holder: AnnotationHolder, boundPred: RsWherePred) {
 
 private fun checkReservedKeyword(holder: AnnotationHolder, item: PsiElement) {
     if (item.elementTypeOrNull == RsElementTypes.IDENTIFIER && item.text in RESERVED_KEYWORDS) {
+        val macroRelatedParent = item.parentOfTypes(
+            RsMacroArgument::class,
+            RsMacroExpansionContents::class,
+            RsMacroPatternContents::class,
+            // Should be more precise, see `RsReservedKeywordAnnotatorTest.test annotate reserved keyword in attributes`
+            RsMetaItemArgs::class,
+            RsCompactTT::class
+        )
+        // it's not an error to use reserved keyword tokens as a part of macro call or macro definition
+        if (macroRelatedParent != null) return
+
         val parent = item.parent
         val fixes = mutableListOf<LocalQuickFix>()
 

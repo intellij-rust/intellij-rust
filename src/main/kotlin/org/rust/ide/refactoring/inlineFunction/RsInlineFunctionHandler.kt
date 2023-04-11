@@ -54,15 +54,22 @@ class RsInlineFunctionHandler : InlineActionHandler() {
             return
         }
 
-        val dialog = RsInlineFunctionDialog(function, reference as RsReference?, allowInlineThisOnly)
         if (!isUnitTestMode) {
+            val dialog = RsInlineFunctionDialog(function, reference as RsReference?, allowInlineThisOnly)
             dialog.show()
             if (!dialog.isOK) {
                 val statusBar = WindowManager.getInstance().getStatusBar(function.project)
                 statusBar?.info = RefactoringBundle.message("press.escape.to.remove.the.highlighting")
             }
         } else {
-            dialog.doAction()
+            val processor = RsInlineFunctionProcessor(
+                project,
+                function,
+                reference as RsReference?,
+                inlineThisOnly = false,
+                removeDefinition = true
+            )
+            processor.run()
         }
     }
 

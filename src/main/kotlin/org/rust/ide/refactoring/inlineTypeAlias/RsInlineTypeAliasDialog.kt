@@ -26,7 +26,7 @@ class RsInlineTypeAliasDialog(
 
     override fun getInlineThisText(): String = "Inline this only and keep the type alias"
 
-    public override fun doAction() {
+    override fun doAction() {
         val processor = RsInlineTypeAliasProcessor(project, typeAlias, reference, isInlineThisOnly)
         invokeRefactoring(processor)
     }
