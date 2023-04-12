@@ -219,6 +219,16 @@ fun RsElement.deleteWithSurroundingPlus() {
     delete()
 }
 
+fun RsElement.deleteWithPreviousWhitespace() {
+    val whitespace = prevSibling as? PsiWhiteSpace
+    if (whitespace != null) {
+        // separate deletion of [whitespace] can lead to addition of new space
+        parent.deleteChildRange(whitespace, this)
+    } else {
+        delete()
+    }
+}
+
 private val PsiElement.isWhitespaceOrComment
     get(): Boolean = this is PsiWhiteSpace || this is PsiComment
 

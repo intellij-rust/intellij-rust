@@ -122,8 +122,7 @@ class RsInlineFunctionProcessor(
             handleUsage(usage, function)
         }
         if (removeDefinition && handledUsages.size == usages.size) {
-            (originalFunction.prevSibling as? PsiWhiteSpace)?.delete()
-            originalFunction.delete()
+            originalFunction.deleteWithPreviousWhitespace()
         }
     }
 
@@ -249,10 +248,7 @@ private class InlineSingleUsage(
 ) {
 
     /** The expression which should be replaced by function body */
-    private val functionCall: RsExpr = when (usage) {
-        is FunctionCallUsage -> usage.functionCall
-        is MethodCallUsage -> usage.methodCall.parent as RsDotExpr
-    }
+    private val functionCall: RsExpr = prepareFunctionCall(usage)
     private val factory: RsPsiFactory = RsPsiFactory(functionCall.project)
     private val function: RsFunction = preprocessFunction(function)
 
@@ -408,6 +404,23 @@ private class InlineSingleUsage(
         val lastUsages = scope.liveness?.lastUsages ?: return false
         val declarationLastUsages = lastUsages[declaration] ?: return false
         return declarationLastUsages.any { it is RsPathExpr && it.path == usage }
+    }
+
+    private fun prepareFunctionCall(usage: CallUsage): RsExpr {
+        val functionCall = when (usage) {
+            is FunctionCallUsage -> usage.functionCall
+            is MethodCallUsage -> usage.methodCall.parent as RsDotExpr
+        }
+        return functionCall.unwrapAwait() ?: functionCall
+    }
+
+    // `foo().await` -> `foo()`
+    //  ~~~~~ [this]
+    private fun RsExpr.unwrapAwait(): RsExpr? {
+        if (!originalFunction.isAsync) return null
+        val parent = parent as? RsDotExpr
+        if (parent?.fieldLookup?.isAsync != true) return null
+        return parent.replace(this) as RsExpr
     }
 
     private fun preprocessFunction(originalFunction: RsFunction): RsFunction {
