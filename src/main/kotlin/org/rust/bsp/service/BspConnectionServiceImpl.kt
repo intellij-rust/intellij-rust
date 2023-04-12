@@ -320,7 +320,7 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
             procMacroArtifact = rustPackage.procMacroArtifact?.let {
                 CargoWorkspaceData.ProcMacroArtifact(
                     path = Path(it.path),
-                    hash = HashCode.fromHexString(it.path)
+                    hash = HashCode.ofFile(Path(it.path))
                 )
             }
         )

@@ -515,22 +515,22 @@ class Cargo(
                 addAll(additionalArguments)
             }
             val rustcExecutable = this@Cargo.toolchain.rustc().executable.toString()
-            val useBsp = project.service<BspConnectionService>().hasBspServer();
-            if (useBsp) {
-                return this@Cargo.toolchain.createGeneralCommandLine(
-                    Paths.get("/usr/bin/bazel"),
-                    workingDirectory,
-                    redirectInputFrom,
-                    backtraceMode,
-                    environmentVariables,
-                    parameters,
-                    emulateTerminal,
-                    // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
-                    // https://github.com/intellij-rust/intellij-rust/issues/7320
-                    if (project.isBuildToolWindowAvailable) withSudo else false,
-                    http = http
-                ).withEnvironment("RUSTC", rustcExecutable)
-            }
+//            val useBsp = project.service<BspConnectionService>().hasBspServer() && false
+//            if (useBsp) {
+//                return this@Cargo.toolchain.createGeneralCommandLine(
+//                    Paths.get("/usr/bin/bazel"),
+//                    workingDirectory,
+//                    redirectInputFrom,
+//                    backtraceMode,
+//                    environmentVariables,
+//                    parameters,
+//                    emulateTerminal,
+//                    // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
+//                    // https://github.com/intellij-rust/intellij-rust/issues/7320
+//                    if (project.isBuildToolWindowAvailable) withSudo else false,
+//                    http = http
+//                ).withEnvironment("RUSTC", rustcExecutable)
+//            }
             this@Cargo.toolchain.createGeneralCommandLine(
                 executable,
                 workingDirectory,
@@ -632,14 +632,14 @@ class Cargo(
             val (pre, post) = splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
-            // TODO fix issues
-            val useBsp = project.service<BspConnectionService>().hasBspServer();
-            if (useBsp) {
-                pre.removeIf {
-                    !it.startsWith("//") // TODO
-                }
-                return copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)
-            }
+//            // TODO fix issues
+//            val useBsp = project.service<BspConnectionService>().hasBspServer() && false
+//            if (useBsp) {
+//                pre.removeIf {
+//                    !it.startsWith("//") // TODO
+//                }
+//                return copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)
+//            }
 
             if (command == "test") {
                 if (allFeatures && !pre.contains("--all-features")) {
