@@ -5,9 +5,16 @@
 
 package org.rust.toml.crates.local
 
+import com.intellij.openapi.Disposable
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class CratesLocalIndexServiceTest : BasePlatformTestCase() {
+
+    override fun setUp() {
+        super.setUp()
+        updateCratesIoIndexIfNeeded(testRootDisposable)
+    }
+
     fun `test index has many crates`() {
         assertTrue(cratesService.getAllCrateNames().unwrap().size > 50_000)
     }
@@ -55,6 +62,17 @@ class CratesLocalIndexServiceTest : BasePlatformTestCase() {
     }
 
     companion object {
+
+        @Volatile
+        private var isCratesIoIndexUpdated: Boolean = false
+
+        private fun updateCratesIoIndexIfNeeded(disposable: Disposable) {
+            if (!isCratesIoIndexUpdated) {
+                CratesLocalIndexUpdater.updateCratesIoGitIndex(disposable)
+                isCratesIoIndexUpdated = true
+            }
+        }
+
         private val cratesService: CratesLocalIndexService by lazy {
             CratesLocalIndexServiceImpl().apply {
                 recoverIfNeeded()

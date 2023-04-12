@@ -79,6 +79,9 @@
         <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>
 
         <vfs.asyncListener implementation="org.rust.toml.crates.local.CratesLocalIndexVfsListener"/>
+
+        <registryKey key="org.rust.crates.local.index.update.interval" defaultValue="60"
+                     description="Interval between crates.io index updates in minutes"/>
     </extensions>
 
     <extensions defaultExtensionNs="JavaScript">
