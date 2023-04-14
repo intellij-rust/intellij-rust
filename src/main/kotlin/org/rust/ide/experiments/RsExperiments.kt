@@ -36,6 +36,8 @@ object RsExperiments {
     const val EMULATE_TERMINAL = "org.rust.cargo.emulate.terminal"
 
     const val INTENTIONS_IN_FN_LIKE_MACROS = "org.rust.ide.intentions.macros.function-like"
+
+    const val SSR = "org.rust.ssr"
 }
 
 /**
