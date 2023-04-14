@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -106,7 +108,18 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     override fun tearDown() {
         val oldTempDirRootUrl = tempDirRootUrl
         val newTempDirRootUrl = tempDirRoot?.url
-        super.tearDown()
+
+        com.intellij.testFramework.common.runAll(
+            {
+                // Fixes flaky tests
+                (ProjectLevelVcsManagerEx.getInstance(project) as ProjectLevelVcsManagerImpl).waitForInitialized()
+            },
+            { super.tearDown() },
+            { checkTempDirs(oldTempDirRootUrl, newTempDirRootUrl) }
+        )
+    }
+
+    private fun checkTempDirs(oldTempDirRootUrl: String?, newTempDirRootUrl: String?) {
         // Check that temp root directory was not renamed during the test
         if (oldTempDirRootUrl != null && oldTempDirRootUrl != newTempDirRootUrl) {
             if (newTempDirRootUrl != null) {
