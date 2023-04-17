@@ -31,7 +31,7 @@ import com.intellij.util.ui.JBUI
 import org.apache.commons.lang3.StringEscapeUtils
 import org.jetbrains.annotations.Nls
 import org.rust.RsBundle
-import org.rust.ide.docs.ColoredDocumentationGenerator
+import org.rust.ide.docs.signature
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -202,11 +202,7 @@ class RsMoveMemberInfo(val member: RsItemElement) : RsMoveNodeInfo {
         val description = if (member is RsModItem) {
             RsBundle.message("mod.0", member.modName?:"")
         } else {
-            val descriptionHTML = buildString {
-                with(ColoredDocumentationGenerator(member.containingCrate, this@buildString)) {
-                    member.signature()
-                }
-            }
+            val descriptionHTML = buildString { member.signature(this) }
             val description = StringEscapeUtils.unescapeHtml4(StringUtil.removeHtmlTags(descriptionHTML))
             description.replace("(?U)\\s+".toRegex(), " ")
         }

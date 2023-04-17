@@ -12,7 +12,7 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable
 import com.intellij.refactoring.ui.MemberSelectionPanelBase
 import com.intellij.ui.RowIcon
 import org.apache.commons.lang3.StringEscapeUtils
-import org.rust.ide.docs.ColoredDocumentationGenerator
+import org.rust.ide.docs.signature
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.RsItemElement
 import javax.swing.Icon
@@ -26,8 +26,7 @@ class RsMemberSelectionPanel(
     AbstractMemberSelectionTable<RsItemElement, RsMemberInfo>
     >(title, RsMemberSelectionTable(memberInfo))
 
-class RsMemberSelectionTable(memberInfo: List<RsMemberInfo>)
-    : AbstractMemberSelectionTable<RsItemElement, RsMemberInfo>(memberInfo, null, null) {
+class RsMemberSelectionTable(memberInfo: List<RsMemberInfo>) : AbstractMemberSelectionTable<RsItemElement, RsMemberInfo>(memberInfo, null, null) {
 
     init {
         setTableHeader(null)
@@ -53,11 +52,7 @@ class RsMemberInfo(member: RsItemElement, isChecked: Boolean) : MemberInfoBase<R
         displayName = if (member is RsModItem) {
             "mod ${member.modName}"
         } else {
-            val description = buildString {
-                with(ColoredDocumentationGenerator(member.containingCrate, this@buildString)) {
-                    member.signature()
-                }
-            }
+            val description = buildString { member.signature(this) }
             StringEscapeUtils.unescapeHtml4(StringUtil.removeHtmlTags(description))
         }
     }
