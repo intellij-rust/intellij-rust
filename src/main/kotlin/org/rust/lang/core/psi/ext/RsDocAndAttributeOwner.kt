@@ -355,6 +355,12 @@ class QueryAttributes<out T: RsMetaItemPsiOrStub>(
         return attrs.any { it.metaItemArgsList.any { item -> item.name == arg } }
     }
 
+    // `#[attributeName = "value"]`
+    fun hasAttributeWithValue(attributeName: String, value: String): Boolean {
+        val attrs = attrsByName(attributeName)
+        return attrs.any { it.value == value }
+    }
+
     // `#[attributeName(arg)]`
     fun getFirstArgOfSingularAttribute(attributeName: String): String? {
         return attrsByName(attributeName).singleOrNull()
