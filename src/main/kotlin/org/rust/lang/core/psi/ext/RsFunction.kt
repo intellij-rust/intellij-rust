@@ -70,11 +70,20 @@ val RsFunction.isVariadic: Boolean
         return stub?.isVariadic ?: (valueParameterList?.variadic != null)
     }
 
-val RsFunction.abiName: String?
+val RsFunction.literalAbiName: String?
     get() {
         val stub = greenStub
-        return stub?.abiName ?: abi?.litExpr?.stringValue
+        if (stub != null) {
+            return stub.abiName
+        }
+        return abi?.litExpr?.stringValue
     }
+
+val RsFunction.actualAbiName: String
+    get() = literalAbiName ?: abi?.let { "C" } ?: "Rust"
+
+val RsFunction.isCOrCdeclAbi
+    get() = actualAbiName == "C" || actualAbiName == "cdecl"
 
 /**
  * Those function parameters that are not disabled by cfg attributes.

@@ -92,7 +92,7 @@ open class RsPsiRenderer(
         }
         if (fn.isActuallyExtern) {
             sb.append("extern ")
-            val abiName = fn.abiName
+            val abiName = fn.literalAbiName
             if (abiName != null) {
                 sb.append("\"")
                 sb.append(abiName)

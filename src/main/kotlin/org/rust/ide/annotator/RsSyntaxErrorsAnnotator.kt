@@ -137,6 +137,7 @@ private fun checkMacroCall(holder: AnnotationHolder, element: RsMacroCall) {
 }
 
 private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+    checkCanUseVariadic(holder, fn)
     if (fn.isMain && fn.getGenericParameters().isNotEmpty()) {
         val typeParameterList = fn.typeParameterList ?: fn
         RsDiagnostic.MainWithGenericsError(
@@ -285,7 +286,7 @@ private fun checkValueParameterList(holder: AnnotationHolder, params: RsValuePar
 
 private fun checkVariadic(holder: AnnotationHolder, fn: RsFunction, dot3: PsiElement?) {
     if (dot3 == null) return
-    if (fn.isUnsafe && fn.abiName == "C") {
+    if (fn.isUnsafe && fn.actualAbiName == "C") {
         C_VARIADIC.check(holder, dot3, "C-variadic functions")
     } else {
         deny(dot3, holder, "${fn.title} cannot be variadic")
@@ -540,6 +541,12 @@ private fun checkReservedKeyword(holder: AnnotationHolder, item: PsiElement) {
         }
 
         RsDiagnostic.ReservedIdentifierIsUsed(item, fixes).addToHolder(holder)
+    }
+}
+
+private fun checkCanUseVariadic(holder: AnnotationHolder, function: RsFunction) {
+    if (function.isVariadic && function.owner == RsAbstractableOwner.Foreign && !function.isCOrCdeclAbi) {
+        RsDiagnostic.VariadicParametersUsedOnNonCABIError(function).addToHolder(holder)
     }
 }
 

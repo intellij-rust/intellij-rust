@@ -950,7 +950,7 @@ class RsFunctionStub(
                 parentStub,
                 this,
                 name = psi.name,
-                abiName = psi.abiName,
+                abiName = psi.literalAbiName,
                 flags = flags,
                 procMacroInfo = procMacroInfo,
             )
