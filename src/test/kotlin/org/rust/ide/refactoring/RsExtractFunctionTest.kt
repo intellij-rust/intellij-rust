@@ -12,6 +12,21 @@ import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
 
 class RsExtractFunctionTest : RsTestBase() {
+
+    fun `test simple`() = doTest("""
+        fn main() {
+            /*selection*/println!();/*selection**/
+        }
+    """, """
+        fn main() {
+            test();
+        }
+
+        fn test() {
+            println!();
+        }
+    """, "test")
+
     fun `test extract a function without parameters and a return value`() = doTest("""
         fn main() {
             <selection>println!("test");
@@ -710,7 +725,7 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, """
         fn foo<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
-            bar(a, b, c, d)
+            bar(a, b, c, d);
         }
 
         fn bar<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
@@ -766,7 +781,7 @@ class RsExtractFunctionTest : RsTestBase() {
         trait Trait2 {}
         trait Trait3 {}
         fn foo<T, U>(t: T, u: U) where T: Trait1 + Trait2, U: Trait3 {
-            bar(t, u)
+            bar(t, u);
         }
 
         fn bar<T, U>(t: T, u: U) where T: Trait1 + Trait2, U: Trait3 {
@@ -1127,7 +1142,7 @@ class RsExtractFunctionTest : RsTestBase() {
         trait Future { type Output; }
 
         async fn foo() {
-            bar().await
+            bar().await;
         }
 
         async fn bar() {
@@ -1803,6 +1818,329 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, "bar")
 
+    fun `test return without value`() = doTest("""
+        fn func(f: bool) {
+            /*selection*/if f { return; }/*selection**/
+        }
+    """, """
+        fn func(f: bool) {
+            if test(f) { return; }
+        }
+
+        fn test(f: bool) -> bool {
+            if f { return true; }
+            false
+        }
+    """, "test")
+
+    fun `test return with value`() = doTest("""
+        fn func(f: bool) -> i32 {
+            /*selection*/if f { return 1; }/*selection**/
+            2
+        }
+    """, """
+        fn func(f: bool) -> i32 {
+            if let Some(value) = test(f) {
+                return value;
+            }
+            2
+        }
+
+        fn test(f: bool) -> Option<i32> {
+            if f { return Some(1); }
+            None
+        }
+    """, "test")
+
+    fun `test return with value inside lambda`() = doTest("""
+        fn func() {
+            |f: bool| {
+                /*selection*/if f { return 1; }/*selection**/
+                2
+            };
+        }
+    """, """
+        fn func() {
+            |f: bool| {
+                if let Some(value) = test(f) {
+                    return value;
+                }
+                2
+            };
+        }
+
+        fn test(f: bool) -> Option<i32> {
+            if f { return Some(1); }
+            None
+        }
+    """, "test")
+
+    fun `test return without value (expr)`() = doTest("""
+        fn func(f: bool) {
+            let x = /*selection*/if f { return; } else { 'c' }/*selection**/;
+        }
+    """, """
+        fn func(f: bool) {
+            let x = match test(f) {
+                Some(value) => value,
+                None => return,
+            };
+        }
+
+        fn test(f: bool) -> Option<char> {
+            Some(if f { return None; } else { 'c' })
+        }
+    """, "test")
+
+    fun `test return with value (expr)`() = doTest("""
+        fn func(f: bool) -> i32 {
+            let x = /*selection*/if f { return 1; } else { 'c' }/*selection**/;
+            2
+        }
+    """, """
+        fn func(f: bool) -> i32 {
+            let x = match test(f) {
+                Ok(value) => value,
+                Err(value) => return value,
+            };
+            2
+        }
+
+        fn test(f: bool) -> Result<char, i32> {
+            Ok(if f { return Err(1); } else { 'c' })
+        }
+    """, "test")
+
+    fun `test continue`() = doTest("""
+        fn func(f: bool) {
+            loop {
+                /*selection*/if f { continue; }/*selection**/
+            }
+        }
+    """, """
+        fn func(f: bool) {
+            loop {
+                if test(f) { continue; }
+            }
+        }
+
+        fn test(f: bool) -> bool {
+            if f { return true; }
+            false
+        }
+    """, "test")
+
+    fun `test break`() = doTest("""
+        fn func(f: bool) {
+            loop {
+                /*selection*/if f { break; }/*selection**/
+            }
+        }
+    """, """
+        fn func(f: bool) {
+            loop {
+                if test(f) { break; }
+            }
+        }
+
+        fn test(f: bool) -> bool {
+            if f { return true; }
+            false
+        }
+    """, "test")
+
+    fun `test break with label`() = doTest("""
+        fn func(f: bool) {
+            'outer: loop {
+                loop {
+                    /*selection*/if f { break 'outer; }/*selection**/
+                }
+            }
+        }
+    """, """
+        fn func(f: bool) {
+            'outer: loop {
+                loop {
+                    if test(f) { break 'outer; }
+                }
+            }
+        }
+
+        fn test(f: bool) -> bool {
+            if f { return true; }
+            false
+        }
+    """, "test")
+
+    fun `test break with value inside labeled block`() = doTest("""
+        fn func(f: bool) {
+            let x = 'label: {
+                /*selection*/if f { break 'label 1; }/*selection**/
+                2
+            };
+        }
+    """, """
+        fn func(f: bool) {
+            let x = 'label: {
+                if let Some(value) = test(f) {
+                    break 'label value;
+                }
+                2
+            };
+        }
+
+        fn test(f: bool) -> Option<i32> {
+            if f { return Some(1); }
+            None
+        }
+    """, "test")
+
+    fun `test break inside nested loop`() = doTest("""
+        fn func(f: bool) {
+            loop {
+                /*selection*/loop { break; }
+                if f { continue; }/*selection**/
+            }
+        }
+    """, """
+        fn func(f: bool) {
+            loop {
+                if test(f) { continue; }
+            }
+        }
+
+        fn test(f: bool) -> bool {
+            loop { break; }
+            if f { return true; }
+            false
+        }
+    """, "test")
+
+    fun `test return inside nested function`() = doTest("""
+        fn func(f: bool) {
+            loop {
+                /*selection*/if f {
+                    fn inner() -> i32 { return 0; }
+                    continue;
+                }/*selection**/
+            }
+        }
+    """, """
+        fn func(f: bool) {
+            loop {
+                if test(f) { continue; }
+            }
+        }
+
+        fn test(f: bool) -> bool {
+            if f {
+                fn inner() -> i32 { return 0; }
+                return true;
+            }
+            false
+        }
+    """, "test")
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try option`() = doTest("""
+        fn foo() -> Option<i32> { None }
+        fn func() -> Option<i32> {
+            /*selection*/foo()?;/*selection**/
+            None
+        }
+    """, """
+        fn foo() -> Option<i32> { None }
+        fn func() -> Option<i32> {
+            test()?;
+            None
+        }
+
+        fn test() -> Option<()> {
+            foo()?;
+            Some(())
+        }
+    """, "test")
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try option (expr)`() = doTest("""
+        fn foo() -> Option<i32> { None }
+        fn func() -> Option<bool> {
+            let x = /*selection*/foo()?/*selection**/;
+            Some(x == 0)
+        }
+    """, """
+        fn foo() -> Option<i32> { None }
+        fn func() -> Option<bool> {
+            let x = test()?;
+            Some(x == 0)
+        }
+
+        fn test() -> Option<i32> {
+            foo()
+        }
+    """, "test")
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try result`() = doTest("""
+        fn foo() -> Result<i32, &str> { Ok(0) }
+        fn func() -> Result<i32, &str> {
+            /*selection*/foo()?;/*selection**/
+            Ok(0)
+        }
+    """, """
+        fn foo() -> Result<i32, &str> { Ok(0) }
+        fn func() -> Result<i32, &str> {
+            test()?;
+            Ok(0)
+        }
+
+        fn test() -> Result<(), &str> {
+            foo()?;
+            Ok(())
+        }
+    """, "test")
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try result (expr)`() = doTest("""
+        fn foo() -> Result<i32, &str> { Ok(0) }
+        fn func() -> Result<bool, &str> {
+            let x = /*selection*/foo()?/*selection**/;
+            Ok(x == 0)
+        }
+    """, """
+        fn foo() -> Result<i32, &str> { Ok(0) }
+        fn func() -> Result<bool, &str> {
+            let x = test()?;
+            Ok(x == 0)
+        }
+
+        fn test() -> Result<i32, &str> {
+            foo()
+        }
+    """, "test")
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test try result (out variables)`() = doTest("""
+        fn foo() -> Result<(), &str> { Ok(()) }
+        fn func() -> Result<bool, &str> {
+            /*selection*/foo()?;
+            let x = 0;/*selection**/
+            Ok(x == 0)
+        }
+    """, """
+        fn foo() -> Result<(), &str> { Ok(()) }
+        fn func() -> Result<bool, &str> {
+            let x = test()?;
+            Ok(x == 0)
+        }
+
+        fn test() -> Result<i32, &str> {
+            foo()?;
+            let x = 0;
+            Ok(x)
+        }
+    """, "test")
+
     private fun doTest(
         @Language("Rust") code: String,
         @Language("Rust") excepted: String,
@@ -1822,7 +2160,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 callback()
             }
         }) {
-            checkEditorAction(code, excepted, "ExtractMethod", trimIndent = false)
+            checkEditorAction(replaceSelectionMarker(code), excepted, "ExtractMethod", trimIndent = false)
         }
     }
 }
