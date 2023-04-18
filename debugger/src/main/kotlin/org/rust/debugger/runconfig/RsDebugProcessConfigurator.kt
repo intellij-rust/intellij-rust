@@ -7,11 +7,17 @@ package org.rust.debugger.runconfig
 
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcessConfigurator
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 
 class RsDebugProcessConfigurator : CidrDebugProcessConfigurator {
     override fun configure(process: CidrDebugProcess) {
-        val cargoProject = when {
+        val cargoProject = findCargoProject(process) ?: return
+        RsDebugProcessConfigurationHelper(process, cargoProject).configure()
+    }
+
+    companion object {
+        fun findCargoProject(process: CidrDebugProcess): CargoProject? = when {
             process is RsLocalDebugProcess -> {
                 // In case of Rust project, select the corresponding Cargo project
                 process.runParameters.cargoProject
@@ -24,9 +30,8 @@ class RsDebugProcessConfigurator : CidrDebugProcessConfigurator {
             }
             else -> {
                 // Otherwise, don't configure the debug process for Rust
-                return
+                null
             }
         }
-        RsDebugProcessConfigurationHelper(process, cargoProject).configure()
     }
 }

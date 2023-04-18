@@ -28,7 +28,7 @@ import java.nio.file.InvalidPathException
 
 class RsDebugProcessConfigurationHelper(
     private val process: CidrDebugProcess,
-    cargoProject: CargoProject?
+    cargoProject: CargoProject
 ) {
     private val settings = RsDebuggerSettings.getInstance()
     private val project = process.project
@@ -36,13 +36,13 @@ class RsDebugProcessConfigurationHelper(
     private val threadId = process.currentThreadId
     private val frameIndex = process.currentFrameIndex
 
-    private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
+    private val commitHash = cargoProject.rustcInfo?.version?.commitHash
 
     private val prettyPrintersPath: String? = toolchain?.toRemotePath(PP_PATH)
 
     private val sysroot: String? by lazy {
-        cargoProject?.workingDirectory
-            ?.let { toolchain?.rustc()?.getSysroot(it) }
+        cargoProject.workingDirectory
+            .let { toolchain?.rustc()?.getSysroot(it) }
             ?.let { toolchain?.toRemotePath(it) }
     }
 
@@ -118,6 +118,13 @@ class RsDebugProcessConfigurationHelper(
             LLDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val basePath = "$sysroot/lib/rustlib/etc"
+
+                // MSVC toolchain does not contain Python pretty-printers.
+                // The corresponding Natvis files are handled by `org.rust.debugger.RustcNatvisFileProvider`
+                if ("windows-msvc" in basePath) {
+                    return
+                }
+
                 val lldbLookupPath = "$basePath/$LLDB_LOOKUP.py".systemDependentAndEscaped()
                 val lldbCommandsPath = "$basePath/lldb_commands".systemDependentAndEscaped()
                 executeInterpreterCommand(threadId, frameIndex, """command script import "$lldbLookupPath" """)
