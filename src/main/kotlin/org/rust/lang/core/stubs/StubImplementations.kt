@@ -88,7 +88,8 @@ class RsFileStub(
         // Bump this number if Stub structure changes
         private const val STUB_VERSION = 232
 
-        override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
+        override fun getStubVersion(): Int =
+            RustParserDefinition.PARSER_VERSION + RS_BUILTIN_ATTRIBUTES_VERSION + STUB_VERSION
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> {

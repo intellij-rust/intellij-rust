@@ -11,9 +11,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
 
+// Bump each time `RS_BUILTIN_ATTRIBUTES` content is modified
+// (that is, `builtin-attributes.json` content is modified)
+const val RS_BUILTIN_ATTRIBUTES_VERSION: Int = 1
 
-// Bump `RsFileStub.Type.STUB_VERSION` if modified
-// https://github.com/rust-lang/rust/blob/7a8636c843bd24038fe1d1f69b4a8e4b0ea55d4e/compiler/rustc_feature/src/builtin_attrs.rs#L266
 val RS_BUILTIN_ATTRIBUTES: Map<String, AttributeInfo> = BuiltinAttributeInfoLoader.loadAttributes()
 
 // https://github.com/rust-lang/rust/blob/76d18cfb8945f824c8777e04981e930d2037954e/compiler/rustc_resolve/src/macros.rs#L153
@@ -92,6 +93,8 @@ private object BuiltinAttributeInfoLoader {
         associateMap["test_case"] = BuiltinProcMacroInfo
         associateMap["global_allocator"] = BuiltinProcMacroInfo
         associateMap["cfg_accessible"] = BuiltinProcMacroInfo
+
+        // Don't forget to bump `RS_BUILTIN_ATTRIBUTES_VERSION` each time `associateMap` is modified!
 
         return associateMap
     }
