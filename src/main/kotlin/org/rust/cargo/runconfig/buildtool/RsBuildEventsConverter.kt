@@ -103,7 +103,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
                 // TODO: support cases when crate types list contains not only binary
                 rustcArtifact.target.cleanCrateTypes.singleOrNull() == CargoMetadata.CrateType.BIN
             }
-            CargoMetadata.TargetKind.TEST -> true
+            CargoMetadata.TargetKind.TEST, CargoMetadata.TargetKind.BENCH -> true
             CargoMetadata.TargetKind.LIB -> rustcArtifact.profile.test
             else -> false
         }

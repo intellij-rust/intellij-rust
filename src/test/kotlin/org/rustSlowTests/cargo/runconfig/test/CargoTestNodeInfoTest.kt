@@ -12,6 +12,7 @@ import com.intellij.execution.testframework.Printer
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.ui.ConsoleViewContentType
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.toolchain.RustChannel
 
 class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
 
@@ -143,6 +144,38 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
         assertTrue("Running" in root.output)
         assertTrue("Process finished" in root.output)
         assertTrue(root.isTestsReporterAttached)
+    }
+
+    fun `test bench output`() {
+        if (channel != RustChannel.NIGHTLY) return
+
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    #![feature(test)]
+
+                    extern crate test;
+
+                    use test::Bencher;
+
+                    #[bench]
+                    fn bench(b: &mut Bencher) {
+                        /*caret*/
+                    }
+                """)
+            }
+        }
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+        val configuration = createBenchRunConfigurationFromContext()
+        val testNode = executeAndGetTestRoot(configuration).findTestByName("sandbox::bench")
+        assertEquals("0 ns/iter (+/- 0)\n", testNode.output)
     }
 
     private fun checkErrors(

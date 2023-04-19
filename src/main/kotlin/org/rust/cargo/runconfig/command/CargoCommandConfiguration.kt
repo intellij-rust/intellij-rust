@@ -205,7 +205,7 @@ open class CargoCommandConfiguration(
 
     private fun showTestToolWindow(commandLine: CargoCommandLine): Boolean = when {
         !isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) -> false
-        commandLine.command != "test" -> false
+        commandLine.command !in listOf("test", "bench") -> false
         "--nocapture" in commandLine.additionalArguments -> false
         Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() -> false
         else -> !hasRemoteTarget

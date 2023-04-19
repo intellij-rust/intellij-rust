@@ -573,7 +573,7 @@ class Cargo(
             val (pre, post) = splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
-            if (command == "test") {
+            if (command in listOf("test", "bench")) {
                 if (allFeatures && !pre.contains("--all-features")) {
                     pre.add("--all-features")
                 }

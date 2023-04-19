@@ -53,7 +53,7 @@ class CargoArgsParser private constructor(
         fun parseArgs(commandName: String, cargoArgs: List<String>): ParsedCargoArgs =
             when (commandName) {
                 "run" -> parseRunArgs(cargoArgs)
-                "test" -> parseTestArgs(cargoArgs)
+                "test", "bench" -> parseTestArgs(cargoArgs)
                 else -> error("Unsupported command")
             }
 
