@@ -218,7 +218,7 @@ class Cargo(
         listener: ProcessListener? = null,
     ): CargoWorkspaceData {
         val bspService = project.service<BspConnectionService>()
-        return bspService.getProjectData()
+        return bspService.getProjectData(projectDirectory)
     }
 
     fun vendorDependencies(

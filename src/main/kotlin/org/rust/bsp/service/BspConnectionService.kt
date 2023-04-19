@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Service
 import org.rust.bsp.BspClient
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 @Service
@@ -23,7 +24,7 @@ interface BspConnectionService {
 
     fun disconnect()
 
-    fun getProjectData(): CargoWorkspaceData
+    fun getProjectData(projectDirectory: Path): CargoWorkspaceData
 
     fun compileSolution(params:CompileParams): CompletableFuture<CargoBuildResult>
     fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>

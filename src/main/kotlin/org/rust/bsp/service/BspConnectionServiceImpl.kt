@@ -5,6 +5,7 @@
 
 package org.rust.bsp.service
 
+import ch.epfl.scala.bsp.Uri
 import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -27,12 +28,17 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
+import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.lang.core.crate.impl.CrateGraphServiceImpl
 import org.rust.stdext.HashCode
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Proxy
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -58,13 +64,13 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         getBspServer()
     }
 
-    override fun getProjectData(): CargoWorkspaceData {
+    override fun getProjectData(projectDirectory: Path): CargoWorkspaceData {
         val server = getBspServer()
         val initializeBuildResult =
             queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
         server.onBuildInitialized()
 
-        return calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities) {
+        return calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities, projectDirectory) {
             println("BSP server capabilities: $it")
         }
     }
@@ -231,22 +237,54 @@ fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
 fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
     buildServerCapabilities: BuildServerCapabilities,
+    projectDirectory: Path,
     errorCallback: (Throwable) -> Unit
 ): CargoWorkspaceData {
     val projectBazelTargets = queryForBazelTargets(server).get()
     val bspWorkspaceRoot = projectBazelTargets.targets.find { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
+    val workspaceRoot = bspWorkspaceRoot?.baseDirectory?.removePrefix("file://") //TODO there must be a better way to do this
     projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
+    val pathReplacer = createSymlinkReplacer(workspaceRoot, projectDirectory)
+    val changedWorkspaceRoot = workspaceRoot?.let { pathReplacer(it) };
 
     val rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
 
-    val projectPackages = createPackages(projectWorkspaceData)
+    val projectPackages = createPackages(projectWorkspaceData, pathReplacer)
     val dependencies = createDependencies(projectWorkspaceData)
     val rawDependencies = createRawDependencies(projectWorkspaceData)
-    val workspaceRoot = bspWorkspaceRoot?.baseDirectory
 
-    return CargoWorkspaceData(projectPackages, dependencies, rawDependencies, workspaceRoot, true)
+    return CargoWorkspaceData(projectPackages, dependencies, rawDependencies, changedWorkspaceRoot, true)
 }
+
+private fun createSymlinkReplacer(
+    workspaceRoot: String?,
+    projectDirectoryRel: Path
+): (String) -> String {
+    val projectDirectory = projectDirectoryRel.toAbsolutePath()
+    val id: (String) -> String = replacer@{return@replacer it}
+    if (workspaceRoot == null || projectDirectory.toString() == workspaceRoot) {
+        return id
+    }
+
+    val workspaceRootPath = Paths.get(workspaceRoot)
+
+    // If the selected projectDirectory doesn't resolve directly to the directory that Cargo spat out at us,
+    // then there's something a bit special with the cargo workspace, and we don't want to assume anything.
+    if (!Files.isSameFile(projectDirectory, workspaceRootPath)) {
+        return id
+    }
+
+    // Otherwise, it's just a normal symlink.
+    val normalisedWorkspace = projectDirectory.normalize().toString()
+    val replacer: (String) -> String = replacer@{
+        if (!it.startsWith(workspaceRoot)) return@replacer it
+        normalisedWorkspace + it.removePrefix(workspaceRoot)
+    }
+    return replacer
+}
+
+
 
 private fun collectRustBspTargets(bspTargets: List<BuildTarget>): List<BuildTarget> {
     return bspTargets.filter {
@@ -295,7 +333,7 @@ private fun resolveOrigin(targetKind: String?): PackageOrigin {
 
 private val LOG: Logger = logger<BspConnectionServiceImpl>()
 
-fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspaceData.Package> {
+fun createPackages(projectWorkspaceData: RustWorkspaceResult, pathReplacer: (String) -> String): List<CargoWorkspaceData.Package> {
     return projectWorkspaceData.packages.map { rustPackage ->
         val associatedTarget = rustPackage.targets.firstOrNull()
         if (associatedTarget == null) {
@@ -304,11 +342,11 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
         }
         CargoWorkspaceData.Package(
             id = rustPackage.id,
-            contentRootUrl = associatedTarget?.packageRootUrl ?: "MISSING PACKAGE PATH!!!",
+            contentRootUrl = associatedTarget?.packageRootUrl?.let { pathReplacer(it) } ?: "MISSING PACKAGE PATH!!!",
             name = rustPackage.id,
             version = rustPackage.version,
-            targets = rustPackage.targets.map(::resolveTarget),
-            allTargets = rustPackage.allTargets.map(::resolveTarget),
+            targets = rustPackage.targets.map { resolveTarget(it, pathReplacer) },
+            allTargets = rustPackage.allTargets.map { resolveTarget(it, pathReplacer) },
             source = rustPackage.source,
             origin = resolveOrigin(rustPackage.origin),
             edition = resolveEdition(rustPackage.edition),
@@ -327,9 +365,9 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult): List<CargoWorkspa
     }
 }
 
-private fun resolveTarget(target: RustTarget): CargoWorkspaceData.Target {
+private fun resolveTarget(target: RustTarget, pathReplacer: (String) -> String): CargoWorkspaceData.Target {
     return CargoWorkspaceData.Target(
-        crateRootUrl = target.crateRootUrl,
+        crateRootUrl = pathReplacer(target.crateRootUrl),
         name = target.name,
         kind = resolveTargetKind(target.kind),
         edition = resolveEdition(target.edition),
