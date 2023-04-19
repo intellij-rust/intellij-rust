@@ -232,6 +232,8 @@
                                   implementationClass="org.rust.ide.lineMarkers.CargoExecutableRunLineMarkerContributor"/>
         <runLineMarkerContributor language="Rust"
                                   implementationClass="org.rust.ide.lineMarkers.CargoTestRunLineMarkerContributor"/>
+        <runLineMarkerContributor language="Rust"
+                                  implementationClass="org.rust.cargo.runconfig.customBuild.CustomBuildRunLineMarkerContributor"/>
 
         <!-- Rename Processor -->
 
@@ -1108,6 +1110,7 @@
 
         <!-- Run Configurations -->
 
+        <programRunner implementation="org.rust.cargo.runconfig.customBuild.CustomBuildRunner"/>
         <programRunner implementation="org.rust.cargo.runconfig.CargoCommandRunner"/>
         <programRunner implementation="org.rust.cargo.runconfig.CargoTestCommandRunner"/>
         <programRunner implementation="org.rust.ide.debugger.runconfig.RsDebugAdvertisingRunner"/>
@@ -1115,7 +1118,10 @@
 
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <configurationType implementation="org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType"/>
+        <configurationType implementation="org.rust.cargo.runconfig.customBuild.CustomBuildConfigurationType"/>
 
+        <runConfigurationProducer
+                implementation="org.rust.cargo.runconfig.customBuild.CustomBuildRunConfigurationProducer"/>
         <runConfigurationProducer
                 implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
         <!-- To register a new producer, add it to the `producers` list in the `CompositeCargoRunConfigurationProducer`
