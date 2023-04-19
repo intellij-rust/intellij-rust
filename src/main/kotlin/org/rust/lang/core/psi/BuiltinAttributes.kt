@@ -5,188 +5,97 @@
 
 package org.rust.lang.core.psi
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import java.io.IOException
 
-// Bump `RsFileStub.Type.STUB_VERSION` if modified
-// https://github.com/rust-lang/rust/blob/7a8636c843bd24038fe1d1f69b4a8e4b0ea55d4e/compiler/rustc_feature/src/builtin_attrs.rs#L266
-val RS_BUILTIN_ATTRIBUTES: Set<String> = setOf(
-    "cfg",
-    "cfg_attr",
-    "ignore",
-    "should_panic",
-    "reexport_test_harness_main",
-    "automatically_derived",
-    "macro_use",
-    "macro_escape",
-    "macro_export",
-    "proc_macro",
-    "proc_macro_derive",
-    "proc_macro_attribute",
-    "warn",
-    "allow",
-    "expect",
-    "forbid",
-    "deny",
-    "must_use",
-    "must_not_suspend",
-    "deprecated",
-    "crate_name",
-    "crate_type",
-    "crate_id",
-    "link",
-    "link_name",
-    "no_link",
-    "repr",
-    "export_name",
-    "link_section",
-    "no_mangle",
-    "used",
-    "link_ordinal",
-    "recursion_limit",
-    "type_length_limit",
-    "const_eval_limit",
-    "move_size_limit",
-    "unix_sigpipe",
-    "start",
-    "no_start",
-    "no_main",
-    "path",
-    "no_std",
-    "no_implicit_prelude",
-    "non_exhaustive",
-    "windows_subsystem",
-    "panic_handler",
-    "inline",
-    "cold",
-    "no_builtins",
-    "target_feature",
-    "track_caller",
-    "no_sanitize",
-    "no_coverage",
-    "doc",
+// Bump each time `RS_BUILTIN_ATTRIBUTES` content is modified
+// (that is, `builtin-attributes.json` content is modified)
+const val RS_BUILTIN_ATTRIBUTES_VERSION: Int = 1
 
-    // Unstable attributes:
-
-    "debugger_visualizer",
-    "naked",
-    "plugin",
-    "test_runner",
-    "marker",
-    "thread_local",
-    "no_core",
-    "optimize",
-    "instruction_set",
-    "ffi_returns_twice",
-    "ffi_pure",
-    "ffi_const",
-    "register_attr",
-    "register_tool",
-    "cmse_nonsecure_entry",
-    "const_trait",
-    "deprecated_safe",
-    "collapse_debuginfo",
-    "feature",
-    "stable",
-    "unstable",
-    "rustc_const_unstable",
-    "rustc_const_stable",
-    "rustc_default_body_unstable",
-    "allow_internal_unstable",
-    "rustc_allow_const_fn_unstable",
-    "allow_internal_unsafe",
-    "rustc_allowed_through_unstable_modules",
-    "fundamental",
-    "may_dangle",
-    "rustc_allocator",
-    "rustc_allocator_nounwind",
-    "rustc_reallocator",
-    "rustc_deallocator",
-    "rustc_allocator_zeroed",
-    "alloc_error_handler",
-    "default_lib_allocator",
-    "needs_allocator",
-    "panic_runtime",
-    "needs_panic_runtime",
-    "compiler_builtins",
-    "profiler_runtime",
-    "linkage",
-    "rustc_std_internal_symbol",
-    "rustc_builtin_macro",
-    "rustc_proc_macro_decls",
-    "rustc_macro_transparency",
-    "rustc_on_unimplemented",
-    "rustc_conversion_suggestion",
-    "rustc_trivial_field_reads",
-    "rustc_lint_query_instability",
-    "rustc_lint_diagnostics",
-    "rustc_lint_opt_ty",
-    "rustc_lint_opt_deny_field_access",
-    "rustc_promotable",
-    "rustc_legacy_const_generics",
-    "rustc_do_not_const_check",
-    "rustc_layout_scalar_valid_range_start",
-    "rustc_layout_scalar_valid_range_end",
-    "rustc_nonnull_optimization_guaranteed",
-    "lang",
-    "rustc_pass_by_value",
-    "rustc_coherence_is_core",
-    "rustc_allow_incoherent_impl",
-    "rustc_has_incoherent_inherent_impls",
-    "rustc_box",
-    "rustc_diagnostic_item",
-    "prelude_import",
-    "rustc_paren_sugar",
-    "rustc_inherit_overflow_checks",
-    "rustc_reservation_impl",
-    "rustc_test_marker",
-    "rustc_unsafe_specialization_marker",
-    "rustc_specialization_trait",
-    "rustc_main",
-    "rustc_skip_array_during_method_dispatch",
-    "rustc_must_implement_one_of",
-    "rustc_effective_visibility",
-    "rustc_outlives",
-    "rustc_capture_analysis",
-    "rustc_insignificant_dtor",
-    "rustc_strict_coherence",
-    "rustc_variance",
-    "rustc_layout",
-    "rustc_regions",
-    "rustc_error",
-    "rustc_dump_user_substs",
-    "rustc_evaluate_where_clauses",
-    "rustc_if_this_changed",
-    "rustc_then_this_would_need",
-    "rustc_clean",
-    "rustc_partition_reused",
-    "rustc_partition_codegened",
-    "rustc_expected_cgu_reuse",
-    "rustc_symbol_name",
-    "rustc_polymorphize_error",
-    "rustc_def_path",
-    "rustc_mir",
-    "rustc_dump_program_clauses",
-    "rustc_dump_env_program_clauses",
-    "rustc_object_lifetime_default",
-    "rustc_dump_vtable",
-    "rustc_dummy",
-    "omit_gdb_pretty_printer_section",
-
-    // Internal stdlib proc macros
-
-    "simd_test",
-    "assert_instr",
-
-    // Proc macros from stdlib. Defined like
-    // `pub macro test($item:item) {}`
-    // TODO resolve them correctly and remove from this list?
-
-    "derive",
-    "test",
-    "bench",
-    "test_case",
-    "global_allocator",
-    "cfg_accessible",
-)
+val RS_BUILTIN_ATTRIBUTES: Map<String, AttributeInfo> = BuiltinAttributeInfoLoader.loadAttributes()
 
 // https://github.com/rust-lang/rust/blob/76d18cfb8945f824c8777e04981e930d2037954e/compiler/rustc_resolve/src/macros.rs#L153
 val RS_BUILTIN_TOOL_ATTRIBUTES = setOf("rustfmt", "clippy")
+
+sealed interface AttributeInfo
+
+data class BuiltinAttributeInfo(
+    val name: String,
+    val type: AttributeType,
+    val template: AttributeTemplate,
+    val duplicates: AttributeDuplicates,
+    val gated: Boolean,
+) : AttributeInfo
+
+object BuiltinProcMacroInfo : AttributeInfo
+
+@Suppress("unused")
+enum class AttributeType {
+    Normal, CrateLevel
+}
+
+data class AttributeTemplate(
+    val word: Boolean,
+    val list: String?,
+    val nameValueStr: String?,
+)
+
+@Suppress("unused")
+enum class AttributeDuplicates {
+    DuplicatesOk,
+    WarnFollowing,
+    WarnFollowingWordOnly,
+    ErrorFollowing,
+    ErrorPreceding,
+    FutureWarnFollowing,
+    FutureWarnPreceding
+}
+
+private object BuiltinAttributeInfoLoader {
+    private const val BUILTIN_ATTRIBUTES_PATH = "compiler-info/builtin-attributes.json"
+
+    private val LOG: Logger = logger<BuiltinAttributeInfoLoader>()
+
+    fun loadAttributes(): Map<String, AttributeInfo> {
+        val attributeList: List<BuiltinAttributeInfo> = try {
+            val stream = BuiltinAttributeInfo::class.java.classLoader
+                .getResourceAsStream(BUILTIN_ATTRIBUTES_PATH)
+            if (stream == null) {
+                LOG.error("Can't find `$BUILTIN_ATTRIBUTES_PATH` file in resources")
+                return emptyMap()
+            }
+            stream.buffered().use {
+                jacksonObjectMapper().readValue(it)
+            }
+        } catch (e: IOException) {
+            LOG.error(e)
+            emptyList()
+        }
+
+        val associateMap: HashMap<String, AttributeInfo> =
+            attributeList.associateByTo(hashMapOf(), BuiltinAttributeInfo::name)
+
+        // Internal stdlib proc macros
+
+        associateMap["simd_test"] = BuiltinProcMacroInfo
+        associateMap["assert_instr"] = BuiltinProcMacroInfo
+
+        // Proc macros from stdlib. Defined like
+        // `pub macro test($item:item) {}`
+        // TODO resolve them correctly and remove from this list?
+
+        associateMap["derive"] = BuiltinProcMacroInfo
+        associateMap["test"] = BuiltinProcMacroInfo
+        associateMap["bench"] = BuiltinProcMacroInfo
+        associateMap["test_case"] = BuiltinProcMacroInfo
+        associateMap["global_allocator"] = BuiltinProcMacroInfo
+        associateMap["cfg_accessible"] = BuiltinProcMacroInfo
+
+        // Don't forget to bump `RS_BUILTIN_ATTRIBUTES_VERSION` each time `associateMap` is modified!
+
+        return associateMap
+    }
+}
