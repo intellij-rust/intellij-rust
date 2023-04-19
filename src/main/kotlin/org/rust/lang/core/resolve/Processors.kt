@@ -593,7 +593,7 @@ fun filterCompletionVariantsByVisibility(context: RsElement, processor: RsResolv
         if (!it.isVisibleFrom(context)) return@wrapWithFilter false
 
         if (element is RsOuterAttributeOwner) {
-            val isHidden = element.shouldHideElementInCompletion(contextMod)
+            val isHidden = element.shouldHideElementInCompletion(context, contextMod)
             if (isHidden) return@wrapWithFilter false
         }
 
@@ -622,12 +622,17 @@ fun filterDeriveProcMacros(processor: RsResolveProcessor): RsResolveProcessor =
         true
     }
 
-fun RsOuterAttributeOwner.shouldHideElementInCompletion(contextMod: RsMod): Boolean {
+fun RsOuterAttributeOwner.shouldHideElementInCompletion(context: RsElement, contextMod: RsMod): Boolean {
     val elementContainingMod = containingMod
     if (elementContainingMod == contextMod) return false
 
     // Hide `#[doc(hidden)]` items
-    if (queryAttributes.isDocHidden) return true
+    if (queryAttributes.isDocHidden) {
+        val isDeriveMacroInImport = context.ancestorStrict<RsUseItem>() != null
+            && this is RsFunction && isCustomDeriveProcMacroDef
+            && containingCrate != contextMod.containingCrate
+        if (!isDeriveMacroInImport) return true
+    }
 
     val rustcChannel = contextMod.cargoProject?.rustcInfo?.version?.channel ?: return false
     val showUnstableItems = rustcChannel != RustChannel.STABLE && rustcChannel != RustChannel.BETA

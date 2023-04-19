@@ -730,14 +730,18 @@ class RsCompletionTest : RsCompletionTestBase() {
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test complete proc macro in use item`() = checkContainsCompletionByFileTree(
-        listOf("macro_function", "macro_attr", "macro_derive"), """
+        listOf("macro_function", "macro_attr", "MacroDerive", "MacroDeriveHidden"), """
     //- dep-proc-macro/lib.rs
         #[proc_macro]
         pub fn macro_function(input: TokenStream) -> TokenStream { input }
         #[proc_macro_attribute]
         pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
-        #[proc_macro_derive(macro_derive)]
+        #[proc_macro_derive(MacroDerive)]
         pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+
+        #[doc(hidden)]
+        #[proc_macro_derive(MacroDeriveHidden)]
+        pub fn macro_derive_hidden(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
     //- lib.rs
         use dep_proc_macro::/*caret*/
     """)
