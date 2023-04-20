@@ -27,6 +27,7 @@ import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.errors.MissingObjectException
 import org.eclipse.jgit.errors.RepositoryNotFoundException
 import org.eclipse.jgit.errors.RevisionSyntaxException
 import org.eclipse.jgit.lib.ObjectId
@@ -553,7 +554,7 @@ private class CratesLocalIndexUpdateTask(
     ): List<Pair<String, CargoRegistryCrate>> {
         val reader = repository.newObjectReader()
         val currentTreeIter = CanonicalTreeParser().apply {
-            val currentHeadTree = repository.resolve("$newHeadHash^{tree}") ?: run {
+            val currentHeadTree = repository.resolveTreeObject(newHeadHash) ?: run {
                 LOG.error("Git revision `$newHeadHash^{tree}` cannot be resolved to any object id")
                 return emptyList()
             }
@@ -561,7 +562,7 @@ private class CratesLocalIndexUpdateTask(
         }
 
         val filter = run {
-            val prevHeadTree = repository.resolve("$prevHeadHash^{tree}") ?: return@run TreeFilter.ALL
+            val prevHeadTree = repository.resolveTreeObject(prevHeadHash) ?: return@run TreeFilter.ALL
 
             val prevTreeIter = CanonicalTreeParser().apply {
                 reset(reader, prevHeadTree)
@@ -644,6 +645,16 @@ private class CratesLocalIndexUpdateTask(
             throw e.cause ?: e
         } finally {
             pool.shutdownNow()
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun Repository.resolveTreeObject(hash: String): ObjectId? {
+        return try {
+            resolve("$hash^{tree}")
+        } catch (e: MissingObjectException) {
+            LOG.warn(e)
+            null
         }
     }
 }
