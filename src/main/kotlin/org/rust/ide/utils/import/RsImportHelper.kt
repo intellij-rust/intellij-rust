@@ -108,8 +108,6 @@ object RsImportHelper {
     private fun collectImportSubjectsFromTypeReferences(
         context: RsElement,
         result: MutableSet<RsQualifiedNamedElement>,
-        useAliases: Boolean,
-        skipUnchangedDefaultGenericArguments: Boolean
     ) {
         context.accept(object : RsVisitor() {
             override fun visitPath(path: RsPath) {

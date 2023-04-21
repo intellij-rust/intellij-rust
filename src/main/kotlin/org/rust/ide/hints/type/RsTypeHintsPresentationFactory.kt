@@ -311,7 +311,7 @@ class RsTypeHintsPresentationFactory(
         argument.isEquivalentTo(parameter.typeReference?.normType)
 
     private fun isDefaultConstParameter(argument: Const, parameter: RsConstParameter): Boolean {
-        val expectedTy = parameter.typeReference?.type ?: TyUnknown
+        val expectedTy = parameter.typeReference?.normType ?: TyUnknown
         val defaultValue = parameter.expr?.evaluate(expectedTy)
         return defaultValue !is CtUnknown && argument == defaultValue
     }

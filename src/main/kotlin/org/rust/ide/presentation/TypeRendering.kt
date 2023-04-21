@@ -24,7 +24,6 @@ import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.stdext.withPrevious
 
@@ -288,7 +287,7 @@ private data class TypeRenderer(
                         parameter.typeReference?.normType?.isEquivalentTo(subst[parameter]) == true -> continue
                     parameter is RsConstParameter &&
                         parameter.expr != null &&
-                        parameter.expr?.evaluate(parameter.typeReference?.type ?: TyUnknown) == subst[parameter] -> continue
+                        parameter.expr?.evaluate(parameter.typeReference?.normType ?: TyUnknown) == subst[parameter] -> continue
                     else  -> nonDefaultParamFound = true
                 }
             }

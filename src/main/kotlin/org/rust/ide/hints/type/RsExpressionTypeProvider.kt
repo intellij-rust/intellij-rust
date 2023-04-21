@@ -84,7 +84,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
         else -> error("Unexpected element type: $element")
     }
 
-    private fun renderTy(ty: Ty): String = ty.render(skipUnchangedDefaultTypeArguments = false)
+    private fun renderTy(ty: Ty): String = ty.render(skipUnchangedDefaultGenericArguments = false)
 
     private fun renderAndAlignTypes(type: Ty, adjustedType: AdjustedType): Pair<String, String> {
         val (l1, _, l3) = alignTypes(renderTy(type), renderTy(adjustedType.derefTy), renderTy(adjustedType.finalTy))
