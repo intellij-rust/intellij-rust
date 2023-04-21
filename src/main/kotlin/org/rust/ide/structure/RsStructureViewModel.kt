@@ -122,7 +122,11 @@ class RsStructureViewElement(
 
                     is RsUseItem -> Unit
 
-                    is RsMacro, is RsItemElement -> add(item)
+                    is RsMacro, is RsItemElement -> {
+                        if (item !is RsConstant || item.name != null) {
+                            add(item)
+                        }
+                    }
                 }
             }
         }
