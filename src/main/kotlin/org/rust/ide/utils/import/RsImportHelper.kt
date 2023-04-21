@@ -34,13 +34,13 @@ object RsImportHelper {
         context: RsElement,
         tys: Collection<Ty>,
         useAliases: Boolean = true,
-        skipUnchangedDefaultTypeArguments: Boolean = true
+        skipUnchangedDefaultGenericArguments: Boolean = true
     ) {
         val (toImport, _) = getTypeReferencesInfoFromTys(
             context,
             *tys.toTypedArray(),
             useAliases = useAliases,
-            skipUnchangedDefaultTypeArguments = skipUnchangedDefaultTypeArguments
+            skipUnchangedDefaultGenericArguments = skipUnchangedDefaultGenericArguments
         )
         importElements(context, toImport)
     }
@@ -49,9 +49,9 @@ object RsImportHelper {
         context: RsElement,
         ty: Ty,
         useAliases: Boolean = true,
-        skipUnchangedDefaultTypeArguments: Boolean = true
+        skipUnchangedDefaultGenericArguments: Boolean = true
     ) {
-        importTypeReferencesFromTys(context, listOf(ty), useAliases, skipUnchangedDefaultTypeArguments)
+        importTypeReferencesFromTys(context, listOf(ty), useAliases, skipUnchangedDefaultGenericArguments)
     }
 
     fun importElement(context: RsElement, element: RsQualifiedNamedElement) =
@@ -90,9 +90,9 @@ object RsImportHelper {
         context: RsElement,
         vararg elemTys: Ty,
         useAliases: Boolean = true,
-        skipUnchangedDefaultTypeArguments: Boolean = true
+        skipUnchangedDefaultGenericArguments: Boolean = true
     ): TypeReferencesInfo = getTypeReferencesInfo(context, elemTys.toList()) { ty, result ->
-        collectImportSubjectsFromTy(ty, emptySubstitution, result, useAliases, skipUnchangedDefaultTypeArguments)
+        collectImportSubjectsFromTy(ty, emptySubstitution, result, useAliases, skipUnchangedDefaultGenericArguments)
     }
 
     private fun <T> getTypeReferencesInfo(
@@ -131,7 +131,7 @@ object RsImportHelper {
         subst: Substitution,
         result: MutableSet<RsQualifiedNamedElement>,
         useAliases: Boolean,
-        skipUnchangedDefaultTypeArguments: Boolean
+        skipUnchangedDefaultGenericArguments: Boolean
     ) {
         ty.substitute(subst).visitWith(object : TypeVisitor {
             override fun visitTy(ty: Ty): Boolean {
@@ -145,7 +145,7 @@ object RsImportHelper {
                     is TyAdt -> {
                         result += ty.item
 
-                        if (skipUnchangedDefaultTypeArguments) {
+                        if (skipUnchangedDefaultGenericArguments) {
                             val filteredTypeArguments = ty.typeArguments
                                 .zip(ty.item.typeParameters)
                                 .dropLastWhile { (argumentTy, param) -> argumentTy.isEquivalentTo(param.typeReference?.normType) }

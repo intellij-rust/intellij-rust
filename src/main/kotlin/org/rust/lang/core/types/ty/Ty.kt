@@ -49,7 +49,7 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
     /**
      * User visible string representation of a type
      */
-    final override fun toString(): String = render(useAliasNames = false, skipUnchangedDefaultTypeArguments = false)
+    final override fun toString(): String = render(useAliasNames = false, skipUnchangedDefaultGenericArguments = false)
 
     /**
      * Use it instead of [equals] if you want to check that the types are the same from the Rust perspective.

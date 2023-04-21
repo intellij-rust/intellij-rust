@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
@@ -1252,6 +1253,26 @@ class RsExtractFunctionTest : RsTestBase() {
         }
 
         fn foo(s: S<u32>) -> S<u32> {
+            s
+        }
+    """, "foo")
+
+    fun `test extract a function with unset default const parameter`() = doTest("""
+        struct S<const N: usize, const M: usize = 1>([i32; M]);
+
+        fn main() {
+            let s: S<0> = S::<0>([1, 2, 3]);
+            <selection>s</selection>;
+        }
+    """, """
+        struct S<const N: usize, const M: usize = 1>([i32; M]);
+
+        fn main() {
+            let s: S<0> = S::<0>([1, 2, 3]);
+            foo(s);
+        }
+
+        fn foo(s: S<0>) -> S<0> {
             s
         }
     """, "foo")

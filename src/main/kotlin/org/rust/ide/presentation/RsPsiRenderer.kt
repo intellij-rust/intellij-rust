@@ -211,6 +211,11 @@ open class RsPsiRenderer(
                         sb.append(": ")
                         appendTypeReference(sb, type)
                     }
+                    val defaultValue = expr
+                    if (defaultValue != null) {
+                        sb.append(" = ")
+                        appendConstExpr(sb, defaultValue)
+                    }
                 }
             }
         }

@@ -1191,6 +1191,28 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test implement function with const generic defaults`() = doTest("""
+        trait T {
+            fn f<const N: usize = 1>();
+        }
+        struct S;
+        impl T for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("f<const N: usize = 1>()", byDefault = true, isSelected = true),
+    ), """
+        trait T {
+            fn f<const N: usize = 1>();
+        }
+        struct S;
+        impl T for S {
+            fn f<const N: usize = 1>() {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
     fun `test do not implement methods already present`() = doTest("""
         trait T {
             fn f1();
