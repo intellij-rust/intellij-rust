@@ -9,7 +9,9 @@ import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.RsElementTypes.SEMICOLON
+import org.rust.lang.core.psi.RsMembers
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.endOffset
 
 /**
@@ -17,7 +19,9 @@ import org.rust.lang.core.psi.ext.endOffset
  */
 class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor>() {
     override fun apply(editor: Editor, processor: RsSmartEnterProcessor, element: PsiElement) {
-        if (element.parent !is RsBlock || (element as? RsStmt)?.semicolon != null) return
+        val parent = element.parent
+        if (parent !is RsBlock && parent !is RsMod && parent !is RsMembers) return
+        if (element.node.findChildByType(SEMICOLON) != null) return
         editor.document.insertString(element.endOffset, ";")
     }
 }

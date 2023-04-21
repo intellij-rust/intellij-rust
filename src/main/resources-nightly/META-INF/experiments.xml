@@ -33,5 +33,8 @@
         <experimentalFeature id="org.rust.ide.intentions.macros.function-like" percentOfUsers="0">
             <description>Invoke intention actions inside function-like macro expansions</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.coverage.source" percentOfUsers="0">
+            <description>Use source-based coverage</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>

@@ -31,7 +31,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
     fun `test highlights type errors`() = doTest("""
         struct X; struct Y;
         fn main() {
-            let _: X = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">Y</error>;
+            let _: <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">X</error> = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">Y</error>;
         }
     """)
 
@@ -39,9 +39,9 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
     fun `test highlights errors from macro`() = doTest("""
         fn main() {
             let mut x = 42;
-            let r = &mut x;
-            <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">dbg!(x)</error>;
-            dbg!(r);
+            let r = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">&mut x</error>;
+            dbg!(x);
+            dbg!(<error descr="${RsExternalLinterUtils.TEST_MESSAGE}">r</error>);
         }
     """)
 
@@ -50,7 +50,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
 
         #[test]
         fn test() {
-            let x: i32 = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">0.0</error>;
+            let x: <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">i32</error> = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">0.0</error>;
         }
     """)
 
@@ -65,7 +65,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
 
         #[cfg(feature = "enabled_feature")]
         fn foo() {
-            let x: i32 = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">0.0</error>;
+            let x: <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">i32</error> = <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">0.0</error>;
         }
 
         #[cfg(feature = "disabled_feature")]
@@ -260,7 +260,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }.create()
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         val highlight = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING)
-            .single { it.description == RsExternalLinterUtils.TEST_MESSAGE }
+            .first { it.description == RsExternalLinterUtils.TEST_MESSAGE }
         assertEquals(tooltip.trimIndent().replace("\n", "<br>"), highlight.toolTip)
     }
 }
