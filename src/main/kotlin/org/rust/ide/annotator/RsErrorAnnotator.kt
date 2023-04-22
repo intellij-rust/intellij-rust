@@ -1318,7 +1318,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0132: Invalid `start` attribute
     private fun checkStartAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("start")) return
+        if (attr.metaItem.name != "start") return
 
         START.check(holder, attr.metaItem, "#[start] function")
 
@@ -1358,7 +1358,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReprAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("repr")) return
+        if (attr.metaItem.name != "repr") return
 
         val owner = attr.owner ?: return
 
@@ -1402,7 +1402,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0518: Inline attribute is allowed only on functions
     private fun checkInlineAttr(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("inline")) return
+        if (attr.metaItem.name != "inline") return
 
         val owner = attr.owner
         if (owner !is RsFunction && owner !is RsLambdaExpr) {
