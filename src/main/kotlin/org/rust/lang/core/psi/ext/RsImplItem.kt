@@ -96,7 +96,12 @@ fun checkOrphanRules(impl: RsImplItem, isSameCrate: (RsElement) -> Boolean): Boo
     val (trait, subst, _) = traitRef.resolveToBoundTrait() ?: return true
     if (isSameCrate(trait)) return true
     val typeParameters = subst.typeSubst.values + (impl.typeReference?.normType ?: return true)
-    return typeParameters.any { tyWrapped ->
+    return typeParameters.checkOrphanRules(isSameCrate)
+    // TODO uncovering
+}
+
+fun Collection<Ty>.checkOrphanRules(isSameCrate: (RsElement) -> Boolean): Boolean =
+    any { tyWrapped ->
         val ty = tyWrapped.unwrapFundamentalTypes()
         ty is TyUnknown
             // `impl ForeignTrait<LocalStruct> for ForeignStruct`
@@ -106,8 +111,6 @@ fun checkOrphanRules(impl: RsImplItem, isSameCrate: (RsElement) -> Boolean): Boo
             // `impl<T> ForeignTrait for Box<T>` in stdlib
             || tyWrapped is TyAdt && isSameCrate(tyWrapped.item)
     }
-    // TODO uncovering
-}
 
 // https://doc.rust-lang.org/reference/glossary.html#fundamental-type-constructors
 private fun Ty.unwrapFundamentalTypes(): Ty {

@@ -25,10 +25,11 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.*
 import org.rust.ide.presentation.getStubOnlyText
+import org.rust.ide.presentation.render
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.refactoring.findBinding
-import org.rust.lang.core.*
+import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.CompilerFeature.Companion.ADT_CONST_PARAMS
 import org.rust.lang.core.CompilerFeature.Companion.ARBITRARY_ENUM_DISCRIMINANT
 import org.rust.lang.core.CompilerFeature.Companion.ASSOCIATED_TYPE_DEFAULTS
@@ -63,7 +64,10 @@ import org.rust.lang.core.CompilerFeature.Companion.RAW_REF_OP
 import org.rust.lang.core.CompilerFeature.Companion.SLICE_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.START
 import org.rust.lang.core.FeatureAvailability.*
+import org.rust.lang.core.FeatureState
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.completion.isFnLikeTrait
+import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
@@ -75,6 +79,7 @@ import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.infer.containsTyOfClass
+import org.rust.lang.core.types.infer.needsSubst
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.*
@@ -1174,7 +1179,52 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             holder.createErrorAnnotation(o, "Chained comparison operator require parentheses", AddTurbofishFix())
+            return
         }
+
+        checkBinaryOperatorImplemented(holder, o)
+    }
+
+    /** For e.g. `a + b` checks that `Add` trait is implemented for type of `a` */
+    private fun checkBinaryOperatorImplemented(holder: RsAnnotationHolder, expr: RsBinaryExpr) {
+        val lhsType = expr.left.type
+        val rhsType = expr.right?.type ?: return
+
+        // These checks are for case when some types are unresolved because of bugs in the plugin
+        if (lhsType.containsTyOfClass(TyUnknown::class.java)) return
+        if (rhsType.containsTyOfClass(TyUnknown::class.java)) return
+
+        val operator = expr.operatorType as? OverloadableBinaryOperator ?: return
+        val operatorTrait: RsTraitItem = expr.knownItems.findLangItem(operator.itemName) ?: return
+
+        // This checks that there are no existing operator trait implementations
+        // Compatibility of [rhsType] is intentionally not checked
+        // (in that case we will show just "Type mismatch" error)
+        if (expr.implLookup.select(TraitRef(lhsType, BoundElement(operatorTrait))) !is SelectionResult.Err) return
+
+        // Workaround for https://github.com/intellij-rust/intellij-rust/issues/9324
+        if (expr.binaryOp.reference.resolve() != null) return
+
+        if (!isUnitTestMode && expr.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
+        // impls search not working in doctest crates
+        val crate = holder.currentAnnotationSession.currentCrate()
+        if (crate !is CargoBasedCrate) return
+
+        val offerFix = setOf(lhsType, rhsType).checkOrphanRules { it.containingCrate == crate }
+            && !lhsType.needsSubst && !rhsType.needsSubst
+        val fix = if (offerFix) {
+            ImplementOperatorTraitFix(expr, operatorTrait, lhsType, rhsType)
+        } else {
+            null
+        }
+
+        RsDiagnostic.UnsupportedBinaryOpOrOpAssign(
+            expr,
+            operator,
+            lhsType.render(),
+            rhsType.render(),
+            fix
+        ).addToHolder(holder)
     }
 
     private fun checkTypeArgumentList(holder: RsAnnotationHolder, args: RsTypeArgumentList) {

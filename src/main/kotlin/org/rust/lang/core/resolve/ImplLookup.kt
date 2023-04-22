@@ -1270,6 +1270,7 @@ class ImplLookup(
         return select(TraitRef(lhsType, trait.withSubst(rhsType)))
     }
 
+    /** Note that it doesn't work with derefs (e.g. `String` + `&String`) */
     fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? =
         selectOverloadedOp(lhsType, rhsType, op).ok()?.impl
 
