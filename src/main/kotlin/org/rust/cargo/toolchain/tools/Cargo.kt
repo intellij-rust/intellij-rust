@@ -101,9 +101,16 @@ class Cargo(
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
-            fun from(line: String): BinaryCrate {
-                val name = line.substringBefore(' ')
-                val rawVersion = line.substringAfter(' ').removePrefix("v").removeSuffix(":")
+            // Examples:
+            // - cargo-expand v1.0.16
+            // - evcxr_repl v0.14.0-alpha.11
+            // - wasm-pack v0.10.3 (/home/josh/dev/wasm-pack)
+            private val VERSION_LINE: Regex = """(?<name>[\w-]+) v(?<version>\d+\.\d+\.\d+(-[\w.]+)?).*""".toRegex()
+
+            fun from(line: String): BinaryCrate? {
+                val result = VERSION_LINE.matchEntire(line) ?: return null
+                val name = result.groups["name"]?.value ?: return null
+                val rawVersion = result.groups["version"]?.value ?: return null
                 return BinaryCrate(name, SemVer.parseFromText(rawVersion))
             }
         }
@@ -114,7 +121,7 @@ class Cargo(
             .execute(toolchain.executionTimeoutInMilliseconds)
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
-            ?.map { BinaryCrate.from(it) }
+            ?.mapNotNull { BinaryCrate.from(it) }
             .orEmpty()
 
     fun installBinaryCrate(project: Project, crateName: String) {
