@@ -242,7 +242,7 @@ fun calculateProjectDetailsWithCapabilities(
 ): CargoWorkspaceData {
     val projectBazelTargets = queryForBazelTargets(server).get()
     val bspWorkspaceRoot = projectBazelTargets.targets.find { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
-    val workspaceRoot = bspWorkspaceRoot?.baseDirectory?.removePrefix("file://") //TODO there must be a better way to do this
+    val workspaceRoot = bspWorkspaceRoot?.baseDirectory?.removePrefix("file://") // TODO there must be a better way to do this
     projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
     val pathReplacer = createSymlinkReplacer(workspaceRoot, projectDirectory)
     val changedWorkspaceRoot = workspaceRoot?.let { pathReplacer(it) };
@@ -276,10 +276,16 @@ private fun createSymlinkReplacer(
     }
 
     // Otherwise, it's just a normal symlink.
-    val normalisedWorkspace = projectDirectory.normalize().toString()
+    val normalisedWorkspace = projectDirectory.normalize().toString() + "/"
     val replacer: (String) -> String = replacer@{
-        if (!it.startsWith(workspaceRoot)) return@replacer it
-        normalisedWorkspace + it.removePrefix(workspaceRoot)
+        // TODO there must be a better way to do this
+        val filePrefix = "file://"
+        val hasFilePrefix = it.startsWith(filePrefix)
+        val path = if (hasFilePrefix) it.removePrefix(filePrefix) else it
+        val prefix = if (hasFilePrefix) filePrefix else ""
+
+        if (!path.startsWith(workspaceRoot)) return@replacer it
+        prefix + normalisedWorkspace + path.removePrefix(workspaceRoot)
     }
     return replacer
 }
