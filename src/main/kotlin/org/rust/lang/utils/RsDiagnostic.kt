@@ -1798,6 +1798,73 @@ sealed class RsDiagnostic(
             "Only auto traits can be used as additional traits in a trait object"
         )
     }
+
+    class WrongMetaDelimiters(
+        beginElement: PsiElement,
+        endElement: PsiElement,
+        private val fix: LocalQuickFix
+    ) : RsDiagnostic(beginElement, endElement) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            null,
+            "Wrong meta list delimiters",
+            description = "The delimiters should be `(` and `)`",
+            fixes = listOfFixes(fix),
+        )
+    }
+
+    class MalformedAttributeInput(
+        element: PsiElement,
+        private val name: String,
+        private val suggestions: String
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            null,
+            "Malformed `${name}` attribute input",
+            description = suggestions,
+        )
+    }
+
+    class AttributeSuffixedLiteral(
+        element: PsiElement,
+        private val fix: LocalQuickFix
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            null,
+            "Suffixed literals are not allowed in attributes",
+            description = "Instead of using a suffixed literal (`1u8`, `1.0f32`, etc.), use an unsuffixed version (`1`, `\n" + "1.0`, etc.)",
+            fixes = listOfFixes(fix),
+        )
+    }
+
+    class UnusedAttribute(
+        element: PsiElement,
+        private val fix: LocalQuickFix,
+        private val isFutureWarning: Boolean = false
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            WARN,
+            null,
+            "Unused attribute",
+            description = if (isFutureWarning) "This was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!" else "",
+            fixes = listOfFixes(fix)
+        )
+    }
+
+    class MultipleAttributes(
+        element: PsiElement,
+        private val name: String,
+        private val fix: LocalQuickFix
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            null,
+            "Multiple '$name' attributes",
+            fixes = listOfFixes(fix),
+        )
+    }
 }
 
 enum class RsErrorCode {
