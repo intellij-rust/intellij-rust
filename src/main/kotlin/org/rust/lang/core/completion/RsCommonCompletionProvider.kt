@@ -212,7 +212,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         for (candidate in candidates) {
             val item = candidate.item
             if (item is RsOuterAttributeOwner) {
-                val isHidden = item.shouldHideElementInCompletion(contextMod)
+                val isHidden = item.shouldHideElementInCompletion(path, contextMod)
                 if (isHidden) continue
             }
             val scopeEntry = SimpleScopeEntry(candidate.itemName, item, TYPES_N_VALUES_N_MACROS)
@@ -538,12 +538,13 @@ fun collectVariantsForEnumCompletion(
     candidate: ImportCandidate? = null
 ): List<LookupElement> {
     val enumName = element.name ?: return emptyList()
-    val contextMod = context.context?.containingMod
+    val contextElement = context.context
+    val contextMod = contextElement?.containingMod
 
     return element.enumBody?.childrenOfType<RsEnumVariant>().orEmpty().mapNotNull { enumVariant ->
         val variantName = enumVariant.name ?: return@mapNotNull null
 
-        if (contextMod != null && enumVariant.shouldHideElementInCompletion(contextMod)) return@mapNotNull null
+        if (contextMod != null && enumVariant.shouldHideElementInCompletion(contextElement, contextMod)) return@mapNotNull null
 
         return@mapNotNull createLookupElement(
             scopeEntry = SimpleScopeEntry("${enumName}::${variantName}", enumVariant, ENUM_VARIANT_NS, substitution),
