@@ -1,7 +1,8 @@
 <html>
 <body>
-Detects unsafe usage of `CString`.
+Detects unsafe usage of <code>CString</code>.
 
-The code like `CString::new("hello").unwrap().as_ptr()` may lead to memory unsafety because the string is deallocated at the end of the expression.
+The code like <code>CString::new("hello").unwrap().as_ptr()</code> may lead to memory unsafety
+because the string is deallocated at the end of the expression.
 </body>
 </html>
