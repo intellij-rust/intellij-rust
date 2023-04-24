@@ -1,15 +1,24 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test" type="JUnit" factoryName="JUnit">
-    <module name="intellij-rust.test" />
-    <option name="PACKAGE_NAME" value="org.rust" />
-    <option name="MAIN_CLASS_NAME" value="" />
-    <option name="METHOD_NAME" value="" />
-    <option name="TEST_OBJECT" value="package" />
-    <option name="VM_PARAMETERS" value="-ea -Didea.system.path=$PROJECT_DIR$/build/idea-sandbox/system-test -Didea.config.path=$PROJECT_DIR$/build/idea-sandbox/config-test" />
-    <option name="PARAMETERS" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
+  <configuration default="false" name="Test" type="GradleRunConfiguration" factoryName="Gradle">
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="-PexcludeTests=org/rustPerformanceTests/** --continue" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="test" />
+        </list>
+      </option>
+      <option name="vmOptions" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <ForceTestExec>false</ForceTestExec>
+    <method v="2" />
   </configuration>
 </component>
