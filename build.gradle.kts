@@ -429,7 +429,7 @@ project(":") {
         api("io.github.z4kn4fein:semver:1.4.2") {
             excludeKotlinDeps()
         }
-        testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
+        testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
     }
 
     tasks {
