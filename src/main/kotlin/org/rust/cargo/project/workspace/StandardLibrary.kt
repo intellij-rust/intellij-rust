@@ -67,7 +67,8 @@ data class StandardLibrary(
             rustcInfo: RustcInfo?,
             cargoConfig: CargoConfig = CargoConfig.DEFAULT,
             isPartOfCargoProject: Boolean = false,
-            listener: ProcessProgressListener? = null
+            listener: ProcessProgressListener? = null,
+            useBsp: Boolean = false
         ): StandardLibrary? {
             val srcDir = findSrcDir(sources) ?: return null
 
@@ -76,7 +77,7 @@ data class StandardLibrary(
                 listener?.warning(message, "")
             }
 
-            val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject) {
+            val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject && !useBsp) {
                 val rustcVersion = rustcInfo?.version
                 val semverVersion = rustcVersion?.semver
                 if (semverVersion == null) {

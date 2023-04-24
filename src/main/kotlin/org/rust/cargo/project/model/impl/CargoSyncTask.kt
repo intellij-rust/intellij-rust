@@ -369,7 +369,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         ) {
             when (it) {
                 CargoCallType.METADATA -> SyncProcessAdapter(childContext)
-                CargoCallType.BUILD_SCRIPT_CHECK ->  {
+                CargoCallType.BUILD_SCRIPT_CHECK -> {
                     val childProgress = childContext.syncProgress.startChildProgress("Build scripts evaluation")
                     val syncContext = childContext.copy(syncProgress = childProgress)
 
@@ -385,8 +385,10 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
             }
         }.unwrapOrElse { return@runWithChildProgress TaskResult.Err("Failed to run Cargo", it.message) }
         if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
-            childContext.warning("Build scripts evaluation failed",
-                "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")
+            childContext.warning(
+                "Build scripts evaluation failed",
+                "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE"
+            )
         }
 
         val manifestPath = projectDirectory.resolve("Cargo.toml")
@@ -400,7 +402,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val cfgOptions = when (cfgOptionsResult) {
             is RsResult.Ok -> cfgOptionsResult.ok
             is RsResult.Err -> {
-                if ((rustcVersion == null || rustcVersion > RUST_1_51)&& !useBSP) {
+                if ((rustcVersion == null || rustcVersion > RUST_1_51) && !useBSP) {
                     val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n" +
                         cfgOptionsResult.err.message.orEmpty()
                     childContext.warning("Fetching target specific `cfg` options", message)
@@ -454,6 +456,20 @@ private fun Rustup.fetchStdlib(
     rustcInfo: RustcInfo?,
     cargoConfig: CargoConfig
 ): TaskResult<StandardLibrary> {
+    val bspService = context.project.service<BspConnectionService>()
+    if (bspService.hasBspServer()) {
+        val stdlib = bspService.getStdLibPath()
+        return if (stdlib != null) {
+            val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context))
+            if (lib == null) {
+                TaskResult.Err("Corrupted standard library: ${stdlib.presentableUrl}")
+            } else {
+                TaskResult.Ok(lib)
+            }
+        } else {
+            TaskResult.Err("Failed to fetch standard library from BSP server")
+        }
+    }
     return when (val download = UnitTestRustcCacheService.cached(rustcInfo?.version) { downloadStdlib() }) {
         is DownloadResult.Ok -> {
             val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context))
@@ -463,6 +479,7 @@ private fun Rustup.fetchStdlib(
                 TaskResult.Ok(lib)
             }
         }
+
         is DownloadResult.Err -> TaskResult.Err("Download failed: ${download.error}")
     }
 }

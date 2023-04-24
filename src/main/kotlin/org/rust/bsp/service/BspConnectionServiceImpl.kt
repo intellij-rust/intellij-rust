@@ -52,6 +52,10 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     override fun getBspServer(): BspServer {
         createBspServerIfNull()
+        initializeBuildResult = queryForInitialize(bspServer!!)
+            .catchSyncErrors { println("Error while initializing BSP server $it") }
+            .get()
+        bspServer!!.onBuildInitialized()
         return bspServer!!
     }
 
@@ -77,10 +81,6 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
             bspServer = getBspConnectionDetailsFile()
                 ?.let { parseBspConnectionDetails(it) }
                 ?.let { createBspServer(it) }!!
-            initializeBuildResult = queryForInitialize(bspServer!!)
-                .catchSyncErrors { println("Error while initializing BSP server $it") }
-                .get()
-            bspServer!!.onBuildInitialized()
         }
     }
 
@@ -229,6 +229,12 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val (toolchain) = calculateToolchains(server)
         return toolchain.procMacroSrvPath.toVirtualFile()?.toNioPath()
     }
+
+    override fun getStdLibPath(): VirtualFile? {
+        val server = getBspServer()
+        val (toolchain) = calculateToolchains(server)
+        return (toolchain.stdLib.rustcSrcSysroot + "/library").toVirtualFile()
+    }
 }
 
 interface BspServer : BuildServer, RustBuildServer
@@ -251,7 +257,7 @@ fun calculateToolchains(
     val rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
     val toolchainsResult = queryForToolchains(server, rustBspTargetsIds).get()
 
-    return toolchainsResult.toolchains
+    return toolchainsResult.toolchains.distinct()
 }
 
 
