@@ -162,6 +162,20 @@ class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpress
     """
     )
 
+    fun `test no error only when use union field in assignment as left operand`() = checkErrors("""
+        union TTT {
+            v1: [u8; 2],
+            v2: u16,
+        }
+
+        fn test() {
+            let ttt = TTT { v2: 10 };
+            ttt.v1 = [1, 1];
+            let foo;
+            foo = /*error descr="Access to union field is unsafe and requires unsafe function or block [E0133]"*/ttt.v1/*error**/;
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test need unsafe asm macro call`() = checkErrors("""
        use std::arch::asm; // required since 1.59

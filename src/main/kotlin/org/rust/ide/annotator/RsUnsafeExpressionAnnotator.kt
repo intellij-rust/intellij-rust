@@ -80,6 +80,8 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
             }
         }
 
+        val exprParent = o.parent
+        if (exprParent is RsBinaryExpr && exprParent.operatorType == AssignmentOp.EQ && exprParent.left == o) return
         if (o.fieldLookup != null) {
             val type = o.expr.type
             if (type !is TyAdt) return
