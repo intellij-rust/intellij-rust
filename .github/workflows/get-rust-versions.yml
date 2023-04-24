@@ -18,7 +18,7 @@ on:
                 value: ${{ jobs.get_versions.outputs.matrix }}
 
 env:
-    STABLE: "1.68.2"
+    STABLE: "1.69.0"
     NIGHTLY: "nightly-2023-03-11"
     OLD: "1.56.0"
 
