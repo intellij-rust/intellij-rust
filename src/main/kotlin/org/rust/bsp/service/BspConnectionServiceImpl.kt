@@ -48,6 +48,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     private var bspServer: BspServer? = null
     private var bspClient: BspClient? = null
     private var disconnectActions: MutableList<() -> Unit> = mutableListOf()
+    private var initializeBuildResult: InitializeBuildResult? = null
 
     override fun getBspServer(): BspServer {
         createBspServerIfNull()
@@ -66,11 +67,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     override fun getProjectData(projectDirectory: Path): CargoWorkspaceData {
         val server = getBspServer()
-        val initializeBuildResult =
-            queryForInitialize(server).catchSyncErrors { println("Error while initializing BSP server $it") }.get()
-        server.onBuildInitialized()
-
-        return calculateProjectDetailsWithCapabilities(server, initializeBuildResult.capabilities, projectDirectory) {
+        return calculateProjectDetailsWithCapabilities(server, projectDirectory) {
             println("BSP server capabilities: $it")
         }
     }
@@ -80,6 +77,10 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
             bspServer = getBspConnectionDetailsFile()
                 ?.let { parseBspConnectionDetails(it) }
                 ?.let { createBspServer(it) }!!
+            initializeBuildResult = queryForInitialize(bspServer!!)
+                .catchSyncErrors { println("Error while initializing BSP server $it") }
+                .get()
+            bspServer!!.onBuildInitialized()
         }
     }
 
@@ -221,6 +222,13 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     override fun hasBspServer(): Boolean {
         return getBspConnectionDetailsFile() != null
     }
+
+    override fun getMacroResolverPath(): Path? {
+        val server = getBspServer()
+        // TODO: We get the first toolchain and ignore the rest
+        val (toolchain) = calculateToolchains(server)
+        return toolchain.procMacroSrvPath.toVirtualFile()?.toNioPath()
+    }
 }
 
 interface BspServer : BuildServer, RustBuildServer
@@ -234,9 +242,21 @@ fun ProcessBuilder.withRealEnvs(): ProcessBuilder {
 }
 
 
+fun calculateToolchains(
+    server: BspServer
+): List<RustToolchain> {
+    val projectBazelTargets = queryForBazelTargets(server).get()
+    projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
+
+    val rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
+    val toolchainsResult = queryForToolchains(server, rustBspTargetsIds).get()
+
+    return toolchainsResult.toolchains
+}
+
+
 fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
-    buildServerCapabilities: BuildServerCapabilities,
     projectDirectory: Path,
     errorCallback: (Throwable) -> Unit
 ): CargoWorkspaceData {
@@ -427,6 +447,10 @@ fun queryForWorkspaceData(server: BspServer, params: List<BuildTargetIdentifier>
 
 fun queryForBazelTargets(server: BspServer): CompletableFuture<WorkspaceBuildTargetsResult> {
     return server.workspaceBuildTargets()
+}
+
+fun queryForToolchains(server: BspServer, params: List<BuildTargetIdentifier>): CompletableFuture<RustToolchainResult> {
+    return server.rustToolchain(RustToolchainParams(params))
 }
 
 private fun <T> CompletableFuture<T>.catchSyncErrors(errorCallback: (Throwable) -> Unit): CompletableFuture<T> =

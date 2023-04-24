@@ -30,4 +30,6 @@ interface BspConnectionService {
     fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>
 
     fun hasBspServer(): Boolean
+
+    fun getMacroResolverPath(): Path?
 }

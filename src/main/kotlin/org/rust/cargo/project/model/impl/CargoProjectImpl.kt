@@ -40,6 +40,7 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.bsp.BspConstants
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
@@ -544,6 +545,10 @@ data class CargoProjectImpl(
     override val project get() = projectService.project
 
     override val procMacroExpanderPath: Path? = rustcInfo?.sysroot?.let { sysroot ->
+        val bspService = project.service<BspConnectionService>()
+        if (bspService.hasBspServer()) {
+            return@let bspService.getMacroResolverPath()
+        }
         val toolchain = project.toolchain ?: return@let null
         ProcMacroServerPool.findExpanderExecutablePath(toolchain, sysroot)
     }
