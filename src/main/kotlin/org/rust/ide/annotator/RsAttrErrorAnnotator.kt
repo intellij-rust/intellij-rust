@@ -23,9 +23,40 @@ class RsAttrErrorAnnotator : AnnotatorBase() {
                 checkMetaBadDelim(element, holder)
                 checkAttrTemplateCompatible(element, holder)
                 checkLiteralSuffix(element, holder)
+
+                when (element.name) {
+                    "deprecated" -> checkDeprecatedAttr(element, holder)
+                }
             }
 
             is RsDocAndAttributeOwner -> checkRsDocAndAttributeOwner(element, holder)
+        }
+    }
+}
+
+private fun checkDeprecatedAttr(element: RsMetaItem, holder: AnnotationHolder) {
+    if (element.templateType != AttributeTemplateType.List) return
+    val usedArgs = mutableSetOf<String>()
+    for (arg in element.metaItemArgsList) {
+        if (arg !is RsMetaItem) continue
+        val argName = arg.name ?: continue
+        when (argName) {
+            // "suggestion" argument is used only in compiler development
+            "since", "note", "suggestion" -> {
+                if (arg.eq == null) {
+                    RsDiagnostic.IncorrectItemInDeprecatedAttr(arg).addToHolder(holder)
+                } else {
+                    if (argName in usedArgs) {
+                        // TODO: Remove element with commas and newlines
+                        RsDiagnostic.MultipleItemsInDeprecatedAttr(arg, argName).addToHolder(holder)
+                    }
+                    usedArgs.add(argName)
+                }
+            }
+
+            else -> {
+                RsDiagnostic.UnknownItemInDeprecatedAttr(arg, argName).addToHolder(holder)
+            }
         }
     }
 }
