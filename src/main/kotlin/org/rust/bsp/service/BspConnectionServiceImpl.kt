@@ -394,7 +394,7 @@ fun createPackages(projectWorkspaceData: RustWorkspaceResult, pathReplacer: (Str
                 )
             }
         )
-    }
+    }.sortedBy { it.id }
 }
 
 private fun resolveTarget(target: RustTarget, pathReplacer: (String) -> String): CargoWorkspaceData.Target {
@@ -419,7 +419,7 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind {
 }
 
 fun createDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, Set<CargoWorkspaceData.Dependency>> {
-    return projectWorkspaceData.dependencies
+    val nonEmptyDependencies = projectWorkspaceData.dependencies
         .groupBy { it.source }
         .mapValues { (_, deps) ->
             deps.map { dep ->
@@ -432,6 +432,13 @@ fun createDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId
                 )
             }.toSet()
         }
+    // TODO: This is not the fastest way to do this, but it's the easiest.
+    //  We can use a `for` loop (I guess). @perlik take a look at this
+    val emptyDependencies = projectWorkspaceData.packages
+        .map { it.id }
+        .filter { it !in nonEmptyDependencies }
+        .associateWith { emptySet<CargoWorkspaceData.Dependency>() }
+    return (nonEmptyDependencies + emptyDependencies).toSortedMap()
 }
 
 fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, List<CargoMetadata.RawDependency>> {
