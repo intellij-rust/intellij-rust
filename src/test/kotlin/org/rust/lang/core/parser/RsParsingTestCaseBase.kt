@@ -14,11 +14,14 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import org.jetbrains.annotations.NonNls
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.RsTestCase
 import org.rust.TestCase
 import org.rust.ide.typing.RsBraceMatcher
 import org.rust.lang.RsLanguage
 
+@RunWith(RsJUnit4TestRunner::class)
 abstract class RsParsingTestCaseBase(@NonNls dataPath: String) : ParsingTestCase(
     "org/rust/lang/core/parser/fixtures/$dataPath",
     "rs",

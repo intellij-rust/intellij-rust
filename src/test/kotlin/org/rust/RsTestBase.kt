@@ -24,6 +24,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
@@ -45,6 +46,7 @@ import org.rust.stdext.RsResult
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.full.createInstance
 
+@RunWith(RsJUnit4TestRunner::class)
 abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     // Needed for assertion that the directory doesn't accidentally renamed during the test

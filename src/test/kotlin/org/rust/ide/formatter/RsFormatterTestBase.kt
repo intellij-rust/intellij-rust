@@ -9,11 +9,14 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.psi.formatter.FormatterTestCase
 import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
 import org.rust.IgnoreInPlatform
+import org.rust.RsJUnit4TestRunner
 import org.rust.TestCase
 import org.rust.findAnnotationInstance
 import kotlin.reflect.KMutableProperty0
 
+@RunWith(RsJUnit4TestRunner::class)
 abstract class RsFormatterTestBase : FormatterTestCase() {
     override fun getTestDataPath() = "src/test/resources"
 
