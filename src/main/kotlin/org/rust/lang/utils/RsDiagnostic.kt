@@ -601,10 +601,13 @@ sealed class RsDiagnostic(
             when (constContext) {
                 is RsConstContextKind.Constant -> "Const `${constContext.psi.name.orEmpty()}` cannot refer to static " +
                     "`${element.text}`"
+
                 is RsConstContextKind.ConstFn -> "Constant function `${constContext.psi.name.orEmpty()}` cannot refer " +
                     "to static `${element.text}`"
+
                 is RsConstContextKind.EnumVariantDiscriminant -> "Enum variant `${constContext.psi.name.orEmpty()}`'s " +
                     "discriminant value cannot refer to static `${element.text}`"
+
                 RsConstContextKind.ArraySize -> "Array size cannot refer to static `${element.text}`"
                 RsConstContextKind.ConstGenericArgument -> "Const generic argument cannot refer to static " +
                     "`${element.text}`"
@@ -1634,7 +1637,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class PatternArgumentInForeignFunctionError (
+    class PatternArgumentInForeignFunctionError(
         element: PsiElement
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
@@ -1644,7 +1647,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class PatternArgumentInFunctionWithoutBodyError (
+    class PatternArgumentInFunctionWithoutBodyError(
         element: PsiElement
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
@@ -1669,7 +1672,7 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation (
+        override fun prepare() = PreparedAnnotation(
             ERROR,
             E0197,
             "Inherent impls cannot be unsafe",
@@ -1681,7 +1684,7 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation (
+        override fun prepare() = PreparedAnnotation(
             ERROR,
             E0131,
             "`main` function is not allowed to have generic parameters",
