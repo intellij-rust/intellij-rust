@@ -407,7 +407,8 @@ class Cargo(
         owner: Disposable,
         directory: VirtualFile,
         name: String,
-        templateUrl: String
+        templateUrl: String,
+        vcs: String? = null
     ): RsProcessResult<GeneratedFilesHolder> {
         val path = directory.pathAsPath
         val args = mutableListOf(
@@ -416,6 +417,10 @@ class Cargo(
             "--init", // generate in current directory
             "--force" // enforce cargo-generate not to do underscores to hyphens name conversion
         )
+
+        vcs?.let {
+            args.addAll(listOf("--vcs", vcs))
+        }
 
         CargoCommandLine("generate", path, args)
             .execute(project, owner)

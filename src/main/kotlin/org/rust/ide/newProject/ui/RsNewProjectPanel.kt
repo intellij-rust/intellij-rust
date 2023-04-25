@@ -35,6 +35,8 @@ import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.fullWidthCell
 import org.rust.stdext.unwrapOrThrow
+import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.DefaultListModel
 import javax.swing.JList
 import javax.swing.ListSelectionModel
@@ -42,10 +44,11 @@ import kotlin.math.min
 
 class RsNewProjectPanel(
     private val showProjectTypeSelection: Boolean,
+    cargoProjectDir: Path = Paths.get("."),
     private val updateListener: (() -> Unit)? = null
 ) : Disposable {
 
-    private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
+    private val rustProjectSettings = RustProjectSettingsPanel(cargoProjectDir, updateListener)
 
     private val cargo: Cargo?
         get() = rustProjectSettings.data.toolchain?.cargo()
