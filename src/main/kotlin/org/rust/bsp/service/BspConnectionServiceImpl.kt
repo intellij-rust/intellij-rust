@@ -457,6 +457,7 @@ fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<Packag
                 )
             }
         }
+        .toSortedMap()
 }
 
 
