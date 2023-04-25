@@ -2,5 +2,6 @@
 name = "example_project"
 version = "0.1.0"
 authors = ["Aleksey Kladov <aleksey.kladov@gmail.com>"]
+edition = "2021"
 
 [dependencies]
