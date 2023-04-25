@@ -19,6 +19,7 @@ class RsAttrErrorAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is RsMetaItem -> {
+                if (!element.isRootMetaItem()) return
                 checkMetaBadDelim(element, holder)
                 checkAttrTemplateCompatible(element, holder)
                 checkLiteralSuffix(element, holder)

@@ -139,4 +139,9 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
         #[cfg_attr(unix, cfg_attr(unix, macro_use))]
         fn nested_cfg() {}
     """)
+
+    fun `test no error for cfg feature`() = checkByText("""
+        #[cfg(feature = "foo")]
+        fn bar() {}
+    """)
 }
