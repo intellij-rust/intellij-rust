@@ -322,7 +322,27 @@ private fun isComplexPattern(pat: RsPat?): Boolean {
 }
 
 private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
-    val fn = param.parent.parent as? RsFunction ?: return
+    val parent = param.parent.parent ?: return
+    when (parent) {
+        is RsFunction -> {
+            checkValueParameterInFunction(parent, param, holder)
+        }
+
+        is RsFnPointerType -> {
+            checkValueParameterInFunctionPointerType(param, holder)
+        }
+    }
+}
+
+fun checkValueParameterInFunctionPointerType(param: RsValueParameter, holder: AnnotationHolder) {
+    val pat = param.pat
+    val isComplexPattern = isComplexPattern(pat)
+    if (isComplexPattern) {
+        RsDiagnostic.PatternArgumentInFunctionPointerTypeError(param).addToHolder(holder)
+    }
+}
+
+private fun checkValueParameterInFunction(fn: RsFunction, param: RsValueParameter, holder: AnnotationHolder) {
     val pat = param.pat
     val isComplexPattern = isComplexPattern(pat)
     when (fn.owner) {
@@ -330,12 +350,14 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
         is RsAbstractableOwner.Impl -> {
             require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
         }
+
         is RsAbstractableOwner.Foreign -> {
             require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
             if (isComplexPattern) {
                 RsDiagnostic.PatternArgumentInForeignFunctionError(param).addToHolder(holder)
             }
         }
+
         is RsAbstractableOwner.Trait -> {
             if (isComplexPattern && fn.block == null) {
                 RsDiagnostic.PatternArgumentInFunctionWithoutBodyError(param).addToHolder(holder)
