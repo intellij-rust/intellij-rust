@@ -17,6 +17,7 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
+import org.junit.runner.RunWith
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.tools.rustc
@@ -31,6 +32,7 @@ import org.rust.stdext.RsResult
  * Unlike [org.rust.RsTestBase] it does not use in-memory temporary VFS
  * and instead copies real files.
  */
+@RunWith(RsJUnit4TestRunner::class)
 abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
 
     protected lateinit var rustupFixture: RustupTestFixture
