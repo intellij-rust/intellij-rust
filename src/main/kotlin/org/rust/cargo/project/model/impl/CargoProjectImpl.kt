@@ -556,12 +556,12 @@ data class CargoProjectImpl(
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy if (!userDisabledFeatures.isEmpty() && isUnitTestMode) {
-            rawWorkspace.withDisabledFeatures(userDisabledFeatures)
+            rawWorkspace.withDisabledFeatures(userDisabledFeatures, project)
         } else {
             rawWorkspace
         }
         rawWorkspace.withStdlib(stdlib, rawWorkspace.cfgOptions, rustcInfo)
-            .withDisabledFeatures(userDisabledFeatures)
+            .withDisabledFeatures(userDisabledFeatures, project)
     }
 
     override val presentableName: String by lazy {

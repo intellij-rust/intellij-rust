@@ -5,12 +5,15 @@
 
 package org.rust.cargo.project.workspace
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
@@ -66,7 +69,7 @@ interface CargoWorkspace {
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
-    fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace
+    fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures, project: Project? = null): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == STDLIB }
 
     @TestOnly
@@ -401,8 +404,19 @@ private class WorkspaceImpl(
         return this
     }
 
-    override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace {
-        val featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
+    override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures, project: Project?): CargoWorkspace {
+        var featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
+
+        // TODO: I don't know why, but I have to enable all features.
+        // FIXME: Please fix someone :(((
+        val bspService = project?.service<BspConnectionService>()
+        if (bspService?.hasBspServer() == true) {
+            featuresState = featuresState.mapValues {
+                it.value.mapValues {
+                    FeatureState.Enabled
+                }
+            }
+        }
 
         return WorkspaceImpl(
             manifestPath,
