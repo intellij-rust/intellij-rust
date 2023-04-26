@@ -144,7 +144,7 @@ private fun emitMalformedAttribute(
     }
     if (template.nameValueStr != null) {
         if (!first) stringBuilder.append(" or ")
-        stringBuilder.append("#${inner}[${name} = ${template.nameValueStr}]")
+        stringBuilder.append("#${inner}[${name} = \"${template.nameValueStr}\"]")
     }
     val msg = if (first) "Must be of the form" else "The following are the possible correct uses"
     RsDiagnostic.MalformedAttributeInput(metaItem, name, "$msg $stringBuilder").addToHolder(holder)
