@@ -10,13 +10,13 @@ class RsPatternArgumentInForeignFunctionTest: RsAnnotatorTestBase(RsSyntaxErrors
         struct MyInt(i32);
 
         extern "C" {
-            fn foo(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">MyInt(x): MyInt</error>);
+            fn foo(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">MyInt(x)</error>: MyInt);
         }
     """)
 
     fun `test E0130 array pattern`() = checkByText("""
         extern "C" {
-            fn foo(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">[x, ..]: [i32; 3]</error>);
+            fn foo(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">[x, ..]</error>: [i32; 3]);
         }
     """)
 
@@ -39,18 +39,18 @@ class RsPatternArgumentInForeignFunctionTest: RsAnnotatorTestBase(RsSyntaxErrors
 
     fun `test E0130 compiler test -- no-patterns-in-args`() = checkByText("""
         extern "C" {
-            fn f1(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">mut arg: u8</error>);
-            fn f2(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">&arg: u8</error>);
-            fn f3(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">arg @ _: u8</error>);
+            fn f1(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">mut arg</error>: u8);
+            fn f2(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">&arg</error>: u8);
+            fn f3(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">arg @ _</error>: u8);
         }
     """)
 
     fun `test E0130 compiler test -- issue-10877`() = checkByText("""
         extern "C" {
-            fn foo(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">1: ()</error>);
-            fn bar(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">(): isize</error>);
-            fn baz(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">Foo { x }: isize</error>);
-            fn qux(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">(x, y): ()</error>);
+            fn foo(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">1</error>: ());
+            fn bar(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">()</error>: isize);
+            fn baz(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">Foo { x }</error>: isize);
+            fn qux(<error descr="Patterns aren't allowed in foreign function declarations [E0130]">(x, y)</error>: ());
             fn this_is_actually_ok(a: usize);
             fn and_so_is_this(_: usize);
         }

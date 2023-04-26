@@ -5,13 +5,13 @@
 
 package org.rust.ide.annotator
 
-class RsPatternArgumentInFuntionPointerTypeTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
+class RsPatternArgumentInFunctionPointerTypeTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
     fun `test E0561 mut identifier`() = checkByText("""
-        type Foo = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">mut arg: u8</error>);
+        type Foo = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">mut arg</error>: u8);
     """)
 
     fun `test E0561 reference`() = checkByText("""
-        type Foo = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">& arg: u8</error>);
+        type Foo = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">&arg</error>: u8);
     """)
 
 
@@ -32,7 +32,7 @@ class RsPatternArgumentInFuntionPointerTypeTest : RsAnnotatorTestBase(RsSyntaxEr
     """)
 
     fun `test E0561 multiple identifiers one mut`() = checkByText("""
-        type Foo = fn(u8, <error descr="Patterns aren't allowed in function pointer types [E0561]">mut first: i32</error>, _: &str);
+        type Foo = fn(u8, <error descr="Patterns aren't allowed in function pointer types [E0561]">mut first</error>: i32, _: &str);
     """)
 
 }
