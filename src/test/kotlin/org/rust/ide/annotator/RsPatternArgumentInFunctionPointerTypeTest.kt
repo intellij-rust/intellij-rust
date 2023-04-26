@@ -35,4 +35,28 @@ class RsPatternArgumentInFunctionPointerTypeTest : RsAnnotatorTestBase(RsSyntaxE
         type Foo = fn(u8, <error descr="Patterns aren't allowed in function pointer types [E0561]">mut first</error>: i32, _: &str);
     """)
 
+
+    fun `test E0561 macros`() = checkByText("""
+        macro_rules! foo {
+            () => { _ };
+        }
+
+        macro_rules! proxy_foo {
+            () => { foo!() };
+        }
+
+        macro_rules! bad {
+            () => { (a, b) };
+        }
+
+        macro_rules! proxy_bad {
+            () => { bad!() };
+        }
+
+        type A = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">foo!()</error>: (i32, i32));
+        type B = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">proxy_foo!()</error>: (i32, i32));
+        type C = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">bad!()</error>: (i32, i32));
+        type D = fn(<error descr="Patterns aren't allowed in function pointer types [E0561]">proxy_bad!()</error>: (i32, i32));
+    """)
+
 }

@@ -368,7 +368,7 @@ private fun checkFunctionParameterPatIsSimple(fn: RsFunction, element: RsPat, ho
 
 private fun checkFunctionPointerTypeParameterPatIsSimple(element: RsPat, holder: AnnotationHolder) {
     val isComplexPattern = isComplexPattern(element)
-    if (isComplexPattern) {
+    if (isComplexPattern || element is RsPatMacro) {
         RsDiagnostic.PatternArgumentInFunctionPointerTypeError(element).addToHolder(holder)
     }
 }
