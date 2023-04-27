@@ -62,6 +62,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsTraitType -> checkTraitType(holder, element)
             is RsUnderscoreExpr -> checkUnderscoreExpr(holder, element)
             is RsWherePred -> checkWherePred(holder, element)
+            is RsLambdaExpr -> checkLambdaExpr(holder, element)
             else -> {
                 checkReservedKeyword(holder, element)
             }
@@ -537,6 +538,16 @@ private fun checkWherePred(holder: AnnotationHolder, boundPred: RsWherePred) {
                 val fixes = listOf(RemovePolyBoundFix(bound))
                 RsDiagnostic.NestedQuantificationOfLifetimeBoundsError(bound, fixes).addToHolder(holder)
             }
+        }
+    }
+}
+
+private fun checkLambdaExpr(holder: AnnotationHolder, lambda: RsLambdaExpr) {
+    val asyncElement = lambda.async
+    if (asyncElement != null && lambda.move == null) {
+        val valueParameterList = lambda.valueParameterList
+        if (valueParameterList.valueParameterList.isNotEmpty()) {
+            RsDiagnostic.AsyncNonMoveClosureWithParameters(asyncElement, valueParameterList).addToHolder(holder)
         }
     }
 }
