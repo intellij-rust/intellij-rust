@@ -72,12 +72,16 @@ data class StandardLibrary(
         ): StandardLibrary? {
             val srcDir = findSrcDir(sources) ?: return null
 
+            if (useBsp) {
+                return fetchHardcodedStdlib(srcDir)
+            }
+
             fun warn(message: String) {
                 LOG.warn(message)
                 listener?.warning(message, "")
             }
 
-            val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject && !useBsp) {
+            val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject) {
                 val rustcVersion = rustcInfo?.version
                 val semverVersion = rustcVersion?.semver
                 if (semverVersion == null) {
