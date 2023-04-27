@@ -35,4 +35,6 @@ interface BspConnectionService {
     fun getMacroResolverPath(): Path?
 
     fun getStdLibPath(): VirtualFile?
+
+    fun getRustcVersion(): String?
 }

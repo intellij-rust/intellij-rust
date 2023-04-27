@@ -235,6 +235,12 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val (toolchain) = calculateToolchains(server)
         return (toolchain.stdLib.rustcSrcSysroot + "/library").toVirtualFile()
     }
+
+    override fun getRustcVersion(): String? {
+        val server = getBspServer()
+        val (toolchain) = calculateToolchains(server)
+        return toolchain.stdLib.rustcVersion
+    }
 }
 
 interface BspServer : BuildServer, RustBuildServer
@@ -288,7 +294,7 @@ private fun createSymlinkReplacer(
     projectDirectoryRel: Path
 ): (String) -> String {
     val projectDirectory = projectDirectoryRel.toAbsolutePath()
-    val id: (String) -> String = replacer@{return@replacer it}
+    val id: (String) -> String = replacer@{ return@replacer it }
     if (workspaceRoot == null || projectDirectory.toString() == workspaceRoot) {
         return id
     }
@@ -315,7 +321,6 @@ private fun createSymlinkReplacer(
     }
     return replacer
 }
-
 
 
 private fun collectRustBspTargets(bspTargets: List<BuildTarget>): List<BuildTarget> {
