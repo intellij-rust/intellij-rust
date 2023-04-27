@@ -7,6 +7,5 @@ RELEASE_MANAGER_RE = re.compile("Release manager: @(\\w+)")
 release_managers = [
     "mchernyavsky",
     "vlad20012",
-    "dima74",
-    "ozkriff"
+    "dima74"
 ]
