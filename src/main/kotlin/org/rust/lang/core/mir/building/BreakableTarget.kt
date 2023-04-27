@@ -7,7 +7,6 @@ package org.rust.lang.core.mir.building
 
 import org.rust.lang.core.types.regions.Scope
 
-class IfThenScope(
-    val scope: Scope,
-    val elseDrops: DropTree,
-)
+sealed class BreakableTarget {
+    data class Break(val scope: Scope) : BreakableTarget()
+}

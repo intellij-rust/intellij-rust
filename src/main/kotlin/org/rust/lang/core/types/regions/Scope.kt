@@ -33,6 +33,18 @@ sealed class Scope {
      * until the end of the block [element].
      */
     data class Remainder(override val element: RsBlock, val letDecl: RsLetDecl) : Scope()
+
+    /**
+     * Scope of the condition and then block of an if expression.
+     * Used for variables introduced in an if-let expression.
+     */
+    data class IfThen(override val element: RsElement) : Scope()
+
+    /**
+     * Scope of arguments passed to a function or closure
+     * (they outlive its body).
+     */
+    data class Arguments(override val element: RsElement) : Scope()
 }
 
 /**

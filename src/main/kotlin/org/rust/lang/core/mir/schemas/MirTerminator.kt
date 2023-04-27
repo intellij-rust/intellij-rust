@@ -41,10 +41,20 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
         override val source: MirSourceInfo,
     ) : MirTerminator<BB>
 
+    data class FalseUnwind<BB : MirBasicBlock>(
+        val realTarget: BB,
+        val unwind: BB?,
+        override val source: MirSourceInfo,
+    ) : MirTerminator<BB>
+
+    data class Unreachable(
+        override val source: MirSourceInfo,
+    ) : MirTerminator<Nothing>
+
     companion object {
         /**
          * This is singleton because it is identified using reference identity (===)
          */
-        val dummy = Resume(MirSourceInfo.Fake)
+        val dummy = Resume(MirSourceInfo.fake)
     }
 }

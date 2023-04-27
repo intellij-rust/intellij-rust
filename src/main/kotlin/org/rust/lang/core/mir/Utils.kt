@@ -5,9 +5,12 @@
 
 package org.rust.lang.core.mir
 
-import org.rust.lang.core.mir.schemas.MirSourceInfo
+import com.intellij.psi.PsiElement
+import org.rust.lang.core.mir.schemas.MirSpan
+import org.rust.lang.core.psi.RsBindingMode
 import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.ty.*
 
 val Ty.isSigned: Boolean
@@ -25,7 +28,8 @@ val TyInteger.minValue: Long
         return Int.MIN_VALUE.toLong()
     }
 
-val RsElement.asSource: MirSourceInfo get() = MirSourceInfo(this)
+val RsElement.asSpan: MirSpan get() = MirSpan(this)
+val RsElement.asStartSpan: MirSpan get() = MirSpan.Start(this)
 
 val Ty.needsDrop: Boolean
     get() {
@@ -33,6 +37,8 @@ val Ty.needsDrop: Boolean
         return when (this) {
             is TyPrimitive -> false
             is TyTuple -> types.any { it.needsDrop }
+            is TyAdt -> false // TODO: usually not false actually
+            is TyReference -> false
             else -> true
         }
     }
@@ -43,3 +49,18 @@ val ArithmeticOp.isCheckable: Boolean
         || this == ArithmeticOp.MUL
         || this == ArithmeticOp.SHL
         || this == ArithmeticOp.SHR
+
+val Scope.span: MirSpan get() { // TODO: it can be more complicated in case of remainder
+    return element.asSpan
+}
+
+/**
+ * This class exists because in case of `let x = 3` there is no binding mode created in PSI
+ */
+@JvmInline
+value class RsBindingModeWrapper(private val bindingMode: RsBindingMode?) {
+    val mut: PsiElement? get() = bindingMode?.mut
+    val ref: PsiElement? get() = bindingMode?.ref
+}
+
+val RsBindingMode?.wrapper get() = RsBindingModeWrapper(this)

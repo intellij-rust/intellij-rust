@@ -6,5 +6,6 @@
 package org.rust.lang.core.mir.schemas
 
 sealed class MirConstValue {
-    data class Scalar(val value: MirScalarValue) : MirConstValue()
+    data class Scalar(val value: MirScalar) : MirConstValue()
+    object ZeroSized : MirConstValue()
 }

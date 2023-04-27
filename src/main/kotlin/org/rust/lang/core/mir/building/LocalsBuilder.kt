@@ -12,21 +12,24 @@ import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 
 class LocalsBuilder(returnTy: Ty, returnSource: MirSourceInfo) {
-    private val returnLocal = MirLocal.returnLocal(returnTy, returnSource)
-    private val tail = mutableListOf<MirLocal>()
+    private val locals = mutableListOf(MirLocal.returnLocal(returnTy, returnSource))
 
-    fun returnPlace() = MirPlace(returnLocal)
+    fun returnPlace() = MirPlace(locals.first())
 
-    fun tempPlace(ty: Ty, source: MirSourceInfo, mutability: Mutability): MirPlace {
-        val local = MirLocal(mutability, ty, source)
-        tail.add(local)
+    fun tempPlace(
+        ty: Ty,
+        source: MirSourceInfo,
+        internal: Boolean = false,
+        mutability: Mutability = Mutability.MUTABLE,
+    ): MirPlace {
+        val local = MirLocal(mutability, internal, null, null, ty, source)
+        locals.add(local)
         return MirPlace(local)
     }
 
-    fun build(): List<MirLocal> {
-        return buildList {
-            add(returnLocal)
-            addAll(tail)
-        }
+    fun push(local: MirLocal) {
+        locals.add(local)
     }
+
+    fun build(): List<MirLocal> = locals.toList()
 }

@@ -7,9 +7,9 @@ package org.rust.lang.core.mir
 
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.openapiext.document
 import java.util.*
 import kotlin.math.max
@@ -23,12 +23,11 @@ internal class MirPrettyPrinter(
     }
 
     private fun localIndex(local: MirLocal): Int = mir.localDecls.indexOf(local)
-
     private fun blockIndex(block: MirBasicBlock): Int = mir.basicBlocks.indexOf(block)
+    private fun scopeIndex(scope: MirSourceScope): Int = mir.sourceScopes.indexOf(scope)
+
     private fun StringBuilder.printMir(mir: MirBody): StringBuilder = apply {
-        printIntro(mir.source)
-        appendLine("{")
-        printScopeTree(mir, 1)
+        printIntro()
         mir.basicBlocks.withIndex().forEach { (index, block) ->
             appendLine()
             print(
@@ -52,9 +51,11 @@ internal class MirPrettyPrinter(
                 }
                 is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${localIndex(stmt.local)});"
                 is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${localIndex(stmt.local)});"
+                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${localIndex(stmt.place.local)});"
             }
             appendLine(statement.withComment(" // ${createComment(stmt.source)}"))
         }
+
         when (val terminator = block.terminator) {
             is MirTerminator.Return -> {
                 val comment = createComment(block.terminator.source)
@@ -89,6 +90,21 @@ internal class MirPrettyPrinter(
                 val comment = createComment(block.terminator.source)
                 appendLine("$INDENT${INDENT}resume;".withComment(" // $comment"))
             }
+            is MirTerminator.FalseUnwind -> {
+                val comment = createComment(block.terminator.source)
+                val cases = buildString {
+                    append("[")
+                    append("real: bb${blockIndex(terminator.realTarget)}")
+                    append(", ")
+                    append("cleanup: bb${blockIndex(terminator.unwind!!)}")
+                    append("]")
+                }
+                appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(" // $comment"))
+            }
+            is MirTerminator.Unreachable -> {
+                val comment = createComment(block.terminator.source)
+                appendLine("$INDENT${INDENT}unreachable;".withComment(" // $comment"))
+            }
         }
         appendLine("$INDENT}")
     }
@@ -115,8 +131,11 @@ internal class MirPrettyPrinter(
         return when (rvalue) {
             is MirRvalue.BinaryOpUse -> {
                 val opName = when (val op = rvalue.op) {
-                    is ArithmeticOp -> op.traitName
-                    is EqualityOp.EQ -> "Eq"
+                    is MirBinaryOperator.Arithmetic -> op.op.traitName
+                    is MirBinaryOperator.Equality -> when (op.op) {
+                        EqualityOp.EQ -> "Eq"
+                        EqualityOp.EXCLEQ -> TODO()
+                    }
                     else -> TODO()
                 }
                 "$opName(${format(rvalue.left)}, ${format(rvalue.right)})"
@@ -125,7 +144,7 @@ internal class MirPrettyPrinter(
             is MirRvalue.Use -> format(rvalue.operand)
             is MirRvalue.CheckedBinaryOpUse -> {
                 val funName = when (val op = rvalue.op) {
-                    is ArithmeticOp -> "Checked${op.traitName}"
+                    is MirBinaryOperator.Arithmetic -> "Checked${op.op.traitName}"
                     else -> throw IllegalStateException("$op can't be checked")
                 }
                 "$funName(${format(rvalue.left)}, ${format(rvalue.right)})"
@@ -140,6 +159,8 @@ internal class MirPrettyPrinter(
                     toString()
                 }
             }
+            is MirRvalue.Aggregate.Adt -> rvalue.definition.name ?: TODO()
+            is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
         }
     }
 
@@ -161,42 +182,45 @@ internal class MirPrettyPrinter(
     }
 
     private fun format(constant: MirConstant): String {
-        return when (constant) {
-            is MirConstant.Value -> {
-                val value = value(constant.constValue)
-                val type = constant.ty as TyPrimitive
-                when (type) {
+        return when {
+            constant is MirConstant.Value && constant.constValue is MirConstValue.Scalar -> {
+                val value = when (val value = (constant.constValue as MirConstValue.Scalar).value) {
+                    is MirScalar.Int -> value.scalarInt.data.toString()
+                }
+                when (val type = constant.ty as TyPrimitive) {
                     is TyInteger -> if (type.minValue.toString() == value) {
                         "${type.name}::MIN"
                     } else {
                         "${value}_${type.name}"
                     }
+
                     is TyBool -> when (value) {
                         "0" -> "false"
                         "1" -> "true"
                         else -> TODO()
                     }
+
                     else -> TODO()
                 }
             }
-        }
-    }
-
-    private fun value(constValue: MirConstValue): String {
-        return when (constValue) {
-            is MirConstValue.Scalar -> when (val value = constValue.value) {
-                is MirScalarValue.Int -> value.scalarInt.data.toString()
+            constant is MirConstant.Value && constant.constValue is MirConstValue.ZeroSized -> {
+                when (constant.ty) {
+                    is TyUnit -> "()"
+                    else -> TODO()
+                }
             }
+            else -> TODO()
         }
     }
 
-    private fun StringBuilder.printIntro(source: MirSourceInfo): StringBuilder = apply {
-        val reference = when (source) {
-            is MirSourceInfo.End -> source.reference
-            MirSourceInfo.Fake -> error("can't print fake source info")
-            is MirSourceInfo.Full -> source.reference
-        }
-        when (reference) {
+    private fun StringBuilder.printIntro(): StringBuilder = apply {
+        printMirSignature()
+        appendLine("{")
+        printScopeTree(mir.sourceScopesTree, mir.outermostScope, 1)
+    }
+
+    private fun StringBuilder.printMirSignature(): StringBuilder = apply {
+        when (val reference = mir.sourceElement) {
             is RsConstant -> {
                 when {
                     reference.const != null -> append("const ")
@@ -205,15 +229,29 @@ internal class MirPrettyPrinter(
                     else -> throw IllegalStateException("Unexpected RsConstant")
                 }
                 append(reference.name ?: TODO())
-                val type = reference.expr?.type as Ty // TODO: later extend for not primitive types
-                append(": ${format(type)} = ")
+                append(": ${format(mir.returnLocal.ty)} = ")
             }
+            is RsFunction -> {
+                append("fn ")
+                append(reference.name)
+                append("(")
+                // TODO: arguments
+                append(") -> ${format(mir.returnLocal.ty)} ")
+            }
+            else -> TODO("Unsupported type ${reference::class}")
+        }
+    }
+
+    private fun format(cause: MirStatement.FakeRead.Cause): String {
+        return when (cause) {
+            is MirStatement.FakeRead.Cause.ForLet -> "ForLet(None)".also { assert(cause.element == null) }
         }
     }
 
     private fun format(ty: Ty): String {
         return when (ty) {
             is TyUnit -> "()"
+            TyNever -> "!"
             is TyPrimitive -> ty.name
             is TyTuple -> if (ty.types.size == 1) {
                 "(${format(ty.types.single())},)"
@@ -225,14 +263,26 @@ internal class MirPrettyPrinter(
                     toString()
                 }
             }
+            is TyAdt -> ty.item.name ?: TODO()
+            is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"
             else -> TODO()
         }
     }
 
     // just local declarations for now
-    private fun StringBuilder.printScopeTree(mir: MirBody, depth: Int): StringBuilder = apply {
+    private fun StringBuilder.printScopeTree(
+        scopeTree: Map<MirSourceScope, List<MirSourceScope>>,
+        parent: MirSourceScope,
+        depth: Int,
+    ): StringBuilder = apply {
         val indent = INDENT.repeat(depth)
-        mir.localDecls.withIndex().forEach { (index, local) ->
+        for (varDebugInfo in mir.varDebugInfo) {
+            if (varDebugInfo.source.scope != parent) continue
+            val debugInfo = "${indent}debug ${varDebugInfo.name} => ${format(varDebugInfo.contents)};"
+            appendLine(debugInfo.withComment(" // in ${createComment(varDebugInfo.source)}"))
+        }
+        for ((index, local) in mir.localDecls.withIndex()) {
+            if (local.source.scope != parent) continue
             val mut = when (local.mutability) {
                 Mutability.MUTABLE -> "mut "
                 Mutability.IMMUTABLE -> ""
@@ -242,36 +292,55 @@ internal class MirPrettyPrinter(
             val comment = createComment(local.source)
             appendLine(definition.withComment(" //$localName in $comment"))
         }
+        val children = scopeTree[parent] ?: return@apply
+        children.forEach { child ->
+            appendLine("${indent}scope ${scopeIndex(child)} {")
+            printScopeTree(scopeTree, child, depth + 1)
+            appendLine("$indent}")
+        }
     }
+
+    private fun format(contents: MirVarDebugInfo.Contents): String {
+        return when (contents) {
+            is MirVarDebugInfo.Contents.Composite -> TODO()
+            is MirVarDebugInfo.Contents.Constant -> format(contents.constant)
+            is MirVarDebugInfo.Contents.Place -> format(contents.place)
+        }
+    }
+
 
     private fun String.withComment(comment: String): String {
         return "$this${" ".repeat(max(ALIGN - length, 0))}$comment"
     }
 
     private fun createComment(source: MirSourceInfo): String {
-        val reference = when (source) {
-            is MirSourceInfo.End -> source.reference
-            MirSourceInfo.Fake -> error("can't print fake source info")
-            is MirSourceInfo.Full -> source.reference
-        }
-        val scope = 0 // TODO
-        val fileName = reference.contextualFile.originalFile.name
-        val startOffset = reference.startOffset
-        val endOffset = reference.endOffset
-        val startLine = reference.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
-        val endLine = reference.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
-        val startLineOffset = startOffset - reference.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
-        val endLineOffset = endOffset - reference.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
-        return when (source) {
-            is MirSourceInfo.Full -> {
+        val scope = scopeIndex(source.scope)
+        val fileName = source.span.reference.contextualFile.originalFile.name
+        val startOffset = source.span.reference.startOffset
+        val endOffset = source.span.reference.endOffset
+        val startLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
+        val endLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
+        val startLineOffset = startOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
+        val endLineOffset = endOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
+        return when (source.span) {
+            is MirSpan.Full -> {
                 "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
                     "${endLine + 1}:${endLineOffset + 1}"
             }
-            is MirSourceInfo.End -> {
+            is MirSpan.EndPoint -> {
                 "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset}: " +
                     "${endLine + 1}:${endLineOffset + 1}"
             }
-            MirSourceInfo.Fake -> error("can't print fake source info")
+            is MirSpan.End -> {
+                "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset + 1}: " +
+                    "${endLine + 1}:${endLineOffset + 1}"
+            }
+            is MirSpan.Start -> {
+                "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
+                    "${startLine + 1}:${startLineOffset + 1}"
+            }
+
+            MirSpan.Fake -> error("can't print fake source info")
         }
     }
 

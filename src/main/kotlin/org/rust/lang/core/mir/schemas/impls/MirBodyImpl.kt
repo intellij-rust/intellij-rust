@@ -5,14 +5,15 @@
 
 package org.rust.lang.core.mir.schemas.impls
 
-import org.rust.lang.core.mir.schemas.MirBody
-import org.rust.lang.core.mir.schemas.MirLocal
-import org.rust.lang.core.mir.schemas.MirSourceInfo
+import org.rust.lang.core.mir.schemas.*
+import org.rust.lang.core.psi.ext.RsElement
 
-class MirBodyImpl(
+data class MirBodyImpl(
+    override val sourceElement: RsElement,
     override val basicBlocks: MutableList<MirBasicBlockImpl>,
     override val localDecls: List<MirLocal>,
-    override val source: MirSourceInfo,
-) : MirBody {
-    override fun toString() = "MirBodyImpl(basicBlocks=$basicBlocks, localDecls=$localDecls, source=$source)"
-}
+    override val span: MirSpan,
+    override val sourceScopes: List<MirSourceScope>,
+    override val argCount: Int,
+    override val varDebugInfo: List<MirVarDebugInfo>,
+) : MirBody

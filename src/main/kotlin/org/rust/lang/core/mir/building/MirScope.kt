@@ -5,11 +5,9 @@
 
 package org.rust.lang.core.mir.building
 
-import org.rust.lang.core.mir.needsDrop
-import org.rust.lang.core.mir.schemas.MirLocal
-import org.rust.lang.core.mir.schemas.MirSourceInfo
+import org.rust.lang.core.types.regions.Scope
 
-class Scope(val source: MirSourceInfo) {
+data class MirScope(val scope: Scope) {
     private val drops = mutableListOf<Drop>()
     var cachedUnwindDrop: DropTree.DropNode? = null
         private set
@@ -22,11 +20,11 @@ class Scope(val source: MirSourceInfo) {
 
     fun drops(): Iterator<Drop> = drops.iterator()
 
-    fun scheduleDrop(local: MirLocal, dropKind: Drop.Kind) {
-        if (dropKind == Drop.Kind.VALUE && !local.ty.needsDrop) return
-        drops.add(Drop(local, dropKind, source.end))
+    fun addDrop(drop: Drop) {
+        drops.add(drop)
     }
 
-    override fun equals(other: Any?) = this === other
-    override fun hashCode() = System.identityHashCode(this)
+    fun invalidateCaches() {
+        cachedUnwindDrop = null
+    }
 }

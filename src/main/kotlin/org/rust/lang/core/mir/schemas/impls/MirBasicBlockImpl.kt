@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-@file:Suppress("CanSealedSubClassBeObject")
-
 package org.rust.lang.core.mir.schemas.impls
 
 import org.rust.lang.core.mir.schemas.*
@@ -40,6 +38,14 @@ class MirBasicBlockImpl private constructor(
 
     fun pushStorageDead(local: MirLocal, source: MirSourceInfo): MirBasicBlockImpl {
         return push(MirStatement.StorageDead(local, source))
+    }
+
+    fun pushFakeRead(
+        cause: MirStatement.FakeRead.Cause.ForLet,
+        place: MirPlace,
+        source: MirSourceInfo,
+    ): MirBasicBlockImpl {
+        return push(MirStatement.FakeRead(cause, place, source))
     }
 
     fun terminateWithReturn(source: MirSourceInfo?) {
@@ -81,6 +87,22 @@ class MirBasicBlockImpl private constructor(
         )
     }
 
+    fun terminateWithFalseUnwind(realTarget: MirBasicBlockImpl, unwind: MirBasicBlockImpl?, source: MirSourceInfo?) {
+        terminator = MirTerminator.FalseUnwind(
+            realTarget = realTarget,
+            unwind = unwind,
+            source = getTerminatorSource(source),
+        )
+    }
+
+    fun terminateWithUnreachable(source: MirSourceInfo?) {
+        terminator = MirTerminator.Unreachable(getTerminatorSource(source))
+    }
+
+    fun terminateWithResume(source: MirSourceInfo?) {
+        terminator = MirTerminator.Resume(getTerminatorSource(source))
+    }
+
     private fun getTerminatorSource(source: MirSourceInfo?): MirSourceInfo {
         require((source == null) xor (terminatorSource == null)) {
             if (source != null) "Source can't be specified when terminator source is specified"
@@ -93,15 +115,12 @@ class MirBasicBlockImpl private constructor(
         statements.add(statement)
     }
 
-    fun resume(source: MirSourceInfo?) {
-        terminator = MirTerminator.Resume(getTerminatorSource(source))
-    }
-
     fun unwindTerminatorTo(block: MirBasicBlockImpl) {
         val terminator = terminator
         when {
             terminator.isDummy() -> error("Terminator is expected to be specified by this moment")
             terminator is MirTerminator.Assert -> this.terminator = terminator.copy(unwind = block)
+            terminator is MirTerminator.FalseUnwind -> this.terminator = terminator.copy(unwind = block)
             else -> error("Terminator is not unwindable")
         }
     }

@@ -7,6 +7,7 @@ package org.rust.lang.core.mir.building
 
 import org.rust.lang.core.mir.schemas.MirLocal
 import org.rust.lang.core.mir.schemas.MirSourceInfo
+import org.rust.lang.core.mir.schemas.MirSpan
 
 class Drop(
     val local: MirLocal,
@@ -19,10 +20,10 @@ class Drop(
     }
 
     override fun toString(): String {
-        return "Drop(local=$local, kind=$kind, source=$source)"
+        return "Drop(local=$local, kind=$kind, source=$source)" // TODO
     }
 
     companion object {
-        val fake = Drop(MirLocal.fake, Kind.STORAGE, MirSourceInfo.Fake)
+        val fake = Drop(MirLocal.fake, Kind.STORAGE, MirSourceInfo.fake)
     }
 }
