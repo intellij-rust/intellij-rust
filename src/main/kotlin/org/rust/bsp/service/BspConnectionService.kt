@@ -36,5 +36,6 @@ interface BspConnectionService {
 
     fun getStdLibPath(): VirtualFile?
 
+    // TODO: use me!
     fun getRustcVersion(): String?
 }

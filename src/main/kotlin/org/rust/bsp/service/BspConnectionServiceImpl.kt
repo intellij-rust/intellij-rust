@@ -32,6 +32,7 @@ import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.lang.core.crate.impl.CrateGraphServiceImpl
+import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import java.io.InputStream
 import java.io.OutputStream
@@ -216,9 +217,6 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     private fun getBspConnectionDetailsFile(): VirtualFile? =
         "${project.stateStore.projectBasePath}/.bsp/bazelbsp.json".toVirtualFile()
 
-    private fun String.toVirtualFile(): VirtualFile? =
-        VirtualFileManager.getInstance().findFileByNioPath(Path(this))
-
     override fun hasBspServer(): Boolean {
         return getBspConnectionDetailsFile() != null
     }
@@ -242,6 +240,9 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return toolchain.stdLib.rustcVersion
     }
 }
+
+private fun String.toVirtualFile(): VirtualFile? =
+    VirtualFileManager.getInstance().findFileByNioPath(Path(this))
 
 interface BspServer : BuildServer, RustBuildServer
 
@@ -310,11 +311,15 @@ private fun createSymlinkReplacer(
     // Otherwise, it's just a normal symlink.
     val normalisedWorkspace = projectDirectory.normalize().toString() + "/"
     val replacer: (String) -> String = replacer@{
-        // TODO there must be a better way to do this
+        // TODO: there must be a better way to do this
+        // TODO: a need to redo it
+        // This function can take both file:// and non-file:// paths, so we need to handle both
         val filePrefix = "file://"
-        val hasFilePrefix = it.startsWith(filePrefix)
-        val path = if (hasFilePrefix) it.removePrefix(filePrefix) else it
-        val prefix = if (hasFilePrefix) filePrefix else ""
+        val (path, prefix) = if (it.startsWith(filePrefix)) {
+            Pair(it.removePrefix(filePrefix), filePrefix)
+        } else {
+            Pair(it, "")
+        }
 
         if (!path.startsWith(workspaceRoot)) return@replacer it
         prefix + normalisedWorkspace + path.removePrefix(workspaceRoot)
