@@ -460,7 +460,7 @@ private fun Rustup.fetchStdlib(
     if (bspService.hasBspServer()) {
         val stdlib = bspService.getStdLibPath()
         return if (stdlib != null) {
-            val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context))
+            val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context), useBsp = true)
             if (lib == null) {
                 TaskResult.Err("Corrupted standard library: ${stdlib.presentableUrl}")
             } else {
