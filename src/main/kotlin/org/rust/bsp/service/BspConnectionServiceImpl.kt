@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
 import org.rust.bsp.BspConstants
+import org.rust.bsp.BspProjectViewManager
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -278,14 +279,27 @@ fun calculateProjectDetailsWithCapabilities(
     val workspaceRoot = bspWorkspaceRoot?.baseDirectory?.removePrefix("file://") // TODO there must be a better way to do this
     projectBazelTargets.targets.removeAll { it.id.uri == BspConstants.BSP_WORKSPACE_ROOT_URI }
     val pathReplacer = createSymlinkReplacer(workspaceRoot, projectDirectory)
-    val changedWorkspaceRoot = workspaceRoot?.let { pathReplacer(it) };
+    val changedWorkspaceRoot = workspaceRoot?.let { pathReplacer(it) }
 
-    val rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
+    var rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
+    changedWorkspaceRoot?.let {
+        val bspProjectViewManager = BspProjectViewManager(it)
+        rustBspTargetsIds = bspProjectViewManager.filterIncludedPackages(rustBspTargetsIds)
+    }
+
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
 
     val projectPackages = createPackages(projectWorkspaceData, pathReplacer)
     val dependencies = createDependencies(projectWorkspaceData)
     val rawDependencies = createRawDependencies(projectWorkspaceData)
+
+    changedWorkspaceRoot?.let {
+        val bspProjectViewManager = BspProjectViewManager(it)
+        val localProjectPackages = projectPackages.filter { pkg ->
+            pkg.origin == PackageOrigin.WORKSPACE
+        }
+        bspProjectViewManager.generateTargetsFile(localProjectPackages)
+    }
 
     return CargoWorkspaceData(projectPackages, dependencies, rawDependencies, changedWorkspaceRoot, true)
 }
