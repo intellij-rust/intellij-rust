@@ -232,6 +232,9 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     override fun getStdLibPath(): VirtualFile? {
         val server = getBspServer()
         val (toolchain) = calculateToolchains(server)
+        // TODO: FIXME: We use the hardcoded way to collect stdlib
+        //  and it requires path to parent directory of all stdlib packages.
+        //  Switching to `experimental` stdlib resolution this suffix should be removed.
         return (toolchain.stdLib.rustcSrcSysroot + "/library").toVirtualFile()
     }
 
