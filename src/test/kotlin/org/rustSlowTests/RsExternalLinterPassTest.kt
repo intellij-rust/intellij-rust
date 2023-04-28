@@ -10,7 +10,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -21,7 +21,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()
-        project.rustSettings.modifyTemporary(testRootDisposable) { it.runExternalLinterOnTheFly = true }
+        project.externalLinterSettings.modifyTemporary(testRootDisposable) { it.runOnTheFly = true }
     }
 
     fun `test no errors if everything is ok`() = doTest("""
@@ -214,7 +214,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         @Language("Rust") mainRs: String,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
-        project.rustSettings.modifyTemporary(testRootDisposable) { it.externalLinter = externalLinter }
+        project.externalLinterSettings.modifyTemporary(testRootDisposable) { it.tool = externalLinter }
         fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -245,7 +245,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         tooltip: String,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
-        project.rustSettings.modifyTemporary(testRootDisposable) { it.externalLinter = externalLinter }
+        project.externalLinterSettings.modifyTemporary(testRootDisposable) { it.tool = externalLinter }
         fileTree {
             toml("Cargo.toml", """
                 [package]

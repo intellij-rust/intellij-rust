@@ -1156,8 +1156,9 @@
                              parentId="language.rust"
                              id="language.rust.rustfmt"/>
 
-        <projectService serviceInterface="org.rust.cargo.project.settings.RustProjectSettingsService"
-                        serviceImplementation="org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl"/>
+        <projectService serviceImplementation="org.rust.cargo.project.settings.RustProjectSettingsService"/>
+
+        <projectService serviceImplementation="org.rust.cargo.project.settings.RsExternalLinterProjectSettingsService"/>
 
         <projectService serviceImplementation="org.rust.cargo.project.settings.RustfmtProjectSettingsService"/>
 

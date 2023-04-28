@@ -46,7 +46,7 @@ class RustfmtWatcher {
         val file = document.virtualFile ?: return false
         if (file.isNotRustFile) return false
         val project = guessProjectForFile(file) ?: return false
-        if (!project.rustfmtSettings.state.runRustfmtOnSave) return false
+        if (!project.rustfmtSettings.runRustfmtOnSave) return false
         return documentsToReformatLater.add(document)
     }
 
@@ -100,7 +100,7 @@ class RustfmtWatcher {
 
         private fun reformatDocuments(cargoProject: CargoProject, documents: List<Document>) {
             val project = cargoProject.project
-            if (!project.rustfmtSettings.state.runRustfmtOnSave) return
+            if (!project.rustfmtSettings.runRustfmtOnSave) return
             val rustfmt = project.toolchain?.rustfmt() ?: return
             if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
             documents.forEach { rustfmt.reformatDocument(cargoProject, it) }

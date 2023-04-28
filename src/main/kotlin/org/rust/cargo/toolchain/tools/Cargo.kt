@@ -33,6 +33,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -719,22 +720,22 @@ sealed class CargoCheckArgs {
 
     companion object {
         fun forTarget(project: Project, target: CargoWorkspace.Target): CargoCheckArgs {
-            val settings = project.rustSettings
+            val settings = project.externalLinterSettings
             return SpecificTarget(
-                settings.externalLinter,
+                settings.tool,
                 target.pkg.workspace.contentRoot,
                 target,
-                settings.externalLinterArguments
+                settings.additionalArguments,
             )
         }
 
         fun forCargoProject(cargoProject: CargoProject): CargoCheckArgs {
-            val settings = cargoProject.project.rustSettings
+            val settings = cargoProject.project.externalLinterSettings
             return FullWorkspace(
-                settings.externalLinter,
+                settings.tool,
                 cargoProject.workingDirectory,
-                settings.compileAllTargets,
-                settings.externalLinterArguments
+                cargoProject.project.rustSettings.compileAllTargets,
+                settings.additionalArguments,
             )
         }
     }

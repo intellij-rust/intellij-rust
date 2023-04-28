@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.WindowManager
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.ide.status.RsExternalLinterWidget
 import java.util.*
 import javax.swing.event.HyperlinkEvent
@@ -45,7 +45,7 @@ class RsExternalLinterSlowRunNotifier(val project: Project) {
             widget.showBalloon(content, MessageType.WARNING, project) { e ->
                 if (e?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
                     when (e.description) {
-                        "disable" -> project.rustSettings.modify { it.runExternalLinterOnTheFly = false }
+                        "disable" -> project.externalLinterSettings.modify { it.runOnTheFly = false }
                         "dont-show-again" -> PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_KEY, true, false)
                     }
                 }

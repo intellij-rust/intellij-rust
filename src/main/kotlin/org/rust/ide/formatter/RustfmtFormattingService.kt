@@ -29,13 +29,12 @@ import org.rust.openapiext.runProcess
 import org.rust.stdext.enumSetOf
 import org.rust.stdext.unwrapOrThrow
 
-@Suppress("UnstableApiUsage")
 class RustfmtFormattingService : AsyncDocumentFormattingService() {
 
     override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
 
     override fun canFormat(file: PsiFile): Boolean =
-        file is RsFile && file.project.rustfmtSettings.state.useRustfmt && getFormattingReason() == FormattingReason.ReformatCode
+        file is RsFile && file.project.rustfmtSettings.useRustfmt && getFormattingReason() == FormattingReason.ReformatCode
 
     override fun createFormattingTask(request: AsyncFormattingRequest): FormattingTask? {
         val context = request.context

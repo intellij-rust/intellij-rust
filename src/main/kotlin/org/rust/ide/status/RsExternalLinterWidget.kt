@@ -20,9 +20,10 @@ import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.configurable.RsExternalLinterConfigurable
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
-import org.rust.cargo.project.settings.RustProjectSettingsService
-import org.rust.cargo.project.settings.RustProjectSettingsService.*
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.RsExternalLinterProjectSettingsService
+import org.rust.cargo.project.settings.RsProjectSettingsServiceBase.*
+import org.rust.cargo.project.settings.RsProjectSettingsServiceBase.Companion.RUST_SETTINGS_TOPIC
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.ide.icons.RsIcons
@@ -50,8 +51,8 @@ class RsExternalLinterWidgetUpdater(private val project: Project) : CargoProject
 class RsExternalLinterWidget(private val project: Project) : TextPanel.WithIconAndArrows(), CustomStatusBarWidget {
     private var statusBar: StatusBar? = null
 
-    private val linter: ExternalLinter get() = project.rustSettings.externalLinter
-    private val turnedOn: Boolean get() = project.rustSettings.runExternalLinterOnTheFly
+    private val linter: ExternalLinter get() = project.externalLinterSettings.tool
+    private val turnedOn: Boolean get() = project.externalLinterSettings.runOnTheFly
 
     var inProgress: Boolean = false
         set(value) {
@@ -79,9 +80,11 @@ class RsExternalLinterWidget(private val project: Project) : TextPanel.WithIconA
                 }
             }.installOn(this, true)
 
-            project.messageBus.connect(this).subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
-                override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
-                    if (e.isChanged(State::externalLinter) || e.isChanged(State::runExternalLinterOnTheFly)) {
+            project.messageBus.connect(this).subscribe(RUST_SETTINGS_TOPIC, object : RsSettingsListener {
+                override fun <T : RsProjectSettingsBase<T>> settingsChanged(e: SettingsChangedEventBase<T>) {
+                    if (e !is RsExternalLinterProjectSettingsService.SettingsChangedEvent) return
+                    if (e.isChanged(RsExternalLinterProjectSettingsService.RsExternalLinterProjectSettings::tool) ||
+                        e.isChanged(RsExternalLinterProjectSettingsService.RsExternalLinterProjectSettings::runOnTheFly)) {
                         update()
                     }
                 }
