@@ -341,7 +341,19 @@ class MirBuilder private constructor(
                             blockAnd.exprIntoPattern(statement.pattern, statement.initializer)
                         }
                     } else {
-                        TODO()
+                        blockAnd = inScope(statement.initScope) {
+                            declareBindings(
+                                visibilityScope,
+                                remainderSourceInfo,
+                                statement.pattern,
+                                null,
+                            )
+                            blockAnd
+                        }
+                        visitPrimaryBindings(statement.pattern) { _, _, _, node, span, _ ->
+                            blockAnd.block.storageLiveBinding(node, span, true)
+                            scheduleDropForBinding(node, span)
+                        }
                     }
                     sourceScopes.sourceScope = visibilityScope
                 }
