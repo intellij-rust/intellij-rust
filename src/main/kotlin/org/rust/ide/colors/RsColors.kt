@@ -18,12 +18,13 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Default
 /**
  * See [RsColorSettingsPage] and [org.rust.ide.highlight.RsHighlighter]
  */
-@Suppress("UnstableApiUsage")
 enum class RsColor(humanName: Supplier<@AttributeDescriptor String>, default: TextAttributesKey? = null) {
     VARIABLE(RsBundle.messagePointer("settings.rust.color.variables.default"), Default.IDENTIFIER),
     MUT_BINDING(RsBundle.messagePointer("settings.rust.color.mutable.binding"), Default.IDENTIFIER),
     FIELD(RsBundle.messagePointer("settings.rust.color.field"), Default.INSTANCE_FIELD),
     CONSTANT(RsBundle.messagePointer("settings.rust.color.constant"), Default.CONSTANT),
+    STATIC(RsBundle.messagePointer("settings.rust.color.static"), VARIABLE.textAttributesKey),
+    MUT_STATIC(RsBundle.messagePointer("settings.rust.color.static.mutable"), MUT_BINDING.textAttributesKey),
 
     FUNCTION(RsBundle.messagePointer("settings.rust.color.function.declaration"), Default.FUNCTION_DECLARATION),
     METHOD(RsBundle.messagePointer("settings.rust.color.method.declaration"), Default.INSTANCE_METHOD),
@@ -90,4 +91,3 @@ enum class RsColor(humanName: Supplier<@AttributeDescriptor String>, default: Te
     val attributesDescriptor = AttributesDescriptor(humanName, textAttributesKey)
     val testSeverity: HighlightSeverity = HighlightSeverity(name, HighlightSeverity.INFORMATION.myVal)
 }
-

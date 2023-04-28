@@ -198,11 +198,13 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     )
 
     fun `test const and static`() = checkHighlightingWithMacro("""
-        const <CONST>FOO</CONST>: i32 = 0;
-        static <CONST>BAR</CONST>: i32 = 0;
+        const <CONSTANT>FOO</CONSTANT>: i32 = 0;
+        static <STATIC>BAR</STATIC>: i32 = 0;
+        static mut <MUT_STATIC>BAZ</MUT_STATIC>: i32 = 0;
         fn main() {
-            <CONST>FOO</CONST>;
-            <CONST>BAR</CONST>;
+            <CONSTANT>FOO</CONSTANT>;
+            <STATIC>BAR</STATIC>;
+            <MUT_STATIC>BAZ</MUT_STATIC>;
         }
     """)
 

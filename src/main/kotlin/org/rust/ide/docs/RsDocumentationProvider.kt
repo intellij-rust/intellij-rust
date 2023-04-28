@@ -408,7 +408,7 @@ private val RsItemElement.declarationModifiers: List<String>
                 }
                 if (isActuallyExtern) {
                     modifiers += "extern"
-                    abiName?.let { modifiers += "\"$it\"" }
+                    literalAbiName?.let { modifiers += "\"$it\"" }
                 }
                 modifiers += "fn"
             }
