@@ -19,6 +19,7 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
+import org.rust.cargo.project.model.isBspWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -405,18 +406,7 @@ private class WorkspaceImpl(
     }
 
     override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures, project: Project?): CargoWorkspace {
-        var featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
-
-        // TODO: I don't know why, but I have to enable all features.
-        // FIXME: Please fix someone :(((
-        val bspService = project?.service<BspConnectionService>()
-        if (bspService?.hasBspServer() == true) {
-            featuresState = featuresState.mapValues {
-                it.value.mapValues {
-                    FeatureState.Enabled
-                }
-            }
-        }
+        val featuresState = inferFeatureState(userDisabledFeatures, usesBSP).associateByPackageRoot()
 
         return WorkspaceImpl(
             manifestPath,
@@ -436,7 +426,7 @@ private class WorkspaceImpl(
      * excluding [userDisabledFeatures] features.
      * Then we enable [DEPENDENCY] packages features transitively based on the initial state and features dependencies
      */
-    private fun inferFeatureState(userDisabledFeatures: UserDisabledFeatures): Map<PackageFeature, FeatureState> {
+    private fun inferFeatureState(userDisabledFeatures: UserDisabledFeatures, usesBSP: Boolean = false): Map<PackageFeature, FeatureState> {
         // Calculate features that should be enabled in the workspace, all by default (if `userDisabledFeatures` is empty)
         val workspaceFeatureState = featureGraph.apply(defaultState = FeatureState.Enabled) {
             disableAll(userDisabledFeatures.getDisabledFeatures(packages))
@@ -445,7 +435,7 @@ private class WorkspaceImpl(
         return featureGraph.apply(defaultState = FeatureState.Disabled) {
             for (pkg in packages) {
                 // Enable remained workspace features (transitively)
-                if (pkg.origin == WORKSPACE || pkg.origin == STDLIB) {
+                if (pkg.origin == WORKSPACE || pkg.origin == STDLIB || usesBSP) {
                     for (feature in pkg.features) {
                         if (workspaceFeatureState[feature] == FeatureState.Enabled) {
                             enable(feature)
