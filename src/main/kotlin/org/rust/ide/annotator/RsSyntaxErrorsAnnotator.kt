@@ -58,7 +58,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsTypeParameter -> checkTypeParameter(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
             is RsLetExpr -> checkLetExpr(holder, element)
-            is RsPatRange -> checkPatRange(holder, element)
+            is RsPat -> checkPat(holder, element)
             is RsTraitType -> checkTraitType(holder, element)
             is RsUnderscoreExpr -> checkUnderscoreExpr(holder, element)
             is RsWherePred -> checkWherePred(holder, element)
@@ -67,6 +67,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             }
         }
     }
+
 }
 
 private fun checkTypeParameter(holder: AnnotationHolder, item: RsTypeParameter) {
@@ -321,30 +322,68 @@ private fun isComplexPattern(pat: RsPat?): Boolean {
     }
 }
 
+private fun checkPat(holder: AnnotationHolder, element: RsPat) {
+    if (element is RsPatRange) {
+        checkPatRange(holder, element)
+    }
+
+    checkGeneralPat(element, holder)
+}
+
+private fun checkGeneralPat(element: RsPat, holder: AnnotationHolder) {
+    val valueParameter = element.parent
+    if (valueParameter !is RsValueParameter) {
+        return
+    }
+    val fn = valueParameter.parent.parent ?: return
+    when (fn) {
+        is RsFunction -> {
+            checkFunctionParameterPatIsSimple(fn, element, holder)
+        }
+
+        is RsFnPointerType -> {
+            checkFunctionPointerTypeParameterPatIsSimple(element, holder)
+        }
+    }
+}
+
+private fun checkFunctionParameterPatIsSimple(fn: RsFunction, element: RsPat, holder: AnnotationHolder) {
+    val isComplexPattern = isComplexPattern(element)
+    when (fn.owner) {
+        is RsAbstractableOwner.Foreign -> {
+            if (isComplexPattern) {
+                RsDiagnostic.PatternArgumentInForeignFunctionError(element).addToHolder(holder)
+            }
+        }
+
+        is RsAbstractableOwner.Trait -> {
+            if (isComplexPattern && fn.block == null) {
+                RsDiagnostic.PatternArgumentInFunctionWithoutBodyError(element).addToHolder(holder)
+            }
+        }
+
+        else -> {}
+    }
+}
+
+private fun checkFunctionPointerTypeParameterPatIsSimple(element: RsPat, holder: AnnotationHolder) {
+    val isComplexPattern = isComplexPattern(element)
+    if (isComplexPattern || element is RsPatMacro) {
+        RsDiagnostic.PatternArgumentInFunctionPointerTypeError(element).addToHolder(holder)
+    }
+}
+
 private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParameter) {
     val parent = param.parent.parent ?: return
     when (parent) {
         is RsFunction -> {
             checkValueParameterInFunction(parent, param, holder)
         }
-
-        is RsFnPointerType -> {
-            checkValueParameterInFunctionPointerType(param, holder)
-        }
-    }
-}
-
-fun checkValueParameterInFunctionPointerType(param: RsValueParameter, holder: AnnotationHolder) {
-    val pat = param.pat
-    val isComplexPattern = isComplexPattern(pat)
-    if (isComplexPattern) {
-        RsDiagnostic.PatternArgumentInFunctionPointerTypeError(param).addToHolder(holder)
     }
 }
 
 private fun checkValueParameterInFunction(fn: RsFunction, param: RsValueParameter, holder: AnnotationHolder) {
     val pat = param.pat
-    val isComplexPattern = isComplexPattern(pat)
     when (fn.owner) {
         is RsAbstractableOwner.Free,
         is RsAbstractableOwner.Impl -> {
@@ -353,15 +392,9 @@ private fun checkValueParameterInFunction(fn: RsFunction, param: RsValueParamete
 
         is RsAbstractableOwner.Foreign -> {
             require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
-            if (isComplexPattern) {
-                RsDiagnostic.PatternArgumentInForeignFunctionError(param).addToHolder(holder)
-            }
         }
 
         is RsAbstractableOwner.Trait -> {
-            if (isComplexPattern && fn.block == null) {
-                RsDiagnostic.PatternArgumentInFunctionWithoutBodyError(param).addToHolder(holder)
-            }
             if (pat == null) {
                 val message = "Anonymous functions parameters are deprecated (RFC 1685)"
                 val annotation = holder.newAnnotation(HighlightSeverity.WARNING, message)

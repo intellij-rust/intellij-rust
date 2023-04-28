@@ -10,9 +10,9 @@ class RsPatternArgumentInFunctionWithoutBodyTest : RsAnnotatorTestBase(RsSyntaxE
         struct S;
 
         trait T {
-            fn foo(<error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y): (i32, i32)</error>);
-            fn bar(<error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y): (i32, i32)</error>);
-            fn method(<error descr="Patterns aren't allowed in functions without bodies [E0642]">S { .. }: S</error>);
+            fn foo(<error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y)</error>: (i32, i32));
+            fn bar(<error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y)</error>: (i32, i32));
+            fn method(<error descr="Patterns aren't allowed in functions without bodies [E0642]">S { .. }</error>: S);
 
             fn f(&ident: &S) {} // ok
             fn g(&&ident: &&S) {} // ok
@@ -22,14 +22,14 @@ class RsPatternArgumentInFunctionWithoutBodyTest : RsAnnotatorTestBase(RsSyntaxE
 
     fun `test E0642 compiler test -- issue-50571`() = checkByText("""
         trait Foo {
-            fn foo(<error descr="Patterns aren't allowed in functions without bodies [E0642]">[a, b]: [i32; 2]</error>);
+            fn foo(<error descr="Patterns aren't allowed in functions without bodies [E0642]">[a, b]</error>: [i32; 2]);
         }
     """)
 
     fun `test E0642 compiler test -- no-patterns-in-args-2`() = checkByText("""
         trait Tr {
-            fn f1(<error descr="Patterns aren't allowed in functions without bodies [E0642]">mut arg: u8</error>);
-            fn f2(<error descr="Patterns aren't allowed in functions without bodies [E0642]">&arg: u8</error>);
+            fn f1(<error descr="Patterns aren't allowed in functions without bodies [E0642]">mut arg</error>: u8);
+            fn f2(<error descr="Patterns aren't allowed in functions without bodies [E0642]">&arg</error>: u8);
             fn g1(arg: u8);
             fn g2(_: u8);
         }
@@ -55,8 +55,8 @@ class RsPatternArgumentInFunctionWithoutBodyTest : RsAnnotatorTestBase(RsSyntaxE
         trait A {
             fn foo(foo!(): (i32, i32)); // OK
             fn proxy_foo(proxy_foo!(): (i32, i32)); // OK
-            fn bad(<error descr="Patterns aren't allowed in functions without bodies [E0642]">bad!(): (i32, i32)</error>);
-            fn proxy_bad(<error descr="Patterns aren't allowed in functions without bodies [E0642]">proxy_bad!(): (i32, i32)</error>);
+            fn bad(<error descr="Patterns aren't allowed in functions without bodies [E0642]">bad!()</error>: (i32, i32));
+            fn proxy_bad(<error descr="Patterns aren't allowed in functions without bodies [E0642]">proxy_bad!()</error>: (i32, i32));
         }
     """)
 }
