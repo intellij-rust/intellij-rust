@@ -17,6 +17,7 @@
         <!-- Project Creation -->
         <projectOpenProcessor id="Cargo" implementation="org.rust.cargo.project.CargoProjectOpenProcessor"/>
         <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>
+        <newProjectWizard.language implementation="org.rust.ide.newProject.RsNewProjectWizard"/>
         <applicationService serviceImplementation="org.rust.ide.newProject.state.RsUserTemplatesState"/>
 
         <!-- File-type Factory -->
