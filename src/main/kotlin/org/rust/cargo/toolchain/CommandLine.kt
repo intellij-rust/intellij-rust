@@ -152,6 +152,8 @@ data class CargoCommandLine(
             targets: List<CargoWorkspace.Target>,
             command: String,
             additionalArguments: List<String> = emptyList(),
+            channel: RustChannel = RustChannel.DEFAULT,
+            environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
             usePackageOption: Boolean = true,
             isDoctest: Boolean = false
         ): CargoCommandLine {
@@ -196,15 +198,23 @@ data class CargoCommandLine(
                 addAll(additionalArguments)
             }
 
-            return CargoCommandLine(command, workingDirectory, commandLineArguments)
+            return CargoCommandLine(
+                command,
+                workingDirectory,
+                commandLineArguments,
+                channel = channel,
+                environmentVariables = environmentVariables
+            )
         }
 
         fun forTarget(
             target: CargoWorkspace.Target,
             command: String,
             additionalArguments: List<String> = emptyList(),
+            channel: RustChannel = RustChannel.DEFAULT,
+            environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
             usePackageOption: Boolean = true
-        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments, usePackageOption)
+        ): CargoCommandLine = forTargets(listOf(target), command, additionalArguments, channel, environmentVariables, usePackageOption)
 
         fun forProject(
             cargoProject: CargoProject,

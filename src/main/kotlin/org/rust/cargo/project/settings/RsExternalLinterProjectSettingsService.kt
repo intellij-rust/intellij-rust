@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.settings.RsExternalLinterProjectSettingsService.RsExternalLinterProjectSettings
 import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.toolchain.RustChannel
 
 val Project.externalLinterSettings: RsExternalLinterProjectSettingsService
     get() = service<RsExternalLinterProjectSettingsService>()
@@ -24,6 +25,8 @@ class RsExternalLinterProjectSettingsService(
 ) : RsProjectSettingsServiceBase<RsExternalLinterProjectSettings>(project, RsExternalLinterProjectSettings()) {
     val tool: ExternalLinter get() = state.tool
     val additionalArguments: String get() = state.additionalArguments
+    val channel: RustChannel get() = state.channel
+    val envs: Map<String, String> get() = state.envs
     val runOnTheFly: Boolean get() = state.runOnTheFly
 
     override fun noStateLoaded() {
@@ -43,6 +46,10 @@ class RsExternalLinterProjectSettingsService(
         @AffectsHighlighting
         var additionalArguments by property("") { it.isEmpty() }
 
+        @AffectsHighlighting
+        var channel by enum(RustChannel.DEFAULT)
+        @AffectsHighlighting
+        var envs by map<String, String>()
         @AffectsHighlighting
         var runOnTheFly by property(false)
 
