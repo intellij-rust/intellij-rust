@@ -92,12 +92,15 @@ class RsTypeInferenceWalker(
 
     private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr, expected: Expectation = NoExpectation): Ty {
         require(blockExpr.isAsync)
-        val retTy = expected
+        val resolvedExpectedType = expected
             .tyAsNullable(ctx)
             ?.let(::resolveTypeVarsWithObligations)
             .takeUnless { it is TyInfer.TyVar }
-            ?.lookupFutureOutputTy(lookup)
-            ?: TyInfer.TyVar()
+        val retTy = if (resolvedExpectedType != null) {
+            lookup.lookupFutureOutputTy(resolvedExpectedType, strict = false).register()
+        } else {
+            TyInfer.TyVar()
+        }
         RsTypeInferenceWalker(ctx, retTy).apply {
             blockExpr.block.inferType(ExpectHasType(retTy), coerce = true)
         }
@@ -893,7 +896,7 @@ class RsTypeInferenceWalker(
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
         if (fieldLookup.identifier?.text == "await" && fieldLookup.isAtLeastEdition2018) {
-            return receiver.lookupFutureOutputTy(lookup)
+            return lookup.lookupFutureOutputTy(receiver, strict = false).register()
         }
 
         val variants = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup)
@@ -1498,26 +1501,6 @@ class RsTypeInferenceWalker(
 
     fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath> {
         return ctx.getResolvedPath(expr)
-    }
-
-    private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
-        val outputTy = this.lookupRawFutureOutputTy(lookup)
-        if (outputTy !is TyUnknown) return outputTy
-        return this.lookupIntoFutureOutputTy(lookup)
-    }
-
-    private fun Ty.lookupRawFutureOutputTy(lookup: ImplLookup): Ty {
-        val futureTrait = lookup.items.Future ?: return TyUnknown
-        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType.withSubst())
-        return selection.ok()?.register() ?: TyUnknown
-    }
-
-    private fun Ty.lookupIntoFutureOutputTy(lookup: ImplLookup): Ty {
-        val intoFutureTrait = lookup.items.IntoFuture ?: return TyUnknown
-        val outputType = intoFutureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjection(TraitRef(this, intoFutureTrait.withSubst()), outputType.withSubst())
-        return selection.ok()?.register() ?: TyUnknown
     }
 
     companion object {

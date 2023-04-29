@@ -1292,6 +1292,27 @@ class ImplLookup(
         return ref.asFunctionType
     }
 
+    /**
+     * If `Ty` is a `Future` or convertible into a `Future` (i.e. `IntoFuture`), get the type of
+     * that future's output.
+     *
+     * If `Ty` is not convertible into a future, or if the `Future` and `IntoFuture` lang items are missing,
+     * returns `TyUnknown`.
+     *
+     * The `IntoFuture` trait is automatically used for Rust versions which support it.
+     */
+    fun lookupFutureOutputTy(ty: Ty, strict: Boolean): TyWithObligations<Ty> {
+        val futureTrait = items.IntoFuture ?: items.Future ?: return TyWithObligations(TyUnknown)
+        val outputType = futureTrait.findAssociatedType("Output")?.withSubst() ?: return TyWithObligations(TyUnknown)
+        val traitRef = TraitRef(ty, futureTrait.withSubst())
+        val selection = if (strict) {
+            selectProjectionStrict(traitRef, outputType)
+        } else {
+            selectProjection(traitRef, outputType)
+        }
+        return selection.ok() ?: TyWithObligations(TyUnknown)
+    }
+
     fun isSized(ty: Ty): Boolean {
         // Treat all types as sized if `Sized` trait is not found. This suppresses error noise in the
         // case of the toolchain misconfiguration (when there is not a `Sized` trait)
