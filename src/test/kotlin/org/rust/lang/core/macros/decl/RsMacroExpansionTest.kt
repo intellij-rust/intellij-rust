@@ -195,6 +195,19 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn bar() {}
     """)
 
+    fun `test meta with a macro call`() = doTest("""
+        macro_rules! foo {
+            ($ i:meta) => (
+                #[$ i]
+                fn bar() {}
+            )
+        }
+        foo! { doc = concat!("foo", "bar") }
+    """, """
+        #[doc = concat!("foo", "bar")]
+         fn bar() {}
+    """)
+
     fun `test tt block`() = doTest("""
         macro_rules! foo {
             ($ i:tt) => { fn foo() $ i }
@@ -1308,6 +1321,18 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo () { let _ = stringify!(unsized); }
     """, """
         fn foo () { let _ = stringify!(virtual); }
+    """)
+
+    fun `test macro call in an attribute`() = checkSingleMacro("""
+        macro_rules! foo {
+            () => {"bar"}
+        }
+
+        #[doc = foo!()]
+              //^
+        fn foo() {}
+    """, """
+        "bar"
     """)
 
     companion object {

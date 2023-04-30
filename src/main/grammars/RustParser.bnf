@@ -162,9 +162,11 @@ fake MetaItem ::= Path [ '=' LitExpr | MetaItemArgs ] | CompactTT {
 //   ~~~~~~~~~~~~~
 // #![crate_type = "lib"]
 //    ~~~~~~~~~~~~~~~~~~
+// #[doc = concat!("foo", "bar")]
+//   ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // #[some::path]
 //   ~~~~~~~~~~
-MetaItemWithoutTT ::= PathWithoutTypeArgs [ '=' LitExprWithoutAttrs | MetaItemArgs ] { elementType = MetaItem }
+MetaItemWithoutTT ::= PathWithoutTypeArgs [ '=' (LitExprWithoutAttrs | MacroCallInMetaItem) | MetaItemArgs ] { elementType = MetaItem }
 
 // #[assert_instr(add_a.b)]
 //                ~~~~~~~
@@ -1537,6 +1539,12 @@ BlockElementMacroCall ::= <<parseMacroCall 'MacroCallParsingMode.BLOCK'>> {
 
 // Parses macro calls in expr/pat/type context, which do not require a semicolon
 ExprLikeMacroCall ::= <<parseMacroCall 'MacroCallParsingMode.EXPR'>> {
+  elementType = MacroCall
+  name = "macro call"
+}
+
+// Parses macro calls in meta item context, which do not require a semicolon
+MacroCallInMetaItem ::= <<parseMacroCall 'MacroCallParsingMode.META'>> {
   elementType = MacroCall
   name = "macro call"
 }
