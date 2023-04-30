@@ -1643,13 +1643,13 @@ private fun KnownItems.makeGenerator(yieldTy: Ty, returnTy: Ty): Ty {
     val boundGenerator = generatorTrait
         .substAssocType("Yield", yieldTy)
         .substAssocType("Return", returnTy)
-    return TyAnon(null, listOf(boundGenerator))
+    return TyAnon(null, listOfNotNull(boundGenerator, Sized?.withSubst()))
 }
 
 private fun KnownItems.makeFuture(outputTy: Ty): Ty {
     val futureTrait = Future ?: return TyUnknown
     val boundFuture = futureTrait.substAssocType("Output", outputTy)
-    return TyAnon(null, listOf(boundFuture))
+    return TyAnon(null, listOfNotNull(boundFuture, Sized?.withSubst()))
 }
 
 fun isBuiltinIndex(baseType: Ty, indexType: Ty) =
