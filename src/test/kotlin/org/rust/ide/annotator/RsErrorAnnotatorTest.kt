@@ -4175,6 +4175,69 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn Send> {}
     """)
 
+    fun `test E0536 valid cfg not pattern`() = checkErrors("""
+        #[cfg(not(unix))]
+        fn one() {}
+
+        #[cfg(not(all(unix, feature = "magic")))]
+        fn two() {}
+
+        #[cfg(not(any(unix, windows)))]
+        fn three() {}
+
+        #[cfg(not(feature = "magic"))]
+        fn four() {}
+    """)
+
+
+    fun `test E0536 invalid cfg not pattern`() = checkErrors("""
+        #[cfg(<error desc="Expected 1 cfg-pattern [E0536]">not()</error>)]
+        fn one() {}
+
+        #[cfg(<error desc="Expected 1 cfg-pattern [E0536]">not(unix, windows)</error>)]
+        fn two() {}
+
+        #[cfg(<error desc="Expected 1 cfg-pattern [E0536]">not(feature = "magic", unix)</error>)]
+        fn three() {}
+    """)
+
+    fun `test E0536 quick fix to all`() = checkFixByText("""Convert to `all(not(unix), not(feature = "magic"), not(windows))`""", """
+        #[cfg(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/unix, feature = "magic", windows)</error>)]
+        fn foo() {}
+    """, """
+        #[cfg(all(not(unix), not(feature = "magic"), not(windows)))]
+        fn foo() {}
+    """)
+
+    fun `test E0536 quick fix to all not available for empty not`() = checkFixIsUnavailable("""Convert to `all()`""", """
+        #[cfg(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/)</error>)]
+        fn foo() {}
+    """)
+
+    fun `test E0536 invalid cfg_attr not pattern`() = checkErrors("""
+        #[cfg_attr(<error desc="Expected 1 cfg-pattern [E0536]">not()</error>, attr)]
+        fn one() {}
+
+        #[cfg_attr(<error desc="Expected 1 cfg-pattern [E0536]">not(unix, windows)</error>, attr)]
+        fn two() {}
+
+        #[cfg_attr(<error desc="Expected 1 cfg-pattern [E0536]">not(feature = "magic", unix)</error>, attr)]
+        fn three() {}
+    """)
+
+    fun `test E0536 cfg_attr quick fix to all`() = checkFixByText("""Convert to `all(not(unix), not(feature = "magic"), not(windows))`""", """
+        #[cfg_attr(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/unix, feature = "magic", windows)</error>, attr)]
+        fn foo() {}
+    """, """
+        #[cfg_attr(all(not(unix), not(feature = "magic"), not(windows)), attr)]
+        fn foo() {}
+    """)
+
+    fun `test E0536 cfg_attr quick fix to all not available for empty not`() = checkFixIsUnavailable("""Convert to `all()`""", """
+        #[cfg_attr(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/)</error>, attr)]
+        fn foo() {}
+    """)
+
     fun `test no E0537 valid cfg`() = checkErrors("""
         #[cfg(any(foo, bar))]
         #[cfg(all(foo, baz))]

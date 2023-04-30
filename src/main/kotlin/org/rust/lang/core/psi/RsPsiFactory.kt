@@ -370,6 +370,10 @@ class RsPsiFactory(
         createFromText("#![$text]")
             ?: error("Failed to create an inner attribute from text: `$text`")
 
+    fun createMetaItem(text: String): RsMetaItem =
+        createFromText("#[$text] fn f(){}")
+            ?: error("Failed to create a meta item from text: `$text`")
+
     fun createMatchBody(patterns: List<Pattern>, ctx: RsElement? = null): RsMatchBody {
         val arms = patterns.joinToString("\n") { "${it.text(ctx)} => {}" }
         return createExpressionOfType<RsMatchExpr>("match x { $arms }").matchBody

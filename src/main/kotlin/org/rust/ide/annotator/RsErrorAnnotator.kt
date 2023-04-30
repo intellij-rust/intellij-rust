@@ -208,8 +208,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         when (itemName) {
             "all", "any" -> args.metaItemList.forEach { checkCfgPredicate(holder, it) }
             "not" -> {
-                val parameter = args.metaItemList.getOrNull(0) ?: return
-                checkCfgPredicate(holder, parameter)
+                if (args.metaItemList.size == 1) {
+                    val parameter = args.metaItemList.first()
+                    checkCfgPredicate(holder, parameter)
+                } else {
+                    val fixes = listOfNotNull(ConvertMalformedCfgNotPatternToCfgAllPatternFix.createIfCompatible(item))
+                    RsDiagnostic.CfgNotPatternIsMalformed(item, fixes).addToHolder(holder)
+                }
             }
             "version" -> { /* version is currently experimental */ }
             else -> {
