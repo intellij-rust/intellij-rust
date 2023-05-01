@@ -155,7 +155,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatTupleStruct(o: RsPatTupleStruct) = checkRsPatTupleStruct(rsHolder, o)
             override fun visitPatTup(o: RsPatTup) = checkRsPatTup(rsHolder, o)
             override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, rsHolder)
-            override fun visitMetaItem(o: RsMetaItem) = checkMetaItem(rsHolder, o)
             override fun visitFieldLookup(o: RsFieldLookup) = checkFieldLookup(rsHolder, o)
         }
 
@@ -166,69 +165,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         DECL_MACRO.check(holder, macro.macroKw, "`macro`")
     }
 
-    private fun checkMetaItem(holder: RsAnnotationHolder, metaItem: RsMetaItem) {
-        val args = metaItem.metaItemArgs
-        val name = metaItem.name
-        val context = ProcessingContext()
-        if (metaItem.isRootMetaItem(context) && args != null) {
-            if (name in listOf("cfg", "cfg_attr")) {
-                val item = args.metaItemList.getOrNull(0) ?: return
-                checkCfgPredicate(holder, item)
-            }
-            if (name == "feature") {
-                checkFeatureAttribute(holder, metaItem, context)
-            }
-        }
-
-    }
-
-    private fun checkFeatureAttribute(holder: RsAnnotationHolder, item: RsMetaItem, context: ProcessingContext) {
-        // outer feature attributes are ignored by the compiler
-        val attr = context.get(RsPsiPattern.META_ITEM_ATTR)
-        if (attr !is RsInnerAttr) return
-        val path = item.path ?: return
-        // feature attributes in non-crate root modules are ignored by the compiler
-        if (!item.containingMod.isCrateRoot) return
-        val metaItemList = item.metaItemArgs?.metaItemList.orEmpty()
-        // #![feature()] can be written even in stable channel
-        if (metaItemList.isEmpty()) return
-        val version = item.cargoProject?.rustcInfo?.version ?: return
-        // we should annotate `feature` attribute if only we are sure that unstable features are not available
-        if (item.areUnstableFeaturesAvailable(version) != ThreeState.NO) return
-
-        val channelName = version.channel.channel ?: return
-
-        val fix = if (item.parent == attr) RemoveAttrFix(attr) else null
-        RsDiagnostic.FeatureAttributeInNonNightlyChannel(path, channelName, fix).addToHolder(holder)
-    }
-
-    private fun checkCfgPredicate(holder: RsAnnotationHolder, item: RsMetaItem) {
-        val itemName = item.name ?: return
-        val args = item.metaItemArgs ?: return
-        when (itemName) {
-            "all", "any" -> args.metaItemList.forEach { checkCfgPredicate(holder, it) }
-            "not" -> {
-                if (args.metaItemList.size == 1) {
-                    val parameter = args.metaItemList.first()
-                    checkCfgPredicate(holder, parameter)
-                } else {
-                    val fixes = listOfNotNull(ConvertMalformedCfgNotPatternToCfgAllPatternFix.createIfCompatible(item))
-                    RsDiagnostic.CfgNotPatternIsMalformed(item, fixes).addToHolder(holder)
-                }
-            }
-            "version" -> { /* version is currently experimental */ }
-            else -> {
-                val path = item.path ?: return
-                val fixes = NameSuggestionFix.createApplicable(path, itemName, listOf("all", "any", "not"), 1) { name ->
-                    RsPsiFactory(path.project).tryCreatePath(name) ?: error("Cannot create path out of $name")
-                }
-                RsDiagnostic.UnknownCfgPredicate(path, itemName, fixes).addToHolder(
-                    holder,
-                    checkExistsAfterExpansion = false
-                )
-            }
-        }
-    }
 
     private fun checkRsPatTup(holder: RsAnnotationHolder, pattern: RsPatTup) {
         if (pattern.isTopLevel) {
