@@ -23,6 +23,14 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
         fn nested_cfg() {}
     """)
 
+    fun `test remove attributes wrong delimiter`() = checkFixByText("Replace brackets", """
+        #[allow <error descr="Wrong meta list delimiters">{/*caret*/ foo_lint }</error> ]
+        fn delim_brace() {}
+    ""","""
+        #[allow ( foo_lint ) ]
+        fn delim_brace() {}
+    """)
+
     fun `test any delimiter is allowed for custom attributes`() = checkByText("""
         #[attr_macro_foo{foo_meta}]
         fn delim_brace() {}
@@ -85,6 +93,14 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
         fn bar<const X: usize>() {}
     """)
 
+    fun `test remove suffix from literal in attribute macro`() = checkFixByText("Remove suffix", """
+        #[rustc_legacy_const_generics(<error descr="Suffixed literals are not allowed in attributes">1.0f64/*caret*/</error>)]
+        fn bar<const X: usize>() {}
+    """, """
+        #[rustc_legacy_const_generics(1.0)]
+        fn bar<const X: usize>() {}
+    """)
+
     fun `test literal with suffixes in attrs are allowed in attr macros`() = checkByText("""
         #[attr_macro_foo(1usize)]
         #[attr_macro_foo(1u8)]
@@ -143,5 +159,67 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
     fun `test no error for cfg feature`() = checkByText("""
         #[cfg(feature = "foo")]
         fn bar() {}
+    """)
+
+    fun `test duplicates remove first`() = checkFixByText("Remove `#[instruction_set(arm::a32)]`", """
+        #[instruction_set(arm::a32)]
+        #[<error descr="Multiple 'instruction_set' attributes">instruction_set(arm::a32)/*caret*/</error>]
+        fn foo_arm_code() {}
+    """, """
+        #[instruction_set(arm::a32)]
+        fn foo_arm_code() {}
+    """)
+
+    fun `test duplicates remove last`() = checkFixByText("Remove `#[ignore]`", """
+        #[<warning descr="Unused attribute">ignore/*caret*/</warning>]
+        #[ignore]
+        fn foo() {}
+    """, """
+        #[ignore]
+        fn foo() {}
+    """)
+
+    fun `test deprecated attr E0538`() = checkByText("""
+        #[deprecated]
+        fn foo() {}
+
+        #[deprecated = "hello world"]
+        fn bar() {}
+
+        #[deprecated(
+            since = "a",
+            <error descr="Multiple 'since' items [E0538]">since = "b"</error>,
+            note = "c"
+        )]
+        fn f1() { }
+
+        #[deprecated(
+            since="1.0.0",
+            note="First deprecation note.",
+            <error descr="Multiple 'note' items [E0538]">note="Second deprecation note."</error>
+        )]
+        fn f2() {}
+    """)
+
+    fun `test deprecated attr E0541`() = checkByText("""
+        #[deprecated(
+            since="1.0.0",
+            suggestion="42"
+        )]
+        fn f1() {}
+
+        #[deprecated(
+            since="1.0.0",
+            <error descr="Unknown meta item 'hello' [E0541]">hello="world"</error>
+        )]
+        fn f2() {}
+    """)
+
+    fun `test deprecated attr E0551`() = checkByText("""
+        #[deprecated(<error descr="Incorrect meta item [E0551]">since(b)</error>, note = "a")]
+        fn f1() {}
+
+        #[deprecated(<error descr="Incorrect meta item [E0551]">since</error>, note = "a")]
+        fn f2() {}
     """)
 }

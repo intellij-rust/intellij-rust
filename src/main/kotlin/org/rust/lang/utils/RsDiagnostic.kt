@@ -1918,6 +1918,38 @@ sealed class RsDiagnostic(
             "C-variadic function must have a compatible calling convention, like `C` or `cdecl`"
         )
     }
+
+    class MultipleItemsInDeprecatedAttr(
+        element: PsiElement,
+        private val itemName: String,
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0538,
+            "Multiple '${itemName}' items",
+        )
+    }
+
+    class UnknownItemInDeprecatedAttr(
+        element: PsiElement,
+        private val itemName: String
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0541,
+            "Unknown meta item '${itemName}'",
+        )
+    }
+
+    class IncorrectItemInDeprecatedAttr(
+        element: PsiElement
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0551,
+            "Incorrect meta item",
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -1926,7 +1958,7 @@ enum class RsErrorCode {
     E0199, E0200, E0201, E0203, E0206, E0220, E0224, E0225, E0226, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0316, E0322, E0323, E0324, E0325, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0434, E0435, E0437, E0438, E0449, E0451, E0463,
-    E0517, E0518, E0536, E0537, E0552, E0554, E0561, E0562, E0569, E0571, E0583, E0586, E0594,
+    E0517, E0518, E0536, E0537, E0538, E0541, E0551, E0552, E0554, E0561, E0562, E0569, E0571, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0642, E0658, E0666, E0667, E0695,
     E0703, E0704, E0708, E0728, E0732, E0733, E0741, E0742, E0747, E0774, E0784, E0785;
 
