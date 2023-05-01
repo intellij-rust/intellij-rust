@@ -297,6 +297,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("manual_strip", false),
     Lint("manual_swap", false),
     Lint("manual_unwrap_or", false),
+    Lint("manual_while_let_some", false),
     Lint("many_single_char_names", false),
     Lint("map_clone", false),
     Lint("map_collect_result_unit", false),
