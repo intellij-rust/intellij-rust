@@ -7,6 +7,8 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.RemoveElementFix
+import org.rust.ide.fixes.SubstituteTextFix
 import com.intellij.util.ProcessingContext
 import com.intellij.util.ThreeState
 import org.rust.ide.fixes.*
@@ -36,12 +38,14 @@ class RsAttrErrorAnnotator : AnnotatorBase() {
                         checkFeatureAttribute(element, rsHolder, context)
                     }
                     "cfg", "cfg_attr" -> checkRootCfgPredicate(element, rsHolder)
+                    "derive" -> checkDeriveAttr(element, rsHolder)
                 }
             }
 
             is RsDocAndAttributeOwner -> checkRsDocAndAttributeOwner(element, holder)
         }
     }
+
 }
 
 private fun checkDeprecatedAttr(element: RsMetaItem, holder: AnnotationHolder) {
@@ -277,5 +281,13 @@ private fun checkCfgPredicate(holder: RsAnnotationHolder, item: RsMetaItem) {
             }
             RsDiagnostic.UnknownCfgPredicate(path, itemName, fixes).addToHolder(holder, checkExistsAfterExpansion = false)
         }
+    }
+}
+
+private fun checkDeriveAttr(element: RsMetaItem, holder: RsAnnotationHolder) {
+    val args = element.metaItemArgs?.litExprList ?: return
+    for (arg in args) {
+        val fixes = listOfNotNull(arg.stringValue?.let { SubstituteTextFix.replace("Remove quotes", arg.containingFile, arg.textRange, it) })
+        RsDiagnostic.LiteralValueInsideDeriveError(arg, fixes = fixes).addToHolder(holder)
     }
 }

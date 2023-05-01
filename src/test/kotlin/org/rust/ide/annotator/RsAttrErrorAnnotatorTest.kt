@@ -438,4 +438,63 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
 
         fn main() {}
     """)
+
+    fun `test E0777 derive string literal error`() = checkErrors("""
+        #[derive(<error descr="Expected path to a trait, found literal [E0777]">"Clone"</error>)]
+        struct A {}
+
+        #[derive(<error descr="Expected path to a trait, found literal [E0777]">"Clone"</error>, Clone, <error descr="Expected path to a trait, found literal [E0777]">"Debug"</error>)]
+        struct B {}
+
+        #[derive(<error descr="Expected path to a trait, found literal [E0777]">16</error>)]
+        struct C {}
+
+        #[derive(<error descr="Expected path to a trait, found literal [E0777]">"Debug
+"</error>)]
+        struct D {}
+    """)
+
+
+    fun `test E0777 derive string literal in cfg_attr that doesn't expand`() = checkErrors("""
+        #[cfg_attr(non_existent, derive("Clone"))]
+        struct A {}
+    """)
+
+    fun `test E0777 derive path`() = checkErrors("""
+        #[derive(Clone)]
+        struct A {}
+
+        #[derive(Clone, Debug)]
+        struct B {}
+    """)
+
+    fun `test E0777 remove quotes`() = checkFixByText("Remove quotes", """
+        #[derive(<error descr="Expected path to a trait, found literal [E0777]">"/*caret*/Clone"</error>)]
+        struct A {}
+    """, """
+        #[derive(Clone)]
+        struct A {}
+    """)
+
+    fun `test E0777 remove quotes multiple arguments`() = checkFixByText("Remove quotes", """
+        #[derive(Debug, <error descr="Expected path to a trait, found literal [E0777]">"/*caret*/Clone"</error>, Copy)]
+        struct A {}
+    """, """
+        #[derive(Debug, Clone, Copy)]
+        struct A {}
+    """)
+
+    fun `test E0777 remove quotes multiple arguments in a single string`() = checkFixByText("Remove quotes", """
+        #[derive(Debug, <error descr="Expected path to a trait, found literal [E0777]">"/*caret*/Clone, PartialEq"</error>, Copy)]
+        struct A {}
+    """, """
+        #[derive(Debug, Clone, PartialEq, Copy)]
+        struct A {}
+    """)
+
+
+    fun `test E0777 remove quotes fix not available for non-string literal`() = checkFixIsUnavailable("Remove quotes", """
+        #[derive(<error descr="Expected path to a trait, found literal [E0777]">1/*caret*/6</error>)]
+        struct A {}
+    """)
 }
