@@ -5,6 +5,9 @@
 
 package org.rust.ide.annotator
 
+import org.rust.MockAdditionalCfgOptions
+import org.rust.MockRustcVersion
+
 class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class) {
 
     fun `test attributes wrong delimiter`() = checkByText("""
@@ -221,5 +224,211 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
 
         #[deprecated(<error descr="Incorrect meta item [E0551]">since</error>, note = "a")]
         fn f2() {}
+    """)
+
+
+    fun `test E0536 valid cfg not pattern`() = checkErrors("""
+        #[cfg(not(unix))]
+        fn one() {}
+
+        #[cfg(not(all(unix, feature = "magic")))]
+        fn two() {}
+
+        #[cfg(not(any(unix, windows)))]
+        fn three() {}
+
+        #[cfg(not(feature = "magic"))]
+        fn four() {}
+    """)
+
+
+    fun `test E0536 invalid cfg not pattern`() = checkErrors("""
+        #[cfg(<error desc="Expected 1 cfg-pattern [E0536]">not()</error>)]
+        fn one() {}
+
+        #[cfg(<error desc="Expected 1 cfg-pattern [E0536]">not(unix, windows)</error>)]
+        fn two() {}
+
+        #[cfg(<error desc="Expected 1 cfg-pattern [E0536]">not(feature = "magic", unix)</error>)]
+        fn three() {}
+    """)
+
+    fun `test E0536 quick fix to all`() = checkFixByText("""Convert to `all(not(unix), not(feature = "magic"), not(windows))`""", """
+        #[cfg(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/unix, feature = "magic", windows)</error>)]
+        fn foo() {}
+    """, """
+        #[cfg(all(not(unix), not(feature = "magic"), not(windows)))]
+        fn foo() {}
+    """)
+
+    fun `test E0536 quick fix to all not available for empty not`() = checkFixIsUnavailable("""Convert to `all()`""", """
+        #[cfg(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/)</error>)]
+        fn foo() {}
+    """)
+
+    fun `test E0536 invalid cfg_attr not pattern`() = checkErrors("""
+        #[cfg_attr(<error desc="Expected 1 cfg-pattern [E0536]">not()</error>, attr)]
+        fn one() {}
+
+        #[cfg_attr(<error desc="Expected 1 cfg-pattern [E0536]">not(unix, windows)</error>, attr)]
+        fn two() {}
+
+        #[cfg_attr(<error desc="Expected 1 cfg-pattern [E0536]">not(feature = "magic", unix)</error>, attr)]
+        fn three() {}
+    """)
+
+    fun `test E0536 cfg_attr quick fix to all`() = checkFixByText("""Convert to `all(not(unix), not(feature = "magic"), not(windows))`""", """
+        #[cfg_attr(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/unix, feature = "magic", windows)</error>, attr)]
+        fn foo() {}
+    """, """
+        #[cfg_attr(all(not(unix), not(feature = "magic"), not(windows)), attr)]
+        fn foo() {}
+    """)
+
+    fun `test E0536 cfg_attr quick fix to all not available for empty not`() = checkFixIsUnavailable("""Convert to `all()`""", """
+        #[cfg_attr(<error descr="Expected 1 cfg-pattern [E0536]">not(/*caret*/)</error>, attr)]
+        fn foo() {}
+    """)
+
+    fun `test no E0537 valid cfg`() = checkErrors("""
+        #[cfg(any(foo, bar))]
+        #[cfg(all(foo, baz))]
+        #[cfg(not(foo))]
+        #[cfg(all(not(foo)))]
+        #[cfg(not(any(foo)))]
+        #[cfg(foo)]
+        fn foo() {}
+    """)
+
+    fun `test E0537 invalid cfg`() = checkErrors("""
+        #[cfg(<error descr="Invalid predicate `an` [E0537]">an</error>(foo))]
+        #[cfg(<error descr="Invalid predicate `allx` [E0537]">allx</error>(foo))]
+        #[cfg(<error descr="Invalid predicate `non` [E0537]">non</error>(foo))]
+        #[cfg(<error descr="Invalid predicate `non` [E0537]">non</error>(an(foo)))]
+        #[cfg(all(x, <error descr="Invalid predicate `bar` [E0537]">bar</error>()))]
+        #[cfg(all(x, not(y), <error descr="Invalid predicate `baz` [E0537]">baz</error>()))]
+        #[cfg(not(<error descr="Invalid predicate `foo` [E0537]">foo</error>()))]
+        #[cfg(all(not(any(bar, <error descr="Invalid predicate `baz` [E0537]">baz</error>()))))]
+        #[cfg(any(x, not(y), <error descr="Invalid predicate `baz` [E0537]">baz</error>()))]
+        fn foo() {}
+    """)
+
+    fun `test no E0537 valid cfg_attr`() = checkErrors("""
+        #[cfg_attr(any(foo), bar)]
+        #[cfg_attr(all(foo), bar)]
+        #[cfg_attr(not(foo), bar)]
+        #[cfg_attr(all(not(foo)), bar)]
+        #[cfg_attr(not(any(foo)), bar)]
+        #[cfg_attr(non, bar)]
+        fn foo() {}
+    """)
+
+    fun `test E0537 invalid cfg_attr`() = checkErrors("""
+        #[cfg_attr(<error descr="Invalid predicate `an` [E0537]">an</error>(foo), bar)]
+        #[cfg_attr(<error descr="Invalid predicate `allx` [E0537]">allx</error>(foo), bar)]
+        #[cfg_attr(<error descr="Invalid predicate `non` [E0537]">non</error>(foo), bar)]
+        #[cfg_attr(<error descr="Invalid predicate `non` [E0537]">non</error>(an(foo)), bar)]
+        #[cfg_attr(not(<error descr="Invalid predicate `foo` [E0537]">foo</error>()), non())]
+        #[cfg_attr(all(not(any(bar, <error descr="Invalid predicate `baz` [E0537]">baz</error>()))), non())]
+        #[cfg_attr(all(x, not(y), <error descr="Invalid predicate `baz` [E0537]">baz</error>()), bar)]
+        #[cfg_attr(any(x, not(y), <error descr="Invalid predicate `baz` [E0537]">baz</error>()), bar)]
+        fn foo() {}
+    """)
+
+    fun `test E0537 ignore non-root attributes`() = checkErrors("""
+        #[bar(cfg(an(foo)))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 nested cfg_attr`() = checkErrors("""
+        #[cfg_attr(foo, cfg_attr(<error descr="Invalid predicate `an` [E0537]">an</error>(), baz))]
+        fn foo() {}
+    """)
+
+    fun `test no E0537 cfg version`() = checkErrors("""
+        #[cfg(version())]
+        fn foo() {}
+    """)
+
+    fun `test E0537 quick fix any`() = checkFixByText("Change to `any`", """
+        #[cfg(<error descr="Invalid predicate `an` [E0537]">an/*caret*/</error>(foo))]
+        fn foo() {}
+    """, """
+        #[cfg(any(foo))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 quick fix all`() = checkFixByText("Change to `all`", """
+        #[cfg(<error descr="Invalid predicate `allx` [E0537]">allx/*caret*/</error>(foo))]
+        fn foo() {}
+    """, """
+        #[cfg(all(foo))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 quick fix not`() = checkFixByText("Change to `not`", """
+        #[cfg(<error descr="Invalid predicate `noo` [E0537]">noo/*caret*/</error>(foo))]
+        fn foo() {}
+    """, """
+        #[cfg(not(foo))]
+        fn foo() {}
+    """)
+
+    fun `test E0537 no quick fix high distance`() = checkFixIsUnavailable("Change to", """
+        #[cfg(<error descr="Invalid predicate `a` [E0537]">a/*caret*/</error>(foo))]
+        fn foo() {}
+    """)
+
+
+    @MockRustcVersion("1.60.0-nightly")
+    fun `test feature attribute in nightly channel`() = checkErrors("""
+        #![feature(never_type)]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0-beta")
+    fun `test feature attribute in beta channel`() = checkErrors("""
+        #![<error descr="`#![feature]` may not be used on the beta release channel [E0554]">feature</error>(never_type)]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
+    fun `test feature attribute in stable channel`() = checkErrors("""
+        #![<error descr="`#![feature]` may not be used on the stable release channel [E0554]">feature</error>(never_type)]
+
+        fn main() {}
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.60.0")
+    fun `test feature attribute inside cfg_attr`() = checkErrors("""
+        #![cfg_attr(intellij_rust, <error descr="`#![feature]` may not be used on the stable release channel [E0554]">feature</error>(never_type))]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
+    fun `test outer feature attribute`() = checkErrors("""
+        #[feature(never_type)]
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
+    fun `test remove feature attribute quick-fix`() = checkFixByText("Remove attribute `feature`", """
+        #![<error>/*caret*/feature</error>(never_type)]
+
+        fn main() {}
+    """, """
+        fn main() {}
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.60.0")
+    fun `test no remove feature attribute quick-fix inside cfg_attr`() = checkFixIsUnavailable("Remove attribute `feature`", """
+        #![cfg_attr(intellij_rust, <error>/*caret*/feature</error>(never_type))]
+
+        fn main() {}
     """)
 }

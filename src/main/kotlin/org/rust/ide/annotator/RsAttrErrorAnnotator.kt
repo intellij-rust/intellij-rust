@@ -7,25 +7,32 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
-import org.rust.ide.fixes.RemoveElementFix
-import org.rust.ide.fixes.SubstituteTextFix
+import com.intellij.util.ProcessingContext
+import com.intellij.util.ThreeState
+import org.rust.ide.fixes.*
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
+import org.rust.lang.utils.areUnstableFeaturesAvailable
 
 class RsAttrErrorAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is RsMetaItem -> {
-                if (!element.isRootMetaItem()) return
+                val context = ProcessingContext()
+                if (!element.isRootMetaItem(context)) return
+
                 checkMetaBadDelim(element, holder)
                 checkAttrTemplateCompatible(element, holder)
                 checkLiteralSuffix(element, holder)
 
                 when (element.name) {
                     "deprecated" -> checkDeprecatedAttr(element, holder)
+                    "feature" -> checkFeatureAttribute(element, holder, context)
+                    "cfg", "cfg_attr" -> checkRootCfgPredicate(element, holder)
                 }
             }
 
@@ -216,6 +223,56 @@ private fun checkMetaBadDelim(element: RsMetaItem, holder: AnnotationHolder) {
                 "Replace brackets", element.containingFile, element.textRange, fixedText
             )
             RsDiagnostic.WrongMetaDelimiters(openDelim, closingDelim, fix).addToHolder(holder)
+        }
+    }
+}
+
+private fun checkFeatureAttribute(item: RsMetaItem, holder: AnnotationHolder, context: ProcessingContext) {
+    // outer feature attributes are ignored by the compiler
+    val attr = context.get(RsPsiPattern.META_ITEM_ATTR)
+    if (attr !is RsInnerAttr) return
+    val path = item.path ?: return
+    // feature attributes in non-crate root modules are ignored by the compiler
+    if (!item.containingMod.isCrateRoot) return
+    val metaItemList = item.metaItemArgs?.metaItemList.orEmpty()
+    // #![feature()] can be written even in stable channel
+    if (metaItemList.isEmpty()) return
+    val version = item.cargoProject?.rustcInfo?.version ?: return
+    // we should annotate `feature` attribute if only we are sure that unstable features are not available
+    if (item.areUnstableFeaturesAvailable(version) != ThreeState.NO) return
+
+    val channelName = version.channel.channel ?: return
+
+    val fix = if (item.parent == attr) RemoveAttrFix(attr) else null
+    RsDiagnostic.FeatureAttributeInNonNightlyChannel(path, channelName, fix).addToHolder(holder)
+}
+
+private fun checkRootCfgPredicate(element: RsMetaItem, holder: AnnotationHolder) {
+    val item = element.metaItemArgs?.metaItemList?.getOrNull(0) ?: return
+    checkCfgPredicate(holder, item)
+}
+
+private fun checkCfgPredicate(holder: AnnotationHolder, item: RsMetaItem) {
+    val itemName = item.name ?: return
+    val args = item.metaItemArgs ?: return
+    when (itemName) {
+        "all", "any" -> args.metaItemList.forEach { checkCfgPredicate(holder, it) }
+        "not" -> {
+            if (args.metaItemList.size == 1) {
+                val parameter = args.metaItemList.first()
+                checkCfgPredicate(holder, parameter)
+            } else {
+                val fixes = listOfNotNull(ConvertMalformedCfgNotPatternToCfgAllPatternFix.createIfCompatible(item))
+                RsDiagnostic.CfgNotPatternIsMalformed(item, fixes).addToHolder(holder)
+            }
+        }
+        "version" -> { /* version is currently experimental */ }
+        else -> {
+            val path = item.path ?: return
+            val fixes = NameSuggestionFix.createApplicable(path, itemName, listOf("all", "any", "not"), 1) { name ->
+                RsPsiFactory(path.project).tryCreatePath(name) ?: error("Cannot create path out of $name")
+            }
+            RsDiagnostic.UnknownCfgPredicate(path, itemName, fixes).addToHolder(holder)
         }
     }
 }
