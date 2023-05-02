@@ -410,6 +410,13 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
     """)
 
     @MockRustcVersion("1.60.0")
+    fun `test feature attribute inside cfg_attr that doesn't expand`() = checkErrors("""
+        #![cfg_attr(non_existent, feature(never_type))]
+
+        fn main() {}
+    """)
+
+    @MockRustcVersion("1.60.0")
     fun `test outer feature attribute`() = checkErrors("""
         #[feature(never_type)]
         fn main() {}

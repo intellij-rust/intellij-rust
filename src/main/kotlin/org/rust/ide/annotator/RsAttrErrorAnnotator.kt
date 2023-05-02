@@ -20,6 +20,7 @@ import org.rust.lang.utils.areUnstableFeaturesAvailable
 
 class RsAttrErrorAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        val rsHolder = RsAnnotationHolder(holder)
         when (element) {
             is RsMetaItem -> {
                 val context = ProcessingContext()
@@ -31,8 +32,10 @@ class RsAttrErrorAnnotator : AnnotatorBase() {
 
                 when (element.name) {
                     "deprecated" -> checkDeprecatedAttr(element, holder)
-                    "feature" -> checkFeatureAttribute(element, holder, context)
-                    "cfg", "cfg_attr" -> checkRootCfgPredicate(element, holder)
+                    "feature" -> {
+                        checkFeatureAttribute(element, rsHolder, context)
+                    }
+                    "cfg", "cfg_attr" -> checkRootCfgPredicate(element, rsHolder)
                 }
             }
 
@@ -227,7 +230,7 @@ private fun checkMetaBadDelim(element: RsMetaItem, holder: AnnotationHolder) {
     }
 }
 
-private fun checkFeatureAttribute(item: RsMetaItem, holder: AnnotationHolder, context: ProcessingContext) {
+private fun checkFeatureAttribute(item: RsMetaItem, holder: RsAnnotationHolder, context: ProcessingContext) {
     // outer feature attributes are ignored by the compiler
     val attr = context.get(RsPsiPattern.META_ITEM_ATTR)
     if (attr !is RsInnerAttr) return
@@ -247,12 +250,12 @@ private fun checkFeatureAttribute(item: RsMetaItem, holder: AnnotationHolder, co
     RsDiagnostic.FeatureAttributeInNonNightlyChannel(path, channelName, fix).addToHolder(holder)
 }
 
-private fun checkRootCfgPredicate(element: RsMetaItem, holder: AnnotationHolder) {
+private fun checkRootCfgPredicate(element: RsMetaItem, holder: RsAnnotationHolder) {
     val item = element.metaItemArgs?.metaItemList?.getOrNull(0) ?: return
     checkCfgPredicate(holder, item)
 }
 
-private fun checkCfgPredicate(holder: AnnotationHolder, item: RsMetaItem) {
+private fun checkCfgPredicate(holder: RsAnnotationHolder, item: RsMetaItem) {
     val itemName = item.name ?: return
     val args = item.metaItemArgs ?: return
     when (itemName) {
@@ -272,7 +275,7 @@ private fun checkCfgPredicate(holder: AnnotationHolder, item: RsMetaItem) {
             val fixes = NameSuggestionFix.createApplicable(path, itemName, listOf("all", "any", "not"), 1) { name ->
                 RsPsiFactory(path.project).tryCreatePath(name) ?: error("Cannot create path out of $name")
             }
-            RsDiagnostic.UnknownCfgPredicate(path, itemName, fixes).addToHolder(holder)
+            RsDiagnostic.UnknownCfgPredicate(path, itemName, fixes).addToHolder(holder, checkExistsAfterExpansion = false)
         }
     }
 }
