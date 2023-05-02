@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.impl.BaseFixture
+import com.intellij.util.EnvironmentUtil
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.tools.Rustup
@@ -49,7 +50,7 @@ open class RustupTestFixture(
         stdlib?.let { VfsRootAccess.allowRootAccess(testRootDisposable, it.path) }
 
         val toolchain = toolchain!!
-        val cargoPath = "~/.cargo"
+        val cargoPath = (EnvironmentUtil.getValue("CARGO_HOME")?:"~/.cargo")
             .let { toolchain.expandUserHome(it) }
             .let { toolchain.toLocalPath(it) }
             .toPath()
