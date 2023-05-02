@@ -22,36 +22,28 @@ internal class MirPrettyPrinter(
         return buildString { printMir(mir) }
     }
 
-    private fun localIndex(local: MirLocal): Int = mir.localDecls.indexOf(local)
-    private fun blockIndex(block: MirBasicBlock): Int = mir.basicBlocks.indexOf(block)
     private fun scopeIndex(scope: MirSourceScope): Int = mir.sourceScopes.indexOf(scope)
 
     private fun StringBuilder.printMir(mir: MirBody): StringBuilder = apply {
         printIntro()
-        mir.basicBlocks.withIndex().forEach { (index, block) ->
+        for (block in mir.basicBlocks) {
             appendLine()
-            print(
-                block = block,
-                index = index,
-            )
+            printBasicBlock(block)
         }
         append("}")
     }
 
-    private fun StringBuilder.print(
-        block: MirBasicBlock,
-        index: Int,
-    ): StringBuilder = apply {
+    private fun StringBuilder.printBasicBlock(block: MirBasicBlock): StringBuilder = apply {
         val cleanup = if (block.unwind) " (cleanup)" else ""
-        appendLine("${INDENT}bb$index$cleanup: {")
+        appendLine("${INDENT}bb${block.index}$cleanup: {")
         block.statements.forEach { stmt ->
             val statement = when (stmt) {
                 is MirStatement.Assign -> {
-                    "$INDENT${INDENT}_${localIndex(stmt.place.local)} = ${format(stmt.rvalue)};"
+                    "$INDENT${INDENT}_${stmt.place.local.index} = ${format(stmt.rvalue)};"
                 }
-                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${localIndex(stmt.local)});"
-                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${localIndex(stmt.local)});"
-                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${localIndex(stmt.place.local)});"
+                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${stmt.local.index});"
+                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${stmt.local.index});"
+                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${stmt.place.local.index});"
             }
             appendLine(statement.withComment(" // ${createComment(stmt.source)}"))
         }
@@ -63,24 +55,24 @@ internal class MirPrettyPrinter(
             }
             is MirTerminator.Assert -> {
                 val neg = if (terminator.expected) "" else "!"
-                val successIndex = blockIndex(terminator.target)
-                val unwindIndex = terminator.unwind?.let { blockIndex(it) }
+                val successIndex = terminator.target.index
+                val unwindIndex = terminator.unwind?.let { it.index }
                 val targets = if (unwindIndex == null) "bb$successIndex" else "[success: bb$successIndex, unwind: bb$unwindIndex]"
                 val assert = "$INDENT${INDENT}assert(${neg}${format(terminator.cond)}${format(terminator.msg)}) -> $targets;"
                 appendLine(assert.withComment(" // ${createComment(block.terminator.source)}"))
             }
             is MirTerminator.Goto -> {
                 val comment = createComment(block.terminator.source)
-                appendLine("$INDENT${INDENT}goto -> bb${blockIndex(terminator.target)};".withComment(" // $comment"))
+                appendLine("$INDENT${INDENT}goto -> bb${terminator.target.index};".withComment(" // $comment"))
             }
             is MirTerminator.SwitchInt -> {
                 val comment = createComment(block.terminator.source)
                 val cases = buildString {
                     append("[")
                     // TODO: hardcoded as hell
-                    append("false: bb${blockIndex(terminator.targets.targets[0])}")
+                    append("false: bb${terminator.targets.targets[0].index}")
                     append(", ")
-                    append("otherwise: bb${blockIndex(terminator.targets.targets[1])}")
+                    append("otherwise: bb${terminator.targets.targets[1].index}")
                     append("]")
                 }
                 val switch = "$INDENT${INDENT}switchInt(${format(terminator.discriminant)}) -> $cases;"
@@ -94,9 +86,9 @@ internal class MirPrettyPrinter(
                 val comment = createComment(block.terminator.source)
                 val cases = buildString {
                     append("[")
-                    append("real: bb${blockIndex(terminator.realTarget)}")
+                    append("real: bb${terminator.realTarget.index}")
                     append(", ")
-                    append("cleanup: bb${blockIndex(terminator.unwind!!)}")
+                    append("cleanup: bb${terminator.unwind!!.index}")
                     append("]")
                 }
                 appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(" // $comment"))
@@ -173,7 +165,7 @@ internal class MirPrettyPrinter(
     }
 
     private fun format(place: MirPlace): String {
-        val index = localIndex(place.local)
+        val index = place.local.index
         if (place.projections.isEmpty()) return "_$index"
         check(place.projections.size == 1) // TODO
         return when (val projection = place.projections.single()) {
@@ -281,14 +273,14 @@ internal class MirPrettyPrinter(
             val debugInfo = "${indent}debug ${varDebugInfo.name} => ${format(varDebugInfo.contents)};"
             appendLine(debugInfo.withComment(" // in ${createComment(varDebugInfo.source)}"))
         }
-        for ((index, local) in mir.localDecls.withIndex()) {
+        for (local in mir.localDecls) {
             if (local.source.scope != parent) continue
             val mut = when (local.mutability) {
                 Mutability.MUTABLE -> "mut "
                 Mutability.IMMUTABLE -> ""
             }
-            val definition = "${indent}let ${mut}_$index: ${format(local.ty)};"
-            val localName = if (index == 0) " return place" else ""
+            val definition = "${indent}let ${mut}_${local.index}: ${format(local.ty)};"
+            val localName = if (local.index == 0) " return place" else ""
             val comment = createComment(local.source)
             appendLine(definition.withComment(" //$localName in $comment"))
         }

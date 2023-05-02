@@ -8,17 +8,19 @@ package org.rust.lang.core.mir.building
 import org.rust.lang.core.mir.schemas.impls.MirBasicBlockImpl
 
 class BasicBlocksBuilder {
-    private val startBlock = MirBasicBlockImpl(false)
-    private val tail = mutableListOf<MirBasicBlockImpl>()
+    private val basicBlocks = mutableListOf<MirBasicBlockImpl>()
 
-    fun startBlock(): BlockAnd<Unit> = startBlock and Unit
+    init {
+        new(false)
+    }
+
+    fun startBlock(): BlockAnd<Unit> = basicBlocks[0] and Unit
 
     fun new(unwind: Boolean = false): MirBasicBlockImpl {
-        return MirBasicBlockImpl(unwind).also { tail.add(it) }
+        val bb = MirBasicBlockImpl(basicBlocks.size, unwind)
+        basicBlocks.add(bb)
+        return bb
     }
 
-    fun build(): MutableList<MirBasicBlockImpl> = mutableListOf<MirBasicBlockImpl>().apply {
-        add(startBlock)
-        addAll(tail)
-    }
+    fun build(): MutableList<MirBasicBlockImpl> = basicBlocks
 }

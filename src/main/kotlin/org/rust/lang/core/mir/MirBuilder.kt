@@ -11,7 +11,10 @@ import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.schemas.MirBinaryOperator.Companion.toMir
 import org.rust.lang.core.mir.schemas.impls.MirBasicBlockImpl
 import org.rust.lang.core.mir.schemas.impls.MirBodyImpl
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.thir.*
@@ -484,7 +487,7 @@ class MirBuilder private constructor(
             refCorrect && mutCorrect
         }
         val debugSource = MirSourceInfo(source.span, visibilityScope)
-        val localForArmBody = MirLocal(
+        val localForArmBody = localDecls.newLocal(
             mutability = mutability,
             ty = variableTy,
             source = source,
@@ -503,7 +506,6 @@ class MirBuilder private constructor(
                 )
             )
         )
-        localDecls.push(localForArmBody)
         varDebugInfo.add(MirVarDebugInfo(name, debugSource, MirVarDebugInfo.Contents.Place(MirPlace(localForArmBody))))
         varIndices[variable] = MirLocalForNode.One(localForArmBody)
     }
@@ -725,9 +727,9 @@ class MirBuilder private constructor(
         val negOne = MirOperand.Constant(toConstant(-1, ty, source.span))
         val min = MirOperand.Constant(toConstant(ty.minValue, ty, source.span))
 
-        val isNegOne = localDecls.tempPlace(TyBool.INSTANCE, source)
-        val isMin = localDecls.tempPlace(TyBool.INSTANCE, source)
-        val overflow = localDecls.tempPlace(TyBool.INSTANCE, source)
+        val isNegOne = localDecls.newTempPlace(TyBool.INSTANCE, source)
+        val isMin = localDecls.newTempPlace(TyBool.INSTANCE, source)
+        val overflow = localDecls.newTempPlace(TyBool.INSTANCE, source)
 
         return block
             .pushAssign(
@@ -762,7 +764,7 @@ class MirBuilder private constructor(
         val needsAssertion = checkOverflow && kind.op == UnaryOperator.MINUS && type.isSigned
         if (!needsAssertion) return this
         check(type is TyInteger) // TODO: guess it can also be boolean or reference
-        val isMin = localDecls.tempPlace(TyBool.INSTANCE, source)
+        val isMin = localDecls.newTempPlace(TyBool.INSTANCE, source)
         val eq = MirRvalue.BinaryOpUse(
             op = EqualityOp.EQ.toMir(),
             left = elem.toCopy(),
@@ -1032,7 +1034,7 @@ class MirBuilder private constructor(
         internal: Boolean = false,
         mutability: Mutability = Mutability.MUTABLE,
     ): MirPlace {
-        return tempPlace(ty, MirSourceInfo.outermost(span), internal, mutability)
+        return newTempPlace(ty, MirSourceInfo.outermost(span), internal, mutability)
     }
 
     companion object {
