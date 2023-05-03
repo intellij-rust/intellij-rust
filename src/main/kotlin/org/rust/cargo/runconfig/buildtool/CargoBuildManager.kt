@@ -107,7 +107,7 @@ object CargoBuildManager {
         }
 
         var usesBsp = cargoProject.workspace?.usesBSP
-        if (usesBsp != null && usesBsp) {
+        if (usesBsp == true) {
             val bspService = project.service<BspConnectionService>()
             val packageIndex = state.config.cmd.additionalArguments.indexOf("--package")
             val targetName = state.config.cmd.additionalArguments[packageIndex + 1]
