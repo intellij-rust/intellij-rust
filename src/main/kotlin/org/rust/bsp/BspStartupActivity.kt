@@ -14,7 +14,9 @@ import org.rust.bsp.service.BspConnectionService
 class BspStartupActivity : StartupActivity.DumbAware {
 
     override fun runActivity(project: Project) {
-        doRunActivity(project)
+        if (project.service<BspConnectionService>().hasBspServer()) {
+            doRunActivity(project)
+        }
     }
 
     private fun doRunActivity(project: Project) {
@@ -23,9 +25,7 @@ class BspStartupActivity : StartupActivity.DumbAware {
 
     private fun collectProject(project: Project) {
         runBackgroundableTask("Connecting with BSP", project, true) {
-            if (project.service<BspConnectionService>().hasBspServer()) {
                 project.service<BspConnectionService>().connect()
-            }
         }
     }
 }
