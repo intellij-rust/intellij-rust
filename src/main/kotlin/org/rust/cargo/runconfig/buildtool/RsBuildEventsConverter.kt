@@ -86,6 +86,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
 
             if (kind == MessageEvent.Kind.ERROR) {
                 context.errors.incrementAndGet()
+                rustcMessage.code?.code?.let(context.errorCodes::add)
             } else {
                 context.warnings.incrementAndGet()
             }
