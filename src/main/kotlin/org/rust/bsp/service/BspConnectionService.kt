@@ -17,10 +17,6 @@ import java.util.concurrent.CompletableFuture
 
 @Service
 interface BspConnectionService {
-    fun getBspServer(): BspServer
-
-    fun getBspClient(): BspClient
-
     fun connect()
 
     fun disconnect()

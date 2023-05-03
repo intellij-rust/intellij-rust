@@ -52,7 +52,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     private var disconnectActions: MutableList<() -> Unit> = mutableListOf()
     private var initializeBuildResult: InitializeBuildResult? = null
 
-    override fun getBspServer(): BspServer {
+    private fun getBspServer(): BspServer {
         createBspServerIfNull()
         initializeBuildResult = queryForInitialize(bspServer!!)
             .catchSyncErrors { println("Error while initializing BSP server $it") }
@@ -61,7 +61,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return bspServer!!
     }
 
-    override fun getBspClient(): BspClient {
+    private fun getBspClient(): BspClient {
         createBspServerIfNull()
         return bspClient!!
     }
