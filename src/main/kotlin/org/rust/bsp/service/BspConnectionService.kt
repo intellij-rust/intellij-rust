@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.bsp.BspClient
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
+import org.rust.cargo.toolchain.impl.RustcVersion
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -32,6 +33,7 @@ interface BspConnectionService {
 
     fun getStdLibPath(): VirtualFile?
 
-    // TODO: use me!
-    fun getRustcVersion(): String?
+    fun getRustcVersion(): RustcVersion?
+
+    fun getRustcSysroot(): String?
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.text.SemVer
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
 import org.rust.bsp.BspConstants
@@ -29,9 +30,11 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.crate.impl.CrateGraphServiceImpl
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
@@ -238,10 +241,18 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return (toolchain.stdLib.rustcSrcSysroot + "/library").toVirtualFile()
     }
 
-    override fun getRustcVersion(): String? {
+    override fun getRustcVersion(): RustcVersion? {
         val server = getBspServer()
         val (toolchain) = calculateToolchains(server)
-        return toolchain.stdLib.rustcVersion
+        val version =  toolchain.stdLib.rustcVersion
+        //TODO get rest of data from bsp
+        return SemVer.parseFromText(version)?.let { RustcVersion(it,"x86_64-unknown-linux-gnu", RustChannel.STABLE)}
+    }
+
+    override fun getRustcSysroot(): String? {
+        val server = getBspServer()
+        val (toolchain) = calculateToolchains(server)
+        return toolchain.sysRoot
     }
 }
 

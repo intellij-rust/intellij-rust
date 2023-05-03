@@ -317,6 +317,12 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
             return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${childContext.toolchain.presentableLocation}")
         }
 
+        val bspService: BspConnectionService = context.project.service<BspConnectionService>()
+        if (bspService.hasBspServer()) {
+            val rustcVersion = bspService.getRustcVersion()
+            val sysroot = bspService.getRustcSysroot() ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+            return@runWithChildProgress TaskResult.Ok(RustcInfo(sysroot, rustcVersion, null, null))
+        }
         val workingDirectory = childContext.oldCargoProject.workingDirectory
 
         val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
