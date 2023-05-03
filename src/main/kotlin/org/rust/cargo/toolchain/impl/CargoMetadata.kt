@@ -5,7 +5,6 @@
 
 package org.rust.cargo.toolchain.impl
 
-import ch.epfl.scala.bsp4j.*
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
