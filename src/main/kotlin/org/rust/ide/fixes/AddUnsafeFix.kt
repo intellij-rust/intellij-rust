@@ -11,11 +11,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.injected.isDoctestInjectedMain
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.isActuallyUnsafe
 import org.rust.lang.core.psi.ext.isMain
+import org.rust.lang.core.psi.ext.isTest
+import org.rust.lang.core.psi.ext.superItem
 
 class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
     private val _text = run {
@@ -50,10 +54,21 @@ class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIn
                 RsImplItem::class.java
             ) ?: return null
 
+
             return when {
-                parent is RsFunction && parent.isMain -> null
+                parent is RsFunction && !parent.isUnsafeApplicable -> null
                 else -> AddUnsafeFix(parent)
             }
         }
+
+        private val RsFunction.isUnsafeApplicable: Boolean
+            get() {
+                // Unsafe modifier cannot be added to main function or tests
+                if (isActuallyUnsafe || isMain || isTest || isDoctestInjectedMain) return false
+
+                val superFn = (superItem as? RsFunction) ?: return true
+                // An implementing function cannot be unsafe unless the trait function is unsafe as well
+                return superFn.isUnsafe
+            }
     }
 }

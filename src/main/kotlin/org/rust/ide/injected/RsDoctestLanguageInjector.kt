@@ -26,6 +26,7 @@ import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.parser.probe
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.docElements
 import org.rust.lang.doc.psi.RsDocCodeFence
@@ -370,3 +371,9 @@ val RsElement.isDoctestInjection: Boolean
 
 val RsElement.isInsideInjection: Boolean
     get() = (contextualFile as? RsFile)?.virtualFile is VirtualFileWindow
+
+/**
+ * Checks if this is the synthetic main function generated for doctests.
+ */
+val RsFunction.isDoctestInjectedMain: Boolean
+    get() = name ==  RsDoctestLanguageInjector.INJECTED_MAIN_NAME && isDoctestInjection && parent is RsFile
