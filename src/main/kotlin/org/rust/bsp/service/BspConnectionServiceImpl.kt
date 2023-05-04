@@ -245,8 +245,9 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val server = getBspServer()
         val (toolchain) = calculateToolchains(server)
         val version = toolchain.stdLib.rustcVersion
-        // TODO: get rest of data from bsp
-        return SemVer.parseFromText(version)?.let { RustcVersion(it, "x86_64-unknown-linux-gnu", RustChannel.STABLE) }
+        // TODO: Just to be sure it is not empty.
+        val host = toolchain.rustHost ?: "x86_64-unknown-linux-gnu"
+        return SemVer.parseFromText(version)?.let { RustcVersion(it, host, RustChannel.STABLE) }
     }
 
     override fun getRustcSysroot(): String? {
