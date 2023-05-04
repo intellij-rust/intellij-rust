@@ -23,4 +23,25 @@ class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantIns
         }
     """)
 
+    fun `test constants with type inference`() = checkByText("""
+        const PI: f32 = <warning descr="Approximate value of `std::f32::consts::PI` found. Consider using it directly.">3.1415</warning>;
+        const PI: f64 = <warning descr="Approximate value of `std::f64::consts::PI` found. Consider using it directly.">3.1415</warning>;
+    """)
+
+    fun `test use core when no std lib`() = checkByText("""
+        #![no_std]
+        const PI: f64 = <warning descr="Approximate value of `core::f64::consts::PI` found. Consider using it directly.">3.1415</warning>;
+    """)
+
+    fun `test unavailable when no core lib`() = checkByText("""
+        #![no_core]
+        const PI: f64 = 3.1415;
+    """.trimIndent())
+
+    fun `test replace with predefined fix`() = checkFixByText("Replace with `std::f64::consts::PI`", """
+        const PI: f64 = <warning descr="Approximate value of `std::f64::consts::PI` found. Consider using it directly.">3.1415<caret></warning>;
+    """, """
+        const PI: f64 = std::f64::consts::PI;
+    """)
+
 }
