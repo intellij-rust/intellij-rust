@@ -36,6 +36,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is RsBreakExpr -> checkBreakExpr(holder, element)
+            is RsContExpr -> checkLabelInWhileCondition(holder, element)
             is RsExternAbi -> checkExternAbi(holder, element)
             is RsItemElement -> {
                 checkItem(holder, element)
@@ -88,6 +89,7 @@ private fun checkImplItem(holder: AnnotationHolder, item: RsImplItem) {
 }
 
 private fun checkBreakExpr(holder: AnnotationHolder, item: RsBreakExpr) {
+    checkLabelInWhileCondition(holder, item)
     item.expr ?: return
     val label = item.label
     val loop = if (label != null) {
@@ -101,6 +103,15 @@ private fun checkBreakExpr(holder: AnnotationHolder, item: RsBreakExpr) {
     when (loop) {
         is RsForExpr -> RsDiagnostic.BreakExprInNonLoopError(item, "for").addToHolder(holder)
         is RsWhileExpr -> RsDiagnostic.BreakExprInNonLoopError(item, "while").addToHolder(holder)
+    }
+}
+
+private fun checkLabelInWhileCondition(holder: AnnotationHolder, item: RsLabelReferenceOwner) {
+    if (item.label != null) return;
+    val condition = item.parent
+    if (condition is RsCondition && condition.parent is RsWhileExpr) {
+        val fixes = if (!holder.isBatchMode) listOf(RsAddLabelFix(item)) else emptyList()
+        RsDiagnostic.BreakContinueInWhileConditionWithoutLoopError(item, item.text, fixes).addToHolder(holder)
     }
 }
 
