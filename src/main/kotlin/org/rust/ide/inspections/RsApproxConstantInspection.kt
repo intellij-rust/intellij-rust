@@ -5,11 +5,16 @@
 
 package org.rust.ide.inspections
 
-import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.RsLiteralKind
-import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.kind
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFile.Attributes
+import org.rust.lang.core.types.ty.TyFloat
+import org.rust.lang.core.types.type
 import kotlin.math.*
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
@@ -19,9 +24,35 @@ class RsApproxConstantInspection : RsLocalInspectionTool() {
             if (literal is RsLiteralKind.Float) {
                 val value = literal.value ?: return
                 val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
-                holder.registerProblem(o, literal.suffix ?: "f64", constant)
+                val lib = when (o.containingFile.rustFile?.getStdlibAttributes(o.containingCrate)) {
+                    Attributes.NONE -> STD
+                    Attributes.NO_STD -> CORE
+                    else -> return
+                }
+                val type = when (val type = o.type) {
+                    is TyFloat -> type.name
+                    else -> "f64"
+                }
+                val path = "$lib::$type::consts::${constant.name}"
+                val fix = ReplaceWithPredefinedQuickFix(o, path)
+                holder.registerProblem(o, "Approximate value of `$path` found. Consider using it directly.", fix)
             }
         }
+    }
+
+    private class ReplaceWithPredefinedQuickFix(
+        element: PsiElement,
+        private val path: String
+    ) : LocalQuickFixOnPsiElement(element) {
+
+        override fun getFamilyName() = "Replace with predefined constant"
+        override fun getText() = "Replace with `$path`"
+
+        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+            val pathExpr = RsPsiFactory(project).createExpression(path)
+            startElement.replace(pathExpr)
+        }
+
     }
 
     private companion object {
@@ -51,8 +82,4 @@ data class PredefinedConstant(val name: String, val value: Double, val minDigits
     private val accuracy: Double = 0.1.pow(minDigits.toDouble())
 
     fun matches(value: Double): Boolean = abs(value - this.value) < accuracy
-}
-
-private fun RsProblemsHolder.registerProblem(element: RsElement, type: String, constant: PredefinedConstant) {
-    registerProblem(element, "Approximate value of `std::$type::consts::${constant.name}` found. Consider using it directly.")
 }
