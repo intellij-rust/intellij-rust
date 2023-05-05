@@ -98,14 +98,8 @@ enum class AttributeTemplateType {
 }
 
 val RsMetaItem.templateType: AttributeTemplateType
-    get() {
-        return if (metaItemArgs?.litExprList?.isNotEmpty() == true ||
-            metaItemArgs?.metaItemList?.isNotEmpty() == true
-        ) {
-            AttributeTemplateType.List
-        } else if (eq != null) {
-            AttributeTemplateType.NameValueStr
-        } else {
-            AttributeTemplateType.Word
-        }
+    get() = when {
+        metaItemArgs != null -> AttributeTemplateType.List
+        eq != null -> AttributeTemplateType.NameValueStr
+        else -> AttributeTemplateType.Word
     }

@@ -144,4 +144,8 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
         #[cfg(feature = "foo")]
         fn bar() {}
     """)
+
+    fun `test no error empty feature`() = checkByText("""
+        #![feature()]
+    """)
 }
