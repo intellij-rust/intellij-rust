@@ -44,7 +44,7 @@ class RsNewProjectWizard : LanguageNewProjectWizard {
 
         override fun setupProject(project: Project) {
             val builder = RsModuleBuilder()
-            val module = builder.commit(project).firstOrNull() ?: return
+            val module = builder.commit(project)?.firstOrNull() ?: return
             ModuleRootModificationUtil.updateModel(module) { rootModel ->
                 builder.configurationData = peer.settings
                 builder.createProject(rootModel, vcs = "none")
