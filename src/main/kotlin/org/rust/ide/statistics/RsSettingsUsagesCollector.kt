@@ -28,9 +28,7 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
             metrics += PROJECT.metric(macroExpansionEngine, doctestInjectionEnabled)
             metrics += CARGO.metric(
                 CARGO_AUTO_SHOW_ERRORS_IN_EDITOR.with(autoShowErrorsInEditor.toBoolean()),
-                CARGO_AUTO_UPDATE.with(autoUpdateEnabled),
                 CARGO_COMPILE_ALL_TARGETS.with(compileAllTargets),
-                CARGO_OFFLINE.with(doctestInjectionEnabled)
             )
         }
         with(project.rustfmtSettings) {
@@ -52,16 +50,12 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
         )
 
         private val CARGO_AUTO_SHOW_ERRORS_IN_EDITOR = EventFields.Boolean("auto_show_errors_in_editor")
-        private val CARGO_AUTO_UPDATE = EventFields.Boolean("auto_update")
         private val CARGO_COMPILE_ALL_TARGETS = EventFields.Boolean("compile_all_targets")
-        private val CARGO_OFFLINE = EventFields.Boolean("offline")
 
         private val CARGO = GROUP.registerVarargEvent(
             "cargo",
             CARGO_AUTO_SHOW_ERRORS_IN_EDITOR,
-            CARGO_AUTO_UPDATE,
             CARGO_COMPILE_ALL_TARGETS,
-            CARGO_OFFLINE
         )
 
         private val RUSTFMT = GROUP.registerEvent(
