@@ -89,9 +89,8 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Can't get output perf data file")
 
         val project = configuration.project
-        val profilerProcess = PerfProfilerProcess(
+        val profilerProcess = createProfilerProcess(
             handler,
-            false,
             outputFile,
             configuration.name,
             project,
