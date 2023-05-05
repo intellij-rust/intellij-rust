@@ -164,6 +164,10 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
         fn bar() {}
     """)
 
+    fun `test no error empty feature`() = checkByText("""
+        #![feature()]
+    """)
+
     fun `test duplicates remove first`() = checkFixByText("Remove `#[instruction_set(arm::a32)]`", """
         #[instruction_set(arm::a32)]
         #[<error descr="Multiple 'instruction_set' attributes">instruction_set(arm::a32)/*caret*/</error>]
