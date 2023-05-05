@@ -11,44 +11,59 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObjectsInspection::class) {
 
-    fun `test simple trait object`() = checkFixByText("Add 'dyn' keyword to trait object", """
+    @MockEdition(Edition.EDITION_2021)
+    fun `test simple trait object in edition 2021`() = checkFixByText("Add 'dyn' keyword to trait object", """
         trait Trait {}
-        fn main(){
-            let a: &<warning descr="Trait objects without an explicit 'dyn' are deprecated">Trait<caret></warning>;
+        fn main() {
+            let a: &<error descr="Trait objects must include the `dyn` keyword [E0782]">Trait<caret></error>;
         }
     """, """
         trait Trait {}
-        fn main(){
+        fn main() {
+            let a: &dyn Trait;
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test simple trait object in edition 2018`() = checkFixByText("Add 'dyn' keyword to trait object", """
+        trait Trait {}
+        fn main() {
+            let a: &<warning descr="Trait objects must include the `dyn` keyword [E0782]This is accepted in the current edition (Rust 2018) but is a hard error in Rust 2021!">Trait<caret></warning>;
+        }
+    """, """
+        trait Trait {}
+        fn main() {
             let a: &dyn Trait;
         }
     """)
 
     fun `test with multiple bounds`() = checkFixByText("Add 'dyn' keyword to trait object", """
         trait Trait {}
-        fn main(){
-            let a: &<warning descr="Trait objects without an explicit 'dyn' are deprecated">Trait + Sync<caret></warning>;
+        fn main() {
+            let a: &<error descr="Trait objects must include the `dyn` keyword [E0782]">Trait + Sync<caret></error>;
         }
     """, """
         trait Trait {}
-        fn main(){
+        fn main() {
             let a: &dyn Trait + Sync;
         }
     """)
 
     fun `test in function declaration`() = checkByText("""
        trait Trait {}
-       fn test(a: Box<<warning>Trait</warning>>) -> Box<<warning>Trait</warning>> {}
+       fn test(a: Box<<error>Trait</error>>) -> Box<<error>Trait</error>> {}
     """)
 
-    fun `test no warning on trait in bounds`() = checkByText("""
+    fun `test no error on trait in bounds`() = checkByText("""
         trait Trait{}
         fn test<X>(a: X) where X : Trait {}
     """)
 
-    fun `test no warning on Self`() = checkByText("""
+    fun `test no error on Self`() = checkByText("""
         trait Y where Self: Foo {}
     """)
 
+    @MockEdition(Edition.EDITION_2018)
     fun `test allow bare_trait_objects`() = checkWarnings("""
         trait Trait {}
 
@@ -58,6 +73,7 @@ class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObject
         }
     """)
 
+    @MockEdition(Edition.EDITION_2018)
     fun `test allow rust_2018_idioms`() = checkWarnings("""
         trait Trait {}
 
@@ -70,7 +86,7 @@ class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObject
     @MockEdition(Edition.EDITION_2015)
     fun `test simple trait object in edition 2015`() = checkByText("""
         trait Trait {}
-        fn main(){
+        fn main() {
             let a: &Trait;
         }
     """)

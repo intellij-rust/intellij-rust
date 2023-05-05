@@ -334,9 +334,9 @@
         <commandLineInspectionProjectConfigurator
             implementation="org.rust.ide.inspections.CargoCommandLineInspectionProjectConfigurator"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Implicit trait objects are deprecated"
-                         enabledByDefault="true" level="WARNING"
+        <localInspection language="Rust" groupPath="Rust" groupName="Rust"
+                         displayName="Trait objects must include the dyn keyword"
+                         enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.lints.RsBareTraitObjectsInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"

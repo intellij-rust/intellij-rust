@@ -16,6 +16,8 @@ import org.rust.lang.core.psi.ext.dyn
 import org.rust.lang.core.psi.ext.isAtLeastEdition2018
 import org.rust.lang.core.psi.ext.skipParens
 import org.rust.lang.core.resolve.ref.deepResolve
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 class RsBareTraitObjectsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.BareTraitObjects
@@ -33,11 +35,7 @@ class RsBareTraitObjectsInspection : RsLintInspection() {
                 val hasImpl = traitType?.impl != null
                 if (!isTraitType || isSelf || hasDyn || hasImpl) return
 
-                holder.registerLintProblem(
-                    typeReference,
-                    "Trait objects without an explicit 'dyn' are deprecated",
-                    fixes = listOf(AddDynKeywordFix(typeReference))
-                )
+                RsDiagnostic.TraitObjectWithNoDyn(typeReference, AddDynKeywordFix(typeReference)).addToHolder(holder)
             }
         }
 
