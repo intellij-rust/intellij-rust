@@ -448,6 +448,11 @@ class RsPsiFactory(
 
     fun createLabel(name: String): RsLabel = createFromText("fn main() { break '$name; }")!!
 
+    fun createLoop(blockText: String, labelName: String? = null): RsLoopExpr {
+        val labelText = if (labelName != null) "$labelName:" else ""
+        return createFromText("fn main() { $labelText loop $blockText }")!!
+    }
+
     private fun tryCreateLambda(text: String): RsLambdaExpr? = createFromText("fn main() { let _ = $text }")
 
     fun createRetType(ty: String): RsRetType =
