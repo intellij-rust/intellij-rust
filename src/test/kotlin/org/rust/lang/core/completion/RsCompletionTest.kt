@@ -1494,4 +1494,20 @@ class RsCompletionTest : RsCompletionTestBase() {
             r#break();
         }
     """)
+
+    fun `test don't suggest labels from blocks`() {
+        val code = """
+            fn f() {
+                'b1: loop {
+                    'b2: {
+                        'b3: loop {
+                            continue 'b/*caret*/;
+                        }
+                    }
+                }
+            }
+        """
+        checkNotContainsCompletion("'b2", code)
+        checkContainsCompletion(listOf("'b1", "'b3"), code)
+    }
 }
