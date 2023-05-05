@@ -33,7 +33,7 @@ interface ResultsVisitable<FlowState> {
 /** A dataflow analysis that has converged to fixpoint. */
 class Results<Domain>(
     val analysis: Analysis<Domain>,
-    private val blockStates: List<Domain>,
+    val blockStates: List<Domain>,
 ) : ResultsVisitable<Domain> {
     override val direction: Direction get() = analysis.direction
 
