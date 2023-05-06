@@ -753,6 +753,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkVis(holder: RsAnnotationHolder, vis: RsVis) {
+        checkVisOnMacroRules(holder, vis)
         val parent = vis.parent
         if (parent is RsImplItem ||
             parent is RsForeignModItem ||
@@ -1887,6 +1888,10 @@ private fun checkRecursiveAsyncFunction(holder: RsAnnotationHolder, fn: RsFuncti
     for (recursiveCall in recursiveCalls) {
         RsDiagnostic.RecursiveAsyncFunction(recursiveCall, fix).addToHolder(holder)
     }
+}
+
+private fun checkVisOnMacroRules(holder: RsAnnotationHolder, vis: RsVis) {
+    if (vis.parent is RsMacro) RsDiagnostic.VisOnMacroRules(vis).addToHolder(holder)
 }
 
 private fun RsFunction.hasAsyncRecursionProcMacro(): Boolean {

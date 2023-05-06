@@ -180,7 +180,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
             }
 
         // Ensure that each attribute is in separate line; comment aware
-            psi1 is RsOuterAttr && (psi2 is RsOuterAttr || psi1.parent is RsItemElement)
+            psi1 is RsOuterAttr && (psi2 is RsOuterAttr || psi1.parent is RsItemElement || psi1.parent is RsMacro)
                 || psi1 is PsiComment && (psi2 is RsOuterAttr || psi1.getPrevNonCommentSibling() is RsOuterAttr)
             -> return lineBreak(keepBlankLines = 0)
 
