@@ -9,7 +9,6 @@ import ch.epfl.scala.bsp4j.CompileParams
 import ch.epfl.scala.bsp4j.RunParams
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.bsp.BspClient
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.toolchain.impl.RustcVersion

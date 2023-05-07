@@ -5,11 +5,9 @@
 
 package org.rust.bsp.service
 
-import ch.epfl.scala.bsp.Uri
 import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import com.intellij.codeInsight.intention.impl.reuseFragmentEditorIndent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -31,12 +29,8 @@ import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.lang.core.crate.impl.CrateGraphServiceImpl
-import org.rust.openapiext.pathAsPath
 import org.rust.stdext.HashCode
 import java.io.InputStream
 import java.io.OutputStream

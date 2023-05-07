@@ -6,14 +6,13 @@
 package org.rust.bsp
 
 import ch.epfl.scala.bsp4j.BuildTargetIdentifier
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import java.io.FileWriter
 import java.nio.file.Path
-import org.rust.cargo.project.workspace.CargoWorkspaceData
 import kotlin.io.path.Path
 
 class BspProjectViewManager(

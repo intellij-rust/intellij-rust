@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
-import org.rust.bsp.BspConstants
 import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.project.model.CargoProject
@@ -56,7 +55,6 @@ import org.rust.openapiext.TaskResult
 import org.rust.stdext.RsResult
 import org.rust.stdext.mapNotNullToSet
 import org.rust.stdext.unwrapOrElse
-import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent

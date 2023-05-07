@@ -29,7 +29,6 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
-import org.rust.bsp.BspConstants
 import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
@@ -72,7 +71,6 @@ import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.buildList
 import org.rust.stdext.unwrapOrElse
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
