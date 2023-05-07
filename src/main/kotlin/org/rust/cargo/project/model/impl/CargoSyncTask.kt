@@ -468,9 +468,8 @@ private fun Rustup.fetchStdlib(
 ): TaskResult<StandardLibrary> {
     val bspService = context.project.service<BspConnectionService>()
     if (bspService.hasBspServer()) {
-        var stdlib: VirtualFile?
-        try {
-            stdlib = bspService.getStdLibPath()
+        val stdlib: VirtualFile? = try {
+            bspService.getStdLibPath()
         } catch (e: NoSuchElementException) {
             return TaskResult.Err(e.message ?: "Failed to get standard library")
         }
