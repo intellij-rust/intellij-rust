@@ -123,6 +123,8 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
                 isSuitable(sourceElement) && sourceElement.containingCargoTarget != null
             }
             ?: return null
+
+        if (sourceElement.cargoWorkspace?.usesBSP == true) return null
         val target = sourceElement.containingCargoTarget ?: return null
         val configPath = sourceElement.crateRelativePath.configPath() ?: return null
         return SingleItemTestConfig(

@@ -468,26 +468,24 @@ private fun resolveDependency(dependencyType: String): CargoWorkspace.DepKind {
 }
 
 fun createDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, Set<CargoWorkspaceData.Dependency>> {
-    val nonEmptyDependencies = projectWorkspaceData.dependencies
-        .groupBy { it.source }
-        .mapValues { (_, deps) ->
-            deps.map { dep ->
+    val dependencies = projectWorkspaceData.packages
+        .associate { it.id to mutableSetOf<CargoWorkspaceData.Dependency>() }
+
+    for (dependency in projectWorkspaceData.dependencies) {
+        dependencies
+            .getOrDefault(dependency.source, mutableSetOf<CargoWorkspaceData.Dependency>() )
+            .add(
                 CargoWorkspaceData.Dependency(
-                    dep.target,
-                    dep.name,
-                    dep.depKinds.map { kind ->
+                    dependency.target,
+                    dependency.name,
+                    dependency.depKinds.map { kind ->
                         CargoWorkspace.DepKindInfo(resolveDependency(kind.kind), kind.target)
                     }
                 )
-            }.toSet()
-        }
-    // TODO: This is not the fastest way to do this, but it's the easiest.
-    //  We can use a `for` loop (I guess). @perlik take a look at this
-    val emptyDependencies = projectWorkspaceData.packages
-        .map { it.id }
-        .filter { it !in nonEmptyDependencies }
-        .associateWith { emptySet<CargoWorkspaceData.Dependency>() }
-    return (nonEmptyDependencies + emptyDependencies).toSortedMap()
+            )
+    }
+
+    return dependencies
 }
 
 fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId, List<CargoMetadata.RawDependency>> {
