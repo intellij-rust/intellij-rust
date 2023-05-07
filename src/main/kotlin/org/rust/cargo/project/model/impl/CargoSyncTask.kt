@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.RsTask
@@ -319,9 +320,14 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
 
         val bspService: BspConnectionService = context.project.service<BspConnectionService>()
         if (bspService.hasBspServer()) {
-            val rustcVersion = bspService.getRustcVersion()
-            val sysroot = bspService.getRustcSysroot() ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
-            return@runWithChildProgress TaskResult.Ok(RustcInfo(sysroot, rustcVersion, null, null))
+            try {
+                val rustcVersion = bspService.getRustcVersion()
+                val sysroot = bspService.getRustcSysroot()
+                    ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+                return@runWithChildProgress TaskResult.Ok(RustcInfo(sysroot, rustcVersion, null, null))
+            } catch (e: NoSuchElementException) {
+                return@runWithChildProgress TaskResult.Err(e.message ?: "failed to get information on rustc")
+            }
         }
         val workingDirectory = childContext.oldCargoProject.workingDirectory
 
@@ -464,7 +470,12 @@ private fun Rustup.fetchStdlib(
 ): TaskResult<StandardLibrary> {
     val bspService = context.project.service<BspConnectionService>()
     if (bspService.hasBspServer()) {
-        val stdlib = bspService.getStdLibPath()
+        var stdlib: VirtualFile?
+        try {
+            stdlib = bspService.getStdLibPath()
+        } catch (e: NoSuchElementException) {
+            return TaskResult.Err(e.message ?: "Failed to get standard library")
+        }
         return if (stdlib != null) {
             val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context), useBsp = true)
             if (lib == null) {
