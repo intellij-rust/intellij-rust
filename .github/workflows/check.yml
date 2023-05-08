@@ -20,9 +20,9 @@ concurrency:
     cancel-in-progress: true
 
 env:
-    OLD_IDEA_VERSION: IU-2022.3
-    OLD_CLION_VERSION: CL-2022.3
-    OLD_NATIVE_DEBUG_PLUGIN_VERSION: 223.7571.139
+    OLD_IDEA_VERSION: IU-2023.1
+    OLD_CLION_VERSION: CL-2023.1
+    OLD_NATIVE_DEBUG_PLUGIN_VERSION: 231.8109.46
 
 jobs:
     get-rust-versions:
@@ -85,14 +85,14 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 # TODO: check on more rustc versions
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
-                platform-version: [ 223, 231 ]
+                platform-version: [ 231 ]
                 include:
                     - os: ubuntu-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
-                      platform-version: 223
+                      platform-version: 231
                     - os: windows-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
-                      platform-version: 223
+                      platform-version: 231
 
         runs-on: ${{ matrix.os }}
         env:
@@ -176,7 +176,7 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
                 base-ide: [ idea, clion ]
-                platform-version: [ 223, 231 ]
+                platform-version: [ 231 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
@@ -184,7 +184,7 @@ jobs:
                     - os: ubuntu-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
                       base-ide: idea
-                      platform-version: 223
+                      platform-version: 231
                       verify-plugin: true
                       default-edition-for-tests: 2021
 
