@@ -12,4 +12,7 @@ interface MirBasicBlock : WithIndex {
     val statements: List<MirStatement>
     val terminator: MirTerminator<MirBasicBlock>
     val unwind: Boolean
+
+    val terminatorLocation: MirLocation
+        get() = MirLocation(this, statements.size)
 }

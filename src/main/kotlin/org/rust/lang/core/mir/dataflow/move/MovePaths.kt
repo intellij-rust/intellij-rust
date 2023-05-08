@@ -31,7 +31,11 @@ class MovePath(
     val parent: MovePath? = null,
     var nextSibling: MovePath? = null,
     var firstChild: MovePath? = null,
-) : WithIndex
+) : WithIndex {
+
+    val ancestors: Sequence<MovePath>
+        get() = generateSequence(this) { it.parent }
+}
 
 /**
  * [MoveOut] represents a point in a program that moves out of some L-value; i.e., "creates" uninitialized memory.

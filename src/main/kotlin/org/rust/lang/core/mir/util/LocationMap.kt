@@ -61,7 +61,5 @@ class LocationMap<V: Any>(
         throw UnsupportedOperationException()
     }
 
-    override fun containsKey(key: MirLocation): Boolean {
-        throw UnsupportedOperationException()
-    }
+    override fun containsKey(key: MirLocation): Boolean = get(key) != null
 }

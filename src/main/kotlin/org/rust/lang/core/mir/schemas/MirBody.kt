@@ -45,4 +45,18 @@ interface MirBody {
             }
         }
     }
+
+    class BasicBlocksPredecessors(private val predecessors: List<List<MirBasicBlock>>) {
+        operator fun get(block: MirBasicBlock): List<MirBasicBlock> = predecessors[block.index]
+    }
+
+    fun getBasicBlocksPredecessors(): BasicBlocksPredecessors {
+        val predecessors = List(basicBlocks.size) { mutableListOf<MirBasicBlock>() }
+        for (block in basicBlocks) {
+            for (successor in block.terminator.successors) {
+                predecessors[successor.index].add(block)
+            }
+        }
+        return BasicBlocksPredecessors(predecessors)
+    }
 }

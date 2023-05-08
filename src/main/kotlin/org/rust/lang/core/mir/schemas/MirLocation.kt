@@ -8,4 +8,15 @@ package org.rust.lang.core.mir.schemas
 class MirLocation(
     val block: MirBasicBlock,
     val statementIndex: Int
-)
+) {
+
+    val source: MirSourceInfo
+        get() = when (statementIndex) {
+            block.statements.size -> block.terminator.source
+            else -> block.statements[statementIndex].source
+        }
+
+    /** null if corresponds to terminator */
+    val statement: MirStatement?
+        get() = block.statements.getOrNull(statementIndex)
+}
