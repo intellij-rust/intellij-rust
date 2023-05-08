@@ -5,9 +5,10 @@
 
 package org.rust.ide.hints.codeVision
 
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.intellij.lang.annotations.Language
 
-class RsReferenceCodeVisionTest : RsCodeVisionTestCaseBase() {
+class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     override val onlyCodeVisionHintsAllowed: Boolean = false
 
     fun `test no usages`() = doTest("""
@@ -142,6 +143,6 @@ class RsReferenceCodeVisionTest : RsCodeVisionTestCaseBase() {
     """)
 
     private fun doTest(@Language("Rust") text: String) {
-        testProviders(text.trimIndent(), "main.rs", RsReferenceCodeVisionProviderBase.ID)
+        testProviders(text.trimIndent(), "main.rs", RsReferenceCodeVisionProvider.ID)
     }
 }

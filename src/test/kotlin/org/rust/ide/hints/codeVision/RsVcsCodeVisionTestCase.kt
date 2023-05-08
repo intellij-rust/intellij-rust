@@ -6,10 +6,11 @@
 package org.rust.ide.hints.codeVision
 
 import com.intellij.codeInsight.hints.VcsCodeVisionProvider
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.intellij.lang.annotations.Language
 
 
-class RsVcsCodeVisionTestCase : RsCodeVisionTestCaseBase() {
+class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
     fun `test function`() = doTest("""
         <# block [John Smith +2] #>
         fn foo() {}

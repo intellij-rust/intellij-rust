@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import org.rust.RsBundle
+import org.rust.ide.statistics.RsCodeVisionUsageCollector.Companion.logUsagesClicked
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -20,7 +21,7 @@ import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.searchReferences
 import org.rust.openapiext.isUnitTestMode
 
-abstract class RsReferenceCodeVisionProviderBase : ReferencesCodeVisionProvider() {
+class RsReferenceCodeVisionProvider : ReferencesCodeVisionProvider() {
     override fun acceptsFile(file: PsiFile): Boolean = file is RsFile
 
     override fun acceptsElement(element: PsiElement): Boolean {
@@ -58,6 +59,10 @@ abstract class RsReferenceCodeVisionProviderBase : ReferencesCodeVisionProvider(
         if (usageCount == 0) return null
 
         return RsBundle.message("rust.code.vision.usage.hint", usageCount)
+    }
+
+    override fun logClickToFUS(element: PsiElement, hint: String) {
+        logUsagesClicked(element)
     }
 
     override val relativeOrderings: List<CodeVisionRelativeOrdering> = emptyList()

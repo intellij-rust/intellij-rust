@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiReference
@@ -168,7 +169,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
         return null
     }
 
-    override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: RenameCallback) =
+    override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<in PsiElement>) =
         renameCallback.pass(substituteElementToRename(element, editor))
 
     override fun findReferences(element: PsiElement, searchScope: SearchScope, searchInCommentsAndStrings: Boolean): Collection<PsiReference> {
