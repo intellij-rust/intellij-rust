@@ -7,13 +7,10 @@ package org.rust.cargo.project
 
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
-import org.rust.cargo.project.settings.RustProjectSettingsService.RustProjectSettings
 import org.rust.cargo.toolchain.RsLocalToolchain
 import java.nio.file.Paths
 
-class RustProjectSettingsServiceTest : RsProjectSettingsServiceTestBase<RustProjectSettings>(
-    RustProjectSettings::class.java
-) {
+class RustProjectSettingsServiceTest : RsProjectSettingsServiceTestBase() {
 
     fun `test serialization`() {
         val service = RustProjectSettingsService(project)
