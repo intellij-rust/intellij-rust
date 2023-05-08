@@ -128,6 +128,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("special_module_name", false),
     Lint("stable_features", false),
     Lint("suspicious_auto_trait_impls", false),
+    Lint("suspicious_double_ref_op", false),
     Lint("temporary_cstring_as_ptr", false),
     Lint("test_unstable_lint", false),
     Lint("text_direction_codepoint_in_comment", false),
