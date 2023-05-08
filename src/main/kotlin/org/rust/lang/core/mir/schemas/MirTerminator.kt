@@ -51,6 +51,15 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
         override val source: MirSourceInfo,
     ) : MirTerminator<Nothing>
 
+    val successors: List<MirBasicBlock>
+        get() = when (this) {
+            is Return, is Resume, is Unreachable -> emptyList()
+            is Assert -> listOfNotNull(target, unwind)
+            is Goto -> listOf(target)
+            is SwitchInt -> targets.targets
+            is FalseUnwind -> listOfNotNull(realTarget, unwind)
+        }
+
     companion object {
         /**
          * This is singleton because it is identified using reference identity (===)
