@@ -19,6 +19,8 @@ class MirLocal(
     val ty: Ty,
     val source: MirSourceInfo,
 ) : WithIndex {
+    constructor(index: Int, ty: Ty, source: MirSourceInfo)
+        : this(index, Mutability.MUTABLE, false, null, null, ty, source)
 
     /** Returns `Some` if this is a reference to a thread-local static item that is used to access that static. */
     val isRefToThreadLocal: Boolean

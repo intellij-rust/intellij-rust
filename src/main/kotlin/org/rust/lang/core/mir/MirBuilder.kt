@@ -227,6 +227,19 @@ class MirBuilder private constructor(
                 blockAnd.block.pushAssign(place, borrow, source)
                 blockAnd.block.andUnit()
             }
+            is ThirExpr.Deref -> {
+                // As stated in the compiler:
+                // Create a "fake" temporary variable so that we check that the
+                // value is Sized. Usually, this is caught in type checking, but
+                // in the case of box expr there is no such check.
+                if (place.projections.isNotEmpty()) {
+                    localDecls.newLocal(expr.ty, MirSourceInfo.outermost(expr.span))
+                }
+                val blockAndPlace = this.toPlace(expr)
+                val rvalue = consumeByCopyOrMove(blockAndPlace.elem).let { MirRvalue.Use(it) }
+                blockAndPlace.block.pushAssign(place, rvalue, source)
+                blockAndPlace.block.andUnit()
+            }
         }
     }
 
@@ -296,7 +309,10 @@ class MirBuilder private constructor(
                 toTemp(expr, expr.tempLifetime, mutability)
                     .map { PlaceBuilder(it) }
             }
-            else -> TODO()
+            is ThirExpr.Deref -> {
+                exprToPlace(expr.arg, mutability).map { it.deref() }
+            }
+            is ThirExpr.Logical -> TODO()
         }
     }
 
@@ -622,6 +638,7 @@ class MirBuilder private constructor(
             is ThirExpr.Break,
             is ThirExpr.Adt,
             is ThirExpr.Field,
+            is ThirExpr.Deref,
             is ThirExpr.VarRef -> {
                 this
                     .toOperand(expr, scope, NeedsTemporary.No)
@@ -993,6 +1010,7 @@ class MirBuilder private constructor(
             is ThirExpr.Loop,
             is ThirExpr.NeverToAny,
             is ThirExpr.Assign,
+            is ThirExpr.Deref,
             is ThirExpr.Field,
             is ThirExpr.VarRef -> {
                 block.pushStorageLive(localPlace.local, source)

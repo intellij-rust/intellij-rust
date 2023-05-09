@@ -29,6 +29,15 @@ class LocalsBuilder(returnTy: Ty, returnSource: MirSourceInfo) {
     }
 
     fun newLocal(
+        ty: Ty,
+        source: MirSourceInfo,
+    ) : MirLocal {
+        val local = MirLocal(locals.size, ty, source)
+        locals.add(local)
+        return local
+    }
+
+    fun newLocal(
         mutability: Mutability,
         internal: Boolean,
         localInfo: MirLocalInfo?,

@@ -28,4 +28,8 @@ class PlaceBuilder(private val base: PlaceBase, private val projections: Mutable
         projections.add(element)
         return this
     }
+
+    fun deref(): PlaceBuilder = apply {
+        projections.add(MirProjectionElem.Deref)
+    }
 }

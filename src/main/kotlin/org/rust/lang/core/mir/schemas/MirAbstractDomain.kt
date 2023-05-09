@@ -11,5 +11,5 @@ typealias MirAbstractElem = MirProjectionElem<MirAbstractType>
 fun PlaceElem.lift(): MirProjectionElem<MirAbstractType> =
     when (this) {
         is MirProjectionElem.Field -> MirProjectionElem.Field(fieldIndex, MirAbstractType)
-        is MirProjectionElem.Deref -> MirProjectionElem.Deref()
+        is MirProjectionElem.Deref -> MirProjectionElem.Deref
     }

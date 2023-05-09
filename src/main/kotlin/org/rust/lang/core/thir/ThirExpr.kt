@@ -135,6 +135,12 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
+
+    class Deref(
+        val arg: ThirExpr,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
 }
 
 typealias MirFieldIndex = Int

@@ -68,6 +68,7 @@ class MirBuildTest : RsTestBase() {
     fun `test empty function with return ty`() = doTest()
     fun `test mutable borrow`() = doTest()
     fun `test empty let`() = doTest()
+    fun `test deref`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
