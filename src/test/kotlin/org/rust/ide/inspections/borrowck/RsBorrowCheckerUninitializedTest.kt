@@ -6,11 +6,14 @@
 package org.rust.ide.inspections.borrowck
 
 import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
+@WithExperimentalFeatures(MIR_BORROW_CHECK)
 class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
     fun `test E0381 error no init`() = checkFixByText("Initialize with a default value", """
         fn main() {
@@ -160,7 +163,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
     fun `test E0381 error no explicit type`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x;
-            let y: i32 =  <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            let y: i32 =  /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*caret*//*error**/;
         }
     """, """
         fn main() {
@@ -173,7 +176,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         fn main() {
             #[foobar]
             let x;
-            let y: i32 =  <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            let y: i32 =  /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*caret*//*error**/;
         }
     """, """
         fn main() {
@@ -187,7 +190,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         fn main() {
             // 123
             let x; // 321
-            let y: i32 =  <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            let y: i32 =  /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*caret*//*error**/;
         }
     """, """
         fn main() {
@@ -269,4 +272,47 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         }
         """, checkWarn = false)
     }
+
+    fun `test E0381 inside then branch`() = checkErrors("""
+        fn main() {
+            let x: i32;
+            if true {
+                let y = /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/;
+            } else {
+                x = 1;
+            }
+        }
+    """)
+
+    fun `test E0381 inside else branch`() = checkErrors("""
+        fn main() {
+            let x: i32;
+            if true {
+                x = 1;
+            } else {
+                let y = /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/;
+            }
+        }
+    """)
+
+    fun `test E0381 inside if expr`() = checkErrors("""
+        fn main() {
+            let x: i32;
+            if /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/ {
+                x = 1;
+            } else {
+                x = 2;
+            }
+        }
+    """)
+
+    fun `test E0381 inside loop`() = checkErrors("""
+        fn main() {
+            let x: i32;
+            loop {
+                let y = /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/;
+                x = 1;
+            }
+        }
+    """)
 }

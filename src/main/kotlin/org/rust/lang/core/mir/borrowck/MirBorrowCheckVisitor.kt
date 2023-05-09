@@ -5,14 +5,11 @@
 
 package org.rust.lang.core.mir.borrowck
 
-import org.rust.lang.core.dfa.borrowck.BorrowCheckResult
-import org.rust.lang.core.dfa.borrowck.MoveError
-import org.rust.lang.core.dfa.borrowck.UseOfMovedValueError
-import org.rust.lang.core.dfa.borrowck.UseOfUninitializedVariable
 import org.rust.lang.core.mir.dataflow.framework.BorrowCheckResults
 import org.rust.lang.core.mir.dataflow.framework.ResultsVisitor
 import org.rust.lang.core.mir.dataflow.move.*
 import org.rust.lang.core.mir.schemas.*
+import org.rust.lang.core.psi.ext.RsElement
 import java.util.*
 
 class MirBorrowCheckVisitor(
@@ -20,12 +17,10 @@ class MirBorrowCheckVisitor(
     private val moveData: MoveData,
 ) : ResultsVisitor<BorrowCheckResults.State> {
 
-    private val usesOfMovedValue: MutableSet<UseOfMovedValueError> = hashSetOf()
-    private val usesOfUninitializedVariable: MutableSet<UseOfUninitializedVariable> = hashSetOf()
-    private val moveErrors: MutableSet<MoveError> = hashSetOf()
+    private val usesOfUninitializedVariable: MutableSet<RsElement> = hashSetOf()
 
-    val result: BorrowCheckResult
-        get() = BorrowCheckResult(usesOfMovedValue.toList(), usesOfUninitializedVariable.toList(), moveErrors.toList())
+    val result: MirBorrowCheckResult
+        get() = MirBorrowCheckResult(usesOfUninitializedVariable.toList())
 
     override fun visitStatementBeforePrimaryEffect(
         state: BorrowCheckResults.State,
@@ -121,7 +116,7 @@ class MirBorrowCheckVisitor(
         val moveOutIndices = getMovedIndexes(location, movePath)
         val element = location.source.span.reference
         if (moveOutIndices.isEmpty()) {
-            usesOfUninitializedVariable += UseOfUninitializedVariable(element)
+            usesOfUninitializedVariable += element
         } else {
             // usesOfMovedValue += UseOfMovedValueError(element, TODO())
         }
@@ -166,7 +161,7 @@ class MirBorrowCheckVisitor(
                 // so we ignore the move-outs created by `StorageDead` and at the beginning of a function
 
                 for (moveOut in moveData.locMap[location].orEmpty()) {
-                    if (movePath in movePaths) {
+                    if (moveOut.path in movePaths) {
                         result += moveOut
                     }
                     return true
