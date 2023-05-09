@@ -6,12 +6,9 @@
 package org.rust.cargo.project
 
 import org.rust.cargo.project.settings.RustfmtProjectSettingsService
-import org.rust.cargo.project.settings.RustfmtProjectSettingsService.RustfmtProjectSettings
 import org.rust.cargo.toolchain.RustChannel
 
-class RustfmtProjectSettingsServiceTest : RsProjectSettingsServiceTestBase<RustfmtProjectSettings>(
-    RustfmtProjectSettings::class.java
-) {
+class RustfmtProjectSettingsServiceTest : RsProjectSettingsServiceTestBase() {
     fun `test serialization`() {
         val service = RustfmtProjectSettingsService(project)
         service.loadStateAndCheck("""

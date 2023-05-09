@@ -6,13 +6,10 @@
 package org.rust.cargo.project
 
 import org.rust.cargo.project.settings.RsExternalLinterProjectSettingsService
-import org.rust.cargo.project.settings.RsExternalLinterProjectSettingsService.RsExternalLinterProjectSettings
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustChannel
 
-class RsExternalLinterProjectSettingsServiceTest : RsProjectSettingsServiceTestBase<RsExternalLinterProjectSettings>(
-    RsExternalLinterProjectSettings::class.java
-) {
+class RsExternalLinterProjectSettingsServiceTest : RsProjectSettingsServiceTestBase() {
     fun `test serialization`() {
         val service = RsExternalLinterProjectSettingsService(project)
         service.loadStateAndCheck("""
