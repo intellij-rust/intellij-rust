@@ -231,22 +231,22 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         // TODO: FIXME: We use the hardcoded way to collect stdlib
         //  and it requires path to parent directory of all stdlib packages.
         //  Switching to `experimental` stdlib resolution this suffix should be removed.
-        return (toolchain.stdLib.rustcSrcSysroot + "/library").toVirtualFile()
+        return (toolchain.rustc.srcSysroot + "/library").toVirtualFile()
     }
 
     override fun getRustcVersion(): RustcVersion? {
         val server = getBspServer()
         val toolchain = getDefaultToolchain(server)
-        val version = toolchain.stdLib.rustcVersion
+        val version = toolchain.rustc.version
         // TODO: Just to be sure it is not empty.
-        val host = toolchain.rustHost ?: "x86_64-unknown-linux-gnu"
+        val host = toolchain.rustc.host ?: "x86_64-unknown-linux-gnu"
         return SemVer.parseFromText(version)?.let { RustcVersion(it, host, RustChannel.STABLE) }
     }
 
     override fun getRustcSysroot(): String? {
         val server = getBspServer()
         val toolchain = getDefaultToolchain(server)
-        return toolchain.sysRoot
+        return toolchain.rustc.sysroot
     }
 }
 
