@@ -491,6 +491,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move Box deref twice`() = checkByText("""
         struct S;
         fn main() {
@@ -500,6 +501,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move error when deref Rc`() = checkByText("""
         use std::rc::Rc;
         struct S;
@@ -509,6 +511,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move custom overloaded deref`() = checkByText("""
         struct S;
         struct SmartPointer {

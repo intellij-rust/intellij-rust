@@ -109,12 +109,16 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
                     span = span,
                 )
                 this.and != null -> ThirExpr.Borrow(
-                    if (this.mut == null) MirBorrowKind.Shared else MirBorrowKind.Mut(false),
-                    this.expr?.mirror(contextOwner) ?: error("Could not get expr of borrow"),
+                    kind = if (this.mut == null) MirBorrowKind.Shared else MirBorrowKind.Mut(false),
+                    arg = this.expr?.mirror(contextOwner) ?: error("Could not get expr of borrow"),
                     ty = ty,
                     span = span,
                 )
-                this.mul != null -> TODO() // deref
+                this.mul != null -> ThirExpr.Deref(
+                    arg = this.expr?.mirror(contextOwner) ?: error("Could not get expr of dereg"),
+                    ty = ty,
+                    span = span,
+                )
                 else -> throw IllegalStateException("Unexpected unary operator")
             }
         }

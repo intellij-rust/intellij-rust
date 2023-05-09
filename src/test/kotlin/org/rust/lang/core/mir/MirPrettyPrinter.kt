@@ -38,11 +38,11 @@ internal class MirPrettyPrinter(
         block.statements.forEach { stmt ->
             val statement = when (stmt) {
                 is MirStatement.Assign -> {
-                    "$INDENT${INDENT}_${stmt.place.local.index} = ${format(stmt.rvalue)};"
+                    "$INDENT${INDENT}${format(stmt.place)} = ${format(stmt.rvalue)};"
                 }
-                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${stmt.local.index});"
-                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${stmt.local.index});"
-                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${stmt.place.local.index});"
+                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(${format(stmt.local)});"
+                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(${format(stmt.local)});"
+                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, ${format(stmt.place.local)});"
             }
             appendLine(statement.withComment(commentSupplier.statementComment(stmt)))
         }
@@ -104,6 +104,10 @@ internal class MirPrettyPrinter(
             }
         }
         appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
+    }
+
+    private fun format(local: MirLocal): String {
+        return "_${local.index}"
     }
 
     private fun format(msg: MirAssertKind): String {
@@ -203,7 +207,7 @@ internal class MirPrettyPrinter(
             for (projection in place.projections.asReversed()) {
                 when (projection) {
                     is MirProjectionElem.Field -> append("(")
-                    is MirProjectionElem.Deref -> TODO()
+                    is MirProjectionElem.Deref -> append("(*")
                 }
             }
 
@@ -212,7 +216,7 @@ internal class MirPrettyPrinter(
             for (projection in place.projections) {
                 when (projection) {
                     is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
-                    is MirProjectionElem.Deref -> TODO()
+                    is MirProjectionElem.Deref -> append(")")
                 }
             }
         }

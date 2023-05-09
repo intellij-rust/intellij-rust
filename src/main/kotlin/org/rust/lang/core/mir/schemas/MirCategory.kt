@@ -21,6 +21,7 @@ sealed class MirCategory {
     companion object {
         fun of(element: ThirExpr): MirCategory? {
             return when (element) {
+                is ThirExpr.Deref,
                 is ThirExpr.Field,
                 is ThirExpr.Deref,
                 is ThirExpr.Index,

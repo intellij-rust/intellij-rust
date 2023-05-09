@@ -91,6 +91,7 @@ class MirBuildTest : RsTestBase() {
     fun `test function call with return value`() = doTest()
     fun `test nested function call`() = doTest()
     fun `test associated function call without arguments`() = doTest()
+    fun `test deref`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)

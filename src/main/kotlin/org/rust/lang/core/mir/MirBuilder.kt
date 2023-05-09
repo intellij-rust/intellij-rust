@@ -369,6 +369,9 @@ class MirBuilder private constructor(
                 toTemp(expr, expr.tempLifetime, mutability)
                     .map { PlaceBuilder(it) }
             }
+            is ThirExpr.Deref -> {
+                exprToPlace(expr.arg, mutability).map { it.deref() }
+            }
             else -> TODO()
         }
     }

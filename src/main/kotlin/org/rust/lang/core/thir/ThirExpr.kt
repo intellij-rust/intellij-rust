@@ -234,6 +234,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /** A *non-overloaded* dereference. */
     class Deref(
+        val arg: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
