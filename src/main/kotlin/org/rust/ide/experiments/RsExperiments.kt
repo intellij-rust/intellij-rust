@@ -40,6 +40,8 @@ object RsExperiments {
     const val SSR = "org.rust.ssr"
 
     const val SOURCE_BASED_COVERAGE = "org.rust.coverage.source"
+
+    const val MIR_BORROW_CHECK = "org.rust.mir.borrow-check"
 }
 
 /**
