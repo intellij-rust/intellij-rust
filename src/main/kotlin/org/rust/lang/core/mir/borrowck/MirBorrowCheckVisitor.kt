@@ -17,10 +17,11 @@ class MirBorrowCheckVisitor(
     private val moveData: MoveData,
 ) : ResultsVisitor<BorrowCheckResults.State> {
 
+    private val usesOfMovedValue: MutableSet<RsElement> = hashSetOf()
     private val usesOfUninitializedVariable: MutableSet<RsElement> = hashSetOf()
 
     val result: MirBorrowCheckResult
-        get() = MirBorrowCheckResult(usesOfUninitializedVariable.toList())
+        get() = MirBorrowCheckResult(usesOfMovedValue.toList(), usesOfUninitializedVariable.toList())
 
     override fun visitStatementBeforePrimaryEffect(
         state: BorrowCheckResults.State,
@@ -118,7 +119,7 @@ class MirBorrowCheckVisitor(
         if (moveOutIndices.isEmpty()) {
             usesOfUninitializedVariable += element
         } else {
-            // usesOfMovedValue += UseOfMovedValueError(element, TODO())
+            usesOfMovedValue += element
         }
     }
 
@@ -163,8 +164,8 @@ class MirBorrowCheckVisitor(
                 for (moveOut in moveData.locMap[location].orEmpty()) {
                     if (moveOut.path in movePaths) {
                         result += moveOut
+                        return true
                     }
-                    return true
                 }
             }
 

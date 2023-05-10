@@ -26,5 +26,6 @@ fun doMirBorrowCheck(body: MirBody): MirBorrowCheckResult {
 }
 
 data class MirBorrowCheckResult(
+    val usesOfMovedValue: List<RsElement>,
     val usesOfUninitializedVariable: List<RsElement>,
 )
