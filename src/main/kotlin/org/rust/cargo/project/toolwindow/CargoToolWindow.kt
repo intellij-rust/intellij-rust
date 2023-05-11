@@ -47,7 +47,7 @@ class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun isApplicable(project: Project): Boolean {
-//        if (project.service<BspConnectionService>().hasBspServer()) return false
+        if (project.service<BspConnectionService>().hasBspServer()) return false
 
         if (CargoToolWindow.isRegistered(project)) return false
 
