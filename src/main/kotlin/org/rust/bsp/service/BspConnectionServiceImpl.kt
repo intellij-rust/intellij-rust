@@ -116,6 +116,18 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         bspClient = null
     }
 
+    override fun compileAllSolutions(params: CompileParams): CompletableFuture<CargoBuildResult> {
+        val wbt = getBspServer().workspaceBuildTargets().get()
+        params.targets = wbt.targets.map { it.id }
+        return getBspServer().buildTargetCompile(params).thenApply {
+                return@thenApply CargoBuildResult(
+                    it.statusCode == StatusCode.OK,
+                    it.statusCode == StatusCode.CANCELLED,
+                    0 //TODO Find proper started time
+                );
+        }
+
+    }
 
     override fun compileSolution(params: CompileParams): CompletableFuture<CargoBuildResult> {
         return getBspServer().buildTargetCompile(params).thenApply {

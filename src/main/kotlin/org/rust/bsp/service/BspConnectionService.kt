@@ -24,6 +24,7 @@ interface BspConnectionService {
 
     fun getProjectData(projectDirectory: Path): CargoWorkspaceData
 
+    fun compileAllSolutions(params:CompileParams): CompletableFuture<CargoBuildResult>
     fun compileSolution(params:CompileParams): CompletableFuture<CargoBuildResult>
     fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>
 

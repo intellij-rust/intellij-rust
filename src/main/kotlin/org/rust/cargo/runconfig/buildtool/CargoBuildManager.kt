@@ -106,17 +106,24 @@ object CargoBuildManager {
             lastBuildCommandLine = state.prepareCommandLine()
         }
 
-        var usesBsp = cargoProject.workspace?.usesBSP
+        val usesBsp = cargoProject.workspace?.usesBSP
         if (usesBsp == true) {
             val bspService = project.service<BspConnectionService>()
             val packageIndex = state.config.cmd.additionalArguments.indexOf("--package")
-            val targetName = state.config.cmd.additionalArguments[packageIndex + 1]
-            var args = state.config.cmd.additionalArguments.toMutableList()
-            args.removeAt(packageIndex + 1)
-            args.removeAt(packageIndex)
-            val compileParams = CompileParams(listOf(BuildTargetIdentifier(targetName)))
-            compileParams.arguments = args
-            return bspService.compileSolution(compileParams)
+            if (packageIndex != -1) {
+                val targetName = state.config.cmd.additionalArguments[packageIndex + 1]
+                val args = state.config.cmd.additionalArguments.toMutableList()
+                args.removeAt(packageIndex + 1)
+                args.removeAt(packageIndex)
+                val compileParams = CompileParams(listOf(BuildTargetIdentifier(targetName)))
+                compileParams.arguments = args
+                return bspService.compileSolution(compileParams)
+            }
+            else {
+                val compileParams = CompileParams(emptyList())
+                compileParams.arguments = state.config.cmd.additionalArguments
+                return bspService.compileAllSolutions(compileParams)
+            }
         }
 
         val buildId = Any()
