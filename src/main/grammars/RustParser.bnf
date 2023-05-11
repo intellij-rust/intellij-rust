@@ -1274,7 +1274,7 @@ ContExpr ::= OuterAttr* continue Label? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BreakExpr ::= OuterAttr* break Label? AnyExpr? {
+BreakExpr ::= OuterAttr* break Label? (<<checkBraceAllowed>> AnyExpr)? {
   implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsBreakMixin"
