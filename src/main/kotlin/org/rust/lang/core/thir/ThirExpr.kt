@@ -16,6 +16,13 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
 sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
+
+    /**
+     * The lifetime of this expression if it should be spilled into a temporary;
+     * Should be `null` only if in a constant context
+     */
+    val tempLifetime: RegionScope? = null  // TODO
+
     class Scope(
         val regionScope: RegionScope,
         val expr: ThirExpr,
@@ -74,6 +81,15 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
+    /** Access to a field of a struct, a tuple, an union, or an enum */
+    class Field(
+        val expr: ThirExpr,
+        /** This can be a named (`.foo`) or unnamed (`.0`) field */
+        val fieldIndex: MirFieldIndex,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
     class Loop(
         val body: ThirExpr,
         ty: Ty,
@@ -120,3 +136,5 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 }
+
+typealias MirFieldIndex = Int

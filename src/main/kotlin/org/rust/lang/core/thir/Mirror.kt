@@ -129,6 +129,19 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
         }
         is RsUnitExpr -> ThirExpr.Tuple(emptyList(), ty, span)
         is RsTupleExpr -> ThirExpr.Tuple(exprList.map { it.mirror(contextOwner) }, ty, span)
+        is RsDotExpr -> {
+            val fieldLookup = fieldLookup
+            val methodCall = methodCall
+            when {
+                fieldLookup != null -> {
+                    val integerLiteral = fieldLookup.integerLiteral ?: TODO("Named fields not implemented")
+                    val fieldIndex = integerLiteral.text.toIntOrNull() ?: error("Invalid field integer literal")
+                    ThirExpr.Field(expr.mirror(contextOwner), fieldIndex, ty, span)
+                }
+                methodCall != null -> TODO("Method calls not implemented")
+                else -> error("Invalid dot expr")
+            }
+        }
         // TODO: `for`s should be also handled into ThirExpr.Loop
         is RsLoopExpr -> {
             val blockTy = TyUnit.INSTANCE // compiler forces it to be unit
