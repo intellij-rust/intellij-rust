@@ -444,6 +444,10 @@ class RsPsiFactory(
     fun createLambda(text: String): RsLambdaExpr =
         tryCreateLambda(text) ?: error("Failed to create lambda element: $text")
 
+    fun createLabelDeclaration(name: String): RsLabelDecl = createFromText("fn main() { '$name: while true {} }")!!
+
+    fun createLabel(name: String): RsLabel = createFromText("fn main() { break '$name; }")!!
+
     private fun tryCreateLambda(text: String): RsLambdaExpr? = createFromText("fn main() { let _ = $text }")
 
     fun createRetType(ty: String): RsRetType =

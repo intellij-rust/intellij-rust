@@ -73,4 +73,21 @@ class RsBreakExprInNonLoopTest: RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::cla
             }
         }
     """)
+
+    fun `test E0571 break with only label in condition`() = checkByText("""
+        fn foo() {
+            fn f2() {
+                'foo: while break 'foo {}
+            }
+        }
+    """)
+
+    fun `test E0571 break with only label in condition and block inside while`() = checkByText("""
+        fn foo() {
+            'foo: while true {
+                <error descr="`break` with value from a `while` loop [E0571]">break 'foo {}</error>;
+            }
+        }
+    """)
+
 }
