@@ -916,6 +916,72 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test if let completion`() = checkCompletion("let", """
+        fn main() {
+            if l/*caret*/
+        }
+    """, """
+        fn main() {
+            if let /*caret*/
+        }
+    """)
+
+
+    fun `test if let completion in else`() = checkCompletion("let", """
+        fn main() {
+            if 1 == 1 { } else if l/*caret*/
+        }
+    """, """
+        fn main() {
+            if 1 == 1 { } else if let /*caret*/
+        }
+    """)
+
+    fun `test if let completion in struct literal`() = checkCompletion("let", """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: if l/*caret*/ }
+        }
+    """, """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: if let /*caret*/ }
+        }
+    """)
+
+
+    fun `test if let completion within struct`() = checkNotContainsCompletion("let", """
+        struct S { if l/*caret*/ }
+    """)
+
+
+    fun `test while let completion`() = checkCompletion("let", """
+        fn main() {
+            while l/*caret*/
+        }
+    """, """
+        fn main() {
+            while let /*caret*/
+        }
+    """)
+
+    fun `test while let completion in struct literal`() = checkCompletion("let", """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: while l/*caret*/ }
+        }
+    """, """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: while let /*caret*/ }
+        }
+    """)
+
+
+    fun `test while let completion within struct`() = checkNotContainsCompletion("let", """
+        struct S { while l/*caret*/ }
+    """)
+
     // Smart mode is used for not completion tests to disable additional results
     // from language agnostic `com.intellij.codeInsight.completion.WordCompletionContributor`
     override fun checkNoCompletion(@Language("Rust") code: String) {
