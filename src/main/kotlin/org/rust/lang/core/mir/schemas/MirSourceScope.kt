@@ -5,11 +5,14 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.mir.WithIndex
+
 data class MirSourceScope(
+    override val index: Int,
     val span: MirSpan,
     val parentScope: MirSourceScope?,
-) {
+) : WithIndex {
     companion object {
-        val fake = MirSourceScope(MirSpan.Fake, null)
+        val fake = MirSourceScope(-1, MirSpan.Fake, null)
     }
 }

@@ -9,12 +9,12 @@ import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.schemas.MirTerminator.Companion.dummy
 import org.rust.lang.core.types.ty.TyBool
 
-class MirBasicBlockImpl private constructor(
-    override val statements: MutableList<MirStatement>,
-    override var terminator: MirTerminator<MirBasicBlockImpl>,
-    override val unwind: Boolean
+class MirBasicBlockImpl(
+    override val index: Int,
+    override val unwind: Boolean,
+    override val statements: MutableList<MirStatement> = mutableListOf(),
+    override var terminator: MirTerminator<MirBasicBlockImpl> = dummy,
 ) : MirBasicBlock {
-    constructor(unwind: Boolean) : this(mutableListOf(), dummy, unwind)
 
     /**
      * Sometimes it is needed to specify terminator source later than

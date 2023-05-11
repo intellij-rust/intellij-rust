@@ -5,31 +5,58 @@
 
 package org.rust.lang.core.mir.building
 
-import org.rust.lang.core.mir.schemas.MirLocal
-import org.rust.lang.core.mir.schemas.MirPlace
-import org.rust.lang.core.mir.schemas.MirSourceInfo
+import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 
 class LocalsBuilder(returnTy: Ty, returnSource: MirSourceInfo) {
-    private val locals = mutableListOf(MirLocal.returnLocal(returnTy, returnSource))
+    private val locals: MutableList<MirLocal> = mutableListOf()
+
+    init {
+        allocateReturnLocal(returnTy, returnSource)
+    }
 
     fun returnPlace() = MirPlace(locals.first())
 
-    fun tempPlace(
+    fun newTempPlace(
         ty: Ty,
         source: MirSourceInfo,
         internal: Boolean = false,
         mutability: Mutability = Mutability.MUTABLE,
     ): MirPlace {
-        val local = MirLocal(mutability, internal, null, null, ty, source)
-        locals.add(local)
+        val local = newLocal(mutability, internal, null, null, ty, source)
         return MirPlace(local)
     }
 
-    fun push(local: MirLocal) {
+    fun newLocal(
+        mutability: Mutability,
+        internal: Boolean,
+        localInfo: MirLocalInfo?,
+        blockTail: MirBlockTailInfo?,
+        ty: Ty,
+        source: MirSourceInfo,
+    ): MirLocal {
+        val local = MirLocal(
+            locals.size,
+            mutability,
+            internal,
+            localInfo,
+            blockTail,
+            ty,
+            source,
+        )
         locals.add(local)
+        return local
     }
 
     fun build(): List<MirLocal> = locals.toList()
+
+    private fun allocateReturnLocal(ty: Ty, source: MirSourceInfo) = newLocal(
+        mutability = Mutability.MUTABLE,
+        internal = false,
+        localInfo = null,
+        blockTail = null,
+        ty = ty,
+        source = source,
+    )
 }

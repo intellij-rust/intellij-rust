@@ -5,8 +5,14 @@
 
 package org.rust.lang.core.mir.schemas
 
-interface MirBasicBlock {
+import org.rust.lang.core.mir.WithIndex
+
+interface MirBasicBlock : WithIndex {
+    override val index: Int
     val statements: List<MirStatement>
     val terminator: MirTerminator<MirBasicBlock>
     val unwind: Boolean
+
+    val terminatorLocation: MirLocation
+        get() = MirLocation(this, statements.size)
 }

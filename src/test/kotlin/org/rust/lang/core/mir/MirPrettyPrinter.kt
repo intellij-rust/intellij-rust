@@ -17,96 +17,83 @@ import kotlin.math.max
 internal class MirPrettyPrinter(
     private val filenamePrefix: String = "src/",
     private val mir: MirBody,
+    private val commentSupplier: CommentSupplier = ScopeCommentSupplier(filenamePrefix)
 ) {
     fun print(): String {
         return buildString { printMir(mir) }
     }
 
-    private fun localIndex(local: MirLocal): Int = mir.localDecls.indexOf(local)
-    private fun blockIndex(block: MirBasicBlock): Int = mir.basicBlocks.indexOf(block)
-    private fun scopeIndex(scope: MirSourceScope): Int = mir.sourceScopes.indexOf(scope)
-
     private fun StringBuilder.printMir(mir: MirBody): StringBuilder = apply {
         printIntro()
-        mir.basicBlocks.withIndex().forEach { (index, block) ->
+        for (block in mir.basicBlocks) {
             appendLine()
-            print(
-                block = block,
-                index = index,
-            )
+            printBasicBlock(block)
         }
         append("}")
     }
 
-    private fun StringBuilder.print(
-        block: MirBasicBlock,
-        index: Int,
-    ): StringBuilder = apply {
+    private fun StringBuilder.printBasicBlock(block: MirBasicBlock): StringBuilder = apply {
         val cleanup = if (block.unwind) " (cleanup)" else ""
-        appendLine("${INDENT}bb$index$cleanup: {")
+        val blockHeader = "${INDENT}bb${block.index}$cleanup: {"
+        appendLine(blockHeader.withComment(commentSupplier.blockStartComment(block)))
         block.statements.forEach { stmt ->
             val statement = when (stmt) {
                 is MirStatement.Assign -> {
-                    "$INDENT${INDENT}_${localIndex(stmt.place.local)} = ${format(stmt.rvalue)};"
+                    "$INDENT${INDENT}_${stmt.place.local.index} = ${format(stmt.rvalue)};"
                 }
-                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${localIndex(stmt.local)});"
-                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${localIndex(stmt.local)});"
-                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${localIndex(stmt.place.local)});"
+                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${stmt.local.index});"
+                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${stmt.local.index});"
+                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${stmt.place.local.index});"
             }
-            appendLine(statement.withComment(" // ${createComment(stmt.source)}"))
+            appendLine(statement.withComment(commentSupplier.statementComment(stmt)))
         }
 
+        val comment = commentSupplier.terminatorComment(block.terminator)
         when (val terminator = block.terminator) {
             is MirTerminator.Return -> {
-                val comment = createComment(block.terminator.source)
-                appendLine("$INDENT${INDENT}return;".withComment(" // $comment"))
+                appendLine("$INDENT${INDENT}return;".withComment(comment))
             }
             is MirTerminator.Assert -> {
                 val neg = if (terminator.expected) "" else "!"
-                val successIndex = blockIndex(terminator.target)
-                val unwindIndex = terminator.unwind?.let { blockIndex(it) }
+                val successIndex = terminator.target.index
+                val unwindIndex = terminator.unwind?.index
                 val targets = if (unwindIndex == null) "bb$successIndex" else "[success: bb$successIndex, unwind: bb$unwindIndex]"
                 val assert = "$INDENT${INDENT}assert(${neg}${format(terminator.cond)}${format(terminator.msg)}) -> $targets;"
-                appendLine(assert.withComment(" // ${createComment(block.terminator.source)}"))
+                appendLine(assert.withComment(comment))
             }
             is MirTerminator.Goto -> {
-                val comment = createComment(block.terminator.source)
-                appendLine("$INDENT${INDENT}goto -> bb${blockIndex(terminator.target)};".withComment(" // $comment"))
+                appendLine("$INDENT${INDENT}goto -> bb${terminator.target.index};".withComment(comment))
             }
             is MirTerminator.SwitchInt -> {
-                val comment = createComment(block.terminator.source)
                 val cases = buildString {
                     append("[")
                     // TODO: hardcoded as hell
-                    append("false: bb${blockIndex(terminator.targets.targets[0])}")
+                    append("false: bb${terminator.targets.targets[0].index}")
                     append(", ")
-                    append("otherwise: bb${blockIndex(terminator.targets.targets[1])}")
+                    append("otherwise: bb${terminator.targets.targets[1].index}")
                     append("]")
                 }
                 val switch = "$INDENT${INDENT}switchInt(${format(terminator.discriminant)}) -> $cases;"
-                appendLine(switch.withComment(" // $comment"))
+                appendLine(switch.withComment(comment))
             }
             is MirTerminator.Resume -> {
-                val comment = createComment(block.terminator.source)
-                appendLine("$INDENT${INDENT}resume;".withComment(" // $comment"))
+                appendLine("$INDENT${INDENT}resume;".withComment(comment))
             }
             is MirTerminator.FalseUnwind -> {
-                val comment = createComment(block.terminator.source)
                 val cases = buildString {
                     append("[")
-                    append("real: bb${blockIndex(terminator.realTarget)}")
+                    append("real: bb${terminator.realTarget.index}")
                     append(", ")
-                    append("cleanup: bb${blockIndex(terminator.unwind!!)}")
+                    append("cleanup: bb${terminator.unwind!!.index}")
                     append("]")
                 }
-                appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(" // $comment"))
+                appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(comment))
             }
             is MirTerminator.Unreachable -> {
-                val comment = createComment(block.terminator.source)
-                appendLine("$INDENT${INDENT}unreachable;".withComment(" // $comment"))
+                appendLine("$INDENT${INDENT}unreachable;".withComment(comment))
             }
         }
-        appendLine("$INDENT}")
+        appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
     }
 
     private fun format(msg: MirAssertKind): String {
@@ -173,7 +160,7 @@ internal class MirPrettyPrinter(
     }
 
     private fun format(place: MirPlace): String {
-        val index = localIndex(place.local)
+        val index = place.local.index
         if (place.projections.isEmpty()) return "_$index"
         check(place.projections.size == 1) // TODO
         return when (val projection = place.projections.single()) {
@@ -279,22 +266,22 @@ internal class MirPrettyPrinter(
         for (varDebugInfo in mir.varDebugInfo) {
             if (varDebugInfo.source.scope != parent) continue
             val debugInfo = "${indent}debug ${varDebugInfo.name} => ${format(varDebugInfo.contents)};"
-            appendLine(debugInfo.withComment(" // in ${createComment(varDebugInfo.source)}"))
+            appendLine(debugInfo.withComment("in ${createComment(varDebugInfo.source)}"))
         }
-        for ((index, local) in mir.localDecls.withIndex()) {
+        for (local in mir.localDecls) {
             if (local.source.scope != parent) continue
             val mut = when (local.mutability) {
                 Mutability.MUTABLE -> "mut "
                 Mutability.IMMUTABLE -> ""
             }
-            val definition = "${indent}let ${mut}_$index: ${format(local.ty)};"
-            val localName = if (index == 0) " return place" else ""
+            val definition = "${indent}let ${mut}_${local.index}: ${format(local.ty)};"
+            val localName = if (local.index == 0) " return place" else ""
             val comment = createComment(local.source)
-            appendLine(definition.withComment(" //$localName in $comment"))
+            appendLine(definition.withCommentAsIs(" //$localName in $comment"))
         }
         val children = scopeTree[parent] ?: return@apply
         children.forEach { child ->
-            appendLine("${indent}scope ${scopeIndex(child)} {")
+            appendLine("${indent}scope ${child.index} {")
             printScopeTree(scopeTree, child, depth + 1)
             appendLine("$indent}")
         }
@@ -308,40 +295,20 @@ internal class MirPrettyPrinter(
         }
     }
 
+    private fun String.withComment(comment: String?): String {
+        return if (comment != null) {
+            withCommentAsIs(" // $comment")
+        } else {
+            this
+        }
+    }
 
-    private fun String.withComment(comment: String): String {
+    private fun String.withCommentAsIs(comment: String): String {
         return "$this${" ".repeat(max(ALIGN - length, 0))}$comment"
     }
 
     private fun createComment(source: MirSourceInfo): String {
-        val scope = scopeIndex(source.scope)
-        val fileName = source.span.reference.contextualFile.originalFile.name
-        val startOffset = source.span.reference.startOffset
-        val endOffset = source.span.reference.endOffset
-        val startLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
-        val endLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
-        val startLineOffset = startOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
-        val endLineOffset = endOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
-        return when (source.span) {
-            is MirSpan.Full -> {
-                "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
-                    "${endLine + 1}:${endLineOffset + 1}"
-            }
-            is MirSpan.EndPoint -> {
-                "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset}: " +
-                    "${endLine + 1}:${endLineOffset + 1}"
-            }
-            is MirSpan.End -> {
-                "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset + 1}: " +
-                    "${endLine + 1}:${endLineOffset + 1}"
-            }
-            is MirSpan.Start -> {
-                "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
-                    "${startLine + 1}:${startLineOffset + 1}"
-            }
-
-            MirSpan.Fake -> error("can't print fake source info")
-        }
+        return createComment(filenamePrefix, source)
     }
 
     private val UnaryOperator.formatted: String get() = when (this) {
@@ -350,8 +317,59 @@ internal class MirPrettyPrinter(
         else -> TODO()
     }
 
+    interface CommentSupplier {
+        fun blockStartComment(block: MirBasicBlock): String? = null
+        fun blockEndComment(block: MirBasicBlock): String? = null
+        fun statementComment(stmt: MirStatement): String? = null
+        fun terminatorComment(terminator: MirTerminator<*>): String? = null
+    }
+
+    class ScopeCommentSupplier(private val filenamePrefix: String) : CommentSupplier {
+        override fun statementComment(stmt: MirStatement): String {
+            return createComment(filenamePrefix, stmt.source)
+        }
+
+        override fun terminatorComment(terminator: MirTerminator<*>): String {
+            return createComment(filenamePrefix, terminator.source)
+        }
+    }
+
     companion object {
         private const val INDENT = "    "
         private const val ALIGN = 40
+
+        private fun createComment(filenamePrefix: String, source: MirSourceInfo): String {
+            val scope = source.scope.index
+            val fileName = source.span.reference.contextualFile.originalFile.name
+            val startOffset = source.span.reference.startOffset
+            val endOffset = source.span.reference.endOffset
+            val startLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
+            val endLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
+            val startLineOffset = startOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
+            val endLineOffset = endOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
+            return when (source.span) {
+                is MirSpan.Full -> {
+                    "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
+                        "${endLine + 1}:${endLineOffset + 1}"
+                }
+
+                is MirSpan.EndPoint -> {
+                    "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset}: " +
+                        "${endLine + 1}:${endLineOffset + 1}"
+                }
+
+                is MirSpan.End -> {
+                    "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset + 1}: " +
+                        "${endLine + 1}:${endLineOffset + 1}"
+                }
+
+                is MirSpan.Start -> {
+                    "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
+                        "${startLine + 1}:${startLineOffset + 1}"
+                }
+
+                MirSpan.Fake -> error("can't print fake source info")
+            }
+        }
     }
 }

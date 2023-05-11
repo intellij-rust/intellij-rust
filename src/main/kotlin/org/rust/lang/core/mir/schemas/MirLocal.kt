@@ -5,27 +5,23 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.mir.WithIndex
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 
 class MirLocal(
+    override val index: Int,
     val mutability: Mutability,
     val internal: Boolean,
     val localInfo: MirLocalInfo?,
     val blockTail: MirBlockTailInfo?,
     val ty: Ty,
     val source: MirSourceInfo,
-) {
+) : WithIndex {
+    override fun toString(): String = "_$index: $ty"
+
     companion object {
-        fun returnLocal(ty: Ty, source: MirSourceInfo) = MirLocal(
-            mutability = Mutability.MUTABLE,
-            internal = false,
-            localInfo = null,
-            blockTail = null,
-            ty = ty,
-            source = source,
-        )
-        val fake = MirLocal(Mutability.MUTABLE, true, null, null, TyUnknown, MirSourceInfo.fake)
+        val fake = MirLocal(-1, Mutability.MUTABLE, true, null, null, TyUnknown, MirSourceInfo.fake)
     }
 }
