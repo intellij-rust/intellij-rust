@@ -17,9 +17,12 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifacts
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.ide.statistics.CargoErrorCodesCollector
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentHashMap.KeySetView
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -38,6 +41,7 @@ abstract class CargoBuildContextBase(
     var indicator: ProgressIndicator? = null
 
     val errors: AtomicInteger = AtomicInteger()
+    val errorCodes: KeySetView<String, Boolean> = ConcurrentHashMap.newKeySet()
     val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
@@ -124,6 +128,10 @@ class CargoBuildContext(
                 hasWarningsOrErrors -> MessageType.WARNING
                 else -> MessageType.INFO
             }
+        }
+
+        if (!isCanceled && !isSuccess) {
+            CargoErrorCodesCollector.logErrorsAfterBuild(project, errorCodes)
         }
 
         result.complete(CargoBuildResult(
