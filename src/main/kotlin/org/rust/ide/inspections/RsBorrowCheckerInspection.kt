@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
 import org.rust.ide.fixes.AddMutableFix
 import org.rust.ide.fixes.DeriveCopyFix
 import org.rust.ide.fixes.InitializeWithDefaultValueFix
@@ -13,8 +14,12 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.borrowCheckResult
 import org.rust.lang.core.types.isImmutable
+import org.rust.lang.core.types.mirBorrowCheckResult
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
+import org.rust.openapiext.isFeatureEnabled
 
 class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
@@ -38,6 +43,8 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
             @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
             override fun visitFunction2(func: RsFunction) {
+                val usedMir = visitFunctionUsingMir(func)
+
                 val borrowCheckResult = func.borrowCheckResult ?: return
 
                 // TODO: Remove this check when type inference is implemented for `asm!` macro calls
@@ -46,13 +53,26 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                 borrowCheckResult.usesOfMovedValue.forEach {
                     registerUseOfMovedValueProblem(holder, it.use)
                 }
-                borrowCheckResult.usesOfUninitializedVariable.forEach {
-                    registerUseOfUninitializedVariableProblem(holder, it.use)
+                if (!usedMir) {
+                    borrowCheckResult.usesOfUninitializedVariable.forEach {
+                        registerUseOfUninitializedVariableProblem(holder, it.use)
+                    }
                 }
                 borrowCheckResult.moveErrors.forEach {
                     val move = it.from.element.ancestorOrSelf<RsExpr>()
                     if (move != null) registerMoveProblem(holder, move)
                 }
+            }
+
+            private fun visitFunctionUsingMir(function: RsFunction): Boolean {
+                if (!isFeatureEnabled(MIR_BORROW_CHECK)) return false
+                val result = function.mirBorrowCheckResult ?: return false
+                for (element in result.usesOfUninitializedVariable) {
+                    if (!element.isPhysical) continue
+                    val fix = InitializeWithDefaultValueFix.createIfCompatible(element)
+                    RsDiagnostic.UseOfUninitializedVariableError(element, fix).addToHolder(holder)
+                }
+                return true
             }
         }
 

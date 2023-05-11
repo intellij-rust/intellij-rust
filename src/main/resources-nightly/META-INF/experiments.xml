@@ -36,5 +36,8 @@
         <experimentalFeature id="org.rust.coverage.source" percentOfUsers="0">
             <description>Use source-based coverage</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.mir.borrow-check" percentOfUsers="0">
+            <description>Code analysis based on MIR borrow checker</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>
