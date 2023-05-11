@@ -16,8 +16,7 @@ public class RefreshAction : AnAction() {
     val project = e.project
 
     if (project != null) {
-        val refresh = RefreshCargoProjectsAction()
-        refresh.actionPerformed(e)
+        RefreshCargoProjectsAction().actionPerformed(e)
     } else {
       log.warn("RefreshAction cannot be performed! Project not available.")
     }

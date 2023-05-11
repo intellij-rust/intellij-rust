@@ -5,8 +5,11 @@
 
 package org.rust.bsp.service
 
+import ch.epfl.scala.bsp4j.BuildTarget
 import ch.epfl.scala.bsp4j.CompileParams
 import ch.epfl.scala.bsp4j.RunParams
+import ch.epfl.scala.bsp4j.WorkspaceBuildTargetsResult
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -16,7 +19,7 @@ import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 @Service
-interface BspConnectionService {
+interface BspConnectionService: Disposable {
     fun isConnected(): Boolean
     fun connect()
 
@@ -37,4 +40,6 @@ interface BspConnectionService {
     fun getRustcVersion(): RustcVersion?
 
     fun getRustcSysroot(): String?
+
+    fun getBspTargets(): List<BuildTarget>
 }

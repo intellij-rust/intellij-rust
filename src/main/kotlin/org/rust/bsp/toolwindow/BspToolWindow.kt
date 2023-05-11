@@ -82,7 +82,7 @@ class BspToolWindow(
     }
 
     private val projectTree = BspProjectsTree()
-    private val projectStructure = BspProjectTreeStructure(projectTree, project)
+    private val projectStructure = BspProjectTreeStructure(projectTree, bspService)
 
     val treeExpander: TreeExpander
 
@@ -96,15 +96,15 @@ class BspToolWindow(
         }
 
         with(project.messageBus.connect()) {
-            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, projects ->
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
                 invokeLater {
-                    projectStructure.updateCargoProjects(projects.toList())
+                    projectStructure.updateBspProjects(project.service<BspConnectionService>().getBspTargets())
                 }
             })
         }
 
         invokeLater {
-            projectStructure.updateCargoProjects(project.cargoProjects.allProjects.toList())
+            projectStructure.updateBspProjects(project.service<BspConnectionService>().getBspTargets())
         }
     }
 

@@ -263,6 +263,14 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val toolchain = getDefaultToolchain(server)
         return toolchain.rustc.sysroot
     }
+
+    override fun getBspTargets(): List<BuildTarget> {
+        return queryForBazelTargets(getBspServer()).get().targets
+    }
+
+    override fun dispose() {
+        disconnect()
+    }
 }
 
 private fun String.toVirtualFile(): VirtualFile? =
