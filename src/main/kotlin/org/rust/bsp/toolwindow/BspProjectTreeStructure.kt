@@ -23,14 +23,14 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.workingDirectory
 import javax.swing.Icon
 
-class BSPProjectTreeStructure(
-    tree: BSPProjectsTree,
+class BspProjectTreeStructure(
+    tree: BspProjectsTree,
     parentDisposable: Disposable,
     private var cargoProjects: List<CargoProject> = emptyList()
 ) : SimpleTreeStructure() {
 
     private val treeModel = StructureTreeModel(this, parentDisposable)
-    private var root = CargoSimpleNode.Root(cargoProjects)
+    private var root = BspSimpleNode.Root(cargoProjects)
 
     init {
         tree.model = AsyncTreeModel(treeModel, parentDisposable)
@@ -40,20 +40,20 @@ class BSPProjectTreeStructure(
 
     fun updateCargoProjects(cargoProjects: List<CargoProject>) {
         this.cargoProjects = cargoProjects
-        root = CargoSimpleNode.Root(cargoProjects)
+        root = BspSimpleNode.Root(cargoProjects)
         treeModel.invalidate()
     }
 
-    sealed class CargoSimpleNode(parent: SimpleNode?) : CachingSimpleNode(parent) {
+    sealed class BspSimpleNode(parent: SimpleNode?) : CachingSimpleNode(parent) {
         abstract fun toTestString(): String
 
-        class Root(private val cargoProjects: List<CargoProject>) : CargoSimpleNode(null) {
+        class Root(private val cargoProjects: List<CargoProject>) : BspSimpleNode(null) {
             override fun buildChildren(): Array<SimpleNode> = cargoProjects.map { Project(it, this) }.sortedBy { it.name }.toTypedArray()
             override fun getName(): String = ""
             override fun toTestString(): String = "Root"
         }
 
-        class Project(val cargoProject: CargoProject, parent: SimpleNode) : CargoSimpleNode(parent) {
+        class Project(val cargoProject: CargoProject, parent: SimpleNode) : BspSimpleNode(parent) {
 
             init {
                 icon = CargoIcons.ICON
@@ -96,7 +96,7 @@ class BSPProjectTreeStructure(
             override fun toTestString(): String = "Project"
         }
 
-        class WorkspaceMember(val pkg: CargoWorkspace.Package, parent: SimpleNode) : CargoSimpleNode(parent) {
+        class WorkspaceMember(val pkg: CargoWorkspace.Package, parent: SimpleNode) : BspSimpleNode(parent) {
 
             init {
                 icon = CargoIcons.ICON
@@ -107,7 +107,7 @@ class BSPProjectTreeStructure(
             override fun toTestString(): String = "WorkspaceMember($name)"
         }
 
-        class Targets(val targets: Collection<CargoWorkspace.Target>, parent: SimpleNode) : CargoSimpleNode(parent) {
+        class Targets(val targets: Collection<CargoWorkspace.Target>, parent: SimpleNode) : BspSimpleNode(parent) {
 
             init {
                 icon = CargoIcons.TARGETS
@@ -118,7 +118,7 @@ class BSPProjectTreeStructure(
             override fun toTestString(): String = "Targets"
         }
 
-        class Target(val target: CargoWorkspace.Target, parent: SimpleNode) : CargoSimpleNode(parent) {
+        class Target(val target: CargoWorkspace.Target, parent: SimpleNode) : BspSimpleNode(parent) {
 
             init {
                 icon = target.icon

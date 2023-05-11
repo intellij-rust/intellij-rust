@@ -8,25 +8,21 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import org.rust.bsp.service.BspConnectionService
+import org.rust.ide.actions.RefreshCargoProjectsAction
 
-public class DisconnectAction : AnAction() {
+public class RefreshAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
 
     if (project != null) {
-      doAction(project)
+        val refresh = RefreshCargoProjectsAction()
+        refresh.actionPerformed(e)
     } else {
-      log.warn("DisconnectAction cannot be performed! Project not available.")
+      log.warn("RefreshAction cannot be performed! Project not available.")
     }
   }
 
-  private fun doAction(project: Project) {
-    runModalTask("Disconnecting...", project = project, cancellable = false) {
-      val connection = project.service<BspConnectionService>()
-      connection.disconnect()
-    }
-  }
 
   public override fun update(e: AnActionEvent) {
     val project = e.project
@@ -34,7 +30,7 @@ public class DisconnectAction : AnAction() {
     if (project != null) {
       doUpdate(project, e)
     } else {
-      log.warn("DisconnectAction cannot be updated! Project not available.")
+      log.warn("RefreshAction cannot be updated! Project not available.")
     }
   }
 
@@ -47,6 +43,6 @@ public class DisconnectAction : AnAction() {
     ActionUpdateThread.BGT
 
   private companion object {
-    private val log = logger<DisconnectAction>()
+    private val log = logger<RefreshAction>()
   }
 }

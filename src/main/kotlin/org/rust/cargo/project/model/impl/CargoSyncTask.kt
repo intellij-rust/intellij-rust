@@ -65,6 +65,7 @@ class CargoSyncTask(
     private val result: CompletableFuture<List<CargoProjectImpl>>
 ) : Task.Backgroundable(project, "Reloading Cargo projects", true), RsTask {
 
+    private val serviceName = if (project.service<BspConnectionService>().hasBspServer()) "Bsp" else "Cargo"
     override val taskType: RsTask.TaskType
         get() = RsTask.TaskType.CARGO_SYNC
 
@@ -100,7 +101,7 @@ class CargoSyncTask(
         result.complete(refreshedProjects)
 
         val elapsed = System.currentTimeMillis() - start
-        LOG.debug("Finished Cargo sync task in $elapsed ms")
+        LOG.debug("Finished $serviceName sync task in $elapsed ms")
     }
 
     private fun doRun(
@@ -111,7 +112,7 @@ class CargoSyncTask(
 
         @Suppress("UnnecessaryVariable")
         val refreshedProjects = if (toolchain == null) {
-            syncProgress.fail(System.currentTimeMillis(), "Cargo project update failed:\nNo Rust toolchain")
+            syncProgress.fail(System.currentTimeMillis(), "$serviceName project update failed:\nNo Rust toolchain")
             cargoProjects
         } else {
             cargoProjects.map { cargoProject ->
@@ -156,7 +157,7 @@ class CargoSyncTask(
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
         buildContentDescriptor.isNavigateToError = project.rustSettings.autoShowErrorsInEditor
         val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
-        val descriptor = DefaultBuildDescriptor(Any(), "Cargo", project.basePath!!, System.currentTimeMillis())
+        val descriptor = DefaultBuildDescriptor(Any(), "$serviceName", project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(refreshAction)
             .withRestartAction(StopAction(progress))
@@ -344,6 +345,7 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
 private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<CargoWorkspace> {
     return context.runWithChildProgress("Updating workspace info") { childContext ->
 
+        val serviceName = if (context.project.service<BspConnectionService>().hasBspServer()) "Cargo" else "Bsp"
         val toolchain = childContext.toolchain
         if (!toolchain.looksLikeValidToolchain()) {
             return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${toolchain.presentableLocation}")
@@ -361,8 +363,8 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
             when (cargoConfigResult) {
                 is RsResult.Ok -> cargoConfigResult.ok
                 is RsResult.Err -> {
-                    val message = "Fetching Cargo Config failed.\n\n" + cargoConfigResult.err.message.orEmpty()
-                    childContext.warning("Fetching Cargo Config", message)
+                    val message = "Fetching $serviceName Config failed.\n\n" + cargoConfigResult.err.message.orEmpty()
+                    childContext.warning("Fetching $serviceName Config", message)
                     CargoConfig.DEFAULT
                 }
             }

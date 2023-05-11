@@ -1,16 +1,15 @@
-package org.jetbrains.plugins.bsp.ui.widgets.tool.window.actions
+package org.rust.bsp.toolwindow.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.bsp.server.connection.BspConnectionService
-import org.jetbrains.plugins.bsp.server.tasks.CollectProjectDetailsTask
-import org.jetbrains.plugins.bsp.ui.console.BspConsoleService
-import org.jetbrains.plugins.bsp.ui.widgets.tool.window.all.targets.BspAllTargetsWidgetBundle
+import org.rust.bsp.service.BspConnectionService
 
-public class ConnectAction : AnAction(BspAllTargetsWidgetBundle.message("connect.action.text")) {
+public class ConnectAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
@@ -23,16 +22,10 @@ public class ConnectAction : AnAction(BspAllTargetsWidgetBundle.message("connect
   }
 
   private fun doAction(project: Project) {
-    val bspSyncConsole = BspConsoleService.getInstance(project).bspSyncConsole
-    bspSyncConsole.startTask("bsp-connect", "Connect", "Connecting...")
-
-    val collectProjectDetailsTask = CollectProjectDetailsTask(project, "bsp-connect").prepareBackgroundTask()
-    collectProjectDetailsTask.executeInTheBackground(
-      name = "Connecting...",
-      cancelable = true,
-      beforeRun = { BspConnectionService.getInstance(project).value.connect("bsp-connect") },
-      afterOnSuccess = { bspSyncConsole.finishTask("bsp-connect", "Done!") }
-    )
+      runModalTask("Connecting...", project = project, cancellable = false) {
+          val connection = project.service<BspConnectionService>()
+          connection.connect()
+      }
   }
 
   public override fun update(e: AnActionEvent) {
@@ -46,8 +39,8 @@ public class ConnectAction : AnAction(BspAllTargetsWidgetBundle.message("connect
   }
 
   private fun doUpdate(project: Project, e: AnActionEvent) {
-    val bspConnection = BspConnectionService.getInstance(project).value
-    e.presentation.isEnabled = bspConnection.isConnected() == false
+      val connection = project.service<BspConnectionService>()
+      e.presentation.isEnabled = connection.isConnected() == false
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread =

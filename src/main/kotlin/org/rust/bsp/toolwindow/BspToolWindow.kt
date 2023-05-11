@@ -30,16 +30,20 @@ import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
+import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
-class BSPToolWindowFactory : ToolWindowFactory, DumbAware {
+class BspToolWindowFactory : ToolWindowFactory, DumbAware {
     private val lock: Any = Any()
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val panel = BspToolWindowPanel(project)
-        toolWindow.contentManager.addContent(ContentFactory.getInstance().createContent(panel.component, "", false))
+        guessAndSetupRustProject(project)
+        val toolwindowPanel = BspToolWindowPanel(project)
+        val tab = ContentFactory.getInstance()
+            .createContent(toolwindowPanel, "", false)
+        toolWindow.contentManager.addContent(tab)
     }
 
     override fun isApplicable(project: Project): Boolean {
@@ -47,29 +51,29 @@ class BSPToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 }
 
-private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
-    private val cargoTab = CargoToolWindow(project)
+private class BspToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {
+    private val bspTab = BspToolWindow(project)
 
     init {
-        toolbar = cargoTab.toolbar.component
-        cargoTab.toolbar.targetComponent = this
-        setContent(cargoTab.content)
+        toolbar = bspTab.toolbar.component
+        bspTab.toolbar.targetComponent = this
+        setContent(bspTab.content)
     }
 
     override fun getData(dataId: String): Any? =
         when {
-            CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId) -> cargoTab.selectedProject
-            PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> cargoTab.treeExpander
+            PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> bspTab.treeExpander
             else -> super.getData(dataId)
         }
 }
 
-class CargoToolWindow(
+class BspToolWindow(
     private val project: Project
 ) {
+    private val bspService: BspConnectionService = project.service<BspConnectionService>()
     val toolbar: ActionToolbar = run {
         val actionManager = ActionManager.getInstance()
-        actionManager.createActionToolbar(CARGO_TOOLBAR_PLACE, actionManager.getAction("Rust.Cargo") as DefaultActionGroup, true)
+        actionManager.createActionToolbar(BSP_TOOLBAR_PLACE, actionManager.getAction("Rust.Bsp") as DefaultActionGroup, true)
     }
 
     val note = JEditorPane("text/html", html("")).apply {
@@ -77,19 +81,20 @@ class CargoToolWindow(
         isEditable = false
     }
 
-    private val projectTree = BSPProjectsTree()
-    private val projectStructure = BSPProjectTreeStructure(projectTree, project)
+    private val projectTree = BspProjectsTree()
+    private val projectStructure = BspProjectTreeStructure(projectTree, project)
 
-    val treeExpander: TreeExpander = object : DefaultTreeExpander(projectTree) {
-        override fun isCollapseAllVisible(): Boolean = project.hasCargoProject
-        override fun isExpandAllVisible(): Boolean = project.hasCargoProject
-    }
+    val treeExpander: TreeExpander
 
-    val selectedProject: CargoProject? get() = projectTree.selectedProject
 
     val content: JComponent = ScrollPaneFactory.createScrollPane(projectTree, 0)
 
     init {
+        treeExpander = object : DefaultTreeExpander(projectTree) {
+            override fun isCollapseAllVisible(): Boolean = bspService.hasBspServer()
+            override fun isExpandAllVisible(): Boolean = bspService.hasBspServer()
+        }
+
         with(project.messageBus.connect()) {
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, projects ->
                 invokeLater {
@@ -116,31 +121,10 @@ class CargoToolWindow(
     """
 
     companion object {
-        private val LOG: Logger = logger<CargoToolWindow>()
+        private val LOG: Logger = logger<BspToolWindow>()
 
-        @JvmStatic
-        val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create("SELECTED_CARGO_PROJECT")
+        const val BSP_TOOLBAR_PLACE: String = "Bsp Toolbar"
 
-        const val CARGO_TOOLBAR_PLACE: String = "Cargo Toolbar"
-
-        private const val ID: String = "Cargo"
-
-        fun initializeToolWindow(project: Project) {
-            try {
-                val manager = ToolWindowManager.getInstance(project) as? ToolWindowManagerEx ?: return
-                val bean = ToolWindowEP.EP_NAME.extensionList.find { it.id == ID }
-                if (bean != null) {
-                    @Suppress("DEPRECATION", "UnstableApiUsage")
-                    manager.initToolWindow(bean)
-                }
-            } catch (e: Exception) {
-                LOG.error("Unable to initialize $ID tool window", e)
-            }
-        }
-
-        fun isRegistered(project: Project): Boolean {
-            val manager = ToolWindowManager.getInstance(project)
-            return manager.getToolWindow(ID) != null
-        }
+        private const val ID: String = "BSP"
     }
 }
