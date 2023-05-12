@@ -84,7 +84,12 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, processor)
                 is RsExternCrateItem -> processExternCrateResolveVariants(element, true, processor)
-                is RsLabel -> processLabelResolveVariants(element, processor)
+                is RsLabel -> {
+                    val processorWithoutLabelsFromBlocks = processor.wrapWithFilter { e ->
+                        !(element.parent is RsContExpr && e.element.parent is RsBlockExpr)
+                    }
+                    processLabelResolveVariants(element, processorWithoutLabelsFromBlocks)
+                }
                 is RsLifetime -> processLifetimeResolveVariants(element, processor)
                 is RsMacroReference -> processMacroReferenceVariants(element, processor)
                 is RsModDeclItem -> processModDeclResolveVariants(element, processor)
