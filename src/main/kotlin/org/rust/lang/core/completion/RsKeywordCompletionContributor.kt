@@ -86,6 +86,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 }
             }
         })
+
+        extend(CompletionType.BASIC, afterIfOrWhilePattern(), RsKeywordCompletionProvider("let"))
     }
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -230,6 +232,18 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun afterVisInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseInherentImplDeclarationPattern().and(afterVis())
+    }
+
+    private fun afterIfOrWhilePattern(): PsiElementPattern.Capture<PsiElement> {
+        return afterIfPattern().or(afterWhilePattern())
+    }
+
+    private fun afterIfPattern(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().afterLeaf(psiElement(IF).withParent(psiElement(IF_EXPR)))
+    }
+
+    private fun afterWhilePattern(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().afterLeaf(psiElement(WHILE).withParent(psiElement(WHILE_EXPR)))
     }
 
     // TODO(parser recovery?): it would be really nice to just say something like element.prevSibling is RsVis
