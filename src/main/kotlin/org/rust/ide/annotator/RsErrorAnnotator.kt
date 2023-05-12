@@ -18,9 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.ProcessingContext
 import com.intellij.util.SmartList
-import com.intellij.util.ThreeState
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.*
@@ -792,8 +790,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkLabel(holder: RsAnnotationHolder, label: RsLabel) {
-        if (hasResolve(label)) {
-            RsDiagnostic.UndeclaredLabelError(label).addToHolder(holder)
+        if (label.reference.multiResolve().isEmpty()) {
+            val error = if (resolveLabelReference(label, true).isNotEmpty()) {
+                RsDiagnostic.UnreachableLabelError(label)
+            } else {
+                RsDiagnostic.UndeclaredLabelError(label)
+            }
+            error.addToHolder(holder)
         }
         val labelName = label.referenceName
         if (labelName.isInvalidLabelName(label.edition)) {
@@ -813,7 +816,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.IllegalLifetimeName(lifetime).addToHolder(holder)
         }
 
-        if (!lifetime.isPredefined && hasResolve(lifetime)) {
+        if (!lifetime.isPredefined && lifetime.reference.multiResolve().isEmpty()) {
             RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
         }
     }
@@ -1554,8 +1557,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         return field.parent.parent is RsEnumVariant
     }
 
-    private fun hasResolve(el: RsMandatoryReferenceElement): Boolean =
-        !(el.reference.resolve() != null || el.reference.multiResolve().size > 1)
 }
 
 private fun RsExpr?.isComparisonBinaryExpr(): Boolean {

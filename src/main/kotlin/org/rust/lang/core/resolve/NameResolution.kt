@@ -709,10 +709,10 @@ fun processPatBindingResolveVariants(
     return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES, processor)
 }
 
-fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
+fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor, processBeyondLabelBarriers: Boolean = false): Boolean {
     val prevScope = hashMapOf<String, Set<Namespace>>()
     for (scope in label.contexts) {
-        if (scope is RsLambdaExpr || scope is RsFunction) return false
+        if (!processBeyondLabelBarriers && isLabelBarrier(scope)) return false
         if (scope is RsLabeledExpression) {
             val labelDecl = scope.labelDecl ?: continue
             val stop = processWithShadowingAndUpdateScope(prevScope, LIFETIMES, processor) {
@@ -722,6 +722,12 @@ fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): 
         }
     }
     return false
+}
+
+private fun isLabelBarrier(scope: PsiElement) = scope is RsLambdaExpr || scope is RsFunction
+
+fun resolveLabelReference(element: RsLabel, processBeyondLabelBarriers: Boolean = false): List<RsElement> {
+    return collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it, processBeyondLabelBarriers) }
 }
 
 fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolveProcessor): Boolean {

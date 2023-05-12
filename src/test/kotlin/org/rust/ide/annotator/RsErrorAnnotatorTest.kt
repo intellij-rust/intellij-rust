@@ -585,6 +585,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test unreachable label E0767`() = checkErrors("""
+        fn ok() {
+            'foo: loop { {loop {continue 'foo} }}
+        }
+
+        fn err<'a>(a: &'a str) {
+            'foo: loop { || {loop {continue <error descr="Use of unreachable label `'foo` [E0767]">'foo</error>}} }
+            'foo: loop { fn f() {loop {continue <error descr="Use of unreachable label `'foo` [E0767]">'foo</error>}} }
+        }
+    """)
+
     fun `test self import not in use group E0429`() = checkErrors("""
         mod test {
             use <error descr="`self` imports are only allowed within a { } list [E0429]">self</error>;
