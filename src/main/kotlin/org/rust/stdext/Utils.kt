@@ -73,3 +73,7 @@ fun numberSuffix(number: Int): String {
         else -> "th"
     }
 }
+
+fun Long.isPowerOfTwo(): Boolean {
+    return this > 0 && (this.and(this - 1)) == 0L
+}
