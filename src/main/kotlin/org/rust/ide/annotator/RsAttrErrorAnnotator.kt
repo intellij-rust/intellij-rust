@@ -7,8 +7,6 @@ package org.rust.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
-import org.rust.ide.fixes.RemoveElementFix
-import org.rust.ide.fixes.SubstituteTextFix
 import com.intellij.util.ProcessingContext
 import com.intellij.util.ThreeState
 import org.rust.ide.fixes.*
@@ -19,6 +17,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.areUnstableFeaturesAvailable
+import org.rust.stdext.isPowerOfTwo
 
 class RsAttrErrorAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
@@ -38,6 +37,7 @@ class RsAttrErrorAnnotator : AnnotatorBase() {
                         checkFeatureAttribute(element, rsHolder, context)
                     }
                     "cfg", "cfg_attr" -> checkRootCfgPredicate(element, rsHolder)
+                    "repr" -> checkReprAttr(element, rsHolder)
                     "derive" -> checkDeriveAttr(element, rsHolder)
                 }
             }
@@ -289,5 +289,81 @@ private fun checkDeriveAttr(element: RsMetaItem, holder: RsAnnotationHolder) {
     for (arg in args) {
         val fixes = listOfNotNull(arg.stringValue?.let { SubstituteTextFix.replace("Remove quotes", arg.containingFile, arg.textRange, it) })
         RsDiagnostic.LiteralValueInsideDeriveError(arg, fixes = fixes).addToHolder(holder)
+    }
+}
+
+private fun checkReprAttr(element: RsMetaItem, holder: RsAnnotationHolder) {
+    val args = element.metaItemArgs?.metaItemList ?: return
+    for (arg in args) {
+        checkReprArg(arg, holder)
+    }
+}
+
+private fun checkReprArg(arg: RsMetaItem, holder: RsAnnotationHolder) {
+    when (arg.name) {
+        "align" -> checkReprAlign(arg, holder)
+    }
+}
+
+private fun checkReprAlign(align: RsMetaItem, holder: RsAnnotationHolder) {
+    val args = align.metaItemArgs?.litExprList
+    val eq = align.eq
+
+    when {
+        args == null && eq == null -> {
+            RsDiagnostic.InvalidReprAlign(
+                align,
+                "`align` needs an argument",
+                fixes = listOf(AddAttrParenthesesFix(align , "align"))
+            ).addToHolder(holder)
+        }
+
+        args == null && eq != null -> {
+            RsDiagnostic.IncorrectlyDeclaredAlignRepresentationHint(
+                align,
+                "Incorrect `repr(align)` attribute format"
+            ).addToHolder(holder)
+        }
+
+        args != null -> {
+            checkReprAlignArgs(args, align, holder)
+        }
+    }
+}
+
+private fun checkReprAlignArgs(args: List<RsLitExpr>, align: RsMetaItem, holder: RsAnnotationHolder) {
+    if (args.size != 1) {
+        RsDiagnostic.IncorrectlyDeclaredAlignRepresentationHint(
+            align,
+            "`align` takes exactly one argument in parentheses"
+        ).addToHolder(holder)
+        return
+    }
+
+    val arg = args.first()
+    val kind = arg.kind
+    if (kind == null || kind !is RsLiteralKind.Integer || kind.suffix != null) {
+        RsDiagnostic.InvalidReprAlign(
+            align,
+            "`align` argument must be an unsuffixed integer",
+            fixes = listOfNotNull(ConvertToUnsuffixedIntegerFix.createIfCompatible(arg, "Change to align(%s)"))
+        ).addToHolder(holder)
+        return
+    }
+
+    val value = arg.integerValue ?: return
+    if (!value.isPowerOfTwo()) {
+        RsDiagnostic.InvalidReprAlign(
+            align,
+            "`align` argument must be a power of two"
+        ).addToHolder(holder)
+        return
+    }
+
+    if (value > (1.shl(29))) {
+        RsDiagnostic.InvalidReprAlign(
+            align,
+            "`align` argument must not be larger than 2^29"
+        ).addToHolder(holder)
     }
 }

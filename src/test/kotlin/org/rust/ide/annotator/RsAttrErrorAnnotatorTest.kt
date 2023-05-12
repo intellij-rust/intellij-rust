@@ -501,4 +501,103 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
         #[derive(<error descr="Expected path to a trait, found literal [E0777]">1/*caret*/6</error>)]
         struct A {}
     """)
+
+    fun `test E0589 align with no arguments`() = checkErrors("""
+        #[repr(<error descr="`align` needs an argument [E0589]">align</error>)]
+        struct S {}
+    """)
+
+
+    fun `test E0589 align with no arguments fix`() = checkFixByText("Add parentheses to `align`", """
+        #[repr(<error descr="`align` needs an argument [E0589]">/*caret*/align</error>)]
+        struct S {}
+    """, """
+        #[repr(align())]
+        struct S {}
+    """)
+
+    fun `test E0589 align not an unsuffixed integer`() = checkErrors("""
+        #[repr(<error descr="`align` argument must be an unsuffixed integer [E0589]">align("8")</error>)]
+        struct A {}
+
+        #[repr(<error descr="`align` argument must be an unsuffixed integer [E0589]">align("hello world :)")</error>)]
+        struct A1 {}
+
+        #[repr(<error descr="`align` argument must be an unsuffixed integer [E0589]">align(8.0)</error>)]
+        struct B {}
+
+        #[repr(<error descr="`align` argument must be an unsuffixed integer [E0589]">align(8i64)</error>)]
+        struct C {}
+    """)
+
+    fun `test E0589 align string literal fix`() = checkFixByText("Change to align(8)", """
+        #[repr(<error descr="`align` argument must be an unsuffixed integer [E0589]">/*caret*/align("8")</error>)]
+        struct A {}
+    """, """
+        #[repr(align(8))]
+        struct A {}
+    """)
+
+    fun `test E0589 align suffixed integer fix`() = checkFixByText("Change to align(8)", """
+        #[repr(<error descr="`align` argument must be an unsuffixed integer [E0589]">/*caret*/align(8i64)</error>)]
+        struct A {}
+    """, """
+        #[repr(align(8))]
+        struct A {}
+    """)
+
+    fun `test E0589 align not a power of two`() = checkErrors("""
+        #[repr(<error descr="`align` argument must be a power of two [E0589]">align(7)</error>)]
+        struct A {}
+
+        #[repr(<error descr="`align` argument must be a power of two [E0589]">align(0)</error>)]
+        struct B {}
+
+        #[repr(<error descr="`align` argument must be a power of two [E0589]">align(1073741825)</error>)]
+        struct C {}
+    """)
+
+
+    fun `test E0589 align larger than 2^29`() = checkErrors("""
+        #[repr(<error descr="`align` argument must not be larger than 2^29 [E0589]">align(1073741824)</error>)]
+        struct A {}
+
+        #[repr(<error descr="`align` argument must not be larger than 2^29 [E0589]">align(4294967296)</error>)]
+        struct B {}
+    """)
+
+
+    fun `test E0589 correct align`() = checkErrors("""
+        #[repr(align(8))]
+        struct A {}
+
+        #[repr(align(1))]
+        struct B {}
+
+        #[repr(align(536870912))]
+        struct C {}
+    """)
+
+    fun `test E0693 align with incorrect representation hint`() = checkErrors("""
+        #[repr(<error descr="Incorrect `repr(align)` attribute format [E0693]">align = 8</error>)]
+        struct A {}
+
+        #[repr(<error descr="Incorrect `repr(align)` attribute format [E0693]">align = "8"</error>)]
+        struct B {}
+    """)
+
+    fun `test E0693 align with incorrect number of arguments`() = checkErrors("""
+        #[repr(<error descr="`align` takes exactly one argument in parentheses [E0693]">align()</error>)]
+        struct A {}
+
+        #[repr(<error descr="`align` takes exactly one argument in parentheses [E0693]">align(8, 4)</error>)]
+        struct B {}
+
+        #[repr(<error descr="`align` takes exactly one argument in parentheses [E0693]">align(8, 4, 16)</error>)]
+        struct C {}
+
+
+        #[repr(<error descr="`align` takes exactly one argument in parentheses [E0693]">align(all(8))</error>)]
+        struct D {}
+    """)
 }
