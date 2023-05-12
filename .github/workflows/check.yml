@@ -85,7 +85,7 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 # TODO: check on more rustc versions
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
-                platform-version: [ 231 ]
+                platform-version: [ 231, 232 ]
                 include:
                     - os: ubuntu-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
@@ -176,7 +176,7 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
                 base-ide: [ idea, clion ]
-                platform-version: [ 231 ]
+                platform-version: [ 231, 232 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
