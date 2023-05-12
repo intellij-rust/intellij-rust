@@ -22,7 +22,7 @@ class RsInPlaceVariableIntroducer(
     private val additionalElementsToRename: List<PsiElement> = emptyList()
 ) : InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, emptyArray(), null) {
 
-    override fun collectAdditionalElementsToRename(stringUsages: UsagesList) {
+    override fun collectAdditionalElementsToRename(stringUsages: MutableList<in Pair<PsiElement, TextRange>>) {
         for (element in additionalElementsToRename) {
             if (element.isValid) {
                 stringUsages.add(Pair(element, TextRange(0, element.textLength)))

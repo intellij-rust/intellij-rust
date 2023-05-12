@@ -37,7 +37,7 @@ class CargoExternalSystemProjectAwareTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()
-        enableAutoImportInTests(projectTracker, testRootDisposable)
+        AutoImportProjectTracker.enableAutoReloadInTests(testRootDisposable)
     }
 
     fun `test modifications`() {

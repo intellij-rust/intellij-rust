@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.LocalQuickFix.notNullElements
 import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
 import org.rust.ide.fixes.AddMutableFix
 import org.rust.ide.fixes.DeriveCopyFix
@@ -111,9 +111,4 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         }
         return false
     }
-}
-
-// BACKCOMPAT: 2022.3. Replace with LocalQuickFix.notNullElements
-private fun notNullElements(fix: LocalQuickFix?): Array<LocalQuickFix> {
-    return if (fix == null) LocalQuickFix.EMPTY_ARRAY else arrayOf(fix)
 }
