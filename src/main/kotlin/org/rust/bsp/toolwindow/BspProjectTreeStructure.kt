@@ -54,7 +54,7 @@ class BspProjectTreeStructure(
         class Target(val target: BuildTarget, val allProjects: Map<BuildTargetIdentifier, BuildTarget>, val node: SimpleNode) : BspSimpleNode(node) {
 
             init {
-                icon = CargoIcons.BSP_ICON
+                icon = if ("rust" in target.languageIds) CargoIcons.RUST else CargoIcons.BSP
             }
 
             override fun buildChildren(): Array<SimpleNode> {

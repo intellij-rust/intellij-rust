@@ -36,7 +36,6 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 
 class BspToolWindowFactory : ToolWindowFactory, DumbAware {
-    private val lock: Any = Any()
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         guessAndSetupRustProject(project)
