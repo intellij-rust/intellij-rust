@@ -724,7 +724,9 @@ fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor, p
     return false
 }
 
-private fun isLabelBarrier(scope: PsiElement) = scope is RsLambdaExpr || scope is RsFunction
+private fun isLabelBarrier(scope: PsiElement): Boolean {
+    return scope is RsLambdaExpr || scope is RsFunction || scope is RsConstant || scope is RsBlockExpr && (scope.isAsync || scope.isConst)
+}
 
 fun resolveLabelReference(element: RsLabel, processBeyondLabelBarriers: Boolean = false): List<RsElement> {
     return collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it, processBeyondLabelBarriers) }

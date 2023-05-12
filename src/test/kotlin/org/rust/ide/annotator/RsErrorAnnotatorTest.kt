@@ -593,6 +593,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn err<'a>(a: &'a str) {
             'foo: loop { || {loop {continue <error descr="Use of unreachable label `'foo` [E0767]">'foo</error>}} }
             'foo: loop { fn f() {loop {continue <error descr="Use of unreachable label `'foo` [E0767]">'foo</error>}} }
+            'foo: loop { async {loop {continue <error descr="Use of unreachable label `'foo` [E0767]">'foo</error>}} }
+            const a: i32 = if true {
+                loop { break <error descr="Use of undeclared label `'a` [E0426]">'a</error>; }
+                1
+            } else {
+                2
+            };
+            static b: i32 = if true {
+                loop { break <error descr="Use of undeclared label `'a` [E0426]">'a</error>; }
+                1
+            } else {
+                2
+            };
         }
     """)
 
