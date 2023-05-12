@@ -50,10 +50,10 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                 // TODO: Remove this check when type inference is implemented for `asm!` macro calls
                 if (func.descendantsWithMacrosOfType<RsAsmMacroArgument>().isNotEmpty()) return
 
-                borrowCheckResult.usesOfMovedValue.forEach {
-                    registerUseOfMovedValueProblem(holder, it.use)
-                }
                 if (!usedMir) {
+                    borrowCheckResult.usesOfMovedValue.forEach {
+                        registerUseOfMovedValueProblem(holder, it.use)
+                    }
                     borrowCheckResult.usesOfUninitializedVariable.forEach {
                         registerUseOfUninitializedVariableProblem(holder, it.use)
                     }
@@ -67,6 +67,11 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
             private fun visitFunctionUsingMir(function: RsFunction): Boolean {
                 if (!isFeatureEnabled(MIR_BORROW_CHECK)) return false
                 val result = function.mirBorrowCheckResult ?: return false
+                for (element in result.usesOfMovedValue) {
+                    if (!element.isPhysical) continue
+                    val fix = DeriveCopyFix.createIfCompatible(element)
+                    RsDiagnostic.UseOfMovedValueError(element, fix).addToHolder(holder)
+                }
                 for (element in result.usesOfUninitializedVariable) {
                     if (!element.isPhysical) continue
                     val fix = InitializeWithDefaultValueFix.createIfCompatible(element)

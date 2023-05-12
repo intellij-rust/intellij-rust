@@ -5,14 +5,13 @@
 
 package org.rust.ide.inspections.borrowck
 
-import org.rust.CheckTestmarkHit
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.lang.core.macros.MacroExpansionManager
 
+@WithExperimentalFeatures(MIR_BORROW_CHECK)
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
     fun `test move by call`() = checkByText("""
         struct S { data: i32 }
@@ -60,6 +59,15 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             s.b = 2;
             let s1 = s;
             <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test move struct by assign 4`() = checkByText("""
+        struct Foo;
+        fn func() {
+            let x = Foo;
+            let y = x;
+            let z = /*error descr="Use of moved value [E0382]"*/x/*error**/;
         }
     """, checkWarn = false)
 
@@ -171,6 +179,32 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move then branch`() = checkByText("""
+        struct Foo;
+        fn func() {
+            let x = Foo;
+            let y = x;
+            let z = if true {
+                /*error descr="Use of moved value [E0382]"*/x/*error**/
+            } else {
+                Foo
+            };
+        }
+    """, checkWarn = false)
+
+    fun `test move else branch`() = checkByText("""
+        struct Foo;
+        fn func() {
+            let x = Foo;
+            let y = x;
+            let z = if true {
+                Foo
+            } else {
+                /*error descr="Use of moved value [E0382]"*/x/*error**/
+            };
+        }
+    """, checkWarn = false)
+
     fun `test move for loop`() = checkByText("""
         struct S { data: i32 }
         struct T;
@@ -187,6 +221,16 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
 
             let ts = vec![T, T, T];
             for t in ts { t; }
+        }
+    """, checkWarn = false)
+
+    fun `test move inside loop`() = checkByText("""
+        struct Foo;
+        fn func() {
+            let x = Foo;
+            loop {
+                let y = /*error descr="Use of moved value [E0382]"*/x/*error**/;
+            }
         }
     """, checkWarn = false)
 
