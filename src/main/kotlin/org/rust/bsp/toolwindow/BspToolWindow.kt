@@ -7,7 +7,10 @@ package org.rust.bsp.toolwindow
 
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.TreeExpander
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -16,22 +19,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil
 import org.rust.bsp.service.BspConnectionService
-import org.rust.cargo.project.model.CargoProject
-import org.rust.cargo.project.model.CargoProjectsService
-import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
-import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
-import org.rust.cargo.project.toolwindow.CargoToolWindow
-import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
@@ -81,7 +75,7 @@ class BspToolWindow(
     }
 
     private val projectTree = BspProjectsTree()
-    private val projectStructure = BspProjectTreeStructure(projectTree, bspService)
+    private val projectStructure = BspProjectTreeStructure(projectTree, bspService, project)
 
     val treeExpander: TreeExpander
 
@@ -95,10 +89,8 @@ class BspToolWindow(
         }
 
         with(project.messageBus.connect()) {
-            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
-                invokeLater {
-                    projectStructure.updateBspProjects(project.service<BspConnectionService>().getBspTargets())
-                }
+            subscribe(BspConnectionService.BSP_WORKSPACE_REFRESH_TOPIC, BspConnectionService.BspProjectsRefreshListener {
+                projectStructure.updateBspProjects(project.service<BspConnectionService>().getBspTargets())
             })
         }
 

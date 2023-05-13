@@ -8,6 +8,7 @@ package org.rust.bsp.service
 import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -21,7 +22,6 @@ import com.intellij.util.text.SemVer
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
 import org.rust.bsp.BspConstants
-import org.rust.bsp.BspProjectViewManager
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -73,9 +73,11 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     override fun getProjectData(projectDirectory: Path): CargoWorkspaceData {
         val server = getBspServer()
-        return calculateProjectDetailsWithCapabilities(server, projectDirectory) {
+        val workspaceData = calculateProjectDetailsWithCapabilities(server, projectDirectory, project) {
             println("BSP server capabilities: $it")
         }
+
+        return workspaceData
     }
 
     private fun createBspServerIfNull() {
@@ -314,6 +316,7 @@ fun calculateToolchains(
 fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
     projectDirectory: Path,
+    project: Project,
     errorCallback: (Throwable) -> Unit
 ): CargoWorkspaceData {
     val projectBazelTargets = queryForBazelTargets(server).get()
@@ -325,8 +328,8 @@ fun calculateProjectDetailsWithCapabilities(
 
     var rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
     changedWorkspaceRoot?.let {
-        val bspProjectViewManager = BspProjectViewManager(it)
-        rustBspTargetsIds = bspProjectViewManager.filterIncludedPackages(rustBspTargetsIds)
+        val bspProjectViewService = project.service<BspProjectViewService>()
+        rustBspTargetsIds = bspProjectViewService.filterIncludedPackages(rustBspTargetsIds)
     }
 
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
@@ -336,11 +339,14 @@ fun calculateProjectDetailsWithCapabilities(
     val rawDependencies = createRawDependencies(projectWorkspaceData)
 
     changedWorkspaceRoot?.let {
-        val bspProjectViewManager = BspProjectViewManager(it)
+        val bspProjectViewManager = project.service<BspProjectViewService>()
         val localProjectPackages = projectPackages.filter { pkg ->
             pkg.origin == PackageOrigin.WORKSPACE
         }
-        bspProjectViewManager.generateTargetsFile(localProjectPackages)
+        val targets = bspProjectViewManager.updateTargets(localProjectPackages)
+        val refreshStatusPublisher = project.messageBus.syncPublisher(BspConnectionService.BSP_WORKSPACE_REFRESH_TOPIC)
+        refreshStatusPublisher.onRefreshFinished()
+
     }
 
     return CargoWorkspaceData(projectPackages, dependencies, rawDependencies, changedWorkspaceRoot, true)

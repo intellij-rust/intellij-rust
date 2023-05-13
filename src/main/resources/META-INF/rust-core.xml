@@ -1266,6 +1266,7 @@
         <!-- BSP -->
         <projectService serviceInterface="org.rust.bsp.service.BspConnectionService"
                         serviceImplementation="org.rust.bsp.service.BspConnectionServiceImpl"/>
+        <projectService serviceImplementation="org.rust.bsp.service.BspProjectViewService"/>
         <postStartupActivity
             implementation="org.rust.bsp.BspStartupActivity"/>
     </extensions>

@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import org.rust.bsp.service.BspConnectionService
+import org.rust.bsp.service.BspProjectViewService
 
 class ProjectClosingListener: ProjectManagerListener {
 
@@ -17,6 +18,7 @@ class ProjectClosingListener: ProjectManagerListener {
             } catch (e: Exception) {
                 log.warn("One of the disconnect actions has failed!", e)
             }
+            project.service<BspProjectViewService>().generateTargetsFile()
         }
     }
 
