@@ -29,6 +29,7 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
             metrics += CARGO.metric(
                 CARGO_AUTO_SHOW_ERRORS_IN_EDITOR.with(autoShowErrorsInEditor.toBoolean()),
                 CARGO_COMPILE_ALL_TARGETS.with(compileAllTargets),
+                CARGO_OFFLINE.with(useOffline)
             )
         }
         with(project.rustfmtSettings) {
@@ -41,7 +42,7 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("rust.settings", 2)
+        private val GROUP = EventLogGroup("rust.settings", 3)
 
         private val PROJECT = GROUP.registerEvent(
             "project",
@@ -51,11 +52,13 @@ class RsSettingsUsagesCollector : ProjectUsagesCollector() {
 
         private val CARGO_AUTO_SHOW_ERRORS_IN_EDITOR = EventFields.Boolean("auto_show_errors_in_editor")
         private val CARGO_COMPILE_ALL_TARGETS = EventFields.Boolean("compile_all_targets")
+        private val CARGO_OFFLINE = EventFields.Boolean("offline")
 
         private val CARGO = GROUP.registerVarargEvent(
             "cargo",
             CARGO_AUTO_SHOW_ERRORS_IN_EDITOR,
             CARGO_COMPILE_ALL_TARGETS,
+            CARGO_OFFLINE
         )
 
         private val RUSTFMT = GROUP.registerEvent(
