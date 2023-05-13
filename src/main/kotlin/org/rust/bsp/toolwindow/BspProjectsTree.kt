@@ -12,14 +12,14 @@ import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
-open class BspProjectsTree (): SimpleTree() {
+class BspProjectsTree (): SimpleTree() {
 
     init {
         isRootVisible = false
         showsRootHandles = true
         emptyText.text = "There are no Rust projects to display."
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
-        @Suppress("LeakingThis")
+        setToggleClickCount(3)
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (e.clickCount < 2 || !SwingUtilities.isLeftMouseButton(e)) return
