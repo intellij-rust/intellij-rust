@@ -16,6 +16,7 @@ import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.psi.ProcMacroAttributeTest.TestProcMacroAttribute.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsAttrProcMacroOwnerStub
+import org.rust.lang.core.stubs.RsFileStub
 import org.rust.stdext.singleOrFilter
 
 /**
@@ -442,7 +443,7 @@ class ProcMacroAttributeTest : RsTestBase() {
 
         @Suppress("UNCHECKED_CAST")
         val itemElementType = item.elementType as IStubElementType<*, PsiElement>
-        val stub = itemElementType.createStub(item, null)
+        val stub = itemElementType.createStub(item, RsFileStub(null, flags = 0))
         if (stub is RsAttrProcMacroOwnerStub && actualAttr is Attr) {
             assertEquals(item.stubbedText, stub.stubbedText)
             assertEquals(item.startOffset, stub.startOffset)

@@ -27,7 +27,7 @@ class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
     """)
 
     fun `test impl`() = doTest("""
-        <# block [1 usage   John Smith +2] #>
+        <# block [John Smith +2] #>
         struct S;
 
         <# block [John Smith +2] #>
