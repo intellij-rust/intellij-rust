@@ -21,6 +21,7 @@ import org.rust.bsp.BspConstants
 import org.rust.bsp.service.BspConnectionService
 import org.rust.bsp.service.BspProjectViewService
 import org.rust.cargo.icons.CargoIcons
+import java.awt.Color
 
 class BspProjectTreeStructure(
     tree: BspProjectsTree,
@@ -67,22 +68,41 @@ class BspProjectTreeStructure(
         }
 
         class Target(val target: BuildTarget, val allProjects: MutableMap<String, Pair<BuildTarget, Boolean>>, val node: SimpleNode, private val projecta: Project) : BspSimpleNode(node) {
+            val initialStatus = allProjects[target.id.uri]!!.second
 
+            private fun getCurrentColor(): Color? {
+                if (initialStatus) {
+                    if (allProjects[target.id.uri]!!.second) {
+                        return JBColor.BLUE
+                    }
+                    else {
+                        return JBColor.RED
+                    }
+                }
+                else {
+                    if (allProjects[target.id.uri]!!.second) {
+                        return JBColor.GREEN
+                    }
+                    else {
+                        return null
+                    }
+                }
+            }
             init {
                 icon = if ("rust" in target.languageIds) CargoIcons.RUST else CargoIcons.BSP
-                myColor = if (allProjects[target.id.uri]!!.second) JBColor.GREEN else null
+                myColor = if (allProjects[target.id.uri]!!.second) JBColor.BLUE else null
             }
             fun click() {
                 val viewManager = projecta.service<BspProjectViewService>()
                 if (allProjects[target.id.uri]!!.second) {
                     allProjects[target.id.uri] = Pair(target, false)
                     viewManager.excludePackage(target.id)
-                    myColor = null
+                    myColor = getCurrentColor()
                 }
                 else {
                     allProjects[target.id.uri] = Pair(target, true)
                     viewManager.includePackage(target.id)
-                    myColor = JBColor.GREEN
+                    myColor = getCurrentColor()
                 }
                 presentation.forcedTextForeground = myColor
 
