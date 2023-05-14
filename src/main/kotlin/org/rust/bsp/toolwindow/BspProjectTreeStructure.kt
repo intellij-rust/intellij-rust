@@ -62,14 +62,22 @@ class BspProjectTreeStructure(
     sealed class BspSimpleNode(parent: SimpleNode?) : CachingSimpleNode(parent) {
 
         class Root(private val allProjects: MutableMap<String, Pair<BuildTarget, Boolean>>, private val topTargets: List<BuildTarget>, private val projecta: Project) : BspSimpleNode(null) {
-            override fun buildChildren(): Array<SimpleNode> = topTargets.map { Target(it, allProjects, this, projecta) }.sortedBy { it.name }.toTypedArray()
+
+            val children = topTargets.map { Target(it, allProjects, this, projecta) }.sortedBy { it.name }
+            override fun buildChildren(): Array<SimpleNode> = children.toTypedArray()
             override fun getName(): String = ""
+
+            fun checkStatus() {
+                children.forEach {it.checkStatus()}
+            }
 
         }
 
         class Target(val target: BuildTarget, val allProjects: MutableMap<String, Pair<BuildTarget, Boolean>>, val node: SimpleNode, private val projecta: Project) : BspSimpleNode(node) {
             val initialStatus = allProjects[target.id.uri]!!.second
 
+            val children = target.dependencies.filter { allProjects.containsKey(it.uri) }
+                .map { Target (allProjects[it.uri]!!.first, allProjects, this, projecta)}
             private fun getCurrentColor(): Color? {
                 if (initialStatus) {
                     if (allProjects[target.id.uri]!!.second) {
@@ -92,24 +100,25 @@ class BspProjectTreeStructure(
                 icon = if ("rust" in target.languageIds) CargoIcons.RUST else CargoIcons.BSP
                 myColor = if (allProjects[target.id.uri]!!.second) JBColor.BLUE else null
             }
+            fun checkStatus() {
+                myColor = getCurrentColor()
+                presentation.forcedTextForeground = myColor
+                children.forEach {it.checkStatus()}
+            }
             fun click() {
                 val viewManager = projecta.service<BspProjectViewService>()
                 if (allProjects[target.id.uri]!!.second) {
                     allProjects[target.id.uri] = Pair(target, false)
                     viewManager.excludePackage(target.id)
-                    myColor = getCurrentColor()
                 }
                 else {
                     allProjects[target.id.uri] = Pair(target, true)
                     viewManager.includePackage(target.id)
-                    myColor = getCurrentColor()
                 }
-                presentation.forcedTextForeground = myColor
 
             }
             override fun buildChildren(): Array<SimpleNode> {
-                return target.dependencies.filter { allProjects.containsKey(it.uri) }
-                    .map { Target (allProjects[it.uri]!!.first, allProjects, this, projecta)}.toTypedArray()
+                return children.toTypedArray()
             }
 
             override fun getName(): String = target.displayName

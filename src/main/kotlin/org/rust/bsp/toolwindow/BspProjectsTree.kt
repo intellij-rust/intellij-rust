@@ -27,8 +27,11 @@ class BspProjectsTree (): SimpleTree() {
                 if (tree.selectionModel.isSelectionEmpty) return
                 val node = tree.selectionModel.selectionPath.lastPathComponent as? DefaultMutableTreeNode ?: return
                 val target = (node.userObject as? BspProjectTreeStructure.BspSimpleNode.Target) ?: return
+                val root = (tree.treeModel.root as? DefaultMutableTreeNode) ?: return
+                val treeRoot = (root.userObject as? BspProjectTreeStructure.BspSimpleNode.Root) ?: return
                 target.click()
                 tree.clearSelection()
+                treeRoot.checkStatus()
                 tree.repaint()
             }
         })
