@@ -71,8 +71,10 @@ def run_lldb_tests(clion_version: str):
     elif host_os == OS.Windows:
         lldb_bundle_path = path.abspath(f"deps/clion-{clion_version}/bin/lldb/win/{arch_name}")
         # Create symlink to allow `lldb` Python module perform `import _lldb` inside
-        # TODO: Drop when this is implemented on CLion side
-        os.symlink(f"{lldb_bundle_path}/bin/liblldb.dll", f"{lldb_bundle_path}/lib/site-packages/lldb/_lldb.pyd")
+        # BACKCOMPAT: 2023.1. `lib/site-packages/lldb/_lldb.pyd` exists since CLion 2023.1
+        lldb_pyd = f"{lldb_bundle_path}/lib/site-packages/lldb/_lldb.pyd"
+        if not path.exists(lldb_pyd):
+            os.symlink(f"{lldb_bundle_path}/bin/liblldb.dll", f"{lldb_bundle_path}/lib/site-packages/lldb/_lldb.pyd")
 
         lldb_path = f"{lldb_bundle_path}/lib/site-packages"
         python = f"{lldb_bundle_path}/bin/python.exe"
