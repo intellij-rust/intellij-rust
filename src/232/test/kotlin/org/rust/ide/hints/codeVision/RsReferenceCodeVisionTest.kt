@@ -143,6 +143,6 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     private fun doTest(@Language("Rust") text: String) {
-        testProviders(text.trimIndent(), "main.rs", RsReferenceCodeVisionProvider.ID)
+        testProviders(text.trimIndent(), "main.rs", RsReferenceCodeVisionProvider().groupId)
     }
 }
