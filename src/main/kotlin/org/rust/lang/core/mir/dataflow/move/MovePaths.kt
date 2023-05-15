@@ -10,6 +10,7 @@ import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.util.IndexAlloc
 import org.rust.lang.core.mir.util.IndexKeyMap
 import org.rust.lang.core.mir.util.LocationMap
+import org.rust.lang.core.types.ty.*
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
@@ -141,12 +142,14 @@ private class MoveDataImpl(
 
 /** Tables mapping from a [MirPlace] to its [MovePath] */
 class MovePathLookup(
-    val locals: Map<MirLocal, MovePath>
+    val locals: Map<MirLocal, MovePath>,
+    val projections: MutableMap<Pair<MovePath, MirAbstractElem>, MovePath>,
 ) {
     fun find(place: MirPlace): LookupResult {
-        val result = locals[place.local]!!
+        var result = locals[place.local]!!
         for (elem in place.projections) {
-            TODO()
+            result = projections[result to elem.lift()]
+                ?: return LookupResult.Parent(result)
         }
         return LookupResult.Exact(result)
     }
@@ -171,11 +174,29 @@ private class MoveDataBuilder(
     }
 
     private fun movePathFor(place: MirPlace): RsResult<MovePath, MoveError> {
-        val base = data.revLookup.locals[place.local]!!
+        var base = data.revLookup.locals[place.local]!!
         place.projections.forEachIndexed { i, elem ->
-            TODO()
+            val projectionBase = place.projections.subList(0, i)
+            when (val placeTy = MirPlace.tyFrom(place.local, projectionBase).ty) {
+                is TyReference, is TyPointer -> TODO()
+                is TyAdt -> TODO()
+                is TySlice -> TODO()
+                is TyArray -> TODO()
+                else -> Unit
+            }
+
+            base = addMovePath(base, elem) {
+                MirPlace(place.local, place.projections.subList(0, i + 1))
+            }
         }
         return Ok(base)
+    }
+
+    private fun addMovePath(base: MovePath, element: MirProjectionElem<Ty>, makePlace: () -> MirPlace): MovePath {
+        val key = base to element.lift()
+        return data.revLookup.projections.getOrPut(key) {
+            newMovePath(data.movePaths, data.pathMap, data.initPathMap, base, makePlace())
+        }
     }
 
     fun gatherStatement(loc: MirLocation, stmt: MirStatement) {
@@ -286,7 +307,8 @@ private class MoveDataBuilder(
                     revLookup = MovePathLookup(
                         locals = IndexKeyMap.fromListUnchecked(body.localDecls.map {
                             newMovePath(movePaths, pathMap, initPathMap, null, MirPlace(it))
-                        })
+                        }),
+                        projections = hashMapOf()
                     ),
                     inits = IndexAlloc(),
                     initLocMap = LocationMap(body),

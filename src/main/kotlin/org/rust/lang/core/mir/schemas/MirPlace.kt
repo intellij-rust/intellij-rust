@@ -15,4 +15,34 @@ data class MirPlace(val local: MirLocal, val projections: List<PlaceElem> = empt
         newProjections.add(MirProjectionElem.Field(fieldIndex, ty))
         return MirPlace(local, newProjections)
     }
+
+    fun ty(): MirPlaceTy = tyFrom(local, projections)
+
+    companion object {
+        fun tyFrom(local: MirLocal, projections: List<MirProjectionElem<Ty>>): MirPlaceTy {
+            return projections.fold(MirPlaceTy.fromTy(local.ty)) { placeTy, element ->
+                placeTy.projectionTy(element)
+            }
+        }
+    }
+}
+
+class MirPlaceTy(
+    val ty: Ty,
+    /** Downcast to a particular variant of an enum or a generator, if included */
+    val variantIndex: Int?,
+) {
+
+    fun projectionTy(element: MirProjectionElem<Ty>): MirPlaceTy {
+        check(variantIndex == null || element !is MirProjectionElem.Field) {
+            "cannot use non field projection on downcasted place"
+        }
+        return when (element) {
+            is MirProjectionElem.Field -> fromTy(element.elem)
+        }
+    }
+
+    companion object {
+        fun fromTy(ty: Ty): MirPlaceTy = MirPlaceTy(ty, variantIndex = null)
+    }
 }

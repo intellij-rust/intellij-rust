@@ -315,4 +315,13 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             }
         }
     """)
+
+    fun `test no E0381 for tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, Foo);
+            let y = x.0;
+            let z = x.1;
+        }
+    """)
 }

@@ -234,6 +234,43 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, Foo);
+            let y = x.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x.0/*error**/;
+        }
+    """)
+
+    fun `test move tuple`() = checkErrors("""
+        fn main() {
+            let x = (0, 0);
+            let y = x;
+            let z = /*error descr="Use of moved value [E0382]"*/x.0/*error**/;
+        }
+    """)
+
+    fun `test reinit tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let mut x = (Foo, Foo);
+            let y1 = x.0;
+            let y2 = x.1;
+            x.0 = Foo;
+            let y3 = x.0;
+        }
+    """)
+
+    fun `test reinit tuple`() = checkErrors("""
+        fn main() {
+            let mut x = (0, 0);
+            let y = x;
+            x = (0, 0);
+            let z = x.0;
+        }
+    """)
+
     fun `test move in while let or patterns`() = checkByText("""
         struct S;
         enum E { A(S), B(S), C }
