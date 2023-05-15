@@ -1,5 +1,5 @@
 version: "1.0"
-linter: jetbrains/qodana-jvm-community:2022.3
+linter: jetbrains/qodana-jvm-community:2023.1
 profile:
   name: qodana.recommended
 exclude:
