@@ -1475,6 +1475,9 @@
         <action id="Bsp.RefreshBspProject"
                 class="org.rust.bsp.toolwindow.actions.RefreshAction"
                 icon="AllIcons.Actions.Refresh"/>
+        <action id="Bsp.BuildAll"
+                class="org.rust.bsp.toolwindow.actions.BuildAllAction"
+                icon="AllIcons.Actions.Compile"/>
         <action id="Bsp.Connect"
                 class="org.rust.bsp.toolwindow.actions.ConnectAction"
                 icon="/icons/bsp/connect.svg"/>
@@ -1499,6 +1502,7 @@
 
         <group id="Rust.Bsp">
             <reference id="Bsp.RefreshBspProject"/>
+            <reference id="Bsp.BuildAll"/>
             <reference id="Bsp.Connect"/>
             <reference id="Bsp.Disconnect"/>
             <separator/>

@@ -73,11 +73,9 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     override fun getProjectData(projectDirectory: Path): CargoWorkspaceData {
         val server = getBspServer()
-        val workspaceData = calculateProjectDetailsWithCapabilities(server, projectDirectory, project) {
+        return calculateProjectDetailsWithCapabilities(server, projectDirectory, project) {
             println("BSP server capabilities: $it")
         }
-
-        return workspaceData
     }
 
     private fun createBspServerIfNull() {

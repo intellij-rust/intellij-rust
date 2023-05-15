@@ -5,6 +5,8 @@
 
 package org.rust.bsp.toolwindow
 
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.treeStructure.SimpleTree
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -20,6 +22,7 @@ class BspProjectsTree (): SimpleTree() {
         emptyText.text = "There are no Rust projects to display."
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         setToggleClickCount(3)
+        PopupHandler.installPopupMenu(this, BspTreeActionGroup(this), ActionPlaces.MOUSE_SHORTCUT)
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
                 if (e.clickCount < 2 || !SwingUtilities.isLeftMouseButton(e)) return
