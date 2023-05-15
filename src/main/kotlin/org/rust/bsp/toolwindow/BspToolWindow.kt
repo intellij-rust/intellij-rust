@@ -25,6 +25,9 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil
 import org.rust.bsp.service.BspConnectionService
+import org.rust.bsp.toolwindow.actions.ClearAllAction
+import org.rust.bsp.toolwindow.actions.UnselectAllAction
+import org.rust.bsp.toolwindow.actions.SelectAllAction
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
@@ -64,9 +67,17 @@ class BspToolWindow(
     private val project: Project
 ) {
     private val bspService: BspConnectionService = project.service<BspConnectionService>()
+
+    private val projectTree = BspProjectsTree()
+    private val projectStructure = BspProjectTreeStructure(projectTree, bspService, project)
+
     val toolbar: ActionToolbar = run {
         val actionManager = ActionManager.getInstance()
-        actionManager.createActionToolbar(BSP_TOOLBAR_PLACE, actionManager.getAction("Rust.Bsp") as DefaultActionGroup, true)
+        val actionGroup =  actionManager.getAction("Rust.Bsp") as DefaultActionGroup
+        actionGroup.add(SelectAllAction(projectTree, projectStructure))
+        actionGroup.add(UnselectAllAction(projectTree, projectStructure))
+        actionGroup.add(ClearAllAction(projectTree, projectStructure))
+        actionManager.createActionToolbar(BSP_TOOLBAR_PLACE, actionGroup, true)
     }
 
     val note = JEditorPane("text/html", html("")).apply {
@@ -74,8 +85,6 @@ class BspToolWindow(
         isEditable = false
     }
 
-    private val projectTree = BspProjectsTree()
-    private val projectStructure = BspProjectTreeStructure(projectTree, bspService, project)
 
     val treeExpander: TreeExpander
 

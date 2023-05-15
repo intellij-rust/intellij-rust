@@ -1,5 +1,6 @@
 package org.rust.bsp.toolwindow.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -8,20 +9,19 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import org.rust.bsp.service.BspConnectionService
-import org.rust.ide.actions.RefreshCargoProjectsAction
+import org.rust.bsp.toolwindow.BspProjectTreeStructure
+import org.rust.bsp.toolwindow.BspProjectsTree
 
-class RefreshAction : AnAction() {
+class SelectAllAction(
+    private val tree: BspProjectsTree,
+    private val structure: BspProjectTreeStructure
+): AnAction("Select All Targets", "Selects all targets to be resolved during next refresh", AllIcons.Actions.Selectall) {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
-
-    if (project != null) {
-        RefreshCargoProjectsAction().actionPerformed(e)
-    } else {
-      log.warn("RefreshAction cannot be performed! Project not available.")
-    }
+      structure.selectAll()
+      structure.checkStatus()
+      tree.repaint()
   }
-
 
   override fun update(e: AnActionEvent) {
     val project = e.project
@@ -29,7 +29,7 @@ class RefreshAction : AnAction() {
     if (project != null) {
       doUpdate(project, e)
     } else {
-      log.warn("RefreshAction cannot be updated! Project not available.")
+      log.warn("DisconnectAction cannot be updated! Project not available.")
     }
   }
 
@@ -42,6 +42,6 @@ class RefreshAction : AnAction() {
     ActionUpdateThread.BGT
 
   private companion object {
-    private val log = logger<RefreshAction>()
+    private val log = logger<SelectAllAction>()
   }
 }

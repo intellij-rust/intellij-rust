@@ -1484,6 +1484,15 @@
         <action id="Bsp.Disconnect"
                 class="org.rust.bsp.toolwindow.actions.DisconnectAction"
                 icon="/icons/bsp/disconnect.svg"/>
+        <action id="Bsp.SelectAll"
+                class="org.rust.bsp.toolwindow.actions.SelectAllAction"
+                icon="/icons/bsp/disconnect.svg"/>
+        <action id="Bsp.DeselectAll"
+                class="org.rust.bsp.toolwindow.actions.UnselectAllAction"
+                icon="/icons/bsp/disconnect.svg"/>
+        <action id="Bsp.ClearAll"
+                class="org.rust.bsp.toolwindow.actions.ClearAllAction"
+                icon="/icons/bsp/disconnect.svg"/>
 
         <group id="Rust.Cargo">
             <reference id="Cargo.RefreshCargoProject"/>
@@ -1503,6 +1512,7 @@
         <group id="Rust.Bsp">
             <reference id="Bsp.RefreshBspProject"/>
             <reference id="Bsp.BuildAll"/>
+            <separator/>
             <reference id="Bsp.Connect"/>
             <reference id="Bsp.Disconnect"/>
             <separator/>

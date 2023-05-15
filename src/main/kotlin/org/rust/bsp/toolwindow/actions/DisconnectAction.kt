@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import org.rust.bsp.service.BspConnectionService
 
-public class DisconnectAction : AnAction() {
+class DisconnectAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
@@ -28,7 +28,7 @@ public class DisconnectAction : AnAction() {
     }
   }
 
-  public override fun update(e: AnActionEvent) {
+  override fun update(e: AnActionEvent) {
     val project = e.project
 
     if (project != null) {
