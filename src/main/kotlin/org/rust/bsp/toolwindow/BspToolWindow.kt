@@ -43,7 +43,7 @@ class BspToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     override fun isApplicable(project: Project): Boolean {
-        return project.service<BspConnectionService>().hasBspServer();
+        return project.service<BspConnectionService>().hasBspServer()
     }
 }
 
@@ -73,7 +73,7 @@ class BspToolWindow(
 
     val toolbar: ActionToolbar = run {
         val actionManager = ActionManager.getInstance()
-        val actionGroup =  actionManager.getAction("Rust.Bsp") as DefaultActionGroup
+        val actionGroup = actionManager.getAction("Rust.Bsp") as DefaultActionGroup
         actionGroup.add(SelectAllAction(projectTree, projectStructure))
         actionGroup.add(UnselectAllAction(projectTree, projectStructure))
         actionGroup.add(ClearAllAction(projectTree, projectStructure))

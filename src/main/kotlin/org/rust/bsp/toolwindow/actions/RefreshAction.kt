@@ -12,36 +12,36 @@ import org.rust.ide.actions.RefreshCargoProjectsAction
 
 class RefreshAction : AnAction() {
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project
 
-    if (project != null) {
-        RefreshCargoProjectsAction().actionPerformed(e)
-    } else {
-      log.warn("RefreshAction cannot be performed! Project not available.")
+        if (project != null) {
+            RefreshCargoProjectsAction().actionPerformed(e)
+        } else {
+            log.warn("RefreshAction cannot be performed! Project not available.")
+        }
     }
-  }
 
 
-  override fun update(e: AnActionEvent) {
-    val project = e.project
+    override fun update(e: AnActionEvent) {
+        val project = e.project
 
-    if (project != null) {
-      doUpdate(project, e)
-    } else {
-      log.warn("RefreshAction cannot be updated! Project not available.")
+        if (project != null) {
+            doUpdate(project, e)
+        } else {
+            log.warn("RefreshAction cannot be updated! Project not available.")
+        }
     }
-  }
 
-  private fun doUpdate(project: Project, e: AnActionEvent) {
-      val connection = project.service<BspConnectionService>()
-      e.presentation.isEnabled = connection.isConnected() == true
-  }
+    private fun doUpdate(project: Project, e: AnActionEvent) {
+        val connection = project.service<BspConnectionService>()
+        e.presentation.isEnabled = connection.isConnected() == true
+    }
 
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.BGT
+    override fun getActionUpdateThread(): ActionUpdateThread =
+        ActionUpdateThread.BGT
 
-  private companion object {
-    private val log = logger<RefreshAction>()
-  }
+    private companion object {
+        private val log = logger<RefreshAction>()
+    }
 }

@@ -66,6 +66,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
     override fun isConnected(): Boolean {
         return bspServer != null
     }
+
     override fun connect() {
         println("Starting BSP server")
         getBspServer()
@@ -120,11 +121,11 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val wbt = getBspServer().workspaceBuildTargets().get()
         params.targets = wbt.targets.map { it.id }
         return getBspServer().buildTargetCompile(params).thenApply {
-                return@thenApply CargoBuildResult(
-                    it.statusCode == StatusCode.OK,
-                    it.statusCode == StatusCode.CANCELLED,
-                    0 //TODO Find proper started time
-                );
+            return@thenApply CargoBuildResult(
+                it.statusCode == StatusCode.OK,
+                it.statusCode == StatusCode.CANCELLED,
+                0 //TODO Find proper started time
+            )
         }
 
     }
@@ -135,7 +136,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
                 it.statusCode == StatusCode.OK,
                 it.statusCode == StatusCode.CANCELLED,
                 0 //TODO Find proper started time
-            );
+            )
         }
 
     }
@@ -146,7 +147,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
                 it.statusCode == StatusCode.OK,
                 it.statusCode == StatusCode.CANCELLED,
                 0 //TODO Find proper started time
-            );
+            )
         }
     }
 
@@ -396,11 +397,11 @@ private fun collectRustBspTargets(bspTargets: List<BuildTarget>): List<BuildTarg
 
 private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions? {
     if (cfgOptions == null)
-        return null;
+        return null
     val name = cfgOptions.nameOptions?.toSet()
     val keyValueOptions = cfgOptions.keyValueOptions?.associate { Pair(it.key, it.value.toSet()) }
     if (name == null || keyValueOptions == null)
-        return null;
+        return null
     return CfgOptions(keyValueOptions, name)
 }
 
@@ -494,7 +495,7 @@ fun createDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId
 
     for (dependency in projectWorkspaceData.dependencies) {
         dependencies
-            .getOrDefault(dependency.source, mutableSetOf<CargoWorkspaceData.Dependency>() )
+            .getOrDefault(dependency.source, mutableSetOf<CargoWorkspaceData.Dependency>())
             .add(
                 CargoWorkspaceData.Dependency(
                     dependency.target,

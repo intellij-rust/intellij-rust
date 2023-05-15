@@ -11,9 +11,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.bsp.toolwindow.actions.BuildAction
 import javax.swing.tree.DefaultMutableTreeNode
 
-class BspTreeActionGroup (
+class BspTreeActionGroup(
     val target: BspProjectsTree
-): ActionGroup() {
+) : ActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val node = target.selectionModel.selectionPath.lastPathComponent as? DefaultMutableTreeNode ?: return arrayOf()
         val selected = (node.userObject as? BspProjectTreeStructure.BspSimpleNode.Target) ?: return arrayOf()

@@ -17,42 +17,42 @@ class BuildAction(
     val target: String
 ) : AnAction("Build Target", null, AllIcons.Actions.Compile) {
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project
 
-    if (project != null) {
-      doAction(project)
-    } else {
-      log.warn("BuildAction cannot be performed! Project not available.")
+        if (project != null) {
+            doAction(project)
+        } else {
+            log.warn("BuildAction cannot be performed! Project not available.")
+        }
     }
-  }
 
-  private fun doAction(project: Project) {
-    runBackgroundableTask("Building...", project = project, cancellable = false) {
-      val connection = project.service<BspConnectionService>()
-      connection.compileSolution(CompileParams(listOf(BuildTargetIdentifier(target))))
+    private fun doAction(project: Project) {
+        runBackgroundableTask("Building...", project = project, cancellable = false) {
+            val connection = project.service<BspConnectionService>()
+            connection.compileSolution(CompileParams(listOf(BuildTargetIdentifier(target))))
+        }
     }
-  }
 
-  override fun update(e: AnActionEvent) {
-    val project = e.project
+    override fun update(e: AnActionEvent) {
+        val project = e.project
 
-    if (project != null) {
-      doUpdate(project, e)
-    } else {
-      log.warn("BuildAction cannot be updated! Project not available.")
+        if (project != null) {
+            doUpdate(project, e)
+        } else {
+            log.warn("BuildAction cannot be updated! Project not available.")
+        }
     }
-  }
 
-  private fun doUpdate(project: Project, e: AnActionEvent) {
-      val connection = project.service<BspConnectionService>()
-      e.presentation.isEnabled = connection.isConnected() == true
-  }
+    private fun doUpdate(project: Project, e: AnActionEvent) {
+        val connection = project.service<BspConnectionService>()
+        e.presentation.isEnabled = connection.isConnected() == true
+    }
 
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.BGT
+    override fun getActionUpdateThread(): ActionUpdateThread =
+        ActionUpdateThread.BGT
 
-  private companion object {
-    private val log = logger<BuildAction>()
-  }
+    private companion object {
+        private val log = logger<BuildAction>()
+    }
 }

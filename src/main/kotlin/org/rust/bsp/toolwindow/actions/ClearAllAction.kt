@@ -17,31 +17,31 @@ class ClearAllAction(
     private val structure: BspProjectTreeStructure
 ) : AnAction("Clear All Targets", "Returns the selection state to the one right after last refresh", AllIcons.Actions.Back) {
 
-  override fun actionPerformed(e: AnActionEvent) {
-      structure.clearAll()
-      structure.checkStatus()
-      tree.repaint()
-  }
-
-  override fun update(e: AnActionEvent) {
-    val project = e.project
-
-    if (project != null) {
-      doUpdate(project, e)
-    } else {
-      log.warn("DisconnectAction cannot be updated! Project not available.")
+    override fun actionPerformed(e: AnActionEvent) {
+        structure.clearAll()
+        structure.checkStatus()
+        tree.repaint()
     }
-  }
 
-  private fun doUpdate(project: Project, e: AnActionEvent) {
-      val connection = project.service<BspConnectionService>()
-      e.presentation.isEnabled = connection.isConnected() == true
-  }
+    override fun update(e: AnActionEvent) {
+        val project = e.project
 
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.BGT
+        if (project != null) {
+            doUpdate(project, e)
+        } else {
+            log.warn("DisconnectAction cannot be updated! Project not available.")
+        }
+    }
 
-  private companion object {
-    private val log = logger<ClearAllAction>()
-  }
+    private fun doUpdate(project: Project, e: AnActionEvent) {
+        val connection = project.service<BspConnectionService>()
+        e.presentation.isEnabled = connection.isConnected() == true
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread =
+        ActionUpdateThread.BGT
+
+    private companion object {
+        private val log = logger<ClearAllAction>()
+    }
 }

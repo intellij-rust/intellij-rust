@@ -22,31 +22,31 @@ class UnselectAllAction(
     private val structure: BspProjectTreeStructure
 ) : AnAction("Unselect All Targets", "Removes all targets so that they won't be selected in next refresh", AllIcons.Actions.Unselectall) {
 
-  override fun actionPerformed(e: AnActionEvent) {
-      structure.unselectAll()
-      structure.checkStatus()
-      tree.repaint()
-  }
-
-  override fun update(e: AnActionEvent) {
-    val project = e.project
-
-    if (project != null) {
-      doUpdate(project, e)
-    } else {
-      log.warn("DisconnectAction cannot be updated! Project not available.")
+    override fun actionPerformed(e: AnActionEvent) {
+        structure.unselectAll()
+        structure.checkStatus()
+        tree.repaint()
     }
-  }
 
-  private fun doUpdate(project: Project, e: AnActionEvent) {
-      val connection = project.service<BspConnectionService>()
-      e.presentation.isEnabled = connection.isConnected() == true
-  }
+    override fun update(e: AnActionEvent) {
+        val project = e.project
 
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.BGT
+        if (project != null) {
+            doUpdate(project, e)
+        } else {
+            log.warn("DisconnectAction cannot be updated! Project not available.")
+        }
+    }
 
-  private companion object {
-    private val log = logger<UnselectAllAction>()
-  }
+    private fun doUpdate(project: Project, e: AnActionEvent) {
+        val connection = project.service<BspConnectionService>()
+        e.presentation.isEnabled = connection.isConnected() == true
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread =
+        ActionUpdateThread.BGT
+
+    private companion object {
+        private val log = logger<UnselectAllAction>()
+    }
 }

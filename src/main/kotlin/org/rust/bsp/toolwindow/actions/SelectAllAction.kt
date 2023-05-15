@@ -15,33 +15,33 @@ import org.rust.bsp.toolwindow.BspProjectsTree
 class SelectAllAction(
     private val tree: BspProjectsTree,
     private val structure: BspProjectTreeStructure
-): AnAction("Select All Targets", "Selects all targets to be resolved during next refresh", AllIcons.Actions.Selectall) {
+) : AnAction("Select All Targets", "Selects all targets to be resolved during next refresh", AllIcons.Actions.Selectall) {
 
-  override fun actionPerformed(e: AnActionEvent) {
-      structure.selectAll()
-      structure.checkStatus()
-      tree.repaint()
-  }
-
-  override fun update(e: AnActionEvent) {
-    val project = e.project
-
-    if (project != null) {
-      doUpdate(project, e)
-    } else {
-      log.warn("DisconnectAction cannot be updated! Project not available.")
+    override fun actionPerformed(e: AnActionEvent) {
+        structure.selectAll()
+        structure.checkStatus()
+        tree.repaint()
     }
-  }
 
-  private fun doUpdate(project: Project, e: AnActionEvent) {
-      val connection = project.service<BspConnectionService>()
-      e.presentation.isEnabled = connection.isConnected() == true
-  }
+    override fun update(e: AnActionEvent) {
+        val project = e.project
 
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.BGT
+        if (project != null) {
+            doUpdate(project, e)
+        } else {
+            log.warn("DisconnectAction cannot be updated! Project not available.")
+        }
+    }
 
-  private companion object {
-    private val log = logger<SelectAllAction>()
-  }
+    private fun doUpdate(project: Project, e: AnActionEvent) {
+        val connection = project.service<BspConnectionService>()
+        e.presentation.isEnabled = connection.isConnected() == true
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread =
+        ActionUpdateThread.BGT
+
+    private companion object {
+        private val log = logger<SelectAllAction>()
+    }
 }

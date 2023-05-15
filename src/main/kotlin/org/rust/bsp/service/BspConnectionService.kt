@@ -19,7 +19,7 @@ import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 @Service
-interface BspConnectionService: Disposable {
+interface BspConnectionService : Disposable {
     fun isConnected(): Boolean
     fun connect()
 
@@ -27,8 +27,8 @@ interface BspConnectionService: Disposable {
 
     fun getProjectData(projectDirectory: Path): CargoWorkspaceData
 
-    fun compileAllSolutions(params:CompileParams): CompletableFuture<CargoBuildResult>
-    fun compileSolution(params:CompileParams): CompletableFuture<CargoBuildResult>
+    fun compileAllSolutions(params: CompileParams): CompletableFuture<CargoBuildResult>
+    fun compileSolution(params: CompileParams): CompletableFuture<CargoBuildResult>
     fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>
 
     fun hasBspServer(): Boolean
@@ -54,6 +54,7 @@ interface BspConnectionService: Disposable {
         )
 
     }
+
     fun interface BspProjectsRefreshListener {
         fun onRefreshFinished()
     }

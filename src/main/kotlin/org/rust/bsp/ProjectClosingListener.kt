@@ -8,7 +8,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import org.rust.bsp.service.BspConnectionService
 import org.rust.bsp.service.BspProjectViewService
 
-class ProjectClosingListener: ProjectManagerListener {
+class ProjectClosingListener : ProjectManagerListener {
 
     override fun projectClosing(project: Project) {
         runModalTask("Disconnecting...", project = project, cancellable = false) {

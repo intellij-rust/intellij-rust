@@ -11,42 +11,42 @@ import org.rust.bsp.service.BspConnectionService
 
 class DisconnectAction : AnAction() {
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project
+    override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project
 
-    if (project != null) {
-      doAction(project)
-    } else {
-      log.warn("DisconnectAction cannot be performed! Project not available.")
+        if (project != null) {
+            doAction(project)
+        } else {
+            log.warn("DisconnectAction cannot be performed! Project not available.")
+        }
     }
-  }
 
-  private fun doAction(project: Project) {
-    runModalTask("Disconnecting...", project = project, cancellable = false) {
-      val connection = project.service<BspConnectionService>()
-      connection.disconnect()
+    private fun doAction(project: Project) {
+        runModalTask("Disconnecting...", project = project, cancellable = false) {
+            val connection = project.service<BspConnectionService>()
+            connection.disconnect()
+        }
     }
-  }
 
-  override fun update(e: AnActionEvent) {
-    val project = e.project
+    override fun update(e: AnActionEvent) {
+        val project = e.project
 
-    if (project != null) {
-      doUpdate(project, e)
-    } else {
-      log.warn("DisconnectAction cannot be updated! Project not available.")
+        if (project != null) {
+            doUpdate(project, e)
+        } else {
+            log.warn("DisconnectAction cannot be updated! Project not available.")
+        }
     }
-  }
 
-  private fun doUpdate(project: Project, e: AnActionEvent) {
-      val connection = project.service<BspConnectionService>()
-      e.presentation.isEnabled = connection.isConnected() == true
-  }
+    private fun doUpdate(project: Project, e: AnActionEvent) {
+        val connection = project.service<BspConnectionService>()
+        e.presentation.isEnabled = connection.isConnected() == true
+    }
 
-  override fun getActionUpdateThread(): ActionUpdateThread =
-    ActionUpdateThread.BGT
+    override fun getActionUpdateThread(): ActionUpdateThread =
+        ActionUpdateThread.BGT
 
-  private companion object {
-    private val log = logger<DisconnectAction>()
-  }
+    private companion object {
+        private val log = logger<DisconnectAction>()
+    }
 }

@@ -14,7 +14,7 @@ import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
-class BspProjectsTree (): SimpleTree() {
+class BspProjectsTree : SimpleTree() {
 
     init {
         isRootVisible = false
