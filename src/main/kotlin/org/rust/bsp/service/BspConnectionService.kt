@@ -42,10 +42,6 @@ interface BspConnectionService : Disposable {
     fun getRustcSysroot(): String?
 
     fun getBspTargets(): List<BuildTarget>
-    /*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
 
     companion object {
         val BSP_WORKSPACE_REFRESH_TOPIC: Topic<BspProjectsRefreshListener> = Topic(
