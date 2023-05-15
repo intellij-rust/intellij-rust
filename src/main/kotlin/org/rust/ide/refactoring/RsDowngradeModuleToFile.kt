@@ -40,7 +40,9 @@ class RsDowngradeModuleToFile : BaseRefactoringAction() {
 
     override fun isAvailableInEditorOnly(): Boolean = false
 
-    override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
+    // `ANY` language is here because the refactoring may be called for directory which language is `ANY`
+    override fun isAvailableForLanguage(language: Language): Boolean =
+        language.`is`(RsLanguage) || language.`is`(Language.ANY)
 
     private object Handler : RefactoringActionHandler {
         override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
