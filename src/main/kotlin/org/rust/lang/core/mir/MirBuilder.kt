@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.thir.*
+import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
@@ -103,7 +104,7 @@ class MirBuilder private constructor(
     private fun BlockAnd<*>.exprIntoPlace(expr: ThirExpr, place: MirPlace): BlockAnd<Unit> {
         val source = sourceInfo(expr.span)
         return when (expr) {
-            is ThirExpr.Literal, is ThirExpr.Unary, is ThirExpr.Binary, is ThirExpr.Tuple -> {
+            is ThirExpr.Literal, is ThirExpr.Unary, is ThirExpr.Binary, is ThirExpr.Array, is ThirExpr.Repeat, is ThirExpr.Tuple -> {
                 val (block, rvalue) = this.toLocalRvalue(expr)
                 block.pushAssign(place, rvalue, source).andUnit()
             }
@@ -281,6 +282,8 @@ class MirBuilder private constructor(
                 // TODO: different handling in case of guards
                 block and PlaceBuilder(varLocal(expr.local))
             }
+            is ThirExpr.Array,
+            is ThirExpr.Repeat,
             is ThirExpr.Tuple,
             is ThirExpr.Adt,
             is ThirExpr.Unary,
@@ -592,6 +595,28 @@ class MirBuilder private constructor(
                     }
                     .buildBinaryOp(expr.op, expr.ty, expr.span)
             }
+            is ThirExpr.Array -> {
+                var blockAnd: BlockAnd<*> = this
+                val elementType = (expr.ty as? TyArray)?.base ?: TyUnknown
+                val fields = expr
+                    .fields
+                    .map {
+                        blockAnd = blockAnd.toOperand(it, scope, NeedsTemporary.Maybe)
+                        blockAnd.elem as MirOperand
+                    }
+                blockAnd.block and MirRvalue.Aggregate.Array(elementType, fields)
+            }
+            is ThirExpr.Repeat -> {
+                var blockAnd: BlockAnd<*> = this
+                if (expr.count.asLong() == 0L) {
+                    // TODO: For a non-const, we may need to generate an appropriate `Drop`
+                    val elementType = expr.value.ty
+                    blockAnd.block and MirRvalue.Aggregate.Array(elementType, emptyList())
+                } else {
+                    blockAnd = blockAnd.toOperand(expr.value, scope, NeedsTemporary.No)
+                    blockAnd.block and MirRvalue.Repeat(blockAnd.elem as MirOperand, expr.count)
+                }
+            }
             is ThirExpr.Tuple -> {
                 var blockAnd: BlockAnd<*> = this
                 val fields = expr
@@ -893,7 +918,9 @@ class MirBuilder private constructor(
     private fun <T> BlockAnd<T>.buildDrops(scope: MirScope): BlockAnd<T> {
         scope.reversedDrops().forEach { drop ->
             when (drop.kind) {
-                Drop.Kind.VALUE -> TODO()
+                Drop.Kind.VALUE -> {
+                    // TODO
+                }
                 Drop.Kind.STORAGE -> {
                     block.pushStorageDead(drop.local, drop.source)
                 }
@@ -988,6 +1015,8 @@ class MirBuilder private constructor(
             is ThirExpr.Binary,
             is ThirExpr.If,
             is ThirExpr.Logical,
+            is ThirExpr.Array,
+            is ThirExpr.Repeat,
             is ThirExpr.Adt,
             is ThirExpr.Tuple,
             is ThirExpr.Loop,

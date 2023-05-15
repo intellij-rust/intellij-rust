@@ -31,6 +31,8 @@ sealed class MirCategory {
                 is ThirExpr.Unary,
                 is ThirExpr.Binary,
                 is ThirExpr.Assign,
+                is ThirExpr.Array,
+                is ThirExpr.Repeat,
                 is ThirExpr.Tuple -> {
                     Rvalue(MirRvalueFunc.AS_RVALUE)
                 }

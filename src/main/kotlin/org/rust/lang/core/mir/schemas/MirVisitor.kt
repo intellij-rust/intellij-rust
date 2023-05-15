@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 
 interface MirVisitor {
@@ -163,6 +164,11 @@ interface MirVisitor {
                 visitOperand(rvalue.operand, location)
             }
 
+            is MirRvalue.Repeat -> {
+                visitOperand(rvalue.operand, location)
+                visitTyConst(rvalue.count, location)
+            }
+
             is MirRvalue.Ref -> {
                 // TODO: visitRegion(rvalue.region, location)
                 val context = when (rvalue.borrowKind) {
@@ -192,6 +198,10 @@ interface MirVisitor {
                 when (rvalue) {
                     is MirRvalue.Aggregate.Adt -> {
                         // TODO: visitSubsts(rvalue.substs, location)
+                    }
+
+                    is MirRvalue.Aggregate.Array -> {
+                        visitTy(rvalue.ty, TyContext.Location(location))
                     }
 
                     is MirRvalue.Aggregate.Tuple -> {}
@@ -270,7 +280,10 @@ interface MirVisitor {
         visitSourceScope(source.scope)
     }
 
-    fun visitTy(ty: Ty, localDecl: Any) {
+    fun visitTy(ty: Ty, context: TyContext) {
+    }
+
+    fun visitTyConst(const: Const, location: MirLocation) {
     }
 }
 

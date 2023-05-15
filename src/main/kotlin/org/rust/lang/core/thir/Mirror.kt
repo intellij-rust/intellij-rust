@@ -11,9 +11,11 @@ import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.adjustments
+import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.Adjustment
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyArray
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
@@ -164,6 +166,19 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
             )
         }
         is RsPathExpr -> this.convert(ty, span)
+        is RsArrayExpr -> {
+            val initializer = initializer
+            val sizeExpr = sizeExpr
+            val arrayElements = arrayElements
+            val count = (ty as? TyArray)?.const ?: CtUnknown
+            when {
+                arrayElements != null ->
+                    ThirExpr.Array(arrayElements.map { it.mirror(contextOwner) }, ty, span)
+                initializer != null && sizeExpr != null ->
+                    ThirExpr.Repeat(initializer.mirror(contextOwner), count, ty, span)
+                else -> error("Incomplete array expr")
+            }
+        }
         else -> TODO("Not implemented for ${this::class}")
     }
 }

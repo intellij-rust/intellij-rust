@@ -283,6 +283,7 @@ private class MoveDataBuilder(
     private fun gatherRvalue(rvalue: MirRvalue) {
         when (rvalue) {
             is MirRvalue.Use -> gatherOperand(rvalue.operand)
+            is MirRvalue.Repeat -> gatherOperand(rvalue.operand)
             is MirRvalue.Aggregate -> {
                 for (operand in rvalue.operands) {
                     gatherOperand(operand)

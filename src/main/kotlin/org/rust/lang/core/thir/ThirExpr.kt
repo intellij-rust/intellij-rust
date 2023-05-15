@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.psi.ext.LogicOp
 import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
@@ -71,6 +72,19 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         val cond: ThirExpr,
         val then: ThirExpr,
         val `else`: ThirExpr?,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Array(
+        val fields: List<ThirExpr>,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Repeat(
+        val value: ThirExpr,
+        val count: Const,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

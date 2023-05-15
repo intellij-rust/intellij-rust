@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.document
-import java.util.*
 import kotlin.math.max
 
 internal class MirPrettyPrinter(
@@ -136,15 +135,20 @@ internal class MirPrettyPrinter(
                 }
                 "$funName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
+            is MirRvalue.Repeat -> {
+                val value = format(rvalue.operand)
+                val count = rvalue.count
+                "[$value; $count]"
+            }
+            is MirRvalue.Aggregate.Array -> when (rvalue.operands.size) {
+                0 -> "[]"
+                1 -> "[${format(rvalue.operands.single())}]"
+                else -> rvalue.operands.joinToString(", ", "[", "]") { format(it) }
+            }
             is MirRvalue.Aggregate.Tuple -> when (rvalue.operands.size) {
                 0 -> "()"
                 1 -> "(${format(rvalue.operands.single())},)"
-                else -> StringJoiner(", ", "(", ")").run {
-                    rvalue.operands.forEach {
-                        add(format(it))
-                    }
-                    toString()
-                }
+                else -> rvalue.operands.joinToString(", ", "(", ")") { format(it) }
             }
             is MirRvalue.Aggregate.Adt -> rvalue.definition.name ?: TODO()
             is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
@@ -253,15 +257,15 @@ internal class MirPrettyPrinter(
             is TyUnit -> "()"
             TyNever -> "!"
             is TyPrimitive -> ty.name
+            is TyArray -> if (ty.size == null) {
+                "[${format(ty.base)}]"
+            } else {
+                "[${format(ty.base)}; ${ty.size}]"
+            }
             is TyTuple -> if (ty.types.size == 1) {
                 "(${format(ty.types.single())},)"
             } else {
-                StringJoiner(", ", "(", ")").run {
-                    ty.types.forEach {
-                        add(format(it))
-                    }
-                    toString()
-                }
+                ty.types.joinToString(", ", "(", ")") { format(it) }
             }
             is TyAdt -> ty.item.name ?: TODO()
             is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"

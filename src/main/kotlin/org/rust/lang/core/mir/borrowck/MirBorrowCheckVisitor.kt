@@ -133,9 +133,11 @@ class MirBorrowCheckVisitor(
                 consumeOperand(location, rvalue.right, state)
             }
 
+            is MirRvalue.Repeat -> consumeOperand(location, rvalue.operand, state)
+
             is MirRvalue.Aggregate -> {
                 when (rvalue) {
-                    is MirRvalue.Aggregate.Adt, is MirRvalue.Aggregate.Tuple -> Unit
+                    is MirRvalue.Aggregate.Adt, is MirRvalue.Aggregate.Array, is MirRvalue.Aggregate.Tuple -> Unit
                     // is MirRvalue.Aggregate.Closure -> propagateClosureUsedMutUpvar()
                 }
                 for (operand in rvalue.operands) {
