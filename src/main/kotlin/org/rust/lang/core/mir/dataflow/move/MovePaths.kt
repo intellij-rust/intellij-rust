@@ -106,6 +106,25 @@ interface MoveData {
     /** The number of [MovePath]'s exists in this [MoveData] */
     val movePathsCount: Int
 
+    /**
+     * For the move path `initPath`, returns the root local variable (if any) that starts the path. (e.g., for a path
+     * like `a.b.c` returns `Some(a)`)
+     */
+    fun baseLocal(initPath: MovePath): MirLocal? {
+        var path = initPath
+        while (true) {
+            val local = path.place.local
+            if (local != null) return local
+            val parent = path.parent
+            if (parent != null) {
+                path = parent
+                continue
+            } else {
+                return null
+            }
+        }
+    }
+
     companion object {
         fun gatherMoves(body: MirBody): MoveData {
             val builder = MoveDataBuilder.new(body)

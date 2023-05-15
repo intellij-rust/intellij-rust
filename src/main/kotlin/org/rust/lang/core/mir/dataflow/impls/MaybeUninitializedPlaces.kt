@@ -27,13 +27,6 @@ class MaybeUninitializedPlaces(private val moveData: MoveData) : GenKillAnalysis
         state.set(0, moveData.movePathsCount)
     }
 
-    override fun join(state1: BitSet, state2: BitSet): Boolean {
-        // TODO optimize, do not copy
-        val old = state1.clone()
-        state1.or(state2)
-        return state1 != old
-    }
-
     override fun applyStatementEffect(state: BitSet, statement: MirStatement, location: MirLocation) {
         dropFlagEffectsForLocation(moveData, location) { movePath, movePathState ->
             updateBits(state, movePath, movePathState)

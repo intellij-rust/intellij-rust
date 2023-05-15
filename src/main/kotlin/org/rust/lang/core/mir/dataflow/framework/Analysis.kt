@@ -14,7 +14,9 @@ interface Analysis<Domain> {
     fun join(state1: Domain, state2: Domain): Boolean
     fun copyState(state: Domain): Domain
 
+    fun applyBeforeStatementEffect(state: Domain, statement: MirStatement, location: MirLocation) {}
     fun applyStatementEffect(state: Domain, statement: MirStatement, location: MirLocation)
+    fun applyBeforeTerminatorEffect(state: Domain, terminator: MirTerminator<MirBasicBlock>, location: MirLocation) {}
     fun applyTerminatorEffect(state: Domain, terminator: MirTerminator<MirBasicBlock>, location: MirLocation)
 
     fun intoEngine(body: MirBody): Engine<Domain> = Engine(body, this)

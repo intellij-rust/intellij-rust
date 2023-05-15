@@ -69,14 +69,14 @@ object Forward : Direction {
         visitor.visitBlockStart(state, block)
         for ((index, statement) in block.statements.withIndex()) {
             val location = MirLocation(block, index)
-            /* results.reconstructBeforeStatementEffect */
+            results.reconstructBeforeStatementEffect(state, statement, location)
             visitor.visitStatementBeforePrimaryEffect(state, statement, location)
             results.reconstructStatementEffect(state, statement, location)
             visitor.visitStatementAfterPrimaryEffect(state, statement, location)
         }
 
         val terminatorLocation = MirLocation(block, block.statements.size)
-        /* results.reconstructBeforeTerminatorEffect */
+        results.reconstructBeforeTerminatorEffect(state, block.terminator, terminatorLocation)
         visitor.visitTerminatorBeforePrimaryEffect(state, block.terminator, terminatorLocation)
         results.reconstructTerminatorEffect(state, block.terminator, terminatorLocation)
         visitor.visitTerminatorAfterPrimaryEffect(state, block.terminator, terminatorLocation)

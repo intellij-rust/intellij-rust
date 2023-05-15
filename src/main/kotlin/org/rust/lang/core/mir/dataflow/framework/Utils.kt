@@ -30,20 +30,28 @@ class WorkQueue<T: WithIndex>(size: Int) {
     fun isEmpty(): Boolean = deque.isEmpty()
 }
 
-fun MirBody.getBasicBlocksInPostOrder(): List<MirBasicBlock> {
+fun MirBody.getBasicBlocksInPostOrder(): List<MirBasicBlock> =
+    getBasicBlocksInOrder { removeFirst() }
+
+fun MirBody.getBasicBlocksInPreOrder(): List<MirBasicBlock> =
+    getBasicBlocksInOrder { removeLast() }
+
+private typealias Element = Pair<MirBasicBlock, Iterator<MirBasicBlock>>
+
+private fun MirBody.getBasicBlocksInOrder(removeNext: ArrayDeque<Element>.() -> Element): List<MirBasicBlock> {
     val visited = BitSet(basicBlocks.size)
-    val stack = ArrayDeque<Pair<MirBasicBlock, Iterator<MirBasicBlock>>>()
+    val queue = ArrayDeque<Element>()
     val result = mutableListOf<MirBasicBlock>()
     val pushNode = { node: MirBasicBlock ->
-        if (visited.add(node.index)) stack.push(Pair(node, node.terminator.successors.iterator()))
+        if (visited.add(node.index)) queue.push(Pair(node, node.terminator.successors.iterator()))
     }
 
     pushNode(basicBlocks.first())
-    while (stack.isNotEmpty()) {
-        val (node, iterator) = stack.pop()
+    while (queue.isNotEmpty()) {
+        val (node, iterator) = queue.removeNext()
         val target = iterator.nextOrNull()
         if (target != null) {
-            stack.push(Pair(node, iterator))
+            queue.push(Pair(node, iterator))
             pushNode(target)
         } else {
             result.add(node)

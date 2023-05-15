@@ -19,6 +19,19 @@ class MirLocal(
     val ty: Ty,
     val source: MirSourceInfo,
 ) : WithIndex {
+
+    /** Returns `Some` if this is a reference to a thread-local static item that is used to access that static. */
+    val isRefToThreadLocal: Boolean
+        get() = if (localInfo is MirLocalInfo.StaticRef) {
+            localInfo.isThreadLocal
+        } else {
+            false
+        }
+
+    /** Returns `true` if this is a reference to a static item that is used to access that static. */
+    val isRefToStatic: Boolean
+        get() = localInfo is MirLocalInfo.StaticRef
+
     override fun toString(): String = "_$index: $ty"
 
     companion object {

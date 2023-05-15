@@ -12,15 +12,15 @@ sealed class MirSpan {
     open val endPoint: MirSpan get() = EndPoint(reference)
     abstract val reference: RsElement
 
-    class Full(override val reference: RsElement) : MirSpan()
+    data class Full(override val reference: RsElement) : MirSpan()
 
-    class Start(override val reference: RsElement) : MirSpan()
+    data class Start(override val reference: RsElement) : MirSpan()
 
-    class EndPoint(override val reference: RsElement) : MirSpan() {
+    data class EndPoint(override val reference: RsElement) : MirSpan() {
         override val endPoint get() = this
     }
 
-    class End(override val reference: RsElement) : MirSpan() {
+    data class End(override val reference: RsElement) : MirSpan() {
         override val end: MirSpan get() = this
     }
 

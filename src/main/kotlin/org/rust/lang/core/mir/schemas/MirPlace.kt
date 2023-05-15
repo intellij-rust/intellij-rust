@@ -39,6 +39,7 @@ class MirPlaceTy(
         }
         return when (element) {
             is MirProjectionElem.Field -> fromTy(element.elem)
+            is MirProjectionElem.Deref -> TODO()
         }
     }
 
