@@ -46,7 +46,7 @@ class BspProjectViewService(val project: Project) {
 
     fun updateTargets(
         rustPackages: List<CargoWorkspaceData.Package>
-    ) : List<String> {
+    ): List<String> {
         pojo = mapPackagesToPojo(rustPackages)
         return pojo.packages.flatMap { pkg ->
             pkg.targets.map {
@@ -54,6 +54,7 @@ class BspProjectViewService(val project: Project) {
             }
         }
     }
+
     fun generateTargetsFile() {
         getViewPath()?.let {
             FileWriter(it).use {
@@ -87,18 +88,18 @@ class BspProjectViewService(val project: Project) {
     fun includePackage(
         target: BuildTargetIdentifier
     ) {
-        val splitName = target.uri.split(":")
-        val target = listOf(splitName[1]).toMutableList()
-        pojo.packages.add(pojo.packages.size, BspPackageView(splitName[0], target))
+        val (packageName, targetName) = target.uri.split(":", limit = 2)
+        pojo.packages.add(pojo.packages.size, BspPackageView(packageName, listOf(targetName).toMutableList()))
         FileWriter(getViewPath()).use {
             gson.toJson(pojo, it)
         }
     }
+
     fun excludePackage(
         target: BuildTargetIdentifier
     ) {
-        val splitName = target.uri.split(":")
-        pojo.packages.forEach { pkg -> if (pkg.name == splitName[0]) pkg.targets.removeIf { it == splitName[1] } }
+        val (packageName, targetName) = target.uri.split(":", limit = 2)
+        pojo.packages.forEach { pkg -> if (pkg.name == packageName) pkg.targets.removeIf { it == targetName } }
         pojo.packages.removeIf { it.targets.isEmpty() }
         FileWriter(getViewPath()).use {
             gson.toJson(pojo, it)
