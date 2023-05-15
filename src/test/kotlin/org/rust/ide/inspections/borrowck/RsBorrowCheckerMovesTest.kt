@@ -234,7 +234,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    fun `test move tuple field`() = checkErrors("""
+    fun `test move tuple field, use tuple field`() = checkErrors("""
         struct Foo;
         fn main() {
             let x = (Foo, Foo);
@@ -243,12 +243,66 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """)
 
-    fun `test move tuple`() = checkErrors("""
+    fun `test move tuple field, use tuple`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, Foo);
+            let y = x.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x/*error**/;
+        }
+    """)
+
+    fun `test move tuple, use tuple field`() = checkErrors("""
         struct S;
         fn main() {
             let x = (S, S);
             let y = x;
             let z = /*error descr="Use of moved value [E0382]"*/x.0/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple field, use nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1.0/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple field, use tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple field, use tuple`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple, use nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1.0/*error**/;
+        }
+    """)
+
+    fun `test tuple, use nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1.0/*error**/;
         }
     """)
 

@@ -324,4 +324,14 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             let z = x.1;
         }
     """)
+
+    fun `test no E0381 for nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y1 = x.0;
+            let y2 = x.1.0;
+            let y3 = x.1.1;
+        }
+    """)
 }
