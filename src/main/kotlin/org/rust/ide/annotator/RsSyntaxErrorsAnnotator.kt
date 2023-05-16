@@ -110,9 +110,15 @@ private fun checkBreakExpr(holder: AnnotationHolder, item: RsBreakExpr) {
 }
 
 private fun checkLabelInWhileCondition(holder: AnnotationHolder, item: RsLabelReferenceOwner) {
-    if (item.label != null) return;
-    val condition = item.parent
-    if (condition is RsCondition && condition.parent is RsWhileExpr) {
+    if (item.label != null) return
+    val condition = PsiTreeUtil.getParentOfType(
+        item,
+        RsCondition::class.java,
+        true,
+        RsLooplikeExpr::class.java,
+        RsItemElement::class.java
+    ) ?: return
+    if (condition.parent is RsWhileExpr) {
         val fixes = if (!holder.isBatchMode) listOf(RsAddLabelFix(item)) else emptyList()
         RsDiagnostic.BreakContinueInWhileConditionWithoutLoopError(item, item.text, fixes).addToHolder(holder)
     }
