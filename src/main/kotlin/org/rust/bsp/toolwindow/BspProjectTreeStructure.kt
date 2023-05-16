@@ -82,10 +82,11 @@ class BspProjectTreeStructure(
     fun clearAll() {
         val viewManager = project.service<BspProjectViewService>()
         targetById.forEach { (_: String, value: BspNodeStatus) ->
-            if (value.isStaged)
-                viewManager.includePackage(value.target.id)
-            else
-                viewManager.excludePackage(value.target.id)
+            if (value.isStaged != value.isResolved)
+                if (value.isResolved)
+                    viewManager.includePackage(value.target.id)
+                else
+                    viewManager.excludePackage(value.target.id)
             value.resetStatus()
         }
     }
@@ -95,7 +96,7 @@ class BspProjectTreeStructure(
     class BspNodeStatus(
         val target: BuildTarget,
         var isStaged: Boolean,
-        private val isResolved: Boolean
+        val isResolved: Boolean
     ) {
 
         fun setStatus(newStatus: Boolean) {

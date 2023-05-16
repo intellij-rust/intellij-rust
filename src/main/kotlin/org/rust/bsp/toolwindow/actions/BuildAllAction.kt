@@ -7,11 +7,15 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.services
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
+import org.rust.bsp.BspBuildTask
 import org.rust.bsp.service.BspConnectionService
+import org.rust.bsp.service.BspProjectViewService
+import org.rust.taskQueue
 
 class BuildAllAction : AnAction() {
 
@@ -26,10 +30,9 @@ class BuildAllAction : AnAction() {
     }
 
     private fun doAction(project: Project) {
-        runBackgroundableTask("Building...", project = project, cancellable = false) {
-            val connection = project.service<BspConnectionService>()
-            connection.compileAllSolutions(CompileParams(listOf()))
-        }
+        val bspProjectViewService = project.service<BspProjectViewService>()
+        val buildTask = BspBuildTask(project, bspProjectViewService.getActiveTargets().map { BuildTargetIdentifier(it) })
+        project.taskQueue.run(buildTask)
     }
 
     override fun update(e: AnActionEvent) {

@@ -20,39 +20,30 @@ class BspProjectViewService(val project: Project) {
     private val filename: String = "rust-targets.json"
     private val gson = GsonBuilder().setPrettyPrinting().create()
 
-    data class BspPackageView(
-        val name: String,
-        val targets: MutableList<String>
-    )
-
     data class BspProjectView(
-        val packages: MutableList<BspPackageView>
+        val targets: MutableSet<String>
     )
 
     private var pojo = readPojo()
 
     private fun mapPackagesToPojo(rustPackages: List<CargoWorkspaceData.Package>): BspProjectView {
-        return BspProjectView(rustPackages.map { pkg ->
-            BspPackageView(
-                pkg.name,
-                pkg.allTargets.map {
-                    it.name
-                }.toMutableList()
-            )
-        }.toMutableList())
+        val result = mutableSetOf<String>()
+        rustPackages.forEach { pkg ->
+            pkg.allTargets.forEach {
+                result.add(pkg.name + ':' + it.name)
+            }
+        }
+        return BspProjectView(result)
     }
 
     private fun getViewPath(): String? = project.basePath?.let { Path.of(it, filename).toString() }
 
+    fun getActiveTargets() = pojo.targets.toList()
     fun updateTargets(
         rustPackages: List<CargoWorkspaceData.Package>
     ): List<String> {
         pojo = mapPackagesToPojo(rustPackages)
-        return pojo.packages.flatMap { pkg ->
-            pkg.targets.map {
-                "${pkg.name}:${it}"
-            }
-        }
+        return pojo.targets.toList()
     }
 
     fun generateTargetsFile() =
@@ -64,32 +55,25 @@ class BspProjectViewService(val project: Project) {
 
 
     private fun readPojo(): BspProjectView {
-        val pojoFile = getViewPath()?.toVirtualFile() ?: return BspProjectView(mutableListOf())
+        val pojoFile = getViewPath()?.toVirtualFile() ?: return BspProjectView(mutableSetOf())
         return try {
             gson.fromJson(VfsUtil.loadText(pojoFile), BspProjectView::class.java)
-        } catch (_: Exception) {
-            BspProjectView(mutableListOf())
+        } catch (e: Exception) {
+            BspProjectView(mutableSetOf())
         }
     }
 
     fun filterIncludedPackages(
         rustTargets: List<BuildTargetIdentifier>
     ): List<BuildTargetIdentifier> {
-        val projectView = pojo
-        if (pojo.packages.isEmpty()) return rustTargets
-        val bspTargetIds = projectView.packages.flatMap { pkg ->
-            pkg.targets.map {
-                "${pkg.name}:${it}"
-            }
-        }
-        return rustTargets.filter { it.uri in bspTargetIds }
+        if (pojo.targets.isEmpty()) return rustTargets
+        return rustTargets.filter { it.uri in pojo.targets }
     }
 
     fun includePackage(
         target: BuildTargetIdentifier
     ) {
-        val (packageName, targetName) = target.uri.split(":", limit = 2)
-        pojo.packages.add(pojo.packages.size, BspPackageView(packageName, listOf(targetName).toMutableList()))
+        pojo.targets.add(target.uri)
         FileWriter(getViewPath()).use {
             gson.toJson(pojo, it)
         }
@@ -98,9 +82,7 @@ class BspProjectViewService(val project: Project) {
     fun excludePackage(
         target: BuildTargetIdentifier
     ) {
-        val (packageName, targetName) = target.uri.split(":", limit = 2)
-        pojo.packages.forEach { pkg -> if (pkg.name == packageName) pkg.targets.removeIf { it == targetName } }
-        pojo.packages.removeIf { it.targets.isEmpty() }
+        pojo.targets.remove(target.uri)
         FileWriter(getViewPath()).use {
             gson.toJson(pojo, it)
         }

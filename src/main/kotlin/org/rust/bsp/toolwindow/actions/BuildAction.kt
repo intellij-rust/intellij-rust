@@ -11,7 +11,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
+import org.rust.bsp.BspBuildTask
 import org.rust.bsp.service.BspConnectionService
+import org.rust.cargo.project.model.impl.CargoSyncTask
+import org.rust.taskQueue
 
 class BuildAction(
     val target: String
@@ -28,10 +31,8 @@ class BuildAction(
     }
 
     private fun doAction(project: Project) {
-        runBackgroundableTask("Building...", project = project, cancellable = false) {
-            val connection = project.service<BspConnectionService>()
-            connection.compileSolution(CompileParams(listOf(BuildTargetIdentifier(target))))
-        }
+        val buildTask = BspBuildTask(project, listOf(BuildTargetIdentifier(target)))
+        project.taskQueue.run(buildTask)
     }
 
     override fun update(e: AnActionEvent) {

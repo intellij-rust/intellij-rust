@@ -7,6 +7,7 @@ package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.BuildTarget
 import ch.epfl.scala.bsp4j.CompileParams
+import ch.epfl.scala.bsp4j.CompileResult
 import ch.epfl.scala.bsp4j.RunParams
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -27,9 +28,8 @@ interface BspConnectionService : Disposable {
 
     fun getProjectData(projectDirectory: Path): CargoWorkspaceData
 
-    fun compileAllSolutions(params: CompileParams): CompletableFuture<CargoBuildResult>
-    fun compileSolution(params: CompileParams): CompletableFuture<CargoBuildResult>
-    fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult>
+    fun compileAllSolutions(params: CompileParams): CompletableFuture<CompileResult>
+    fun compileSolution(params: CompileParams): CompletableFuture<CompileResult>
 
     fun hasBspServer(): Boolean
 

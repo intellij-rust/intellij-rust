@@ -115,38 +115,15 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         bspClient = null
     }
 
-    override fun compileAllSolutions(params: CompileParams): CompletableFuture<CargoBuildResult> {
+    override fun compileAllSolutions(params: CompileParams): CompletableFuture<CompileResult> {
         val wbt = getBspServer().workspaceBuildTargets().get()
         params.targets = wbt.targets.map { it.id }
-        return getBspServer().buildTargetCompile(params).thenApply {
-            return@thenApply CargoBuildResult(
-                it.statusCode == StatusCode.OK,
-                it.statusCode == StatusCode.CANCELLED,
-                0 //TODO Find proper started time
-            )
-        }
+        return getBspServer().buildTargetCompile(params)
 
     }
 
-    override fun compileSolution(params: CompileParams): CompletableFuture<CargoBuildResult> {
-        return getBspServer().buildTargetCompile(params).thenApply {
-            return@thenApply CargoBuildResult(
-                it.statusCode == StatusCode.OK,
-                it.statusCode == StatusCode.CANCELLED,
-                0 //TODO Find proper started time
-            )
-        }
-
-    }
-
-    override fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult> {
-        return getBspServer().buildTargetRun(params).thenApply {
-            return@thenApply CargoBuildResult(
-                it.statusCode == StatusCode.OK,
-                it.statusCode == StatusCode.CANCELLED,
-                0 //TODO Find proper started time
-            )
-        }
+    override fun compileSolution(params: CompileParams): CompletableFuture<CompileResult> {
+        return getBspServer().buildTargetCompile(params)
     }
 
     private fun executeDisconnectActionAndReturnThrowableIfFailed(disconnectAction: () -> Unit): Throwable? =
