@@ -7,6 +7,8 @@ package org.rust.ide.annotator
 
 import org.rust.MockAdditionalCfgOptions
 import org.rust.MockRustcVersion
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 
 class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class) {
 
@@ -599,5 +601,94 @@ class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class
 
         #[repr(<error descr="`align` takes exactly one argument in parentheses [E0693]">align(all(8))</error>)]
         struct D {}
+    """)
+
+    fun `test E0552 unrecognized repr`() = checkErrors("""
+        #[repr(<error descr="Unrecognized representation CD [E0552]">CD</error>)]
+        struct Test(i32);
+    """)
+
+    fun `test empty enum with repr E0084`() = checkErrors("""
+        #[<error descr="Enum with no variants can't have `repr` attribute [E0084]">repr</error>(u8)]
+        enum Test {}
+    """)
+
+    fun `test enum without body with repr E0084`() = checkErrors("""
+        #[repr(u8)] // There should not be a `repr` error when enum doesn't have a body
+        enum Test<EOLError descr="<, where or '{' expected"></EOLError>
+    """)
+
+
+    fun `test E0517 placement repr C`() = checkErrors("""
+        #[repr(<error descr="C attribute should be applied to struct, enum, or union [E0517]">C</error>)]
+        type Test = i32;
+
+        #[repr(C)]
+        struct Test1(i32);
+
+        #[repr(C)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement repr transparent`() = checkErrors("""
+        #[repr(<error descr="transparent attribute should be applied to struct, enum, or union [E0517]">transparent</error>)]
+        type Test = i32;
+
+        #[repr(transparent)]
+        struct Test1(i32);
+
+        #[repr(transparent)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement repr align`() = checkErrors("""
+        #[repr(<error descr="align attribute should be applied to struct, enum, or union [E0517]">align(2)</error>)]
+        type Test = i32;
+
+        #[repr(align(2))]
+        struct Test1(i32);
+
+        #[repr(align(2))]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement repr primitive representations`() = checkErrors("""
+        #[repr(<error descr="u32 attribute should be applied to enum [E0517]">u32</error>)]
+        type Test = i32;
+
+        #[repr(<error descr="i32 attribute should be applied to enum [E0517]">i32</error>)]
+        struct Test1(i32);
+
+        #[repr(isize)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement packed`() = checkErrors("""
+        #[repr(<error descr="packed attribute should be applied to struct or union [E0517]">packed</error>)]
+        type Test = i32;
+
+        #[repr(packed)]
+        struct Test1(i32);
+
+        #[repr(<error descr="packed attribute should be applied to struct or union [E0517]">packed</error>)]
+        enum Test2 { AA }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test E0517 custom repr proc macro attr`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn repr(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::repr;
+
+        #[repr/*caret*/(<error descr="C attribute should be applied to struct, enum, or union [E0517]">C</error>)]
+        type Foo = i32;
     """)
 }

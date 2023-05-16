@@ -1241,7 +1241,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkAttr(holder: RsAnnotationHolder, attr: RsAttr) {
         checkDeriveAttribute(holder, attr)
         checkInlineAttr(holder, attr)
-        checkReprAttribute(holder, attr)
 
         if (attr.owner !is RsFunction)
             checkStartAttribute(holder, attr)
@@ -1295,49 +1294,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 RsDiagnostic
                     .InvalidStartAttrError.InvalidOwner(attr.metaItem.path?.referenceNameElement ?: attr.metaItem)
                     .addToHolder(holder)
-        }
-    }
-
-    private fun checkReprAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (attr.metaItem.name != "repr") return
-
-        val owner = attr.owner ?: return
-
-        val reprArgs = attr.metaItem.metaItemArgs?.metaItemList.orEmpty()
-
-        check@ for (reprArg in reprArgs) {
-            val reprName = reprArg.name ?: continue
-
-            val errorText = when (reprName) {
-                "C", "transparent", "align" -> when (owner) {
-                    is RsStructItem, is RsEnumItem -> continue@check
-                    else -> "$reprName attribute should be applied to struct, enum, or union"
-                }
-
-                in TyInteger.NAMES -> when (owner) {
-                    is RsEnumItem -> continue@check
-                    else -> "$reprName attribute should be applied to enum"
-                }
-
-                "packed", "simd" -> when (owner) {
-                    is RsStructItem -> continue@check
-                    else -> "$reprName attribute should be applied to struct or union"
-                }
-
-                else -> {
-                    RsDiagnostic.UnrecognizedReprAttribute(reprArg, reprName).addToHolder(holder)
-                    continue@check
-                }
-            }
-
-            RsDiagnostic.ReprAttrUnsupportedItem(reprArg, errorText).addToHolder(holder)
-        }
-
-        // E0084: Enum with no variants can't have `repr` attribute
-        val enum = owner as? RsEnumItem ?: return
-        // Not using `enum.variants` to avoid false positive for enum without body
-        if (enum.enumBody?.enumVariantList?.isEmpty() == true) {
-            RsDiagnostic.ReprForEmptyEnumError(attr).addToHolder(holder)
         }
     }
 

@@ -14,6 +14,7 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.areUnstableFeaturesAvailable
@@ -37,7 +38,7 @@ class RsAttrErrorAnnotator : AnnotatorBase() {
                         checkFeatureAttribute(element, rsHolder, context)
                     }
                     "cfg", "cfg_attr" -> checkRootCfgPredicate(element, rsHolder)
-                    "repr" -> checkReprAttr(element, rsHolder)
+                    "repr" -> checkReprAttr(element, rsHolder, context)
                     "derive" -> checkDeriveAttr(element, rsHolder)
                 }
             }
@@ -292,17 +293,55 @@ private fun checkDeriveAttr(element: RsMetaItem, holder: RsAnnotationHolder) {
     }
 }
 
-private fun checkReprAttr(element: RsMetaItem, holder: RsAnnotationHolder) {
+private fun checkReprAttr(element: RsMetaItem, holder: RsAnnotationHolder, context: ProcessingContext) {
     val args = element.metaItemArgs?.metaItemList ?: return
+    val owner = element.owner ?: return
     for (arg in args) {
-        checkReprArg(arg, holder)
+        checkReprArg(arg, owner, holder)
+    }
+
+    // E0084: Enum with no variants can't have `repr` attribute
+    val enum = owner as? RsEnumItem ?: return
+    // Not using `enum.variants` to avoid false positive for enum without body
+    if (enum.enumBody?.enumVariantList?.isEmpty() == true) {
+        RsDiagnostic.ReprForEmptyEnumError(context.get(RsPsiPattern.META_ITEM_ATTR)).addToHolder(holder)
     }
 }
 
-private fun checkReprArg(arg: RsMetaItem, holder: RsAnnotationHolder) {
-    when (arg.name) {
-        "align" -> checkReprAlign(arg, holder)
+private fun checkReprArg(reprArg: RsMetaItem, owner: RsDocAndAttributeOwner, holder: RsAnnotationHolder) {
+    val reprName = reprArg.name ?: return
+
+    when (reprName) {
+        "align" -> checkReprAlign(reprArg, holder)
     }
+
+    checkReprArgIsCorrectlyApplied(reprName, owner, reprArg, holder)
+}
+
+private fun checkReprArgIsCorrectlyApplied(reprName: String, owner: RsDocAndAttributeOwner, reprArg: RsMetaItem, holder: RsAnnotationHolder) {
+    val errorText = when (reprName) {
+        "C", "transparent", "align" -> when (owner) {
+            is RsStructItem, is RsEnumItem -> return
+            else -> "$reprName attribute should be applied to struct, enum, or union"
+        }
+
+        in TyInteger.NAMES -> when (owner) {
+            is RsEnumItem -> return
+            else -> "$reprName attribute should be applied to enum"
+        }
+
+        "packed", "simd" -> when (owner) {
+            is RsStructItem -> return
+            else -> "$reprName attribute should be applied to struct or union"
+        }
+
+        else -> {
+            RsDiagnostic.UnrecognizedReprAttribute(reprArg, reprName).addToHolder(holder)
+            return
+        }
+    }
+
+    RsDiagnostic.ReprAttrUnsupportedItem(reprArg, errorText).addToHolder(holder)
 }
 
 private fun checkReprAlign(align: RsMetaItem, holder: RsAnnotationHolder) {

@@ -6,9 +6,10 @@
 package org.rust.ide.annotator.fixes
 
 import org.rust.ide.annotator.RsAnnotatorTestBase
+import org.rust.ide.annotator.RsAttrErrorAnnotator
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class RemoveReprValueFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
+class RemoveReprValueFixTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class) {
 
     fun `test fix E0517 remove wrong repr value`() = checkFixByText("Remove", """
         #[repr(<error descr="C attribute should be applied to struct, enum, or union [E0517]">C/*caret*/</error>)]
