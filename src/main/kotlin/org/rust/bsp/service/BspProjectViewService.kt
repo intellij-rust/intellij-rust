@@ -55,13 +55,13 @@ class BspProjectViewService(val project: Project) {
         }
     }
 
-    fun generateTargetsFile() {
+    fun generateTargetsFile() =
         getViewPath()?.let {
             FileWriter(it).use {
                 gson.toJson(pojo, it)
             }
         }
-    }
+
 
     private fun readPojo(): BspProjectView {
         val pojoFile = getViewPath()?.toVirtualFile() ?: return BspProjectView(mutableListOf())

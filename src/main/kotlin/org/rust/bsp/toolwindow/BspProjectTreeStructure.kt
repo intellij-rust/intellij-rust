@@ -104,9 +104,7 @@ class BspProjectTreeStructure(
             override fun buildChildren(): Array<SimpleNode> = children.toTypedArray()
             override fun getName(): String = ""
 
-            fun checkStatus() {
-                children.forEach { it.checkStatus() }
-            }
+            fun checkStatus() = children.forEach { it.checkStatus() }
 
         }
 
@@ -159,9 +157,7 @@ class BspProjectTreeStructure(
 
             }
 
-            override fun buildChildren(): Array<SimpleNode> {
-                return children.toTypedArray()
-            }
+            override fun buildChildren(): Array<SimpleNode> = children.toTypedArray()
 
             override fun getName(): String = target.displayName
 

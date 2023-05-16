@@ -42,9 +42,8 @@ class BspToolWindowFactory : ToolWindowFactory, DumbAware {
         toolWindow.contentManager.addContent(tab)
     }
 
-    override fun isApplicable(project: Project): Boolean {
-        return project.service<BspConnectionService>().hasBspServer()
-    }
+    override fun isApplicable(project: Project): Boolean = project.service<BspConnectionService>().hasBspServer()
+
 }
 
 private class BspToolWindowPanel(project: Project) : SimpleToolWindowPanel(true, false) {

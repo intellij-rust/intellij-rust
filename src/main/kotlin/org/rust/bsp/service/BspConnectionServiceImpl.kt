@@ -63,9 +63,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return bspClient!!
     }
 
-    override fun isConnected(): Boolean {
-        return bspServer != null
-    }
+    override fun isConnected(): Boolean = bspServer != null
 
     override fun connect() {
         println("Starting BSP server")
@@ -265,13 +263,10 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return toolchain.rustc.sysroot
     }
 
-    override fun getBspTargets(): List<BuildTarget> {
-        return queryForBazelTargets(getBspServer()).get().targets
-    }
+    override fun getBspTargets(): List<BuildTarget> = queryForBazelTargets(getBspServer()).get().targets
 
-    override fun dispose() {
-        disconnect()
-    }
+    override fun dispose() = disconnect()
+
 }
 
 private fun String.toVirtualFile(): VirtualFile? =
