@@ -484,6 +484,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsTryMacroInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Unnecessary cast"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsUnnecessaryCastInspection"/>
+
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="While true loop"
                          enabledByDefault="true" level="WEAK WARNING"
