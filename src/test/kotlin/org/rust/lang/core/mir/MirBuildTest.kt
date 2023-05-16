@@ -53,6 +53,9 @@ class MirBuildTest : RsTestBase() {
     fun `test const boolean or`() = doTest()
     fun `test const boolean long logical`() = doTest()
     fun `test unit type`() = doTest()
+    fun `test tuple fields simple`() = doTest()
+    fun `test tuple fields nested`() = doTest()
+    fun `test tuple fields temporary value`() = expect<Throwable> { doTest() }
     fun `test three element tuple with tuples`() = doTest()
     fun `test loop break`() = doTest()
     fun `test block with let`() = doTest()

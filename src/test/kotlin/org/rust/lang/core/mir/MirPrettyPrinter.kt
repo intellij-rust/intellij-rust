@@ -161,10 +161,21 @@ internal class MirPrettyPrinter(
 
     private fun format(place: MirPlace): String {
         val index = place.local.index
-        if (place.projections.isEmpty()) return "_$index"
-        check(place.projections.size == 1) // TODO
-        return when (val projection = place.projections.single()) {
-            is MirProjectionElem.Field -> "(_$index.${projection.fieldIndex}: ${projection.elem})"
+
+        return buildString {
+            for (projection in place.projections.asReversed()) {
+                when (projection) {
+                    is MirProjectionElem.Field -> append("(")
+                }
+            }
+
+            append("_$index")
+
+            for (projection in place.projections) {
+                when (projection) {
+                    is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
+                }
+            }
         }
     }
 

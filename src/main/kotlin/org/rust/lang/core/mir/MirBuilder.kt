@@ -11,10 +11,7 @@ import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.schemas.MirBinaryOperator.Companion.toMir
 import org.rust.lang.core.mir.schemas.impls.MirBasicBlockImpl
 import org.rust.lang.core.mir.schemas.impls.MirBodyImpl
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.thir.*
@@ -192,7 +189,16 @@ class MirBuilder private constructor(
                 basicBlocks.new().andUnit()
             }
             is ThirExpr.Break -> statementExpr(expr, null)
-            is ThirExpr.VarRef -> {
+            is ThirExpr.VarRef, is ThirExpr.Field -> {
+                if (expr is ThirExpr.Field) {
+                    // Create a "fake" temporary variable so that we check that the value is Sized.
+                    // Usually, this is caught in type checking, but in the case of box expr there is no such check.
+                    if (place.projections.isNotEmpty()) {
+                        // TODO Do we really need it ?
+                        // localDecls.newLocal(..., expr.ty, expr.span)
+                    }
+                }
+
                 this
                     .toPlace(expr)
                     .map { consumeByCopyOrMove(it) }
@@ -255,9 +261,40 @@ class MirBuilder private constructor(
                     exprToPlace(expr.expr, mutability)
                 }
             }
+            is ThirExpr.Field -> {
+                exprToPlace(expr.expr, mutability)
+                    .map { placeBuilder ->
+                        val ty = expr.expr.ty
+                        if (ty is TyAdt && ty.item is RsEnumItem) {
+                            TODO()
+                            // placeBuilder.downcast(ty.item, variantIndex)
+                        } else {
+                            placeBuilder
+                        }
+                    }
+                    .map { placeBuilder ->
+                        placeBuilder.field(expr.fieldIndex, expr.ty)
+                    }
+
+            }
             is ThirExpr.VarRef -> {
                 // TODO: different handling in case of guards
                 block and PlaceBuilder(varLocal(expr.local))
+            }
+            is ThirExpr.Tuple,
+            is ThirExpr.Adt,
+            is ThirExpr.Unary,
+            is ThirExpr.Binary,
+            is ThirExpr.NeverToAny,
+            is ThirExpr.Borrow,
+            is ThirExpr.If,
+            is ThirExpr.Loop,
+            is ThirExpr.Block,
+            is ThirExpr.Assign,
+            is ThirExpr.Break,
+            is ThirExpr.Literal -> {
+                toTemp(expr, expr.tempLifetime, mutability)
+                    .map { PlaceBuilder(it) }
             }
             else -> TODO()
         }
@@ -584,6 +621,7 @@ class MirBuilder private constructor(
             is ThirExpr.NeverToAny,
             is ThirExpr.Break,
             is ThirExpr.Adt,
+            is ThirExpr.Field,
             is ThirExpr.VarRef -> {
                 this
                     .toOperand(expr, scope, NeedsTemporary.No)
@@ -939,11 +977,11 @@ class MirBuilder private constructor(
         }
     }
 
-    private fun BlockAnd<*>.toTemp(expr: ThirExpr, scope: Scope, mutability: Mutability): BlockAnd<MirLocal> {
+    private fun BlockAnd<*>.toTemp(expr: ThirExpr, scope: Scope?, mutability: Mutability): BlockAnd<MirLocal> {
         val localPlace = localDecls.tempPlace(expr.ty, expr.span, mutability = mutability)
         val source = sourceInfo(expr.span)
-        return when (expr) {
-            is ThirExpr.Scope -> inScope(expr.regionScope) { toTemp(expr.expr, scope, mutability) }
+        when (expr) {
+            is ThirExpr.Scope -> return inScope(expr.regionScope) { toTemp(expr.expr, scope, mutability) }
             is ThirExpr.Literal,
             is ThirExpr.Borrow,
             is ThirExpr.Unary,
@@ -955,22 +993,25 @@ class MirBuilder private constructor(
             is ThirExpr.Loop,
             is ThirExpr.NeverToAny,
             is ThirExpr.Assign,
+            is ThirExpr.Field,
             is ThirExpr.VarRef -> {
                 block.pushStorageLive(localPlace.local, source)
-                scheduleDrop(scope, localPlace.local, Drop.Kind.STORAGE)
-                this
-                    .exprIntoPlace(expr, localPlace)
-                    .also { scheduleDrop(scope, localPlace.local, Drop.Kind.VALUE) }
-                    .map { localPlace.local }
+                if (scope != null) {
+                    scheduleDrop(scope, localPlace.local, Drop.Kind.STORAGE)
+                }
             }
-            is ThirExpr.Break -> {
-                this
-                    .exprIntoPlace(expr, localPlace)
-                    .also { scheduleDrop(scope, localPlace.local, Drop.Kind.VALUE) }
-                    .map { localPlace.local }
-            }
+            is ThirExpr.Break -> Unit
             is ThirExpr.Block -> TODO()
         }
+
+        return this
+            .exprIntoPlace(expr, localPlace)
+            .also {
+                if (scope != null) {
+                    scheduleDrop(scope, localPlace.local, Drop.Kind.VALUE)
+                }
+            }
+            .map { localPlace.local }
     }
 
     private fun scheduleDrop(regionScope: Scope, local: MirLocal, dropKind: Drop.Kind) {

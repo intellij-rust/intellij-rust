@@ -5,7 +5,12 @@
 
 package org.rust.lang.core.mir.dataflow.move
 
+import org.rust.lang.core.dfa.borrowck.gatherLoans.hasDestructor
 import org.rust.lang.core.mir.schemas.MirLocation
+import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsStructKind
+import org.rust.lang.core.psi.ext.kind
+import org.rust.lang.core.types.ty.*
 
 enum class DropFlagState {
     /** The tracked value is initialized and needs to be dropped when leaving its scope */
@@ -49,6 +54,25 @@ fun onAllChildrenBits(
     movePath: MovePath,
     eachChild: (MovePath) -> Unit
 ) {
-    // TODO actually process children
     eachChild(movePath)
+
+    if (isTerminalPath(movePath)) return
+
+    var nextChild = movePath.firstChild
+    while (nextChild != null) {
+        onAllChildrenBits(nextChild, eachChild)
+        nextChild = nextChild.nextSibling
+    }
+}
+
+private fun isTerminalPath(movePath: MovePath): Boolean {
+    val place = movePath.place
+    return when (val ty = place.ty().ty) {
+        is TyAdt -> {
+            val isUnion = (ty.item as? RsStructItem)?.kind == RsStructKind.UNION
+            (ty.item.hasDestructor && !ty.isBox) || isUnion
+        }
+        is TySlice, is TyReference, is TyPointer -> true
+        else -> false
+    }
 }
