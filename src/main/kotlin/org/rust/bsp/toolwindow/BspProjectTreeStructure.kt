@@ -28,7 +28,7 @@ class BspProjectTreeStructure(
     parentDisposable: Disposable,
     val project: Project
 ) : SimpleTreeStructure() {
-    protected lateinit var bspConnection: BspConnectionService
+    private lateinit var bspConnection: BspConnectionService
     private val treeModel = StructureTreeModel(this, parentDisposable)
     private var root = BspSimpleNode.Root(mutableMapOf(), emptyList(), project)
     private var targetById: MutableMap<String, Triple<BuildTarget, Boolean, Boolean>> = mutableMapOf()

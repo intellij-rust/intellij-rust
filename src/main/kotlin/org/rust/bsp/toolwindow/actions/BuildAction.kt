@@ -46,7 +46,7 @@ class BuildAction(
 
     private fun doUpdate(project: Project, e: AnActionEvent) {
         val connection = project.service<BspConnectionService>()
-        e.presentation.isEnabled = connection.isConnected() == true
+        e.presentation.isEnabled = connection.isConnected()
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread =
