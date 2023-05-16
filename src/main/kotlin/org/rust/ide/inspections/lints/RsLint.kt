@@ -42,6 +42,7 @@ sealed class RsLint(
     object NeedlessLifetimes : RsLint("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy"))
     object DoubleMustUse : RsLint("clippy::double_must_use", listOf("clippy::style", "clippy::all", "clippy"))
     object WrongSelfConvention : RsLint("clippy::wrong_self_convention", listOf("clippy::style", "clippy::all", "clippy"))
+    object UnnecessaryCast : RsLint("clippy::unnecessary_cast", listOf("clippy::complexity", "clippy::all", "clippy"))
 
     // External linter lint
     class ExternalLinterLint(id: String) : RsLint(id) {
