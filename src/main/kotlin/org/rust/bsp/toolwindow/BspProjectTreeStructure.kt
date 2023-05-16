@@ -31,7 +31,7 @@ class BspProjectTreeStructure(
     private lateinit var bspConnection: BspConnectionService
     private val treeModel = StructureTreeModel(this, parentDisposable)
     private var root = BspSimpleNode.Root(mutableMapOf(), emptyList(), project)
-    private var targetById: MutableMap<String, Triple<BuildTarget, Boolean, Boolean>> = mutableMapOf()
+    private var targetById: MutableMap<String, BspNodeStatus> = mutableMapOf()
 
     init {
         tree.model = AsyncTreeModel(treeModel, parentDisposable)
@@ -51,12 +51,12 @@ class BspProjectTreeStructure(
         }
         // TODO : We assume that targets form DAG - can we assume that?
 
-        targetById = targetsWithoutRoot.associate { Pair(it.id.uri, Triple(it, false, false)) }.toMutableMap()
+        targetById = targetsWithoutRoot.associate { Pair(it.id.uri, BspNodeStatus(it, isStaged = false, isResolved = false)) }.toMutableMap()
         val viewService = project.service<BspProjectViewService>()
         val filteredTargets = viewService.filterIncludedPackages(targets.map { it.id })
         for (targ in filteredTargets)
             if (targetById.containsKey(targ.uri))
-                targetById[targ.uri] = Triple(targetById[targ.uri]!!.first, true, true)
+                targetById[targ.uri] = BspNodeStatus(targetById[targ.uri]!!.target, true, true)
 
         root = BspSimpleNode.Root(targetById, targetsWithoutRoot.filter { top.contains(it.id) }, project)
         treeModel.invalidate()
@@ -64,38 +64,67 @@ class BspProjectTreeStructure(
 
     fun selectAll() {
         val viewManager = project.service<BspProjectViewService>()
-        targetById.replaceAll { _: String, value: Triple<BuildTarget, Boolean, Boolean> ->
-            viewManager.includePackage(value.first.id)
-            return@replaceAll Triple(value.first, true, value.third)
+        targetById.forEach { (_: String, value: BspNodeStatus) ->
+            viewManager.includePackage(value.target.id)
+            value.setStatus(true)
         }
     }
 
 
     fun unselectAll() {
         val viewManager = project.service<BspProjectViewService>()
-        targetById.replaceAll { _: String, value: Triple<BuildTarget, Boolean, Boolean> ->
-            viewManager.excludePackage(value.first.id)
-            return@replaceAll Triple(value.first, false, value.third)
+        targetById.forEach { (_: String, value: BspNodeStatus) ->
+            viewManager.excludePackage(value.target.id)
+            value.setStatus(false)
         }
     }
 
     fun clearAll() {
         val viewManager = project.service<BspProjectViewService>()
-        targetById.replaceAll { _: String, value: Triple<BuildTarget, Boolean, Boolean> ->
-            if (value.third)
-                viewManager.includePackage(value.first.id)
+        targetById.forEach { (_: String, value: BspNodeStatus) ->
+            if (value.isStaged)
+                viewManager.includePackage(value.target.id)
             else
-                viewManager.excludePackage(value.first.id)
-            return@replaceAll Triple(value.first, value.third, value.third)
+                viewManager.excludePackage(value.target.id)
+            value.resetStatus()
         }
     }
 
     fun checkStatus() = root.checkStatus()
 
+    class BspNodeStatus(
+        val target: BuildTarget,
+        var isStaged: Boolean,
+        private val isResolved: Boolean
+    ) {
+
+        fun setStatus(newStatus: Boolean) {
+            isStaged = newStatus
+        }
+
+        fun resetStatus() {
+            isStaged = isResolved
+        }
+
+        fun getColor(): Color? {
+            return if (isResolved) {
+                if (isStaged)
+                    JBColor.BLUE
+                else
+                    JBColor.RED
+            } else {
+                if (isStaged)
+                    JBColor.GREEN
+                else
+                    null
+            }
+        }
+    }
+
     sealed class BspSimpleNode(parent: SimpleNode?) : CachingSimpleNode(parent) {
 
         class Root(
-            private val allProjects: MutableMap<String, Triple<BuildTarget, Boolean, Boolean>>, //triple describes for given target id (Target, is it staged for resolution, is it resolved)
+            private val allProjects: MutableMap<String, BspNodeStatus>, //triple describes for given target id (Target, is it staged for resolution, is it resolved)
             topTargets: List<BuildTarget>,
             private val projecta: Project
         ) : BspSimpleNode(null) {
@@ -110,32 +139,18 @@ class BspProjectTreeStructure(
 
         class Target(
             val target: BuildTarget,
-            val allProjects: MutableMap<String, Triple<BuildTarget, Boolean, Boolean>>,
+            val allProjects: MutableMap<String, BspNodeStatus>,
             val node: SimpleNode,
             private val projecta: Project
         ) : BspSimpleNode(node) {
             val children = target.dependencies.filter { allProjects.containsKey(it.uri) }
-                .map { Target(allProjects[it.uri]!!.first, allProjects, this, projecta) }
+                .map { Target(allProjects[it.uri]!!.target, allProjects, this, projecta) }
 
-            private fun getCurrentColor(): Color? {
-                val initialStatus = allProjects[target.id.uri]!!.third
-                val currentStatus = allProjects[target.id.uri]!!.second
-                return if (initialStatus) {
-                    if (currentStatus)
-                        JBColor.BLUE
-                    else
-                        JBColor.RED
-                } else {
-                    if (currentStatus)
-                        JBColor.GREEN
-                    else
-                        null
-                }
-            }
+            private fun getCurrentColor(): Color? = allProjects[target.id.uri]!!.getColor()
 
             init {
                 icon = if ("rust" in target.languageIds) CargoIcons.RUST else CargoIcons.BSP
-                myColor = if (allProjects[target.id.uri]!!.second) JBColor.BLUE else null
+                myColor = if (allProjects[target.id.uri]!!.isStaged) JBColor.BLUE else null
             }
 
             fun checkStatus() {
@@ -147,11 +162,11 @@ class BspProjectTreeStructure(
             fun click() {
                 val viewManager = projecta.service<BspProjectViewService>()
                 val currentStatus = allProjects[target.id.uri]!!
-                if (currentStatus.second) {
-                    allProjects[target.id.uri] = Triple(target, false, currentStatus.third)
+                if (currentStatus.isStaged) {
+                    allProjects[target.id.uri]!!.setStatus(false)
                     viewManager.excludePackage(target.id)
                 } else {
-                    allProjects[target.id.uri] = Triple(target, true, currentStatus.third)
+                    allProjects[target.id.uri]!!.setStatus(true)
                     viewManager.includePackage(target.id)
                 }
 
