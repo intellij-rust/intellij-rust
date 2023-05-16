@@ -333,11 +333,11 @@ fun calculateProjectDetailsWithCapabilities(
     val rawDependencies = createRawDependencies(projectWorkspaceData)
 
     changedWorkspaceRoot?.let {
-        val bspProjectViewManager = project.service<BspProjectViewService>()
+        val bspProjectViewService = project.service<BspProjectViewService>()
         val localProjectPackages = projectPackages.filter { pkg ->
             pkg.origin == PackageOrigin.WORKSPACE
         }
-        val targets = bspProjectViewManager.updateTargets(localProjectPackages)
+        bspProjectViewService.updateTargets(localProjectPackages)
         val refreshStatusPublisher = project.messageBus.syncPublisher(BspConnectionService.BSP_WORKSPACE_REFRESH_TOPIC)
         refreshStatusPublisher.onRefreshFinished()
 
