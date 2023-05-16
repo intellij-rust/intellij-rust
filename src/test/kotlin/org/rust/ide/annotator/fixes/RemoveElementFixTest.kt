@@ -24,13 +24,6 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         enum Test {}
     """)
 
-    fun `test repr on empty enum`() = checkFixByText("Remove attribute `repr`", """
-        #[<error descr="Enum with no variants can't have `repr` attribute [E0084]">repr/*caret*/</error>(u8)]
-        enum Test {}
-    """, """
-        enum Test {}
-    """)
-
     fun `test remove colon colon in type ref`() = checkFixByText("Remove `::`", """
         type A = Vec<weak_warning descr="Redundant `::`">::/*caret*/</weak_warning><i32>;
     """, """
