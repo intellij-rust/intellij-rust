@@ -120,7 +120,7 @@ class BspProjectTreeStructure(
     sealed class BspSimpleNode(parent: SimpleNode?) : CachingSimpleNode(parent) {
 
         class Root(
-            private val allProjects: MutableMap<String, BspNodeStatus>, //triple describes for given target id (Target, is it staged for resolution, is it resolved)
+            private val allProjects: MutableMap<String, BspNodeStatus>,
             topTargets: List<BuildTarget>,
             private val projecta: Project
         ) : BspSimpleNode(null) {
