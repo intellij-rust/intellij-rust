@@ -1,88 +1,76 @@
 package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.BuildTargetIdentifier
-import com.google.gson.GsonBuilder
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import org.rust.cargo.project.workspace.CargoWorkspaceData
-import java.io.FileWriter
-import java.nio.file.Path
-import kotlin.io.path.Path
 
-class BspProjectViewService(val project: Project) {
-    private val filename: String = "rust-targets.json"
-    private val gson = GsonBuilder().setPrettyPrinting().create()
 
-    data class BspProjectView(
-        val targets: MutableSet<String>
-    )
+@State(
+    name = "BspProjectViewService",
+    storages = [Storage("bspProjectView.xml")],
+    reportStatistic = true
+)
+class BspProjectViewService(val project: Project) :
+    PersistentStateComponent<BspProjectState> {
 
-    private var pojo = readPojo()
 
-    private fun mapPackagesToPojo(rustPackages: List<CargoWorkspaceData.Package>): BspProjectView {
+
+    private var state = BspProjectState()
+    override fun getState(): BspProjectState {
+        return state
+    }
+
+    override fun loadState(state: BspProjectState) {
+        this.state = state
+    }
+
+    private fun mapPackagesToPojo(rustPackages: List<CargoWorkspaceData.Package>): BspProjectState {
         val result = mutableSetOf<String>()
         rustPackages.forEach { pkg ->
             pkg.allTargets.forEach {
                 result.add(pkg.name + ':' + it.name)
             }
         }
-        return BspProjectView(result)
+        return BspProjectState(result)
     }
 
-    private fun getViewPath(): String? = project.basePath?.let { Path.of(it, filename).toString() }
-
-    fun getActiveTargets() = pojo.targets.toList()
+    fun getActiveTargets() = state.targets.toList()
     fun updateTargets(
         rustPackages: List<CargoWorkspaceData.Package>
     ): List<String> {
-        pojo = mapPackagesToPojo(rustPackages)
-        return pojo.targets.toList()
-    }
-
-    fun generateTargetsFile() =
-        getViewPath()?.let {
-            FileWriter(it).use {
-                gson.toJson(pojo, it)
-            }
-        }
-
-
-    private fun readPojo(): BspProjectView {
-        val pojoFile = getViewPath()?.toVirtualFile() ?: return BspProjectView(mutableSetOf())
-        return try {
-            gson.fromJson(VfsUtil.loadText(pojoFile), BspProjectView::class.java)
-        } catch (e: Exception) {
-            BspProjectView(mutableSetOf())
-        }
+        state = mapPackagesToPojo(rustPackages)
+        return state.targets.toList()
     }
 
     fun filterIncludedPackages(
         rustTargets: List<BuildTargetIdentifier>
     ): List<BuildTargetIdentifier> {
-        if (pojo.targets.isEmpty()) return rustTargets
-        return rustTargets.filter { it.uri in pojo.targets }
+        if (state.targets.isEmpty()) return rustTargets
+        return rustTargets.filter { it.uri in state.targets }
     }
 
     fun includePackage(
         target: BuildTargetIdentifier
     ) {
-        pojo.targets.add(target.uri)
-        FileWriter(getViewPath()).use {
-            gson.toJson(pojo, it)
-        }
+        state.targets.add(target.uri)
     }
 
     fun excludePackage(
         target: BuildTargetIdentifier
     ) {
-        pojo.targets.remove(target.uri)
-        FileWriter(getViewPath()).use {
-            gson.toJson(pojo, it)
-        }
+        state.targets.remove(target.uri)
+    }
+
+    companion object {
+        fun getInstance(project: Project): BspProjectViewService =
+            project.getService(BspProjectViewService::class.java)
     }
 }
 
-private fun String.toVirtualFile(): VirtualFile? =
-    VirtualFileManager.getInstance().findFileByNioPath(Path(this))
+
+data class BspProjectState(
+    var targets: MutableSet<String> = mutableSetOf()
+)

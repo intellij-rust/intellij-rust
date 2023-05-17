@@ -18,7 +18,6 @@ class ProjectClosingListener : ProjectManagerListener {
             } catch (e: Exception) {
                 log.warn("One of the disconnect actions has failed!", e)
             }
-            project.service<BspProjectViewService>().generateTargetsFile()
         }
     }
 
