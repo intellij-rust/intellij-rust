@@ -7,8 +7,10 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
@@ -28,6 +30,9 @@ import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.normType
+import org.rust.lang.core.types.rawType
+import org.rust.lang.core.types.ty.TyTraitObject
 
 /**
  * Completes Rust keywords
@@ -88,6 +93,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         })
 
         extend(CompletionType.BASIC, afterIfOrWhilePattern(), RsKeywordCompletionProvider("let"))
+        extend(CompletionType.BASIC, afterImplTraitPattern(), RsKeywordCompletionProvider("for"))
     }
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -244,6 +250,23 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun afterWhilePattern(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().afterLeaf(psiElement(WHILE).withParent(psiElement(WHILE_EXPR)))
+    }
+
+    private fun afterImplTraitPattern(): PsiElementPattern.Capture<PsiElement> {
+        val impl = psiElement<RsImplItem>()
+            .withLastChildSkipping(RsPsiPattern.error, psiElement<RsPathType>().with("isTrait") { it ->
+                if (it.project.service<DumbService>().isDumb) {
+                    // Considering that `impl Struct for` (where `Struct` is a struct, not a trait) is invalid code,
+                    // it will not be written often
+                    // So we can assume that a trait is specified
+                    true
+                } else {
+                    it.path.reference?.resolve() is RsTraitItem
+                }
+            })
+
+        return psiElement()
+            .withPrevSiblingSkipping(RsPsiPattern.whitespace, impl)
     }
 
     // TODO(parser recovery?): it would be really nice to just say something like element.prevSibling is RsVis
