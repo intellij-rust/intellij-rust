@@ -208,7 +208,7 @@ class MirBuilder private constructor(
                     .block
                     .andUnit()
             }
-            is ThirExpr.Assign -> {
+            is ThirExpr.Assign, is ThirExpr.AssignOp -> {
                 this
                     .statementExpr(expr, null)
                     .also { block.pushAssignUnit(place, source) }
@@ -627,7 +627,7 @@ class MirBuilder private constructor(
                     }
                 blockAnd.block and MirRvalue.Aggregate.Tuple(fields)
             }
-            is ThirExpr.Assign -> {
+            is ThirExpr.Assign, is ThirExpr.AssignOp -> {
                 this
                     .statementExpr(expr, null)
                     .map {
@@ -667,6 +667,15 @@ class MirBuilder private constructor(
                 val blockAndLeft = blockAndRight.toPlace(expr.left)
                 blockAndLeft.block.pushAssign(blockAndLeft.elem, blockAndRight.elem, source)
                 blockAndLeft.block.andUnit()
+            }
+            is ThirExpr.AssignOp -> {
+                val blockAndRight = toLocalOperand(expr.right)
+                val blockAndLeft = blockAndRight.toPlace(expr.left)
+                val operands: Pair<MirOperand, MirOperand> = MirOperand.Copy(blockAndLeft.elem) to blockAndRight.elem
+                val blockAndOperands = blockAndLeft.block and operands
+                val result = blockAndOperands.buildBinaryOp(expr.op, expr.left.ty, expr.span)
+                result.block.pushAssign(blockAndLeft.elem, result.elem, source)
+                result.block.andUnit()
             }
             else -> TODO()
         }
@@ -726,14 +735,14 @@ class MirBuilder private constructor(
     }
 
     private fun BlockAnd<Pair<MirOperand, MirOperand>>.buildBinaryOp(
-        op: ArithmeticOp,
+        op: BinaryOperator,
         ty: Ty,
         span: MirSpan,
     ): BlockAnd<MirRvalue> {
         val left = elem.first
         val right = elem.second
         val source = sourceInfo(span)
-        return if (checkOverflow && op.isCheckable && ty.isIntegral) {
+        return if (checkOverflow && op is ArithmeticOp && op.isCheckable && ty.isIntegral) {
             val resultTy = TyTuple(listOf(ty, TyBool.INSTANCE))
             val resultPlace = localDecls.tempPlace(resultTy, span)
             val value = resultPlace.makeField(0, ty)
@@ -755,6 +764,7 @@ class MirBuilder private constructor(
             if (!(ty.isIntegral && (op == ArithmeticOp.DIV || op == ArithmeticOp.REM))) {
                 return block and MirRvalue.BinaryOpUse(op.toMir(), left, right)
             }
+            op as ArithmeticOp  // `op` is either `ArithmeticOp.DIV` or `ArithmeticOp.REM`
 
             val zeroAssert = if (op == ArithmeticOp.DIV) {
                 MirAssertKind.DivisionByZero(left.toCopy())
@@ -1022,6 +1032,7 @@ class MirBuilder private constructor(
             is ThirExpr.Loop,
             is ThirExpr.NeverToAny,
             is ThirExpr.Assign,
+            is ThirExpr.AssignOp,
             is ThirExpr.Field,
             is ThirExpr.VarRef -> {
                 block.pushStorageLive(localPlace.local, source)
@@ -1147,7 +1158,7 @@ class MirBuilder private constructor(
                 element = function,
                 implLookup = ImplLookup.relativeTo(function),
                 checkOverflow = true,
-                span = function.block?.asSpan ?: error("Could not get block of function"),
+                span = function.asSpan,
                 argCount = function.valueParameterList?.valueParameterList?.size ?: error("Could not get parameters"),
                 returnTy = function.normReturnType,
                 returnSpan = returnSpan,

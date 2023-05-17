@@ -259,7 +259,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             let mut _0: ();                      // return place in scope 0 at src/main.rs:2:19: 2:19
             let _1: i32;                         // in scope 0 at src/main.rs:3:17: 3:18
             let mut _2: !;                       // in scope 0 at src/main.rs:4:13: 6:14
-            let mut _3: ();                      // in scope 0 at src/main.rs:2:19: 7:10
+            let mut _3: ();                      // in scope 0 at src/main.rs:2:9: 7:10
             scope 1 {
                 debug a => _1;                   // in scope 1 at src/main.rs:3:17: 3:18
             }

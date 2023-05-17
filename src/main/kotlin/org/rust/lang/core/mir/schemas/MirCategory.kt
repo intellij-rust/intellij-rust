@@ -31,6 +31,7 @@ sealed class MirCategory {
                 is ThirExpr.Unary,
                 is ThirExpr.Binary,
                 is ThirExpr.Assign,
+                is ThirExpr.AssignOp,
                 is ThirExpr.Array,
                 is ThirExpr.Repeat,
                 is ThirExpr.Tuple -> {

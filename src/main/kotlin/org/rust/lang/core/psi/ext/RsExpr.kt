@@ -180,7 +180,7 @@ sealed class ArithmeticAssignmentOp(
     }
 }
 
-private val ArithmeticAssignmentOp.nonAssignEquivalent: BinaryOperator
+val ArithmeticAssignmentOp.nonAssignEquivalent: BinaryOperator
     get() = when (this) {
         ArithmeticAssignmentOp.ANDEQ -> LogicOp.AND
         ArithmeticAssignmentOp.OREQ -> LogicOp.OR

@@ -63,7 +63,10 @@ sealed class Adjustment: TypeFoldable<Adjustment> {
         override val target: TyReference
     ) : Adjustment() {
         val region: Region = target.region
-        val mutability: Mutability = target.mutability
+        val mutability: AutoBorrowMutability = when (target.mutability) {
+            MUTABLE -> AutoBorrowMutability.Mutable(allowTwoPhaseBorrow = false /* TODO */)
+            IMMUTABLE -> AutoBorrowMutability.Immutable
+        }
         override fun superFoldWith(folder: TypeFolder): Adjustment = BorrowReference(target.foldWith(folder) as TyReference)
     }
 
@@ -491,7 +494,9 @@ class RsInferenceContext(
             expr
         }
 
-        val isAutoborrowMut = adjustment.any { it is Adjustment.BorrowReference && it.mutability == MUTABLE }
+        val isAutoborrowMut = adjustment.any {
+            it is Adjustment.BorrowReference && it.mutability is AutoBorrowMutability.Mutable
+        }
 
         adjustments.getOrPut(unwrappedExpr) { mutableListOf() }.addAll(adjustment)
 
@@ -1305,7 +1310,7 @@ class RsInferenceContext(
             val baseAdjustments = adjustments[base] ?: continue
 
             baseAdjustments.forEachIndexed { i, adjustment ->
-                if (adjustment is Adjustment.BorrowReference && adjustment.mutability == IMMUTABLE) {
+                if (adjustment is Adjustment.BorrowReference && adjustment.mutability is AutoBorrowMutability.Immutable) {
                     baseAdjustments[i] = Adjustment.BorrowReference(adjustment.target.copy(mutability = MUTABLE))
                 }
             }

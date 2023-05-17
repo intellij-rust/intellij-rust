@@ -8,6 +8,7 @@ package org.rust.lang.core.thir
 import org.rust.lang.core.mir.asSpan
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
+import org.rust.lang.core.mir.schemas.toBorrowKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.adjustments
@@ -108,12 +109,22 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
                     ty = ty,
                     span = span,
                 )
-                is AssignmentOp -> ThirExpr.Assign(
+                is AssignmentOp.EQ -> ThirExpr.Assign(
                     left = left.mirror(contextOwner),
                     right = right?.mirror(contextOwner) ?: error("Could not get rhs of assignment"),
                     ty = ty,
                     span = span,
                 )
+                is ArithmeticAssignmentOp -> {
+                    // TODO custom method call (not builtin)
+                    ThirExpr.AssignOp(
+                        op = operator.nonAssignEquivalent,
+                        left = left.mirror(contextOwner),
+                        right = right?.mirror(contextOwner) ?: error("Could not get rhs of assignment"),
+                        ty = ty,
+                        span = span,
+                    )
+                }
                 else -> TODO()
             }
         }
@@ -240,7 +251,13 @@ private fun applyAdjustment(psiExpr: RsElement, thirExpr: ThirExpr, adjustment: 
     return when (adjustment) {
         is Adjustment.NeverToAny -> ThirExpr.NeverToAny(thirExpr, adjustment.target, thirExpr.span)
         is Adjustment.BorrowPointer -> TODO()
-        is Adjustment.BorrowReference -> TODO()
+        is Adjustment.BorrowReference -> {
+            // TODO See fix_scalar_builtin_expr - borrow adjustment for binary operators on scalars should be removed before MIR building
+            return thirExpr
+
+            val borrowKind = adjustment.mutability.toBorrowKind()
+            ThirExpr.Borrow(borrowKind, thirExpr, adjustment.target, thirExpr.span)
+        }
         is Adjustment.Deref -> TODO()
         is Adjustment.MutToConstPointer -> TODO()
         is Adjustment.Unsize -> TODO()

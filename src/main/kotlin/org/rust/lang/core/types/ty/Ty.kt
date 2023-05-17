@@ -80,6 +80,11 @@ enum class Mutability {
     }
 }
 
+sealed class AutoBorrowMutability {
+    data class Mutable(val allowTwoPhaseBorrow: Boolean) : AutoBorrowMutability()
+    object Immutable : AutoBorrowMutability()
+}
+
 enum class BorrowKind {
     /** `&expr` or `&mut expr` */
     REF,
