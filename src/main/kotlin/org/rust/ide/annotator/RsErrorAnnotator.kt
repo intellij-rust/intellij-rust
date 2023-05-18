@@ -193,7 +193,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkDuplicateImport(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
         if (checkDuplicateSelfInUseGroup(holder, useSpeck)) return
 
-        val scope = useSpeck.parentOfType<RsUseItem>()!!.parent
+        val scope = useSpeck.contextStrict<RsUseItem>()?.context ?: return
         val duplicatesMap = holder.currentAnnotationSession.duplicatesByNamespace(scope, false)
         val (namespace, name, duplicates) = duplicatesMap[useSpeck] ?: return
         val identifier = PsiTreeUtil.getDeepestLast(useSpeck)
@@ -1537,10 +1537,10 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
 private fun checkDuplicates(
     holder: RsAnnotationHolder,
     element: RsNameIdentifierOwner,
-    scope: PsiElement = element.parent,
+    scope: PsiElement? = element.context,
     recursively: Boolean = false
 ) {
-    if (element.isCfgUnknown) return
+    if (element.isCfgUnknown || scope == null) return
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicatesMap = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
     val (ns, name, duplicates) = duplicatesMap[element] ?: return
@@ -1676,19 +1676,26 @@ private fun AnnotationSession.duplicatesByNamespace(
     }
 
     if (owner is RsItemsOwner) {
-        for (import in owner.expandedItemsCached.imports) {
+        val expandedItems = owner.expandedItemsCached
+        for (import in expandedItems.imports) {
             import.useSpeck?.forEachLeafSpeck { speck ->
                 if (speck.isStarImport) return@forEachLeafSpeck
                 val nameInScope = speck.nameInScope.takeIf { it != "_" } ?: return@forEachLeafSpeck
                 addItem(speck, speck.namespaces, nameInScope)
             }
         }
-    }
-
-    for (item in owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)) {
-        if (item is RsMacro) continue
-        val name = (item as? RsExternCrateItem)?.nameWithAlias ?: item.name ?: continue
-        addItem(item, item.namespacesForDuplicatesCheck, name)
+        for ((name, items) in expandedItems.named) {
+            for (item in items) {
+                if (item is RsNamedElement) {
+                    addItem(item, item.namespacesForDuplicatesCheck, name)
+                }
+            }
+        }
+    } else {
+        for (item in owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)) {
+            val name = item.name ?: continue
+            addItem(item, item.namespacesForDuplicatesCheck, name)
+        }
     }
 
     val duplicates = itemsAll
