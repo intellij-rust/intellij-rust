@@ -39,6 +39,38 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
+    /** For literals that don't correspond to anything in the HIR */
+    class NonHirLiteral(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A literal of a ZST type. */
+    class ZstLiteral(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Associated constants and named constants */
+    class NamedConst(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class ConstParam(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /**
+     * A literal containing the address of a `static`.
+     * This is only distinguished from `Literal` so that we can register some info for diagnostics.
+     */
+    class StaticRef(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
     class Unary(
         val op: UnaryOperator,
         val arg: ThirExpr,
@@ -124,8 +156,24 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
+    class Continue(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Return(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
     class VarRef(
         val local: LocalVar,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Used to represent upvars mentioned in a closure/generator */
+    class UpvarRef(
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
@@ -156,6 +204,108 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     class Borrow(
         val kind: MirBorrowKind,
         val arg: ThirExpr,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A `&raw [const|mut] $place_expr` raw borrow resulting in type `*[const|mut] T`. */
+    class AddressOf(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A `box <value>` expression. */
+    class Box(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A function call. Method calls and overloaded operators are converted to plain function calls. */
+    class Call(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A *non-overloaded* dereference. */
+    class Deref(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A cast: `<source> as <type>`. The type we cast to is the type of the parent expression. */
+    class Cast(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Use(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Pointer(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Let(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Match(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A *non-overloaded* indexing operation. */
+    class Index(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** An inline `const` block, e.g. `const {}`. */
+    class ConstBlock(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A type ascription on a place. */
+    class PlaceTypeAscription(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A type ascription on a value, e.g. `42: i32`. */
+    class ValueTypeAscription(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Closure(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Inline assembly, i.e. `asm!()`. */
+    class InlineAsm(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Field offset (`offset_of!`) */
+    class OffsetOf(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** An expression taking a reference to a thread local. */
+    class ThreadLocalRef(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Yield(
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

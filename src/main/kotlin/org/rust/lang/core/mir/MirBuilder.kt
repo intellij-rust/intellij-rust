@@ -104,7 +104,24 @@ class MirBuilder private constructor(
     private fun BlockAnd<*>.exprIntoPlace(expr: ThirExpr, place: MirPlace): BlockAnd<Unit> {
         val source = sourceInfo(expr.span)
         return when (expr) {
-            is ThirExpr.Literal, is ThirExpr.Unary, is ThirExpr.Binary, is ThirExpr.Array, is ThirExpr.Repeat, is ThirExpr.Tuple -> {
+            is ThirExpr.Unary,
+            is ThirExpr.Binary,
+            is ThirExpr.Box,
+            is ThirExpr.Cast,
+            is ThirExpr.Pointer,
+            is ThirExpr.Repeat,
+            is ThirExpr.Array,
+            is ThirExpr.Tuple,
+            is ThirExpr.Closure,
+            is ThirExpr.ConstBlock,
+            is ThirExpr.Literal,
+            is ThirExpr.NamedConst,
+            is ThirExpr.NonHirLiteral,
+            is ThirExpr.ZstLiteral,
+            is ThirExpr.ConstParam,
+            is ThirExpr.ThreadLocalRef,
+            is ThirExpr.StaticRef,
+            is ThirExpr.OffsetOf -> {
                 val (block, rvalue) = this.toLocalRvalue(expr)
                 block.pushAssign(place, rvalue, source).andUnit()
             }
@@ -189,8 +206,14 @@ class MirBuilder private constructor(
                 block.terminateWithUnreachable(source)
                 basicBlocks.new().andUnit()
             }
-            is ThirExpr.Break -> statementExpr(expr, null)
-            is ThirExpr.VarRef, is ThirExpr.Field -> {
+            is ThirExpr.Continue, is ThirExpr.Break, is ThirExpr.Return -> statementExpr(expr, null)
+            is ThirExpr.VarRef,
+            is ThirExpr.UpvarRef,
+            is ThirExpr.PlaceTypeAscription,
+            is ThirExpr.ValueTypeAscription,
+            is ThirExpr.Index,
+            is ThirExpr.Deref,
+            is ThirExpr.Field -> {
                 if (expr is ThirExpr.Field) {
                     // Create a "fake" temporary variable so that we check that the value is Sized.
                     // Usually, this is caught in type checking, but in the case of box expr there is no such check.
@@ -228,6 +251,7 @@ class MirBuilder private constructor(
                 blockAnd.block.pushAssign(place, borrow, source)
                 blockAnd.block.andUnit()
             }
+            else -> TODO()
         }
     }
 
@@ -581,6 +605,12 @@ class MirBuilder private constructor(
                 val constant = toConstant(expr, expr.ty, expr.span)
                 block and MirRvalue.Use(MirOperand.Constant(constant))
             }
+            is ThirExpr.NamedConst,
+            is ThirExpr.NonHirLiteral,
+            is ThirExpr.ZstLiteral,
+            is ThirExpr.ConstParam,
+            is ThirExpr.ConstBlock,
+            is ThirExpr.StaticRef -> TODO()
             is ThirExpr.Unary -> {
                 toOperand(expr.arg, scope, NeedsTemporary.No)
                     .assertNoNegOverflow(expr, expr.ty, sourceInfo(expr.span))
@@ -638,20 +668,35 @@ class MirBuilder private constructor(
                         )
                     }
             }
+            is ThirExpr.Yield,
             is ThirExpr.Block,
-            is ThirExpr.Borrow,
+            is ThirExpr.Match,
             is ThirExpr.If,
-            is ThirExpr.Logical,
-            is ThirExpr.Loop,
             is ThirExpr.NeverToAny,
-            is ThirExpr.Break,
+            is ThirExpr.Use,
+            is ThirExpr.Borrow,
+            is ThirExpr.AddressOf,
             is ThirExpr.Adt,
+            is ThirExpr.Loop,
+            is ThirExpr.Logical,
+            is ThirExpr.Call,
             is ThirExpr.Field,
-            is ThirExpr.VarRef -> {
+            is ThirExpr.Let,
+            is ThirExpr.Deref,
+            is ThirExpr.Index,
+            is ThirExpr.VarRef,
+            is ThirExpr.UpvarRef,
+            is ThirExpr.Break,
+            is ThirExpr.Continue,
+            is ThirExpr.Return,
+            is ThirExpr.InlineAsm,
+            is ThirExpr.PlaceTypeAscription,
+            is ThirExpr.ValueTypeAscription -> {
                 this
                     .toOperand(expr, scope, NeedsTemporary.No)
                     .map { MirRvalue.Use(it) }
             }
+            else -> TODO()
         }
     }
 
@@ -659,7 +704,9 @@ class MirBuilder private constructor(
         val source = sourceInfo(expr.span)
         return when (expr) {
             is ThirExpr.Scope -> inScope(expr.regionScope) { statementExpr(expr.expr, statementScope) }
+            is ThirExpr.Continue -> TODO()
             is ThirExpr.Break -> breakScope(expr.expr, BreakableTarget.Break(expr.label), source)
+            is ThirExpr.Return -> TODO()
             is ThirExpr.Assign -> if (expr.left.ty.needsDrop) {
                 TODO()
             } else {
@@ -1019,29 +1066,14 @@ class MirBuilder private constructor(
         val source = sourceInfo(expr.span)
         when (expr) {
             is ThirExpr.Scope -> return inScope(expr.regionScope) { toTemp(expr.expr, scope, mutability) }
-            is ThirExpr.Literal,
-            is ThirExpr.Borrow,
-            is ThirExpr.Unary,
-            is ThirExpr.Binary,
-            is ThirExpr.If,
-            is ThirExpr.Logical,
-            is ThirExpr.Array,
-            is ThirExpr.Repeat,
-            is ThirExpr.Adt,
-            is ThirExpr.Tuple,
-            is ThirExpr.Loop,
-            is ThirExpr.NeverToAny,
-            is ThirExpr.Assign,
-            is ThirExpr.AssignOp,
-            is ThirExpr.Field,
-            is ThirExpr.VarRef -> {
+            is ThirExpr.Break, is ThirExpr.Continue, is ThirExpr.Return -> Unit
+            is ThirExpr.Block -> TODO()
+            else -> {
                 block.pushStorageLive(localPlace.local, source)
                 if (scope != null) {
                     scheduleDrop(scope, localPlace.local, Drop.Kind.STORAGE)
                 }
             }
-            is ThirExpr.Break -> Unit
-            is ThirExpr.Block -> TODO()
         }
 
         return this
