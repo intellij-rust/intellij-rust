@@ -402,7 +402,7 @@ class MirBuilder private constructor(
                 }
                 statement is ThirStatement.Expr -> {
                     blockAnd = inScope(statement.scope) {
-                        statementExpr(statement.expr, statement.scope)
+                        blockAnd.statementExpr(statement.expr, statement.scope)
                     }
                 }
                 else -> TODO()
