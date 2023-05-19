@@ -68,7 +68,7 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
             is Goto -> listOf(target)
             is SwitchInt -> targets.targets
             is FalseUnwind -> listOfNotNull(realTarget, unwind)
-            is Call -> TODO()
+            is Call -> listOfNotNull(target, unwind)
         }
 
     companion object {

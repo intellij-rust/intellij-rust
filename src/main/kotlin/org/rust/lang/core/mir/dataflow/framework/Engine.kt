@@ -31,7 +31,7 @@ class Engine<Domain>(
             val initialBlockState = blockStates[block.index]
             val blockState = analysis.copyState(initialBlockState)
             analysis.direction.applyEffectsInBlock(analysis, blockState, block)
-            analysis.direction.joinStateIntoSuccessorsOf(blockState, block) { target, targetState ->
+            analysis.direction.joinStateIntoSuccessorsOf(analysis, blockState, block) { target, targetState ->
                 val changed = analysis.join(blockStates[target.index], targetState)
                 if (changed) {
                     dirtyQueue.insert(target)

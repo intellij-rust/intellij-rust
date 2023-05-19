@@ -49,4 +49,15 @@ class RsBorrowCheckerBorrowsTest : RsInspectionsTestBase(RsBorrowCheckerInspecti
             let d = ar;
         }
     """, checkWarn = false)
+
+    fun `test E0505 with a borrow in a function argument`() = checkByText( """
+        struct S;
+        fn main() {
+            let a = S;
+            let b = foo(&a);
+            let c = /*error descr="A value was moved out while it was still borrowed [E0505]"*/a/*error**/;
+            let d = b;
+        }
+        fn foo<T>(a: T) -> T {}
+    """, checkWarn = false)
 }

@@ -236,7 +236,17 @@ interface MirVisitor {
             is MirTerminator.FalseUnwind -> {
             }
 
-            is MirTerminator.Call -> TODO()
+            is MirTerminator.Call -> {
+                visitOperand(terminator.callee, location)
+                for (arg in terminator.args) {
+                    visitOperand(arg, location)
+                }
+                visitPlace(
+                    terminator.destination,
+                    MirPlaceContext.MutatingUse(MutatingUseContext.Call),
+                    location,
+                )
+            }
         }
     }
 
@@ -311,7 +321,8 @@ enum class NonMutatingUseContext {
 enum class MutatingUseContext {
     Projection,
     Store,
-    Borrow
+    Borrow,
+    Call,
 }
 
 enum class NonUseContext {

@@ -350,4 +350,21 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             y += 1;
         }
     """)
+
+    fun `test E0381 in function argument`() = checkErrors("""
+        fn main() {
+            let x: i32;
+            foo(/*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/);
+        }
+        fn foo(_a: i32) {}
+    """)
+
+    fun `test no E0381 for variable assigned in function call`() = checkErrors("""
+        fn main() {
+            let mut a: i32;
+            a = foo();
+            let b = a;
+        }
+        fn foo() -> i32 { 0 }
+    """)
 }

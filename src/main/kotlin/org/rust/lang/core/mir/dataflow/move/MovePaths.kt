@@ -263,7 +263,16 @@ private class MoveDataBuilder(
             is MirTerminator.Resume -> Unit
             is MirTerminator.Return -> Unit
             is MirTerminator.Unreachable -> Unit
-            is MirTerminator.Call -> TODO()
+            is MirTerminator.Call -> {
+                gatherOperand(term.callee)
+                for (arg in term.args) {
+                    gatherOperand(arg)
+                }
+                if (term.target != null) {
+                    createMovePath(term.destination)
+                    gatherInit(term.destination, InitKind.NonPanicPathOnly)
+                }
+            }
         }
     }
 

@@ -14,7 +14,17 @@ import org.rust.lang.core.macros.MacroExpansionManager
 @WithExperimentalFeatures(MIR_BORROW_CHECK)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
-    fun `test move by call`() = checkByText("""
+    fun `test move by call 1`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let a = S;
+            foo(a, /*error descr="Use of moved value [E0382]"*/a/*error**/);
+        }
+        fn foo(a: S, b: S) {}
+    """, checkWarn = false)
+
+    fun `test move by call 2`() = checkByText("""
         struct S { data: i32 }
 
         fn f(s: S) {}
