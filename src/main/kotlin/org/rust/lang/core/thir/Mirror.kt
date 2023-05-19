@@ -56,6 +56,19 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
     val ty = type
     return when (this) {
         is RsParenExpr -> expr?.mirror(contextOwner, span) ?: error("Could not get expr of paren expression")
+        is RsCallExpr -> {
+            val callee = expr
+            // TODO Fn, FnMut, FnOnce
+            // TODO tuple-struct constructor
+            ThirExpr.Call(
+                callee.type,
+                callee.mirror(contextOwner),
+                valueArgumentList.exprList.map { it.mirror(contextOwner) },
+                fromCall = true,
+                ty,
+                span
+            )
+        }
         is RsUnaryExpr -> {
             when {
                 this.minus != null -> {
@@ -198,6 +211,7 @@ private fun RsPathExpr.convert(ty: Ty, source: MirSpan): ThirExpr {
     return when (val resolved = this.path.reference?.resolve() ?: error("Could not resolve RsPathExpr")) {
         is RsPatBinding -> ThirExpr.VarRef(LocalVar(resolved), ty, source) // TODO: captured values are not yet handled
         is RsStructItem -> ThirExpr.Adt(resolved, ty, source)
+        is RsFunction -> ThirExpr.ZstLiteral(ty, source)
         else -> TODO()
     }
 }

@@ -200,6 +200,30 @@ class MirBuilder private constructor(
                     null
                 }
             }
+            is ThirExpr.Call -> {
+                var blockAnd = this
+                blockAnd = blockAnd.toLocalOperand(expr.callee)
+                val callee = blockAnd.elem
+                val args = expr
+                    .args
+                    .map {
+                        blockAnd = blockAnd.toLocalCallOperand(it)
+                        blockAnd.elem as MirOperand
+                    }
+                val success = basicBlocks.new()
+                // TODO record_operands_moved(args)
+                blockAnd.block.terminateWithCall(
+                    callee,
+                    args,
+                    destination = place,
+                    target = success,
+                    unwind = null,
+                    expr.fromCall,
+                    source
+                )
+                divergeFrom(blockAnd.block)
+                success.andUnit()
+            }
             // TODO: there is an optimization for calls that will change the result unoptimized mir
             is ThirExpr.NeverToAny -> {
                 val block = this.toTemp(expr.spanExpr, scopes.topmost(), Mutability.MUTABLE).block
@@ -497,7 +521,7 @@ class MirBuilder private constructor(
         return when (val localForNode = varIndices[variable]) {
             is MirLocalForNode.ForGuard -> TODO()
             is MirLocalForNode.One -> localForNode.local
-            null -> error("Could not find variable")
+            null -> error("Could not find variable: ${variable.value.name}")
         }
     }
 
@@ -598,19 +622,31 @@ class MirBuilder private constructor(
         return toOperand(expr, scopes.topmost(), NeedsTemporary.Maybe)
     }
 
+    private fun BlockAnd<*>.toLocalCallOperand(expr: ThirExpr): BlockAnd<MirOperand> {
+        return toCallOperand(expr, scopes.topmost())
+    }
+
+    private fun BlockAnd<*>.toCallOperand(expr: ThirExpr, scope: Scope): BlockAnd<MirOperand> {
+        if (expr is ThirExpr.Scope) {
+            return inScope(expr.regionScope) { toCallOperand(expr.expr, scope) }
+        }
+        // TODO unsized_fn_params
+        return toOperand(expr, scope, NeedsTemporary.Maybe)
+    }
+
     private fun BlockAnd<*>.toRvalue(expr: ThirExpr, scope: Scope): BlockAnd<MirRvalue> {
         return when (expr) {
             is ThirExpr.Scope -> inScope(expr.regionScope) { toRvalue(expr.expr, scope) }
-            is ThirExpr.Literal -> {
-                val constant = toConstant(expr, expr.ty, expr.span)
-                block and MirRvalue.Use(MirOperand.Constant(constant))
-            }
+            is ThirExpr.Literal,
             is ThirExpr.NamedConst,
             is ThirExpr.NonHirLiteral,
             is ThirExpr.ZstLiteral,
             is ThirExpr.ConstParam,
             is ThirExpr.ConstBlock,
-            is ThirExpr.StaticRef -> TODO()
+            is ThirExpr.StaticRef -> {
+                val constant = toConstant(expr)
+                block and MirRvalue.Use(MirOperand.Constant(constant))
+            }
             is ThirExpr.Unary -> {
                 toOperand(expr.arg, scope, NeedsTemporary.No)
                     .assertNoNegOverflow(expr, expr.ty, sourceInfo(expr.span))
@@ -1050,13 +1086,8 @@ class MirBuilder private constructor(
 
         return when (MirCategory.of(expr)) {
             MirCategory.Constant -> {
-                // TODO: cast to literal is temporary
                 if (needsTemporary == NeedsTemporary.No || !expr.ty.needsDrop) {
-                    val constant = toConstant(
-                        expr as? ThirExpr.Literal ?: error("Unsupported type of constant category"),
-                        expr.ty,
-                        expr.span,
-                    )
+                    val constant = toConstant(expr)
                     block and MirOperand.Constant(constant)
                 } else {
                     toTemp(expr, scope, Mutability.MUTABLE)
@@ -1112,20 +1143,25 @@ class MirBuilder private constructor(
         error("Corresponding scope is not found")
     }
 
-    private fun toConstant(
-        constant: ThirExpr.Literal,
-        ty: Ty,
-        source: MirSpan,
-    ): MirConstant {
-        return when {
-            constant.literal.integerValue != null && ty.isIntegral -> {
-                val value = constant.literal.integerValue!!.let { if (constant.neg) -it else it }
-                toConstant(value, ty, source)
+    private fun toConstant(expr: ThirExpr): MirConstant {
+        return when (expr) {
+            is ThirExpr.Literal -> when {
+                expr.literal.integerValue != null && expr.ty.isIntegral -> {
+                    val value = expr.literal.integerValue!!.let { if (expr.neg) -it else it }
+                    toConstant(value, expr.ty, expr.span)
+                }
+                expr.literal.booleanValue != null && expr.ty is TyBool -> {
+                    toConstant(expr.literal.booleanValue!!, expr.ty, expr.span)
+                }
+                else -> TODO()
             }
-            constant.literal.booleanValue != null && ty is TyBool -> {
-                toConstant(constant.literal.booleanValue!!, ty, source)
-            }
-            else -> TODO()
+            is ThirExpr.NonHirLiteral -> TODO()
+            is ThirExpr.ZstLiteral -> MirConstant.zeroSized(expr.ty, expr.span)
+            is ThirExpr.NamedConst -> TODO()
+            is ThirExpr.ConstParam -> TODO()
+            is ThirExpr.ConstBlock -> TODO()
+            is ThirExpr.StaticRef -> TODO()
+            else -> error("expression is not a valid constant: $expr")
         }
     }
 
@@ -1170,6 +1206,7 @@ class MirBuilder private constructor(
                         is RsFunction -> add(build(child))
                         is RsStructItem -> {}
                         is PsiWhiteSpace -> {}
+                        is RsImplItem -> {}
                         else -> TODO("Type ${child::class} is not supported")
                     }
                 }

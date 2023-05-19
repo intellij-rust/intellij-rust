@@ -263,6 +263,7 @@ private class MoveDataBuilder(
             is MirTerminator.Resume -> Unit
             is MirTerminator.Return -> Unit
             is MirTerminator.Unreachable -> Unit
+            is MirTerminator.Call -> TODO()
         }
     }
 

@@ -235,6 +235,8 @@ interface MirVisitor {
             is MirTerminator.Unreachable,
             is MirTerminator.FalseUnwind -> {
             }
+
+            is MirTerminator.Call -> TODO()
         }
     }
 

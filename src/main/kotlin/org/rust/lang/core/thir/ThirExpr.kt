@@ -222,6 +222,10 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /** A function call. Method calls and overloaded operators are converted to plain function calls. */
     class Call(
+        val fnTy: Ty,
+        val callee: ThirExpr,
+        val args: List<ThirExpr>,
+        val fromCall: Boolean,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

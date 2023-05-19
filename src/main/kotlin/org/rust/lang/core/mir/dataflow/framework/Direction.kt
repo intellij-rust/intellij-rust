@@ -57,6 +57,8 @@ object Forward : Direction {
                     propagate(target, exitState)
                 }
             }
+
+            is MirTerminator.Call -> TODO()
         }
     }
 

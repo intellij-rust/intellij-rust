@@ -91,6 +91,17 @@ internal class MirPrettyPrinter(
             is MirTerminator.Unreachable -> {
                 appendLine("$INDENT${INDENT}unreachable;".withComment(comment))
             }
+
+            is MirTerminator.Call -> {
+                val args = terminator.args.joinToString(separator = ", ") { format(it) }
+                appendLine(
+                    buildString {
+                        append("$INDENT${INDENT}_${terminator.destination.local.index} = ")
+                        append("${format(terminator.callee)}($args) -> ")
+                        append("[return: bb${terminator.target?.index}, unwind: bb${terminator.unwind?.index}];")
+                    }.withComment(comment)
+                )
+            }
         }
         appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
     }
@@ -157,7 +168,15 @@ internal class MirPrettyPrinter(
 
     private fun format(operand: MirOperand): String {
         return when (operand) {
-            is MirOperand.Constant -> "const ${format(operand.constant)}"
+            is MirOperand.Constant -> {
+                val constant = operand.constant
+                val formattedConst = format(constant)
+                if (constant is MirConstant.Value && constant.ty is TyFunctionBase) {
+                    formattedConst
+                } else {
+                    "const $formattedConst"
+                }
+            }
             is MirOperand.Move -> "move ${format(operand.place)}"
             is MirOperand.Copy -> format(operand.place)
         }
@@ -210,6 +229,7 @@ internal class MirPrettyPrinter(
             constant is MirConstant.Value && constant.constValue is MirConstValue.ZeroSized -> {
                 when (constant.ty) {
                     is TyUnit -> "()"
+                    is TyFunctionBase -> "function"
                     else -> TODO()
                 }
             }
@@ -269,7 +289,8 @@ internal class MirPrettyPrinter(
             }
             is TyAdt -> ty.item.name ?: TODO()
             is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"
-            else -> TODO()
+            is TyFunctionBase -> "function"
+            else -> TODO("Unknown type: $ty")
         }
     }
 

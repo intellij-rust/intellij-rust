@@ -14,6 +14,8 @@ import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
+import org.rust.stdext.singleOrFilter
 import org.rust.stdext.toPath
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
@@ -75,6 +77,15 @@ class MirBuildTest : RsTestBase() {
     fun `test repeat`() = doTest()
     fun `test zero repeat`() = doTest()
     fun `test expr stmt`() = doTest()
+    // TODO more terminator comments
+    // TODO `foo` instead of `function` (needs type inference support)
+    fun `test function call without arguments`() = doTest()
+    fun `test function call with 1 copy argument`() = doTest()
+    fun `test function call with 2 copy arguments`() = doTest()
+    fun `test function call with 2 move arguments`() = doTest()
+    fun `test function call with return value`() = doTest()
+    fun `test nested function call`() = doTest()
+    fun `test associated function call without arguments`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
@@ -93,7 +104,9 @@ class MirBuildTest : RsTestBase() {
         fileName: String = "main.rs",
     ) {
         InlineFile(code, fileName)
-        val builtMir = MirBuilder.build(myFixture.file as RsFile).single()
+        val builtMir = MirBuilder.build(myFixture.file as RsFile)
+            .singleOrFilter { it.sourceElement.let { fn -> fn is RsFunction && fn.name == "main" }  }
+            .single()
         val builtMirStr = MirPrettyPrinter(mir = builtMir).print()
         UsefulTestCase.assertSameLinesWithFile(expectedFilePath, builtMirStr)
     }
