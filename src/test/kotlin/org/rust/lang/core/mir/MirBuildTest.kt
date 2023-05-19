@@ -59,6 +59,11 @@ class MirBuildTest : RsTestBase() {
     fun `test tuple fields nested`() = doTest()
     fun `test tuple fields temporary value`() = expect<Throwable> { doTest() }
     fun `test three element tuple with tuples`() = doTest()
+    fun `test struct literal simple`() = doTest()
+    fun `test struct literal different fields order`() = doTest()
+    fun `test struct literal field shorthand`() = doTest()
+    fun `test struct literal nested 1`() = doTest()
+    fun `test struct literal nested 2`() = doTest()
     fun `test loop break`() = doTest()
     fun `test block with let`() = doTest()
     fun `test block with 3 lets`() = doTest()

@@ -261,9 +261,31 @@ class MirBuilder private constructor(
                     .also { block.pushAssignUnit(place, source) }
             }
             is ThirExpr.Adt -> {
+                // first process the set of fields that were provided (evaluating them in order given by user)
+                val fieldsMap = run {
+                    var block = block
+                    expr.fields.associateBy({ it.name }, {
+                        val blockAndOperand = block.andUnit().toOperand(it.expr, scopes.topmost(), NeedsTemporary.Maybe)
+                        block = blockAndOperand.block
+                        blockAndOperand.elem
+                    })
+                }
+
+                val fieldsNames = expr.definition.fields.indices
+
+                val fields = if (expr.base != null) {
+                    TODO()
+                } else {
+                    fieldsNames.map {
+                        fieldsMap.getOrElse(it) {
+                            throw IllegalStateException("Mismatched fields in struct literal and definition")
+                        }
+                    }
+                }
+
                 this
                     .block
-                    .pushAssign(place, MirRvalue.Aggregate.Adt(expr.definition, emptyList()), source)
+                    .pushAssign(place, MirRvalue.Aggregate.Adt(expr.definition, fields), source)
                     .andUnit()
             }
             is ThirExpr.Borrow -> {

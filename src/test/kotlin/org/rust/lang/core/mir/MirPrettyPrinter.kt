@@ -161,7 +161,21 @@ internal class MirPrettyPrinter(
                 1 -> "(${format(rvalue.operands.single())},)"
                 else -> rvalue.operands.joinToString(", ", "(", ")") { format(it) }
             }
-            is MirRvalue.Aggregate.Adt -> rvalue.definition.name ?: TODO()
+            is MirRvalue.Aggregate.Adt -> {
+                val struct = rvalue.definition
+                when {
+                    struct.isFieldless -> struct.name ?: TODO()
+                    struct.isTupleStruct -> TODO()
+                    else -> {
+                        check(struct.fields.size == rvalue.operands.size)
+                        val fields = (struct.fields zip rvalue.operands)
+                            .joinToString { (fieldDeclaration, fieldValue) ->
+                                "${fieldDeclaration.name}: ${format(fieldValue)}"
+                            }
+                        "${struct.name!!} { $fields }"
+                    }
+                }
+            }
             is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
         }
     }

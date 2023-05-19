@@ -196,6 +196,8 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     class Adt(
         val definition: RsStructItem,
+        val fields: List<FieldExpr>,
+        val base: FruInfo?,
         // TODO: more properties here
         ty: Ty,
         span: MirSpan,
@@ -316,3 +318,9 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 }
 
 typealias MirFieldIndex = Int
+
+/** Represents the association of a field identifier and an expression. This is used in struct constructors. */
+class FieldExpr(val name: MirFieldIndex, val expr: ThirExpr)
+
+// `Foo { ..base }`
+class FruInfo(val base: ThirExpr, val fieldTypes: List<Ty>)

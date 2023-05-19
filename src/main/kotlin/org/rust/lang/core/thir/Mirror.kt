@@ -16,6 +16,7 @@ import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.Adjustment
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyArray
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
@@ -29,6 +30,18 @@ fun RsBlock.mirrorAsExpr(contextOwner: RsInferenceContextOwner, ty: Ty, span: Mi
 
 fun RsExpr.mirror(contextOwner: RsInferenceContextOwner, span: MirSpan = this.asSpan): ThirExpr {
     val mirrored = mirrorUnadjusted(contextOwner, span)
+    return completeMirroring(mirrored, adjustments, span)
+}
+
+// Special case because of field shorthands
+fun RsStructLiteralField.mirror(contextOwner: RsInferenceContextOwner): ThirExpr {
+    // `Foo { a: 0 }`
+    val expr = expr
+    if (expr != null) return expr.mirror(contextOwner)
+
+    // `Foo { a }`
+    val span = asSpan
+    val mirrored = convert(type, span)
     return completeMirroring(mirrored, adjustments, span)
 }
 
@@ -203,18 +216,53 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
                 else -> error("Incomplete array expr")
             }
         }
+        is RsStructLiteral -> {
+            check(ty is TyAdt) { "Unexpected type for struct literal" }
+            when (val item = ty.item) {
+                is RsStructItem -> {
+                    val body = structLiteralBody
+                    val base = body.expr?.let { TODO() }
+                    val fields = fieldRefs(body.structLiteralFieldList, item.fields, contextOwner)
+                    ThirExpr.Adt(item, fields, base, ty, span)
+                }
+                is RsEnumItem -> TODO()
+                else -> error("unreachable")
+            }
+        }
         else -> TODO("Not implemented for ${this::class}")
     }
 }
 
+private fun fieldRefs(
+    fieldLiterals: List<RsStructLiteralField>,
+    fieldDeclarations: List<RsFieldDecl>,
+    contextOwner: RsInferenceContextOwner
+): List<FieldExpr> {
+    return fieldLiterals.map {
+        val fieldDeclaration = it.resolveToDeclaration() ?: error("Could not resolve RsStructLiteralField")
+        val fieldIndex = fieldDeclarations.indexOf(fieldDeclaration)
+        if (fieldIndex == -1) error("Can't find RsFieldDecl for RsStructLiteralField")
+        FieldExpr(fieldIndex, it.mirror(contextOwner))
+    }
+}
+
 private fun RsPathExpr.convert(ty: Ty, source: MirSpan): ThirExpr {
-    return when (val resolved = this.path.reference?.resolve() ?: error("Could not resolve RsPathExpr")) {
+    val resolved = this.path.reference?.resolve() ?: error("Could not resolve RsPathExpr")
+    return convert(resolved, ty, source)
+}
+
+private fun RsStructLiteralField.convert(ty: Ty, source: MirSpan): ThirExpr {
+    val resolved = resolveToBinding() ?: error("Could not resolve RsStructLiteralField")
+    return convert(resolved, ty, source)
+}
+
+private fun convert(resolved: RsElement, ty: Ty, source: MirSpan): ThirExpr =
+    when (resolved) {
         is RsPatBinding -> ThirExpr.VarRef(LocalVar(resolved), ty, source) // TODO: captured values are not yet handled
-        is RsStructItem -> ThirExpr.Adt(resolved, ty, source)
+        is RsStructItem -> ThirExpr.Adt(resolved, fields = emptyList(), base = null, ty, source)
         is RsFunction -> ThirExpr.ZstLiteral(ty, source)
         else -> TODO()
     }
-}
 
 private fun RsBlock.mirror(
     ty: Ty,

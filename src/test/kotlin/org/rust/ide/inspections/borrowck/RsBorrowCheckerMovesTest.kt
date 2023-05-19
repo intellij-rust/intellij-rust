@@ -162,7 +162,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         struct T { s1: S, s2: S }
         fn main() {
             let s = S;
-            let t = T { s1: s, s2: <error descr="Use of moved value">s</error> };
+            let t = T { s1: s, s2: <error descr="Use of moved value [E0382]">s</error> };
         }
     """, checkWarn = false)
 
@@ -172,7 +172,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             s;
-            let t = T { <error descr="Use of moved value">s</error> };
+            let t = T { <error descr="Use of moved value [E0382]">s</error> };
         }
     """, checkWarn = false)
 
@@ -698,7 +698,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             let t1 = T { s: s };
-            let t2 = T { s: <error descr="Use of moved value">s</error> };
+            let t2 = T { s: <error descr="Use of moved value [E0382]">s</error> };
         }
     """, checkWarn = false)
 
