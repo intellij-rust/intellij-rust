@@ -18,7 +18,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
     fun `test E0381 error no init`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;
-            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            <error descr="Use of possibly uninitialized variable [E0381]">x<caret></error>;
         }
     """, """
         fn main() {
@@ -36,7 +36,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
 
         fn main() {
             let x: A;
-            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            <error descr="Use of possibly uninitialized variable [E0381]">x<caret></error>;
         }
     """, """
         #[derive(Default)]
@@ -59,7 +59,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         fn main() {
             let a: u64 = 1;
             let x: A;
-            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            <error descr="Use of possibly uninitialized variable [E0381]">x<caret></error>;
         }
     """, """
         struct A {

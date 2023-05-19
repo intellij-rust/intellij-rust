@@ -724,7 +724,17 @@ class MirBuilder private constructor(
                 result.block.pushAssign(blockAndLeft.elem, result.elem, source)
                 result.block.andUnit()
             }
-            else -> TODO()
+            else -> {
+                check(statementScope != null) {
+                    "Should not call `statementExpr` on a general expression without a statement scope"
+                }
+                if (expr is ThirExpr.Block && expr.block.expr != null) {
+                    TODO()  // adjustedSpan
+                }
+
+                val result = toTemp(expr, statementScope, Mutability.IMMUTABLE)
+                result.block.andUnit()
+            }
         }
     }
 

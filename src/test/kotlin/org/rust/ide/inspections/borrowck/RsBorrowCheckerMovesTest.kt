@@ -36,7 +36,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -47,7 +47,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let x = S;
             let mut y = 2;
             y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -798,7 +798,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             (s);
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 
@@ -810,7 +810,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             my_macro_move!(s);
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 
@@ -949,7 +949,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             #[cfg(intellij_rust)] s;
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 

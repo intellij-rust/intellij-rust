@@ -74,6 +74,7 @@ class MirBuildTest : RsTestBase() {
     fun `test array`() = doTest()
     fun `test repeat`() = doTest()
     fun `test zero repeat`() = doTest()
+    fun `test expr stmt`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)

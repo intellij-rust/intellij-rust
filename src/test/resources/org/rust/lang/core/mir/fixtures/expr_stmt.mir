@@ -1,0 +1,12 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:11: 1:11
+    let _1: i32;                         // in scope 0 at src/main.rs:2:5: 2:6
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:5: 2:6
+        _1 = const 1_i32;                // scope 0 at src/main.rs:2:5: 2:6
+        StorageDead(_1);                 // scope 0 at src/main.rs:2:6: 2:7
+        _0 = const ();                   // scope 0 at src/main.rs:1:11: 3:2
+        return;                          // scope 0 at src/main.rs:3:2: 3:2
+    }
+}
