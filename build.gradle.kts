@@ -421,7 +421,7 @@ project(":") {
     }
 
     dependencies {
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.2") {
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.15.1") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
