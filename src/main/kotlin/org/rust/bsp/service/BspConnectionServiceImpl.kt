@@ -1,13 +1,9 @@
-/*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
-
 package org.rust.bsp.service
 
 import ch.epfl.scala.bsp4j.*
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -21,7 +17,6 @@ import com.intellij.util.text.SemVer
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.rust.bsp.BspClient
 import org.rust.bsp.BspConstants
-import org.rust.bsp.BspProjectViewManager
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -63,6 +58,8 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         return bspClient!!
     }
 
+    override fun isConnected(): Boolean = bspServer != null
+
     override fun connect() {
         println("Starting BSP server")
         getBspServer()
@@ -70,7 +67,7 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
 
     override fun getProjectData(projectDirectory: Path): CargoWorkspaceData {
         val server = getBspServer()
-        return calculateProjectDetailsWithCapabilities(server, projectDirectory) {
+        return calculateProjectDetailsWithCapabilities(server, projectDirectory, project) {
             println("BSP server capabilities: $it")
         }
     }
@@ -113,26 +110,15 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         bspClient = null
     }
 
-
-    override fun compileSolution(params: CompileParams): CompletableFuture<CargoBuildResult> {
-        return getBspServer().buildTargetCompile(params).thenApply {
-            return@thenApply CargoBuildResult(
-                it.statusCode == StatusCode.OK,
-                it.statusCode == StatusCode.CANCELLED,
-                0 //TODO Find proper started time
-            );
-        }
+    override fun compileAllSolutions(params: CompileParams): CompletableFuture<CompileResult> {
+        val wbt = getBspServer().workspaceBuildTargets().get()
+        params.targets = wbt.targets.map { it.id }
+        return getBspServer().buildTargetCompile(params)
 
     }
 
-    override fun runSolution(params: RunParams): CompletableFuture<CargoBuildResult> {
-        return getBspServer().buildTargetRun(params).thenApply {
-            return@thenApply CargoBuildResult(
-                it.statusCode == StatusCode.OK,
-                it.statusCode == StatusCode.CANCELLED,
-                0 //TODO Find proper started time
-            );
-        }
+    override fun compileSolution(params: CompileParams): CompletableFuture<CompileResult> {
+        return getBspServer().buildTargetCompile(params)
     }
 
     private fun executeDisconnectActionAndReturnThrowableIfFailed(disconnectAction: () -> Unit): Throwable? =
@@ -248,6 +234,11 @@ class BspConnectionServiceImpl(val project: Project) : BspConnectionService {
         val toolchain = getDefaultToolchain(server)
         return toolchain.rustc.sysroot
     }
+
+    override fun getBspTargets(): List<BuildTarget> = queryForBazelTargets(getBspServer()).get().targets
+
+    override fun dispose() = disconnect()
+
 }
 
 private fun String.toVirtualFile(): VirtualFile? =
@@ -291,6 +282,7 @@ fun calculateToolchains(
 fun calculateProjectDetailsWithCapabilities(
     server: BspServer,
     projectDirectory: Path,
+    project: Project,
     errorCallback: (Throwable) -> Unit
 ): CargoWorkspaceData {
     val projectBazelTargets = queryForBazelTargets(server).get()
@@ -302,8 +294,8 @@ fun calculateProjectDetailsWithCapabilities(
 
     var rustBspTargetsIds = collectRustBspTargets(projectBazelTargets.targets).map { it.id }
     changedWorkspaceRoot?.let {
-        val bspProjectViewManager = BspProjectViewManager(it)
-        rustBspTargetsIds = bspProjectViewManager.filterIncludedPackages(rustBspTargetsIds)
+        val bspProjectViewService = project.service<BspProjectViewService>()
+        rustBspTargetsIds = bspProjectViewService.filterIncludedPackages(rustBspTargetsIds)
     }
 
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
@@ -313,11 +305,14 @@ fun calculateProjectDetailsWithCapabilities(
     val rawDependencies = createRawDependencies(projectWorkspaceData)
 
     changedWorkspaceRoot?.let {
-        val bspProjectViewManager = BspProjectViewManager(it)
+        val bspProjectViewService = project.service<BspProjectViewService>()
         val localProjectPackages = projectPackages.filter { pkg ->
             pkg.origin == PackageOrigin.WORKSPACE
         }
-        bspProjectViewManager.generateTargetsFile(localProjectPackages)
+        bspProjectViewService.updateTargets(localProjectPackages)
+        val refreshStatusPublisher = project.messageBus.syncPublisher(BspConnectionService.BSP_WORKSPACE_REFRESH_TOPIC)
+        refreshStatusPublisher.onRefreshFinished()
+
     }
 
     return CargoWorkspaceData(projectPackages, dependencies, rawDependencies, changedWorkspaceRoot, true)
@@ -369,11 +364,11 @@ private fun collectRustBspTargets(bspTargets: List<BuildTarget>): List<BuildTarg
 
 private fun createCfgOptions(cfgOptions: RustCfgOptions?): CfgOptions? {
     if (cfgOptions == null)
-        return null;
+        return null
     val name = cfgOptions.nameOptions?.toSet()
     val keyValueOptions = cfgOptions.keyValueOptions?.associate { Pair(it.key, it.value.toSet()) }
     if (name == null || keyValueOptions == null)
-        return null;
+        return null
     return CfgOptions(keyValueOptions, name)
 }
 
@@ -467,7 +462,7 @@ fun createDependencies(projectWorkspaceData: RustWorkspaceResult): Map<PackageId
 
     for (dependency in projectWorkspaceData.dependencies) {
         dependencies
-            .getOrDefault(dependency.source, mutableSetOf<CargoWorkspaceData.Dependency>() )
+            .getOrDefault(dependency.source, mutableSetOf<CargoWorkspaceData.Dependency>())
             .add(
                 CargoWorkspaceData.Dependency(
                     dependency.target,

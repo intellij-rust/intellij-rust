@@ -25,7 +25,7 @@ class BspStartupActivity : StartupActivity.DumbAware {
 
     private fun collectProject(project: Project) {
         runBackgroundableTask("Connecting with BSP", project, true) {
-                project.service<BspConnectionService>().connect()
+            project.service<BspConnectionService>().connect()
         }
     }
 }

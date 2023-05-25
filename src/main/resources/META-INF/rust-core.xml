@@ -1077,6 +1077,11 @@
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
                     icon="/icons/tool-window.svg"/>
 
+        <toolWindow id="BSP"
+                    anchor="right"
+                    factoryClass="org.rust.bsp.toolwindow.BspToolWindowFactory"
+                    icon="/icons/bsp/bsp.svg"/>
+
         <statusBarWidgetFactory id="rustExternalLinterWidget"
                                 implementation="org.rust.ide.status.RsExternalLinterWidgetFactory"
                                 order="first"/>
@@ -1261,6 +1266,7 @@
         <!-- BSP -->
         <projectService serviceInterface="org.rust.bsp.service.BspConnectionService"
                         serviceImplementation="org.rust.bsp.service.BspConnectionServiceImpl"/>
+        <projectService serviceImplementation="org.rust.bsp.service.BspProjectViewService"/>
         <postStartupActivity
             implementation="org.rust.bsp.BspStartupActivity"/>
     </extensions>
@@ -1464,6 +1470,30 @@
                 icon="AllIcons.General.Settings">
         </action>
 
+
+
+        <action id="Bsp.RefreshBspProject"
+                class="org.rust.bsp.toolwindow.actions.RefreshAction"
+                icon="AllIcons.Actions.Refresh"/>
+        <action id="Bsp.BuildAll"
+                class="org.rust.bsp.toolwindow.actions.BuildAllAction"
+                icon="AllIcons.Actions.Compile"/>
+        <action id="Bsp.Connect"
+                class="org.rust.bsp.toolwindow.actions.ConnectAction"
+                icon="/icons/bsp/connect.svg"/>
+        <action id="Bsp.Disconnect"
+                class="org.rust.bsp.toolwindow.actions.DisconnectAction"
+                icon="/icons/bsp/disconnect.svg"/>
+        <action id="Bsp.SelectAll"
+                class="org.rust.bsp.toolwindow.actions.SelectAllAction"
+                icon="/icons/bsp/disconnect.svg"/>
+        <action id="Bsp.DeselectAll"
+                class="org.rust.bsp.toolwindow.actions.UnselectAllAction"
+                icon="/icons/bsp/disconnect.svg"/>
+        <action id="Bsp.ClearAll"
+                class="org.rust.bsp.toolwindow.actions.ClearAllAction"
+                icon="/icons/bsp/disconnect.svg"/>
+
         <group id="Rust.Cargo">
             <reference id="Cargo.RefreshCargoProject"/>
             <reference id="Cargo.AttachCargoProject"/>
@@ -1477,6 +1507,17 @@
             <reference id="CollapseAll"/>
             <separator/>
             <reference id="Cargo.ShowSettings"/>
+        </group>
+
+        <group id="Rust.Bsp">
+            <reference id="Bsp.RefreshBspProject"/>
+            <reference id="Bsp.BuildAll"/>
+            <separator/>
+            <reference id="Bsp.Connect"/>
+            <reference id="Bsp.Disconnect"/>
+            <separator/>
+            <reference id="ExpandAll"/>
+            <reference id="CollapseAll"/>
         </group>
 
         <group id="Rust.ProjectView">

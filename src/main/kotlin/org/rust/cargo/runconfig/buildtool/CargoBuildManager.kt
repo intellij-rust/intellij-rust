@@ -5,8 +5,6 @@
 
 package org.rust.cargo.runconfig.buildtool
 
-import ch.epfl.scala.bsp4j.BuildTargetIdentifier
-import ch.epfl.scala.bsp4j.CompileParams
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildViewManager
 import com.intellij.execution.ExecutorRegistry
@@ -34,19 +32,15 @@ import com.intellij.ui.SystemNotifications
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
-import io.ktor.util.reflect.*
 import org.jetbrains.annotations.TestOnly
-import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.CargoRunState
-import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.ParsedCommand
 import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.cargo.runconfig.target.localBuildArgsForRemoteRun
-import org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.cargo.util.parseSemVer
@@ -104,19 +98,6 @@ object CargoBuildManager {
 
         if (isUnitTestMode) {
             lastBuildCommandLine = state.prepareCommandLine()
-        }
-
-        var usesBsp = cargoProject.workspace?.usesBSP
-        if (usesBsp == true) {
-            val bspService = project.service<BspConnectionService>()
-            val packageIndex = state.config.cmd.additionalArguments.indexOf("--package")
-            val targetName = state.config.cmd.additionalArguments[packageIndex + 1]
-            var args = state.config.cmd.additionalArguments.toMutableList()
-            args.removeAt(packageIndex + 1)
-            args.removeAt(packageIndex)
-            val compileParams = CompileParams(listOf(BuildTargetIdentifier(targetName)))
-            compileParams.arguments = args
-            return bspService.compileSolution(compileParams)
         }
 
         val buildId = Any()

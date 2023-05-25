@@ -44,14 +44,11 @@ class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
         val tab = ContentFactory.getInstance()
             .createContent(toolwindowPanel, "", false)
         toolWindow.contentManager.addContent(tab)
-
-        val useBSP: Boolean = project.service<BspConnectionService>().hasBspServer()
-        if (useBSP) {
-            toolWindow.stripeTitle = "Rust"
-        }
     }
 
     override fun isApplicable(project: Project): Boolean {
+        if (project.service<BspConnectionService>().hasBspServer()) return false
+
         if (CargoToolWindow.isRegistered(project)) return false
 
         val cargoProjects = project.cargoProjects
