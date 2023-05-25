@@ -306,10 +306,7 @@ fun calculateProjectDetailsWithCapabilities(
 
     changedWorkspaceRoot?.let {
         val bspProjectViewService = project.service<BspProjectViewService>()
-        val localProjectPackages = projectPackages.filter { pkg ->
-            pkg.origin == PackageOrigin.WORKSPACE
-        }
-        bspProjectViewService.updateTargets(localProjectPackages)
+        bspProjectViewService.updateTargets(projectWorkspaceData.resolvedTargets)
         val refreshStatusPublisher = project.messageBus.syncPublisher(BspConnectionService.BSP_WORKSPACE_REFRESH_TOPIC)
         refreshStatusPublisher.onRefreshFinished()
 

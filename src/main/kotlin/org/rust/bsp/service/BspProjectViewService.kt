@@ -39,9 +39,9 @@ class BspProjectViewService(val project: Project) :
 
     fun getActiveTargets() = state.targets.toList()
     fun updateTargets(
-        rustPackages: List<CargoWorkspaceData.Package>
+        rustPackages: List<BuildTargetIdentifier>
     ): List<String> {
-        state = mapPackagesToPojo(rustPackages)
+        state = BspProjectState(rustPackages.map{it.uri}.toMutableSet())
         return state.targets.toList()
     }
 
