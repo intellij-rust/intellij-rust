@@ -123,7 +123,7 @@ fun DataOutput.writeMacroExpansionError(err: MacroExpansionError) {
         is ProcMacroExpansionError.ProcessAborted -> writeInt(err.exitCode)
         is ProcMacroExpansionError.Timeout -> writeLong(err.timeout)
         else -> Unit
-    }.exhaustive
+    }
 }
 
 @Throws(IOException::class)
@@ -175,7 +175,7 @@ private fun DataOutput.saveMatchingError(value: MacroMatchingError) {
             IOUtil.writeUTF(this, value.variableName)
         }
         else -> Unit
-    }.exhaustive
+    }
 }
 
 @Throws(IOException::class)

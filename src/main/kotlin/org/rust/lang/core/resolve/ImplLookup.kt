@@ -695,7 +695,7 @@ class ImplLookup(
             }
             BuiltinImplConditions.None -> Unit
             BuiltinImplConditions.Ambiguous -> candidates.ambiguous = true
-        }.exhaustive
+        }
     }
 
     // https://github.com/rust-lang/rust/blob/3a90bedb332d/compiler/rustc_trait_selection/src/traits/select/mod.rs#L1820

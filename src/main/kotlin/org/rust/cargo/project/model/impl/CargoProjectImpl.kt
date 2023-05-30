@@ -62,7 +62,6 @@ import org.rust.openapiext.modules
 import org.rust.openapiext.pathAsPath
 import org.rust.stdext.AsyncValue
 import org.rust.stdext.applyWithSymlink
-import org.rust.stdext.exhaustive
 import org.rust.stdext.mapNotNullToSet
 import org.rust.taskQueue
 import java.nio.file.Path
@@ -322,7 +321,7 @@ open class CargoProjectsServiceImpl(
                         }
                     }
                 }
-            }.exhaustive
+            }
         }
     }
 

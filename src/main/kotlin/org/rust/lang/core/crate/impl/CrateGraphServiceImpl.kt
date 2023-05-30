@@ -33,7 +33,6 @@ import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.enumSetOf
-import org.rust.stdext.exhaustive
 import java.nio.file.Path
 
 class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
@@ -251,7 +250,7 @@ private class CrateGraphBuilder {
                     CargoWorkspace.DepKind.Normal -> normal += dependency
                     CargoWorkspace.DepKind.Development -> dev += dependency
                     CargoWorkspace.DepKind.Build -> build += dependency
-                }.exhaustive
+                }
             }
         }
 

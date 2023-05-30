@@ -386,7 +386,7 @@ sealed class VisibilityLight : Writeable {
                 data.writeByte(3)
                 data.writePath(inPath)
             }
-        }.exhaustive
+        }
     }
 
     companion object {
