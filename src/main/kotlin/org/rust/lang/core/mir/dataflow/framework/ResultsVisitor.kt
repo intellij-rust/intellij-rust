@@ -26,7 +26,9 @@ interface ResultsVisitor<FlowState> {
 interface ResultsVisitable<FlowState> {
     val direction: Direction
     fun getCopyOfBlockState(block: MirBasicBlock): FlowState
+    fun reconstructBeforeStatementEffect(state: FlowState, statement: MirStatement, location: MirLocation)
     fun reconstructStatementEffect(state: FlowState, statement: MirStatement, location: MirLocation)
+    fun reconstructBeforeTerminatorEffect(state: FlowState, terminator: MirTerminator<MirBasicBlock>, location: MirLocation)
     fun reconstructTerminatorEffect(state: FlowState, terminator: MirTerminator<MirBasicBlock>, location: MirLocation)
 }
 
@@ -40,8 +42,16 @@ class Results<Domain>(
     override fun getCopyOfBlockState(block: MirBasicBlock): Domain =
         analysis.copyState(blockStates[block.index])
 
+    override fun reconstructBeforeStatementEffect(state: Domain, statement: MirStatement, location: MirLocation) {
+        analysis.applyBeforeStatementEffect(state, statement, location)
+    }
+
     override fun reconstructStatementEffect(state: Domain, statement: MirStatement, location: MirLocation) {
         analysis.applyStatementEffect(state, statement, location)
+    }
+
+    override fun reconstructBeforeTerminatorEffect(state: Domain, terminator: MirTerminator<MirBasicBlock>, location: MirLocation) {
+        analysis.applyBeforeTerminatorEffect(state, terminator, location)
     }
 
     override fun reconstructTerminatorEffect(state: Domain, terminator: MirTerminator<MirBasicBlock>, location: MirLocation) {
@@ -51,24 +61,38 @@ class Results<Domain>(
 
 class BorrowCheckResults(
     private val uninits: Results<BitSet>,
-    // TODO Borrows, EverInitializedPlaces
+    private val borrows: Results<BitSet>,
+    // TODO: EverInitializedPlaces
 ) : ResultsVisitable<BorrowCheckResults.State> {
 
     override val direction: Direction get() = Forward
 
     override fun getCopyOfBlockState(block: MirBasicBlock): State =
-        State(uninits.getCopyOfBlockState(block))
+        State(uninits.getCopyOfBlockState(block), borrows.getCopyOfBlockState(block))
+
+    override fun reconstructBeforeStatementEffect(state: State, statement: MirStatement, location: MirLocation) {
+        uninits.reconstructBeforeStatementEffect(state.uninits, statement, location)
+        borrows.reconstructBeforeStatementEffect(state.borrows, statement, location)
+    }
 
     override fun reconstructStatementEffect(state: State, statement: MirStatement, location: MirLocation) {
         uninits.reconstructStatementEffect(state.uninits, statement, location)
+        borrows.reconstructStatementEffect(state.borrows, statement, location)
+    }
+
+    override fun reconstructBeforeTerminatorEffect(state: State, terminator: MirTerminator<MirBasicBlock>, location: MirLocation) {
+        uninits.reconstructBeforeTerminatorEffect(state.uninits, terminator, location)
+        borrows.reconstructBeforeTerminatorEffect(state.borrows, terminator, location)
     }
 
     override fun reconstructTerminatorEffect(state: State, terminator: MirTerminator<MirBasicBlock>, location: MirLocation) {
         uninits.reconstructTerminatorEffect(state.uninits, terminator, location)
+        borrows.reconstructTerminatorEffect(state.borrows, terminator, location)
     }
 
     class State(
         val uninits: BitSet,
+        val borrows: BitSet
     )
 }
 

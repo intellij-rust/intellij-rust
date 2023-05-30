@@ -77,6 +77,10 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                     val fix = InitializeWithDefaultValueFix.createIfCompatible(element)
                     RsDiagnostic.UseOfUninitializedVariableError(element, fix).addToHolder(holder)
                 }
+                for (element in result.moveOutWhileBorrowedValues) {
+                    if (!element.isPhysical) continue
+                    RsDiagnostic.MoveOutWhileBorrowedError(element).addToHolder(holder)
+                }
                 return true
             }
         }

@@ -166,6 +166,7 @@ internal class MirPrettyPrinter(
             for (projection in place.projections.asReversed()) {
                 when (projection) {
                     is MirProjectionElem.Field -> append("(")
+                    is MirProjectionElem.Deref -> TODO()
                 }
             }
 
@@ -174,6 +175,7 @@ internal class MirPrettyPrinter(
             for (projection in place.projections) {
                 when (projection) {
                     is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
+                    is MirProjectionElem.Deref -> TODO()
                 }
             }
         }

@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.mir.schemas
 
+val MirBorrowKind.allowTwoPhaseBorrow: Boolean
+    get() = if (this is MirBorrowKind.Mut) allowTwoPhaseBorrow else false
+
 sealed class MirBorrowKind {
     object Shared : MirBorrowKind()
     object Shallow : MirBorrowKind()

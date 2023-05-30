@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.mir.schemas
 
-class MirLocation(
+data class MirLocation(
     val block: MirBasicBlock,
     val statementIndex: Int
 ) {
