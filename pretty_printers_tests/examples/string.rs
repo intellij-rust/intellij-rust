@@ -67,5 +67,9 @@ fn main() {
     let empty_s4 = empty_s3 as *mut str;
     let empty_s5 = empty_s1 as *const str;
 
+    // if empty_s5 is not used before the breakpoint,
+    // debugger will throw "error: could not find item" when trying to frame it
+    println!("{:?}", empty_s5);
+
     print!(""); // #break
 }
