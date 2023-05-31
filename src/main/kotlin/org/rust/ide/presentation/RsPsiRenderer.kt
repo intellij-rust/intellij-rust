@@ -26,7 +26,6 @@ import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.utils.escapeRust
 import org.rust.lang.utils.evaluation.evaluate
-import org.rust.stdext.exhaustive
 import org.rust.stdext.joinToWithBuffer
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
@@ -530,8 +529,8 @@ open class RsPsiRenderer(
                 sb.append(kind.value.orEmpty().escapeRust())
                 sb.append('"')
             }
-            null -> "{}"
-        }.exhaustive
+            null -> Unit
+        }
     }
 
     protected open fun appendBlockExpr(sb: StringBuilder, expr: RsBlockExpr) {
