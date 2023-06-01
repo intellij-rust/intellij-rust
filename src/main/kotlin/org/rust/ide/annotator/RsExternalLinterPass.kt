@@ -107,7 +107,7 @@ class RsExternalLinterPass(
                 })
             }
 
-            override fun canEat(update: Update?): Boolean = updateFile == (update as? RsUpdate)?.updateFile
+            override fun canEat(update: Update): Boolean = updateFile == (update as? RsUpdate)?.updateFile
         }
 
         val update = RsUpdate()
