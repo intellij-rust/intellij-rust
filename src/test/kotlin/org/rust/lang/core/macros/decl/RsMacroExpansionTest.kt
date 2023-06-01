@@ -1335,6 +1335,70 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         "bar"
     """)
 
+    fun `test marker_impls using macro 2`() = doTest("""
+        macro marker_impls {
+            ( $(#[$($ meta:tt)*])* $ Trait:ident for $({$($ bounds:tt)*})? $ T:ty $(, $($ rest:tt)*)? ) => {
+                    $(#[$($ meta)*])* impl< $($($ bounds)*)? > $ Trait for $ T {}
+                    marker_impls! { $(#[$($ meta)*])* $ Trait for $($($ rest)*)? }
+                },
+            ( $(#[$($ meta:tt)*])* $ Trait:ident for ) => {},
+
+            ( $(#[$($ meta:tt)*])* unsafe $ Trait:ident for $({$($ bounds:tt)*})? $ T:ty $(, $($ rest:tt)*)? ) => {
+                    $(#[$($ meta)*])* unsafe impl< $($($ bounds)*)? > $ Trait for $ T {}
+                    marker_impls! { $(#[$($ meta)*])* unsafe $ Trait for $($($ rest)*)? }
+                },
+            ( $(#[$($ meta:tt)*])* unsafe $ Trait:ident for ) => {},
+        }
+        marker_impls! {
+            #[stable(feature = "rust1", since = "1.0.0")]
+            Copy for
+                usize, u8, u16, u32, u64, u128,
+                isize, i8, i16, i32, i64, i128,
+                f32, f64,
+                bool, char,
+                {T: ?Sized} *const T,
+                {T: ?Sized} *mut T,
+
+        }
+    """, """
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for usize {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u8 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u16 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u32 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u64 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u128 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for isize {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i8 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i16 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i32 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i64 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i128 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for f32 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for f64 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for bool {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for char {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<T: ?Sized> Copy for *const T {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<T: ?Sized> Copy for *mut T {}
+    """)
+
     companion object {
         // BACKCOMPAT: Rust 1.62
         private val RUST_1_63 = "1.63.0".parseSemVer()
