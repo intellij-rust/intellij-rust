@@ -86,7 +86,7 @@ class RsFileStub(
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        private const val STUB_VERSION = 232
+        private const val STUB_VERSION = 233
 
         override fun getStubVersion(): Int =
             RustParserDefinition.PARSER_VERSION + RS_BUILTIN_ATTRIBUTES_VERSION + STUB_VERSION
