@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
@@ -29,6 +30,7 @@ import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.RsResult.Ok
+import org.rust.stdext.orElse
 import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 
@@ -38,14 +40,17 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         val project = cargoProject.project
-        val stdout = createCommandLine(cargoProject, document)
-            ?.execute(project, stdIn = document.text.toByteArray())
+        val stdout = reformatTextDocument(cargoProject, document, project)
             ?.unwrapOrElse { e ->
                 e.showRustfmtError(project)
                 if (isUnitTestMode) throw e else return null
             }?.stdout
         return stdout.nullize()
     }
+
+    fun reformatTextDocument(cargoProject: CargoProject, document: Document, project: Project): RsProcessResult<ProcessOutput>? =
+        createCommandLine(cargoProject, document)
+            ?.execute(project, stdIn = document.text.toByteArray())
 
     fun createCommandLine(cargoProject: CargoProject, document: Document): GeneralCommandLine? {
         val file = document.virtualFile ?: return null
