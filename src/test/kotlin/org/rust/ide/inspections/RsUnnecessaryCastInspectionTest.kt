@@ -388,6 +388,22 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         }
     """)
 
+    fun `test fn casts`() = checkWarnings("""
+        fn main() {
+            let mut a = foo as fn();
+            a = bar as fn();
+
+            let add = |x, y| x + y;
+            let b = add as fn(i32, i32) -> i32;
+
+            let c = foo;
+            let d = c as fn();
+        }
+
+        fn foo() {}
+        fn bar() {}
+    """)
+
     /**
      * TODO: fix this false-positive
      *

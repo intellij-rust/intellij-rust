@@ -16,6 +16,7 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
@@ -69,6 +70,19 @@ class RsUnnecessaryCastInspection : RsLintInspection() {
             if (containsUnknown(exprType)) return
 
             /**
+             * There are 3 different function types
+             * - function item
+             * - function pointer
+             * - closure
+             * (see https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/reference/types.html#function-item-types)
+             *
+             * Currently, they all map to [TyFunction], so there's no way to check if the cast is necessary or not
+             * TODO: when [TyFunction] contains info about the different function types, improve this check
+             */
+            if (isFunction(typeReferenceType)) return
+            if (isFunction(exprType)) return
+
+            /**
              * Consider the following code
              *
              * ```rust
@@ -99,13 +113,17 @@ class RsUnnecessaryCastInspection : RsLintInspection() {
         }
     }
 
-    private fun isAlias(typeReferenceType: Ty): Boolean {
+    private fun isFunction(ty: Ty): Boolean {
+        return ty is TyFunction
+    }
+
+    private fun isAlias(ty: Ty): Boolean {
         val visitor = object : TypeVisitor {
             override fun visitTy(ty: Ty): Boolean {
                 return ty.aliasedBy != null || ty.superVisitWith(this)
             }
         }
-        return typeReferenceType.visitWith(visitor)
+        return ty.visitWith(visitor)
     }
 
     private fun isUnsuffixedNumber(expr: RsExpr): Boolean {
