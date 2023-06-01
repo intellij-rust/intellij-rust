@@ -127,17 +127,16 @@ private fun createDeclarationInfo(
         ?.startOffsetInParent ?: return null
 
     val nameStart = name.offsetIn(decl)
+    val nameEnd = nameStart + name.textLength
 
     // pick (in order) elements we should stop at
     // if they all fail, drop down to the end of the name element
     val end = stopAt
         .filterNotNull().firstOrNull()
         ?.let { it.startOffsetInParent + it.textLength }
-        ?: nameStart + name.textLength
+        ?: nameEnd
 
     val valueStart = valueSeparator?.offsetIn(decl) ?: end
-
-    val nameEnd = nameStart + name.textLength
 
     check(signatureStart <= nameStart && nameEnd <= valueStart && valueStart <= end && end <= decl.textLength) {
         "Can't generate signature for `${decl.text}`"
