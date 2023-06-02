@@ -41,7 +41,7 @@ class MirBasicBlockImpl(
     }
 
     fun pushFakeRead(
-        cause: MirStatement.FakeRead.Cause.ForLet,
+        cause: MirStatement.FakeRead.Cause,
         place: MirPlace,
         source: MirSourceInfo,
     ): MirBasicBlockImpl {

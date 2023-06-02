@@ -22,6 +22,7 @@ import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.regions.getRegionScopeTree
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.testAssert
+import org.rust.lang.core.types.regions.Scope as RegionScope
 
 class MirBuilder private constructor(
     private val element: RsElement,
@@ -325,15 +326,21 @@ class MirBuilder private constructor(
         return exprToPlace(expr, Mutability.MUTABLE)
     }
 
-    private fun BlockAnd<*>.exprToPlace(expr: ThirExpr, mutability: Mutability): BlockAnd<PlaceBuilder> {
+    private fun BlockAnd<*>.exprToPlace(
+        expr: ThirExpr,
+        mutability: Mutability,
+        fakeBorrowTemps: MutableList<MirLocal>? = null
+    ): BlockAnd<PlaceBuilder> {
+        val exprSpan = expr.span
+        val sourceInfo = sourceInfo(exprSpan)
         return when (expr) {
             is ThirExpr.Scope -> {
                 inScope(expr.regionScope) {
-                    exprToPlace(expr.expr, mutability)
+                    exprToPlace(expr.expr, mutability, fakeBorrowTemps)
                 }
             }
             is ThirExpr.Field -> {
-                exprToPlace(expr.expr, mutability)
+                exprToPlace(expr.expr, mutability, fakeBorrowTemps)
                     .map { placeBuilder ->
                         val ty = expr.expr.ty
                         if (ty is TyAdt && ty.item is RsEnumItem) {
@@ -347,6 +354,17 @@ class MirBuilder private constructor(
                         placeBuilder.field(expr.fieldIndex, expr.ty)
                     }
 
+            }
+            is ThirExpr.Index -> {
+                lowerIndexExpression(
+                    expr.lhs,
+                    expr.index,
+                    mutability,
+                    fakeBorrowTemps,
+                    expr.tempLifetime,
+                    exprSpan,
+                    sourceInfo
+                )
             }
             is ThirExpr.VarRef -> {
                 // TODO: different handling in case of guards
@@ -374,6 +392,109 @@ class MirBuilder private constructor(
             }
             else -> TODO()
         }
+    }
+
+    private fun BlockAnd<*>.lowerIndexExpression(
+        base: ThirExpr,
+        index: ThirExpr,
+        mutability: Mutability,
+        fakeBorrowTemps: MutableList<MirLocal>?,
+        tempLifetime: RegionScope?,
+        span: MirSpan,
+        sourceInfo: MirSourceInfo
+    ): BlockAnd<PlaceBuilder> {
+        var blockAnd = this
+        val newFakeBorrowTemps = fakeBorrowTemps ?: mutableListOf()
+
+        blockAnd = blockAnd.exprToPlace(base, mutability, newFakeBorrowTemps)
+        val basePlace = blockAnd.elem
+
+        // Making this a *fresh* temporary means we do not have to worry about the index changing later: Nothing will
+        // ever change this temporary. The "retagging" transformation (for Stacked Borrows) relies on this.
+        blockAnd = blockAnd.toTemp(index, tempLifetime, Mutability.IMMUTABLE)
+        val idx = blockAnd.elem
+
+        var block = boundsCheck(blockAnd.block, basePlace, idx, span, sourceInfo)
+
+        val isOutermostIndex = fakeBorrowTemps == null
+        if (isOutermostIndex) {
+            block = readFakeBorrows(block, newFakeBorrowTemps, sourceInfo)
+        } else {
+            addFakeBorrowsOfBase(basePlace.toPlace())
+        }
+
+        return block and basePlace.index(idx)
+    }
+
+    private fun boundsCheck(
+        block: MirBasicBlockImpl,
+        slice: PlaceBuilder,
+        index: MirLocal,
+        span: MirSpan,
+        sourceInfo: MirSourceInfo
+    ): MirBasicBlockImpl {
+        val usizeTy = TyInteger.USize.INSTANCE
+        val boolTy = TyBool.INSTANCE
+        // bounds check:
+        val len = localDecls.tempPlace(usizeTy, span)
+        val lt = localDecls.tempPlace(boolTy, span)
+
+        // len = len(slice)
+        var blockTemp = block.pushAssign(len, MirRvalue.Len(slice.toPlace()), sourceInfo)
+        // lt = idx < len
+        blockTemp = blockTemp.pushAssign(
+            lt,
+            MirRvalue.BinaryOpUse(ComparisonOp.LT.toMir(), MirOperand.Copy(MirPlace(index)), MirOperand.Copy(len)),
+            sourceInfo
+        )
+
+        val msg = MirAssertKind.BoundsCheck(MirOperand.Move(len), MirOperand.Copy(MirPlace(index)))
+        blockTemp = blockTemp.assert(MirOperand.Move(lt), true, span, msg)
+
+        return blockTemp
+    }
+
+    private fun addFakeBorrowsOfBase(basePlace: MirPlace) {
+        val placeTy = basePlace.ty()
+        if (placeTy.ty is TySlice) {
+            // We need to create fake borrows to ensure that the bounds check that we just did stays valid. Since we
+            // can't assign to unsized values, we only need to ensure that none of the pointers in the base place are
+            // modified.
+            for ((idx, elem) in basePlace.projections.withIndex().reversed()) {
+                when (elem) {
+                    is MirProjectionElem.Deref -> {
+                        // TODO
+                    }
+
+                    is MirProjectionElem.Index -> {
+                        val indexTy = MirPlace.tyFrom(basePlace.local, basePlace.projections.subList(0, idx))
+                        when (indexTy.ty) {
+                            // The previous index expression has already done any index expressions needed here.
+                            is TySlice -> break
+                            is TyArray -> Unit
+                            else -> error("unexpected index base")
+                        }
+                    }
+
+                    is MirProjectionElem.ConstantIndex,
+                    is MirProjectionElem.Field -> Unit
+                }
+            }
+        }
+    }
+
+    private fun readFakeBorrows(
+        block: MirBasicBlockImpl,
+        fakeBorrowTemps: MutableList<MirLocal>,
+        sourceInfo: MirSourceInfo
+    ): MirBasicBlockImpl {
+        var blockTemp = block
+        // All indexes have been evaluated now, read all of the fake borrows so that they are live across those index
+        // expressions.
+        for (temp in fakeBorrowTemps) {
+            blockTemp = blockTemp.pushFakeRead(MirStatement.FakeRead.Cause.ForIndex, MirPlace(temp), sourceInfo)
+        }
+        return blockTemp
     }
 
     private fun BlockAnd<*>.thenElseBreak(
@@ -1128,10 +1249,12 @@ class MirBuilder private constructor(
     }
 
     private fun BlockAnd<*>.toTemp(expr: ThirExpr, scope: Scope?, mutability: Mutability): BlockAnd<MirLocal> {
+        if (expr is ThirExpr.Scope) {
+            return inScope(expr.regionScope) { toTemp(expr.expr, scope, mutability) }
+        }
         val localPlace = localDecls.tempPlace(expr.ty, expr.span, mutability = mutability)
         val source = sourceInfo(expr.span)
         when (expr) {
-            is ThirExpr.Scope -> return inScope(expr.regionScope) { toTemp(expr.expr, scope, mutability) }
             is ThirExpr.Break, is ThirExpr.Continue, is ThirExpr.Return -> Unit
             is ThirExpr.Block -> TODO()
             else -> {

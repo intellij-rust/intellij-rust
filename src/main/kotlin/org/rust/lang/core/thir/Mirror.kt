@@ -233,6 +233,15 @@ private fun RsExpr.mirrorUnadjusted(contextOwner: RsInferenceContextOwner, span:
                 else -> error("unreachable")
             }
         }
+        is RsIndexExpr -> {
+            // TODO: support overloaded index
+            ThirExpr.Index(
+                containerExpr.mirror(contextOwner),
+                indexExpr?.mirror(contextOwner) ?: error("Could not get index"),
+                ty,
+                span
+            )
+        }
         else -> TODO("Not implemented for ${this::class}")
     }
 }

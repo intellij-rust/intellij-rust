@@ -17,12 +17,14 @@ class PlaceBuilder(private val base: PlaceBase, private val projections: Mutable
 
     fun toPlace(): MirPlace {
         when (base) {
-            is PlaceBase.Local -> return MirPlace(base.local, projections)
+            is PlaceBase.Local -> return MirPlace(base.local, projections.toList())
         }
     }
 
     fun field(fieldIndex: MirFieldIndex, ty: Ty): PlaceBuilder =
         project(MirProjectionElem.Field(fieldIndex, ty))
+
+    fun index(index: MirLocal): PlaceBuilder = project(MirProjectionElem.Index(index))
 
     fun project(element: PlaceElem): PlaceBuilder {
         projections.add(element)

@@ -22,4 +22,5 @@ sealed class MirRvalue {
     }
     data class Repeat(val operand: MirOperand, val count: Const) : MirRvalue()
     data class Ref(val borrowKind: MirBorrowKind, val place: MirPlace) : MirRvalue()
+    data class Len(val place: MirPlace) : MirRvalue()
 }

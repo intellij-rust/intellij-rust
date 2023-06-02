@@ -117,7 +117,11 @@ interface MirVisitor {
                 visitTy(elem.elem, TyContext.Location(location))
             }
 
-            is MirProjectionElem.Deref -> {}
+            is MirProjectionElem.Index -> {
+                visitLocal(elem.index, MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Copy), location)
+            }
+
+            is MirProjectionElem.Deref, is MirProjectionElem.ConstantIndex -> {}
         }
     }
 
@@ -211,6 +215,14 @@ interface MirVisitor {
                     visitOperand(operand, location)
                 }
             }
+
+            is MirRvalue.Len -> {
+                visitPlace(
+                    rvalue.place,
+                    MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Inspect),
+                    location,
+                )
+            }
         }
     }
 
@@ -283,6 +295,11 @@ interface MirVisitor {
 
             is MirAssertKind.ReminderByZero -> {
                 visitOperand(msg.arg, location)
+            }
+
+            is MirAssertKind.BoundsCheck -> {
+                visitOperand(msg.len, location)
+                visitOperand(msg.index, location)
             }
         }
     }

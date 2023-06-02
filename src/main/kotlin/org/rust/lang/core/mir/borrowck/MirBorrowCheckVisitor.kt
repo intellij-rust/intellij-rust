@@ -144,6 +144,11 @@ class MirBorrowCheckVisitor(
                     consumeOperand(location, operand, state)
                 }
             }
+
+            is MirRvalue.Len -> {
+                accessPlace(location, rvalue.place, Read(Copy), state)
+                checkIfPathOrSubpathIsMoved(location, rvalue.place, state)
+            }
         }
     }
 

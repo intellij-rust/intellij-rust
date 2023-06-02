@@ -156,6 +156,13 @@ fun Ty.builtinDeref(items: KnownItems, explicit: Boolean = true): Pair<Ty, Mutab
         else -> null
     }
 
+fun Ty.builtinIndex(): Ty? =
+    when (this) {
+        is TyArray -> base
+        is TySlice -> elementType
+        else -> null
+    }
+
 tailrec fun Ty.stripReferences(): Ty =
     when (this) {
         is TyReference -> referenced.stripReferences()

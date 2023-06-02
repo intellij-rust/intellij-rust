@@ -311,7 +311,7 @@ private class MoveDataBuilder(
             }
 
             is MirRvalue.UnaryOpUse -> gatherOperand(rvalue.operand)
-            is MirRvalue.Ref -> Unit
+            is MirRvalue.Ref, is MirRvalue.Len -> Unit
         }
     }
 

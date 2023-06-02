@@ -125,6 +125,7 @@ internal class MirPrettyPrinter(
             }
             is MirAssertKind.DivisionByZero -> ", \"attempt to divide `{}` by zero\", ${format(msg.arg)}"
             is MirAssertKind.ReminderByZero -> ", \"attempt to calculate the remainder of `{}` with a divisor of zero\", ${format(msg.arg)}"
+            is MirAssertKind.BoundsCheck -> ", \"index out of bounds: the length is {} but the index is {}\", ${format(msg.len)}, ${format(msg.index)}"
         }
     }
 
@@ -137,7 +138,13 @@ internal class MirPrettyPrinter(
                         EqualityOp.EQ -> "Eq"
                         EqualityOp.EXCLEQ -> TODO()
                     }
-                    else -> TODO()
+                    is MirBinaryOperator.Comparison -> when (op.op) {
+                        ComparisonOp.LT -> "Lt"
+                        ComparisonOp.GT -> TODO()
+                        ComparisonOp.GTEQ -> TODO()
+                        ComparisonOp.LTEQ -> TODO()
+                    }
+                    MirBinaryOperator.Offset -> TODO()
                 }
                 "$opName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
@@ -181,6 +188,7 @@ internal class MirPrettyPrinter(
                 }
             }
             is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
+            is MirRvalue.Len -> "Len(${format(rvalue.place)})"
         }
     }
 
@@ -208,6 +216,8 @@ internal class MirPrettyPrinter(
                 when (projection) {
                     is MirProjectionElem.Field -> append("(")
                     is MirProjectionElem.Deref -> append("(*")
+                    is MirProjectionElem.Index,
+                    is MirProjectionElem.ConstantIndex -> Unit
                 }
             }
 
@@ -217,6 +227,8 @@ internal class MirPrettyPrinter(
                 when (projection) {
                     is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
                     is MirProjectionElem.Deref -> append(")")
+                    is MirProjectionElem.Index -> append("[_${projection.index.index}]")
+                    is MirProjectionElem.ConstantIndex -> append("[${projection.offset} of ${projection.minLength}]")
                 }
             }
         }
@@ -229,7 +241,7 @@ internal class MirPrettyPrinter(
                     is MirScalar.Int -> value.scalarInt.data.toString()
                 }
                 when (val type = constant.ty as TyPrimitive) {
-                    is TyInteger -> if (type.minValue.toString() == value) {
+                    is TyInteger -> if (type.isSigned && type.minValue.toString() == value) {
                         "${type.name}::MIN"
                     } else {
                         "${value}_${type.name}"
@@ -287,6 +299,7 @@ internal class MirPrettyPrinter(
     private fun format(cause: MirStatement.FakeRead.Cause): String {
         return when (cause) {
             is MirStatement.FakeRead.Cause.ForLet -> "ForLet(None)".also { assert(cause.element == null) }
+            MirStatement.FakeRead.Cause.ForIndex -> "ForIndex"
         }
     }
 

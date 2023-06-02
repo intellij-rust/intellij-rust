@@ -267,6 +267,8 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /** A *non-overloaded* indexing operation. */
     class Index(
+        val lhs: ThirExpr,
+        val index: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

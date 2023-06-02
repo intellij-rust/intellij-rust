@@ -25,6 +25,7 @@ sealed class MirStatement(
     class FakeRead(val cause: Cause, val place: MirPlace, source: MirSourceInfo) : MirStatement(source) {
         sealed class Cause {
             data class ForLet(val element: RsElement?) : Cause()
+            object ForIndex : Cause()
         }
     }
 }

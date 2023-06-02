@@ -148,6 +148,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {}
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support index in gatherMoves
     fun `test move from array`() = checkByText("""
         struct S;
 
