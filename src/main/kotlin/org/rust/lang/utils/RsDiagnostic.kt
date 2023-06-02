@@ -1303,12 +1303,13 @@ sealed class RsDiagnostic(
         )
     }
 
-    class ImplTraitNotAllowedHere(traitType: RsTraitType) : RsDiagnostic(traitType) {
+    class ImplTraitNotAllowedHere(traitType: RsTraitType, val fixes: List<LocalQuickFix> = emptyList()) : RsDiagnostic(traitType) {
         override fun prepare(): PreparedAnnotation =
             PreparedAnnotation(
                 ERROR,
                 E0562,
-                "`impl Trait` not allowed outside of function and inherent method return types"
+                "`impl Trait` not allowed outside of function and inherent method return types",
+                fixes = fixes.toQuickFixInfo()
             )
     }
 

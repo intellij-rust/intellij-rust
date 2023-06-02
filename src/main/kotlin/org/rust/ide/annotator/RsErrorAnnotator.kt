@@ -375,6 +375,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkTraitObjectBounds(holder, traitType)
 
         if (!traitType.isImpl) return
+
         val invalidContext = traitType
             .ancestors
             .takeWhile { !(it is RsAssocTypeBinding && it.parentOfType<RsTypeQual>() == null) }
@@ -394,7 +395,16 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (invalidContext is RsTypeQual) {
             RsDiagnostic.ImplTraitNotAllowedInPathParams(traitType).addToHolder(holder)
         } else if (invalidContext != null) {
-            RsDiagnostic.ImplTraitNotAllowedHere(traitType).addToHolder(holder)
+            if (isFeatureGated(invalidContext)) {
+                when (CompilerFeature.RETURN_POSITION_IMPL_TRAIT_IN_TRAIT.availability(traitType)) {
+                    NOT_AVAILABLE -> RsDiagnostic.ImplTraitNotAllowedHere(traitType).addToHolder(holder)
+                    CAN_BE_ADDED -> RsDiagnostic.ImplTraitNotAllowedHere(traitType, fixes = listOf(CompilerFeature.RETURN_POSITION_IMPL_TRAIT_IN_TRAIT.addFeatureFix(traitType))).addToHolder(holder)
+                    else -> {}
+
+                }
+            } else {
+                RsDiagnostic.ImplTraitNotAllowedHere(traitType).addToHolder(holder)
+            }
         }
 
         val outerImplOrStop = traitType
@@ -406,6 +416,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.NestedImplTraitNotAllowed(traitType).addToHolder(holder)
         }
 
+    }
+
+    private fun isFeatureGated(invalidContext: PsiElement): Boolean {
+        return invalidContext is RsRetType
     }
 
     private fun checkTraitObjectBounds(holder: RsAnnotationHolder, traitType: RsTraitType) {

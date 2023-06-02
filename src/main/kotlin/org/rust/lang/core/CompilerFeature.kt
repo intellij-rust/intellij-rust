@@ -206,6 +206,7 @@ class CompilerFeature(
         val PARAM_ATTRS: CompilerFeature get() = get("param_attrs")
         val PLATFORM_INTRINSICS: CompilerFeature get() = get("platform_intrinsics")
         val RAW_REF_OP: CompilerFeature get() = get("raw_ref_op")
+        val RETURN_POSITION_IMPL_TRAIT_IN_TRAIT: CompilerFeature get() = get("return_position_impl_trait_in_trait")
         val SLICE_PATTERNS: CompilerFeature get() = get("slice_patterns")
         val START: CompilerFeature get() = get("start")
         val UNBOXED_CLOSURES: CompilerFeature get() = get("unboxed_closures")

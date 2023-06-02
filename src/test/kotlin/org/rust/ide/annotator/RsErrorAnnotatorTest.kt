@@ -2521,6 +2521,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn main() {}
             """)
 
+    @MockRustcVersion("1.69.0")
     fun `test impl Trait not allowed E0562`() = checkErrors("""
         trait Debug{}
         // Allowed
@@ -2684,6 +2685,52 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let _in_return_in_local_variable = || -> impl Fn() { || {} };
         }
     """)
+
+    @MockRustcVersion("1.69.0-nightly")
+    fun `test feature gated impl Trait not allowed E0562`() = checkErrors("""
+        #![feature(return_position_impl_trait_in_trait)]
+        trait Debug {}
+
+        trait InTraitDefnReturn {
+            fn in_return() -> impl Debug;
+        }
+
+        trait DummyTrait {
+            fn in_trait_impl_parameter(_: impl Debug);
+            fn in_trait_impl_return() -> Self::Out;
+            fn wrapper();
+        }
+
+        impl DummyTrait for () {
+            fn in_trait_impl_parameter(_: impl Debug) { }
+            fn in_trait_impl_return() -> impl Debug { () }
+            fn wrapper() {
+                fn in_nested_impl_return() -> impl Debug { () }
+            }
+        }
+
+        trait Nested {
+            fn deref(&self) -> impl Deref<Target = impl Display> + '_;
+        }
+    """)
+
+
+    @MockRustcVersion("1.69.0-nightly")
+    fun `test feature gated impl Trait not allowed E0562 fix`() = checkFixByText("Add `return_position_impl_trait_in_trait` feature", """
+        trait Debug {}
+
+        trait InTraitDefnReturn {
+            fn in_return() -> /*error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]"*/impl/*caret*/ Debug/*error**/;
+        }
+    """, """
+        #![feature(return_position_impl_trait_in_trait)]
+
+        trait Debug {}
+
+        trait InTraitDefnReturn {
+            fn in_return() -> impl/*caret*/ Debug;
+        }
+    """, preview = null)
 
     @MockRustcVersion("1.42.0")
     fun `test const trait impl E0658 1`() = checkErrors("""
