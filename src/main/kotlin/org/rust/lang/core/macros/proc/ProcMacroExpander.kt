@@ -23,6 +23,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.childrenWithLeaves
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
+import org.rust.lang.core.psi.ext.needsSemicolon
 import org.rust.openapiext.RsPathManager.INTELLIJ_RUST_NATIVE_HELPER
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.RsResult
@@ -184,7 +185,7 @@ class ProcMacroExpander private constructor(
 
             override fun visitExprStmt(o: RsExprStmt) {
                 super.visitStmt(o)
-                if (o.semicolon == null && o.getNextNonCommentSibling() is RsStmt) {
+                if (o.semicolon == null && o.needsSemicolon() && o.getNextNonCommentSibling() is RsStmt) {
                     sb.appendUnmapped(";")
                 }
             }
@@ -209,7 +210,7 @@ class ProcMacroExpander private constructor(
         psi !is RsDotExpr && psi.childrenWithLeaves.any { it is PsiErrorElement || it !is RsExpr && hasErrorToHandle(it) }
 
     companion object {
-        const val EXPANDER_VERSION: Int = 9
+        const val EXPANDER_VERSION: Int = 10
 
         fun forCrate(crate: Crate): ProcMacroExpander {
             val project = crate.project

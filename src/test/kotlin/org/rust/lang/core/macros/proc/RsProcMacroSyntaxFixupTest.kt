@@ -104,6 +104,20 @@ class RsProcMacroSyntaxFixupTest : RsTestBase() {
         }
     """)
 
+    fun `test no extra semicolon for if statement`() = checkSyntaxFixup("""
+        fn main() {
+            let a = 1;
+            if true { 1; } else { 2; }
+            let c = 2;
+        }
+    """, """
+        fn main() {
+            let a = 1;
+            if true { 1; } else { 2; }
+            let c = 2;
+        }
+    """)
+
     private fun checkSyntaxFixup(input: String, @Language("Rust") expectedOutput: String) {
         InlineFile("""
             |use test_proc_macros::attr_as_is;

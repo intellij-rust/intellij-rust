@@ -34,10 +34,13 @@ fun RsExprStmt.addSemicolon() {
 }
 
 fun RsExprStmt.addSemicolonIfNeeded() {
-    if (expr.needsSemicolon()) {
+    if (needsSemicolon()) {
         addSemicolon()
     }
 }
+
+fun RsExprStmt.needsSemicolon(): Boolean =
+    expr.needsSemicolon()
 
 private fun RsExpr.needsSemicolon(): Boolean =
     this !is RsWhileExpr && this !is RsIfExpr && this !is RsForExpr && this !is RsLoopExpr && this !is RsMatchExpr
