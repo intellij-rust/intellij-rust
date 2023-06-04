@@ -9,9 +9,9 @@ import com.intellij.psi.PsiElement
 import org.rust.RsBundle
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsPathExpr
-import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.isTailStmt
 
 // TODO: Future improvements: https://github.com/intellij-rust/intellij-rust/issues/9555
@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.ext.isTailStmt
 class RsPathStatementsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.PathStatements
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitExprStmt(exprStmt: RsExprStmt) {
             super.visitExprStmt(exprStmt)
 
