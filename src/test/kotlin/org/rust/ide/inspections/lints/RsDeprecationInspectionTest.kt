@@ -64,26 +64,6 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
     """)
 
-    fun `test rustc_deprecated attribute`() = checkByText("""
-        #[rustc_deprecated(since="0.0.1", reason="here could be your reason")]
-        pub fn foo() {
-        }
-
-        fn main() {
-            <warning descr="`foo` is deprecated since 0.0.1: here could be your reason">foo</warning>();
-        }
-    """)
-
-    fun `test future rustc_deprecated attribute`() = checkByText("""
-        #[rustc_deprecated(since="1.0.0", reason="here could be your reason")]
-        pub fn foo() {
-        }
-
-        fn main() {
-            <weak_warning descr="`foo` will be deprecated from 1.0.0: here could be your reason">foo</weak_warning>();
-        }
-    """)
-
     fun `test deprecated struct`() = checkByText("""
         #[deprecated]
         struct Foo;
