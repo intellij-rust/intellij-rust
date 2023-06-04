@@ -10,7 +10,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.fixes.RemoveMutableFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.contextStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.psi.ext.selfParameter
@@ -22,8 +22,8 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
         object : RsWithMacrosInspectionVisitor() {
             override fun visitPatBinding(o: RsPatBinding) {
                 if (!o.mutability.isMut) return
-                val block = o.ancestorStrict<RsBlock>() ?: o.ancestorStrict<RsFunction>() ?: return
-                if (ReferencesSearch.search(o, LocalSearchScope(block))
+                val block = o.contextStrict<RsBlock>() ?: o.contextStrict<RsFunction>() ?: return
+                if (ReferencesSearch.search(o, LocalSearchScope(block), /*ignoreAccessScope=*/true)
                         .any { checkOccurrenceNeedMutable(it.element.parent) }) return
                 if (block.descendantsOfType<RsMacroCall>().any { checkExprPosition(o, it) }) return
                 holder.registerProblem(
