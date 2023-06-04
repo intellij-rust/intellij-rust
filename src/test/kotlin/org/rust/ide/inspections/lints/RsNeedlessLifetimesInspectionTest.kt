@@ -118,11 +118,11 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
     fun `test output trait type`() = doTest("""
         trait T<'a> {}
         impl <'a> T<'a> for () {}
-        <weak_warning>fn <caret>foo<'a>(a: &'a str) -> impl T<'a></weak_warning> { unimplemented!() }
+        /*weak_warning*/fn /*caret*/foo<'a>(a: &'a str) -> impl T<'a>/*weak_warning**/ { unimplemented!() }
     """, """
         trait T<'a> {}
         impl <'a> T<'a> for () {}
-        fn <caret>foo(a: &str) -> impl T { unimplemented!() }
+        fn /*caret*/foo(a: &str) -> impl T { unimplemented!() }
     """)
 
     fun `test input struct with implicit lifetime`() = doTest("""

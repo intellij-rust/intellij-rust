@@ -304,6 +304,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- macro.rs
     """, preview = null)
 
+    @SkipTestWrapping // Investigate after enabling file-tree with wrapping
     fun `test code insight after attach`() = checkFixByFileTreeWithoutHighlighting("Attach file to lib.rs", """
     //- lib.rs
         fn func() {}

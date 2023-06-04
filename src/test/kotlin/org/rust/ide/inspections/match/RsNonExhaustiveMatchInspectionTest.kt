@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.match
 
 import org.rust.ProjectDescriptor
+import org.rust.SkipTestWrapping
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.ExplicitPreview
@@ -525,6 +526,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    @SkipTestWrapping // TODO adjust `fixupRustSyntaxErrors`
     fun `test add _ pattern for no expression in match`() = checkFixByText("Add _ pattern", """
         fn main() {
             let test = true;
@@ -631,6 +633,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    @SkipTestWrapping // TODO adjust `fixupRustSyntaxErrors`
     fun `test add remaining patterns for no expression in match`() = checkFixByText("Add remaining patterns", """
         fn main() {
             let test = true;
@@ -993,6 +996,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """))
 
+    @SkipTestWrapping // TODO adjust `fixupRustSyntaxErrors`
     fun `test no match body with enum expr`() = checkFixByText("Add remaining patterns", """
         enum E { A, B, C }
 
@@ -1011,6 +1015,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    @SkipTestWrapping // TODO adjust `fixupRustSyntaxErrors`
     fun `test no match body with i32 expr`() = checkFixByText("Add remaining patterns", """
         fn test(i: i32) {
             <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> i<EOLError descr="'!', '(', '::', <operator>, '[' or '{' expected, got '}'"></EOLError>
@@ -1021,6 +1026,7 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    @SkipTestWrapping // TODO adjust `fixupRustSyntaxErrors`
     fun `test no match body with {} expr`() = checkFixByText("Add remaining patterns", """
         fn test() {
             <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> {}<EOLError descr="'(', <operator>, '[' or '{' expected, got '}'"></EOLError>

@@ -18,10 +18,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.ide.annotator.RsAnnotationTestFixture
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.lang.RsLanguage
 
+@RunWith(RsJUnit4TestRunner::class)
 class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> =

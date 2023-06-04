@@ -199,6 +199,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         use foo::<error descr="identifier expected, got '::'">:</error>:bar;
     """, false)
 
+    @SkipTestWrapping // TODO remove after enabling expansion for extern crates
     @MockAdditionalCfgOptions("intellij_rust")
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test unknown crate E0463`() = checkByText("""

@@ -5,9 +5,12 @@
 
 package org.rust.ide.inspections
 
+import org.rust.SkipTestWrapping
+
 /**
  * Tests for Missing Else inspection.
  */
+@SkipTestWrapping // TODO adjust `fixupRustSyntaxErrors`
 class RsMissingElseInspectionTest : RsInspectionsTestBase(RsMissingElseInspection::class) {
 
     fun `test simple`() = checkByText("""

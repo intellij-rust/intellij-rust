@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 /**
@@ -264,6 +265,7 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         pub fn bar() {}
     """)
 
+    @SkipTestWrapping // TODO remove after enabling quick-fixes in macros
     fun `test suppression quick fix for statement 1`() = expect<AssertionError> {
         checkFixByText("Suppress `deprecated` for statement", """
             #[deprecated]
