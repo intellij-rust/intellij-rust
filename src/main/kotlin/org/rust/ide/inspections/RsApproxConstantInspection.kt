@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.ide.utils.import.stdlibAttributes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes
 import org.rust.lang.core.types.ty.TyFloat
@@ -24,10 +25,10 @@ class RsApproxConstantInspection : RsLocalInspectionTool() {
             if (literal is RsLiteralKind.Float) {
                 val value = literal.value ?: return
                 val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
-                val lib = when (o.containingFile.rustFile?.getStdlibAttributes(o.containingCrate)) {
+                val lib = when (o.stdlibAttributes) {
                     Attributes.NONE -> STD
                     Attributes.NO_STD -> CORE
-                    else -> return
+                    Attributes.NO_CORE -> return
                 }
                 val type = when (val type = o.type) {
                     is TyFloat -> type.name

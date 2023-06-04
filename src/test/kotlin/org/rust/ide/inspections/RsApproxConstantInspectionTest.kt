@@ -36,7 +36,7 @@ class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantIns
     fun `test unavailable when no core lib`() = checkByText("""
         #![no_core]
         const PI: f64 = 3.1415;
-    """.trimIndent())
+    """)
 
     fun `test replace with predefined fix`() = checkFixByText("Replace with `std::f64::consts::PI`", """
         const PI: f64 = <warning descr="Approximate value of `std::f64::consts::PI` found. Consider using it directly.">3.1415<caret></warning>;
@@ -44,4 +44,13 @@ class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantIns
         const PI: f64 = std::f64::consts::PI;
     """)
 
+    fun `test use core when no std in other file`() = checkFixByFileTree("Replace with `core::f64::consts::PI`", """
+    //- main.rs
+        #![no_std]
+        mod foo;
+    //- foo.rs
+        const PI: f64 = /*warning descr="Approximate value of `core::f64::consts::PI` found. Consider using it directly."*//*caret*/3.1415/*warning**/;
+    """, """
+
+    """)
 }
