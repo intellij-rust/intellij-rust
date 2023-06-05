@@ -30,9 +30,9 @@ val baseVersion = when (baseIDE) {
 }
 
 val tomlPlugin = "org.toml.lang"
-val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
+val nativeDebugPlugin: String by project
 val graziePlugin = "tanvd.grazi"
-val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
+val psiViewerPlugin: String by project
 val intelliLangPlugin = "org.intellij.intelliLang"
 val copyrightPlugin = "com.intellij.copyright"
 val javaPlugin = "com.intellij.java"
