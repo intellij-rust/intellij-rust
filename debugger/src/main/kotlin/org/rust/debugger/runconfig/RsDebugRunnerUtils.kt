@@ -25,6 +25,7 @@ import org.rust.cargo.runconfig.BuildResult
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.CargoTestRunState
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
+import org.rust.debugger.DebuggerAvailability
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.settings.RsDebuggerSettings
 
@@ -72,13 +73,13 @@ object RsDebugRunnerUtils {
     }
 
     fun checkToolchainConfigured(project: Project): Boolean {
-        val lldbStatus = RsDebuggerToolchainService.getInstance().getLLDBStatus()
-        val (message, action) = when (lldbStatus) {
-            RsDebuggerToolchainService.LLDBStatus.Unavailable -> return false
-            RsDebuggerToolchainService.LLDBStatus.NeedToDownload -> "Debugger is not loaded yet" to "Download"
-            RsDebuggerToolchainService.LLDBStatus.NeedToUpdate -> "Debugger is outdated" to "Update"
-            RsDebuggerToolchainService.LLDBStatus.Bundled,
-            is RsDebuggerToolchainService.LLDBStatus.Binaries -> return true
+        val lldbAvailability = RsDebuggerToolchainService.getInstance().lldbAvailability()
+        val (message, action) = when (lldbAvailability) {
+            DebuggerAvailability.Unavailable -> return false
+            DebuggerAvailability.NeedToDownload -> "Debugger is not loaded yet" to "Download"
+            DebuggerAvailability.NeedToUpdate -> "Debugger is outdated" to "Update"
+            DebuggerAvailability.Bundled,
+            is DebuggerAvailability.Binaries -> return true
         }
 
         val downloadDebugger = if (!RsDebuggerSettings.getInstance().downloadAutomatically) {

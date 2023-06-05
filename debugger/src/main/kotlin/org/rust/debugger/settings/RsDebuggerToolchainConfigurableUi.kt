@@ -12,9 +12,9 @@ import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
 import org.rust.debugger.DebuggerKind
+import org.rust.debugger.DebuggerAvailability
 import org.rust.debugger.RsDebuggerBundle
 import org.rust.debugger.RsDebuggerToolchainService
-import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import javax.swing.ComboBoxModel
 import javax.swing.JEditorPane
 
@@ -71,10 +71,10 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
 
     private fun update() {
         @Suppress("MoveVariableDeclarationIntoWhen")
-        val status = RsDebuggerToolchainService.getInstance().getLLDBStatus()
-        val text = when (status) {
-            LLDBStatus.NeedToDownload -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.comment")
-            LLDBStatus.NeedToUpdate -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.update.comment")
+        val availability = RsDebuggerToolchainService.getInstance().lldbAvailability()
+        val text = when (availability) {
+            DebuggerAvailability.NeedToDownload -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.comment")
+            DebuggerAvailability.NeedToUpdate -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.update.comment")
             else -> null
         }
 

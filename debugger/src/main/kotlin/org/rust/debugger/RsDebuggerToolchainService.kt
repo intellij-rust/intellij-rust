@@ -37,37 +37,37 @@ import java.util.*
 @Service
 class RsDebuggerToolchainService {
 
-    fun getLLDBStatus(): LLDBStatus {
-        if (LLDBDriverConfiguration.hasBundledLLDB()) return LLDBStatus.Bundled
-        return getLLDBStatus(RsDebuggerSettings.getInstance().lldbPath)
+    fun lldbAvailability(): DebuggerAvailability<LLDBBinaries> {
+        if (LLDBDriverConfiguration.hasBundledLLDB()) return DebuggerAvailability.Bundled
+        return lldbAvailability(RsDebuggerSettings.getInstance().lldbPath)
     }
 
-    fun getLLDBStatus(lldbPath: String?, checkVersions: Boolean = true): LLDBStatus {
-        if (lldbPath.isNullOrEmpty()) return LLDBStatus.NeedToDownload
+    fun lldbAvailability(lldbPath: String?, checkVersions: Boolean = true): DebuggerAvailability<LLDBBinaries> {
+        if (lldbPath.isNullOrEmpty()) return DebuggerAvailability.NeedToDownload
 
         val (frameworkPath, frontendPath) = when {
             SystemInfo.isMac -> "LLDB.framework" to "LLDBFrontend"
             SystemInfo.isUnix -> "lib/liblldb.so" to "bin/LLDBFrontend"
             SystemInfo.isWindows -> "bin/liblldb.dll" to "bin/LLDBFrontend.exe"
-            else -> return LLDBStatus.Unavailable
+            else -> return DebuggerAvailability.Unavailable
         }
 
         val frameworkFile = File(FileUtil.join(lldbPath, frameworkPath))
         val frontendFile = File(FileUtil.join(lldbPath, frontendPath))
-        if (!frameworkFile.exists() || !frontendFile.exists()) return LLDBStatus.NeedToDownload
+        if (!frameworkFile.exists() || !frontendFile.exists()) return DebuggerAvailability.NeedToDownload
 
         if (checkVersions) {
             val versions = loadLLDBVersions()
-            val (lldbFrameworkUrl, lldbFrontendUrl) = lldbUrls ?: return LLDBStatus.Unavailable
+            val (lldbFrameworkUrl, lldbFrontendUrl) = lldbUrls ?: return DebuggerAvailability.Unavailable
 
             val lldbFrameworkVersion = fileNameWithoutExtension(lldbFrameworkUrl.toString())
             val lldbFrontendVersion = fileNameWithoutExtension(lldbFrontendUrl.toString())
 
             if (versions[LLDB_FRAMEWORK_PROPERTY_NAME] != lldbFrameworkVersion ||
-                versions[LLDB_FRONTEND_PROPERTY_NAME] != lldbFrontendVersion) return LLDBStatus.NeedToUpdate
+                versions[LLDB_FRONTEND_PROPERTY_NAME] != lldbFrontendVersion) return DebuggerAvailability.NeedToUpdate
         }
 
-        return LLDBStatus.Binaries(frameworkFile, frontendFile)
+        return DebuggerAvailability.Binaries(LLDBBinaries(frameworkFile, frontendFile))
     }
 
     fun downloadDebugger(project: Project? = null): DownloadResult {
@@ -234,13 +234,5 @@ class RsDebuggerToolchainService {
         class Ok(val lldbDir: File) : DownloadResult()
         object NoUrls : DownloadResult()
         class Failed(val message: String?) : DownloadResult()
-    }
-
-    sealed class LLDBStatus {
-        object Unavailable : LLDBStatus()
-        object NeedToDownload : LLDBStatus()
-        object NeedToUpdate : LLDBStatus()
-        object Bundled: LLDBStatus()
-        data class Binaries(val frameworkFile: File, val frontendFile: File) : LLDBStatus()
     }
 }
