@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SimpleConfigurable
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
+import org.rust.debugger.DebuggerKind
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
 import org.rust.debugger.RsDebuggerBundle
@@ -19,6 +20,8 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     var lldbRenderers: LLDBRenderers = LLDBRenderers.DEFAULT
     var gdbRenderers: GDBRenderers = GDBRenderers.DEFAULT
+
+    var debuggerKind: DebuggerKind = DebuggerKind.LLDB
 
     var lldbPath: String? = null
     var downloadAutomatically: Boolean = false
