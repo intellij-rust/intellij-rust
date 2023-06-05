@@ -114,7 +114,7 @@ sealed class LocalsStateAtExit {
             object : MirVisitor {
                 override fun returnPlace(): MirLocal = body.returnPlace()
                 override fun visitLocal(local: MirLocal, context: MirPlaceContext, location: MirLocation) {
-                    if (context is MirPlaceContext.NonUse && context.context == NonUseContext.StorageDead) {
+                    if (context is MirPlaceContext.NonUse.StorageDead) {
                         hasStorageDeadOrMoved[local.index] = true
                     }
                 }
@@ -182,11 +182,7 @@ class GatherBorrows(
         val borrowData = pendingActivations[local]
         if (borrowData != null) {
             // Watch out: the use of TMP in the borrow itself doesn't count as an activation. =)
-            if (borrowData.reserveLocation == location
-                && context is MirPlaceContext.MutatingUse
-                && context.context == MutatingUseContext.Store) {
-                return
-            }
+            if (borrowData.reserveLocation == location && context is MirPlaceContext.MutatingUse.Store) return
 
             activationMap.getOrPut(location) { mutableListOf() }.add(borrowData)
             borrowData.activationLocation = TwoPhaseActivation.ActivatedAt(location)
