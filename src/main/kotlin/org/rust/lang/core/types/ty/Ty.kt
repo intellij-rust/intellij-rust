@@ -190,8 +190,8 @@ fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
         is TyArray -> base.isMovesByDefault(lookup)
         is TySlice -> elementType.isMovesByDefault(lookup)
-        is TyTypeParameter -> !(parameter == TyTypeParameter.Self || lookup.isCopy(this))
-        else -> !lookup.isCopy(this)
+        is TyTypeParameter -> parameter != TyTypeParameter.Self && lookup.isCopy(this).isFalse
+        else -> lookup.isCopy(this).isFalse
     }
 
 val Ty.isBox: Boolean

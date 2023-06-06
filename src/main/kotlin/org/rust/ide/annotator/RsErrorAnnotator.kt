@@ -1199,13 +1199,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         if (realCount == expectedCount && fixes.isNotEmpty()) {
-            val builder = holder.holder.newSilentAnnotation(HighlightSeverity.ERROR)
-                .textAttributes(TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES"))
-                .range(args.textRange)
-            for (fix in fixes) {
-                builder.withFix(fix)
-            }
-            builder.create()
+            holder.newAnnotation(args, HighlightSeverity.ERROR, null, *fixes.toTypedArray())
+                ?.textAttributes(TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES"))
+                ?.create()
         }
     }
 
@@ -1587,9 +1583,11 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     }
 
     val lookup = ImplLookup.relativeTo(constParameter)
-    if (ProcMacroApplicationService.isFullyEnabled() && !(lookup.isPartialEq(ty) && lookup.isEq(ty))) {
-        RsDiagnostic.NonStructuralMatchTypeAsConstGenericParameter(typeReference, ty.shortPresentableText)
-            .addToHolder(holder)
+    if (ProcMacroApplicationService.isFullyEnabled()) {
+        if (lookup.isPartialEq(ty).isFalse || lookup.isEq(ty).isFalse) {
+            RsDiagnostic.NonStructuralMatchTypeAsConstGenericParameter(typeReference, ty.shortPresentableText)
+                .addToHolder(holder)
+        }
     }
 }
 

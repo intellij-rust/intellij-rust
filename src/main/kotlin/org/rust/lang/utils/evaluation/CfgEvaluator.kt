@@ -38,6 +38,9 @@ import org.rust.openapiext.Testmark
 enum class ThreeValuedLogic {
     True, False, Unknown;
 
+    val isTrue: Boolean get() = this == True
+    val isFalse: Boolean get() = this == False
+
     companion object {
         fun fromBoolean(value: Boolean) = when (value) {
             true -> True

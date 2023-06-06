@@ -49,7 +49,7 @@ class RsSelfConventionInspection : RsLintInspection() {
                 if (selfSignature == SelfSignature.BY_VAL) {
                     val selfType = traitOrImpl.selfType
                     val implLookup = ImplLookup.relativeTo(traitOrImpl)
-                    if (selfType is TyUnknown || implLookup.isCopy(selfType)) return
+                    if (selfType is TyUnknown || !implLookup.isCopy(selfType).isFalse) return
                 }
 
                 holder.registerProblem(m.selfParameter ?: m.identifier, convention)

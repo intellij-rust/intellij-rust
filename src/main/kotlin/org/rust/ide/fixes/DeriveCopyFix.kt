@@ -28,7 +28,7 @@ class DeriveCopyFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiEl
         val item = type.item.findPreviewCopyIfNeeded(file)
 
         val implLookup = ImplLookup.relativeTo(item)
-        val isCloneImplemented = implLookup.isClone(type)
+        val isCloneImplemented = implLookup.isClone(type).isTrue
 
         val psiFactory = RsPsiFactory(project)
         val existingDeriveAttr = item.findOuterAttr("derive")
