@@ -6,9 +6,11 @@
 package org.rust.ide.annotator
 
 import org.rust.MockEdition
+import org.rust.SkipTestWrapping
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
+@SkipTestWrapping
 class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018KeywordsAnnotator::class) {
 
     override fun setUp() {

@@ -5,6 +5,9 @@
 
 package org.rust.ide.annotator
 
+import org.rust.SkipTestWrapping
+
+@SkipTestWrapping
 class RsReservedKeywordAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
 
     fun `test annotate reserved keyword 1`() = checkByText("""

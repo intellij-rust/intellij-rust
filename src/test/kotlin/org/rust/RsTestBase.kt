@@ -26,7 +26,6 @@ import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.junit.runner.RunWith
 import org.rust.cargo.CfgOptions
-import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -134,8 +133,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     private fun setupMockRustcVersion() {
         val annotation = findAnnotationInstance<MockRustcVersion>() ?: return
         val (semVer, channel) = parse(annotation.rustcVersion)
-        val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
-        project.testCargoProjects.setRustcInfo(rustcInfo, testRootDisposable)
+        project.testCargoProjects.setRustcVersion(RustcVersion(semVer, "", channel), testRootDisposable)
     }
 
     private fun setupMockEdition() {

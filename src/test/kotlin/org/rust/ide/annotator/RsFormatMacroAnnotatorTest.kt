@@ -10,6 +10,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.annotator.format.RsFormatMacroAnnotator
 import org.rust.ide.colors.RsColor
 
+@SkipTestWrapping // TODO investigate what doesn't work in macros
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::class) {
     override fun setUp() {

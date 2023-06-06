@@ -67,7 +67,7 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test remove visibility qualifier impl`() = checkFixByText("Remove visibility qualifier", """
         struct S;
-        <error descr="Unnecessary visibility qualifier [E0449]">pub/*caret*/</error> impl S {
+        /*error descr="Unnecessary visibility qualifier [E0449]"*/pub/*caret*//*error**/ impl S {
             fn foo() {}
         }
     """, """

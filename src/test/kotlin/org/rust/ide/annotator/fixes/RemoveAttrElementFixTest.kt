@@ -5,10 +5,11 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsAttrErrorAnnotator
-import org.rust.ide.annotator.RsErrorAnnotator
 
+@SkipTestWrapping // TODO RsAttrErrorAnnotator in macros
 class RemoveAttrElementFixTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class) {
     fun `test repr on empty enum`() = checkFixByText("Remove attribute `repr`", """
         #[<error descr="Enum with no variants can't have `repr` attribute [E0084]">repr/*caret*/</error>(u8)]

@@ -5,11 +5,9 @@
 
 package org.rust.ide.annotator
 
-import org.rust.MockAdditionalCfgOptions
-import org.rust.MockRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 
+@SkipTestWrapping // TODO RsAttrErrorAnnotator in macros
 class RsAttrErrorAnnotatorTest : RsAnnotatorTestBase(RsAttrErrorAnnotator::class) {
 
     fun `test attributes wrong delimiter`() = checkByText("""

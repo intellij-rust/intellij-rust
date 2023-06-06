@@ -5,10 +5,7 @@
 
 package org.rust.ide.annotator
 
-import org.rust.MockAdditionalCfgOptions
-import org.rust.MockRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
 
 class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -267,7 +264,10 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         }
     """)
 
+    @MockRustcVersion("1.0.0-nightly")
     fun `test respects namespaces E0428`() = checkErrors("""
+        #![feature(decl_macro)]
+
         mod m {
             // Consts and types are in different namespaces
             type  NO_C_DUP = bool;
@@ -451,6 +451,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         struct foo2 {}
     """)
 
+    @SkipTestWrapping
     fun `test duplicates item vs extern crate E0260`() = checkErrors("""
         <error descr="The name `foo1` is defined multiple times [E0260]">extern crate std as foo1;</error>
         struct <error descr="The name `foo1` is defined multiple times [E0260]">foo1</error> {}
@@ -459,6 +460,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         fn foo2() {}
     """)
 
+    @SkipTestWrapping
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test E0260 respects crate aliases`() = checkErrors("""
         extern crate core as core_alias;
@@ -468,6 +470,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         mod <error descr="The name `alloc` is defined multiple times [E0260]">alloc</error> {}
     """)
 
+    @SkipTestWrapping
     fun `test duplicates import vs extern crate E0254`() = checkErrors("""
         mod inner {
             pub struct foo1 {}
@@ -481,6 +484,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         use inner::foo2;
     """)
 
+    @SkipTestWrapping
     fun `test duplicates extern crate vs extern crate E0259`() = checkErrors("""
         <error descr="The name `std` is defined multiple times [E0259]">extern crate std;</error>
         <error descr="The name `std` is defined multiple times [E0259]">extern crate core as std;</error>

@@ -6,8 +6,10 @@
 package org.rust.ide.annotator
 
 import org.rust.MockAdditionalCfgOptions
+import org.rust.SkipTestWrapping
 import org.rust.ide.colors.RsColor
 
+@SkipTestWrapping
 class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnnotator::class) {
     override fun setUp() {
         super.setUp()

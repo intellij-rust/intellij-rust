@@ -5,6 +5,9 @@
 
 package org.rust.ide.annotator
 
+import org.rust.SkipTestWrapping
+
+@SkipTestWrapping
 class RsExpressionAnnotatorTest : RsAnnotatorTestBase(RsExpressionAnnotator::class) {
 
     fun `test unnecessary parens`() = checkWarnings("""

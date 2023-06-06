@@ -8,7 +8,6 @@ package org.rust.ide.annotator
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.completion.WithWorkspaceAndStdLibProjectDescriptor
 import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
 import org.rust.lang.core.psi.RsExpressionCodeFragment
 
@@ -384,9 +383,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    @ProjectDescriptor(WithWorkspaceAndStdLibProjectDescriptor::class)
-    fun `test boxed function E0061`() = checkErrors(
-        """
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test boxed function E0061`() = checkErrors("""
         use std::boxed::Box;
 
         fn foo() {}
@@ -395,8 +393,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             a(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
             a();
         }
-    """
-    )
+    """)
 
     fun `test non-path call expression E0061`() = checkErrors("""
         fn foo() {}
@@ -1289,6 +1286,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.70.0")
     fun `test generic associated type is sized E0277`() = checkErrors("""
         #[lang = "sized"] trait Sized {}
         pub trait Deref { type Target: ?Sized; }
@@ -1899,6 +1897,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @SkipTestWrapping // Attribute macro on extern crate declaration is not supported for now
     @MockRustcVersion("1.33.0")
     fun `test extern_crate_self 1`() = checkErrors("""
         <error descr="`extern crate self` is experimental [E0658]">extern crate self as foo;</error>
@@ -1911,6 +1910,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         extern crate self as foo;
     """)
 
+    @SkipTestWrapping // Attribute macro on extern crate declaration is not supported for now
     @MockRustcVersion("1.33.0-nightly")
     fun `test extern_crate_self without alias`() = checkErrors("""
         #![feature(extern_crate_self)]
@@ -1947,20 +1947,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test expected function on a impl FnOnce E0618`() = checkErrors("""
+    @MockRustcVersion("1.68.0")
+    fun `test no 'expected function' on a manual FnOnce impl E0618`() = checkErrors("""
         struct Foo;
         #[lang = "fn_once"]
         trait FnOnce<Args> {
             type Output;
             fn call_once(self, args: Args) -> Self::Output;
         }
-        impl /*error descr="Manual implementations of `FnOnce` are experimental [E0183]"*/FnOnce<()>/*error**/ for Foo {
+        impl /*error descr="Manual implementations of `FnOnce` are experimental [E0183]"*//*error descr="The precise format of `Fn`-family traits' type parameters is subject to change [E0658]"*/FnOnce<()>/*error**//*error**/ for Foo {
             type Output = ();
             fn call_once(self, (): ()) {}
         }
 
         fn bar() {
-            Foo();
+            Foo(); // No E0618 here
         }
     """)
 
@@ -3169,6 +3170,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.70.0")
     fun `test arbitrary enum discriminant without repr E0732`() = checkErrors("""
         #![feature(arbitrary_enum_discriminant)]
         enum <error descr="`#[repr(inttype)]` must be specified [E0732]">Enum</error> {
@@ -3178,6 +3180,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.70.0")
     fun `test valid arbitrary enum discriminant E0732`() = checkErrors("""
         #![feature(arbitrary_enum_discriminant)]
         #[repr(u8)]
@@ -3822,6 +3825,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.0.0-nightly")
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test custom start proc macro attr`() = checkByFileTree("""
     //- dep-proc-macro/lib.rs
@@ -3832,6 +3836,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             item
         }
     //- main.rs
+        #![feature(start)]
         extern crate dep_proc_macro;
 
         use dep_proc_macro::start;
@@ -4351,10 +4356,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl T for S { type Item<'a> where 'a : 'static = S; }
     """)
 
+    @MockRustcVersion("1.68.0")
     fun `test generic associated types E0658 3`() = checkErrors("""
         struct S;
         type ItemFree<>;
-        impl S { type Item<>; }
+        impl S { <error descr="inherent associated types is experimental [E0658]">type Item<>;</error> }
         trait T { type Item<>; }
         impl T for S { type Item<>; }
     """)
@@ -4389,13 +4395,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl T for S { type Item = S; }
     """)
 
+    @MockRustcVersion("1.0.0")
     fun `test unnecessary visibility qualifier E0449`() = checkErrors("""
         struct S;
         pub type ItemFree = S;
-        impl S { pub type Item = S; }
+        impl S { <error descr="inherent associated types is experimental [E0658]">pub type Item = S;</error> }
         trait T { <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type Item; }
         impl T for S { <error descr="Unnecessary visibility qualifier [E0449]">pub</error> type Item = S; }
-        extern { pub type ItemForeign; }
+        extern { <error descr="extern types is experimental [E0658]">pub type ItemForeign;</error> }
     """)
 
     fun `test do not annotate usage of private field in debugger code fragment`() = checkByCodeFragment("""
