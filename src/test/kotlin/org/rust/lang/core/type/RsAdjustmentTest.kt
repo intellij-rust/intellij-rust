@@ -556,6 +556,149 @@ class RsAdjustmentTest : RsTestBase() {
         } //^ borrow(&mut [i32; 3]), unsize(&mut [i32])
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer`() = testExpr("""
+        fn main() {
+            let a: fn() = || {};
+                        //^ closureFnPointer(fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer with param`() = testExpr("""
+        fn main() {
+            let a: fn(i32) = |b: i32| {};
+                           //^ closureFnPointer(fn(i32))
+        }
+    """)
+
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer with return value`() = testExpr("""
+        fn main() {
+            let a: fn() -> i32 = || { 0i32 };
+                               //^ closureFnPointer(fn() -> i32)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer with param and return value`() = testExpr("""
+        fn main() {
+            let a: fn(i32) -> i64 = |b: i32| { 0i64 };
+                                  //^ closureFnPointer(fn(i32) -> i64)
+        }
+
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to unsafe function pointer`() = testExpr("""
+        fn main() {
+            let a: unsafe fn() = || {};
+                               //^ closureFnPointer(unsafe fn())
+        }
+    """)
+
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce closure to another closure`() = testExpr("""
+        fn main() {
+            let mut a = || {};
+            a = || {};
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce closure to function def`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let mut a = foo;
+            a = || {};
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test function def to function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+                        //^ reifyFnPointer(fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test function def to unsafe function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: unsafe fn() = foo;
+                               //^ reifyFnPointer(fn()), unsafeFnPointer(unsafe fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce function to another function`() = testExpr("""
+        fn foo() {}
+        fn bar() {}
+        fn main() {
+            let mut a = foo;
+            a = bar;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce function to closure`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let mut a = || {};
+            a = foo;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test function pointer to unsafe function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: unsafe fn() = a;
+                               //^ unsafeFnPointer(unsafe fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no coercion needed for function pointer to function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: fn() = a;
+                        //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test don't coerce function pointer to function def`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let mut b = foo;
+            b = a;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test don't coerce function pointer to closure`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let mut b = || {};
+            b = a;
+              //^
+        }
+    """)
+
     private fun testExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedAdjustments) = findElementAndDataInEditor<RsExpr>()
@@ -589,9 +732,12 @@ class RsAdjustmentTest : RsTestBase() {
                     }
                 }
                 is Adjustment.BorrowReference -> "borrow(${it.target})"
-                is Adjustment.BorrowPointer -> "borrow(${it.target})"
+                is Adjustment.BorrowPointer -> "borrow(${it.target})" // FIXME: should be different from BorrowReference
                 is Adjustment.MutToConstPointer -> "mutToConstPtr(${it.target})"
                 is Adjustment.Unsize -> "unsize(${it.target})"
+                is Adjustment.ClosureFnPointer -> "closureFnPointer(${it.target})"
+                is Adjustment.ReifyFnPointer -> "reifyFnPointer(${it.target})"
+                is Adjustment.UnsafeFnPointer -> "unsafeFnPointer(${it.target})"
             }
         }
         assertEquals(expectedAdjustments.replace("), ", ")\n"), adjustmentsStr)

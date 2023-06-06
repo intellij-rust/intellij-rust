@@ -45,7 +45,7 @@ class RsTypeHintsPresentationFactory(
         return when (kind) {
             is TyTuple -> tupleTypeHint(kind, level)
             is TyAdt -> adtTypeHint(kind, level)
-            is TyFunction -> functionTypeHint(kind, level)
+            is TyFunctionBase -> functionTypeHint(kind, level)
             is TyReference -> referenceTypeHint(kind, level)
             is TyPointer -> pointerTypeHint(kind, level)
             is TyProjection -> projectionTypeHint(kind, level)
@@ -61,7 +61,7 @@ class RsTypeHintsPresentationFactory(
         }
     }
 
-    private fun functionTypeHint(type: TyFunction, level: Int): InlayPresentation {
+    private fun functionTypeHint(type: TyFunctionBase, level: Int): InlayPresentation {
         val parameters = type.paramTypes
         val returnType = type.retType
 

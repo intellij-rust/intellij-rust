@@ -1102,7 +1102,7 @@ class RsForeignModStub(
             return RsForeignModStub(
                 parentStub, this,
                 flags, procMacroInfo,
-                abi = psi.externAbi.litExpr?.stringValue,
+                abi = psi.abi,
             )
         }
     }

@@ -1766,7 +1766,7 @@ fun RsCallExpr.getFunctionCallContext(): FunctionCallContext? {
             val type = el.type.stripReferences()
             // TODO: replace with more generic solution
             // when https://github.com/intellij-rust/intellij-rust/issues/6391 will be implemented
-            if (type is TyFunction) {
+            if (type is TyFunctionBase) {
                 val letDecl = el.parent?.parent as? RsLetDecl
                 if (letDecl?.expr is RsLambdaExpr) {
                     FunctionCallContext(type.paramTypes.size, FunctionType.CLOSURE)

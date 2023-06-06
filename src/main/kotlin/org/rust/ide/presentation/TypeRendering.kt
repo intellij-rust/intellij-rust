@@ -132,7 +132,8 @@ private data class TypeRenderer(
         }
 
         return when (ty) {
-            is TyFunction -> formatFnLike("fn", ty.paramTypes, ty.retType, render)
+            is TyFunctionDef -> formatFunctionDef(ty.def.name, ty.unsafety, ty.paramTypes, ty.retType, render)
+            is TyFunctionBase -> formatFnLike("fn", ty.unsafety, ty.paramTypes, ty.retType, render)
             is TySlice -> "[${render(ty.elementType)}]"
 
             is TyTuple -> if (ty.types.size == 1) {
@@ -199,14 +200,28 @@ private data class TypeRenderer(
             else -> unknownConst
         }
 
-    private fun formatFnLike(fnType: String, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
+    private fun formatFnLike(fnType: String, unsafety: Unsafety, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
         buildString {
-            paramTypes.joinTo(this, ", ", "$fnType(", ")", transform = render)
-            if (retType !is TyUnit) {
-                append(" -> ")
-                append(render(retType))
+            buildFnLikeString(fnType, unsafety, paramTypes, retType, render)
+        }
+
+
+    private fun formatFunctionDef(name: String?, unsafety: Unsafety, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
+        buildString {
+            buildFnLikeString("fn", unsafety, paramTypes, retType, render)
+            if (name != null) {
+                append(" {$name}")
             }
         }
+
+    private fun StringBuilder.buildFnLikeString(fnType: String, unsafety: Unsafety, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String) {
+        val unsafetyPrefix = if (unsafety == Unsafety.Unsafe) "unsafe " else ""
+        paramTypes.joinTo(this, ", ", "$unsafetyPrefix$fnType(", ")", transform = render)
+        if (retType !is TyUnit) {
+            append(" -> ")
+            append(render(retType))
+        }
+    }
 
     private fun formatTrait(trait: BoundElement<RsTraitItem>, render: (Ty) -> String): String = buildString {
         val name = trait.element.name ?: return anonymous
@@ -220,7 +235,7 @@ private data class TypeRenderer(
                 .find { it.key.name == "Output" }
                 ?.value
                 ?: TyUnit.INSTANCE
-            append(formatFnLike(name, paramTypes, retType, render))
+            append(formatFnLike(name, Unsafety.fromBoolean(trait.element.isUnsafe), paramTypes, retType, render))
         } else {
             append(name)
             if (includeTypeArguments) append(formatTraitGenerics(trait, render))

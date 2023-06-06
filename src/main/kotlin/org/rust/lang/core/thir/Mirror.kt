@@ -229,5 +229,8 @@ private fun applyAdjustment(psiExpr: RsElement, thirExpr: ThirExpr, adjustment: 
         is Adjustment.Deref -> TODO()
         is Adjustment.MutToConstPointer -> TODO()
         is Adjustment.Unsize -> TODO()
+        is Adjustment.ClosureFnPointer -> TODO()
+        is Adjustment.ReifyFnPointer -> TODO()
+        is Adjustment.UnsafeFnPointer -> TODO()
     }
 }

@@ -310,7 +310,7 @@ class RsTypeInferenceWalker(
                 ty ?: when (val ety = expected.tyAsNullable(ctx)) {
                     is TyInteger -> ety
                     is TyChar -> TyInteger.U8.INSTANCE
-                    is TyPointer, is TyFunction -> TyInteger.USize.INSTANCE
+                    is TyPointer, is TyFunctionBase -> TyInteger.USize.INSTANCE
                     else -> TyInfer.IntVar()
                 }
             }
@@ -420,7 +420,8 @@ class RsTypeInferenceWalker(
             val tupleFields = ((implForTy as? TyAdt)?.item as? RsFieldsOwner)?.tupleFields
             return if (tupleFields != null) {
                 // Treat tuple constructor as a function
-                TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy)
+                // TODO: This is actually TyFunctionBase, but can't find RsFunction
+                TyFunctionPointer(FnSig(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy))
                     .substitute(implForTy.typeParameterValues)
             } else {
                 implForTy
@@ -502,7 +503,8 @@ class RsTypeInferenceWalker(
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
             // Treat tuple constructor as a function
-            TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, type)
+            // TODO: This is actually TyFunctionBase, but can't find RsFunction
+            TyFunctionPointer(FnSig(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, type))
         } else {
             type
         }.substitute(typeParameters).foldWith(associatedTypeNormalizer)
@@ -633,7 +635,7 @@ class RsTypeInferenceWalker(
         val calleeType = ctx.resolveTypeVarsIfPossible(
             (derefTy?.register() ?: unknownTyFunction(argExprs.size))
                 .foldWith(associatedTypeNormalizer)
-        ) as TyFunction
+        ) as TyFunctionBase
         val expectedInputTys = expectedInputsForExpectedOutput(expected, calleeType.retType, calleeType.paramTypes)
         inferArgumentTypes(calleeType.paramTypes, expectedInputTys, argExprs)
         return calleeType.retType
@@ -723,7 +725,7 @@ class RsTypeInferenceWalker(
 
         val methodType = (callee.element.type)
             .substitute(newSubst)
-            .foldWith(associatedTypeNormalizer) as TyFunction
+            .foldWith(associatedTypeNormalizer) as TyFunctionBase
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `methodCall.valueArgumentList.exprList`
         val formalInputTys = methodType.paramTypes.drop(1)
@@ -837,8 +839,9 @@ class RsTypeInferenceWalker(
         }
     }
 
-    private fun unknownTyFunction(arity: Int): TyFunction =
-        TyFunction(generateSequence { TyUnknown }.take(arity).toList(), TyUnknown)
+    // TODO: return FnSig
+    private fun unknownTyFunction(arity: Int): TyFunctionPointer =
+        TyFunctionPointer(FnSig(generateSequence { TyUnknown }.take(arity).toList(), TyUnknown))
 
     private fun inferArgumentTypes(
         formalInputTys: List<Ty>,
@@ -1339,7 +1342,7 @@ class RsTypeInferenceWalker(
         val expectedFnTy = expected
             .tyAsNullable(ctx)
             ?.let(this::deduceLambdaType)
-            ?: TyFunction(generateSequence { TyInfer.TyVar() }.take(params.size).toList(), TyUnknown)
+            ?: TyClosure(expr, FnSig(generateSequence { TyInfer.TyVar() }.take(params.size).toList(), TyUnknown))
         val extendedArgs = expectedFnTy.paramTypes.asSequence().infiniteWithTyUnknown()
         val paramTypes = extendedArgs.zip(params.asSequence()).map { (expectedArg, actualArg) ->
             val paramTy = actualArg.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: expectedArg
@@ -1359,13 +1362,13 @@ class RsTypeInferenceWalker(
 
         val yieldTy = lambdaBodyContext.yieldTy
         return if (yieldTy == null) {
-            TyFunction(paramTypes, if (expr.isAsync) items.makeFuture(actualRetTy) else actualRetTy)
+            TyClosure(expr, FnSig(paramTypes, if (expr.isAsync) items.makeFuture(actualRetTy) else actualRetTy))
         } else {
             items.makeGenerator(yieldTy, actualRetTy)
         }
     }
 
-    private fun deduceLambdaType(expected: Ty): TyFunction? {
+    private fun deduceLambdaType(expected: Ty): TyFunctionBase? {
         return when (expected) {
             is TyInfer.TyVar -> {
                 fulfill.pendingObligations
@@ -1374,7 +1377,7 @@ class RsTypeInferenceWalker(
                     ?.let { lookup.asTyFunction(it.trait.trait) }
             }
             is TyTraitObject -> lookup.asTyFunction(expected.traits.first()) // TODO: Use all trait bounds
-            is TyFunction -> expected
+            is TyFunctionBase -> expected
             is TyAnon -> {
                 val trait = expected.traits.find { it.element in listOf(items.Fn, items.FnMut, items.FnOnce) }
                 trait?.let { lookup.asTyFunction(it) }
@@ -1580,19 +1583,8 @@ private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
 
 }
 
-val RsFunction.type: TyFunction
-    get() {
-        val paramTypes = mutableListOf<Ty>()
-
-        val self = selfParameter
-        if (self != null) {
-            paramTypes += self.typeOfValue
-        }
-
-        paramTypes += valueParameters.map { it.typeReference?.rawType ?: TyUnknown }
-
-        return TyFunction(paramTypes, if (isAsync) knownItems.makeFuture(rawReturnType) else rawReturnType)
-    }
+val RsFunction.type: TyFunctionDef
+    get() = TyFunctionDef(this)
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }
@@ -1646,7 +1638,7 @@ private fun KnownItems.makeGenerator(yieldTy: Ty, returnTy: Ty): Ty {
     return TyAnon(null, listOfNotNull(boundGenerator, Sized?.withSubst()))
 }
 
-private fun KnownItems.makeFuture(outputTy: Ty): Ty {
+fun KnownItems.makeFuture(outputTy: Ty): Ty {
     val futureTrait = Future ?: return TyUnknown
     val boundFuture = futureTrait.substAssocType("Output", outputTy)
     return TyAnon(null, listOfNotNull(boundFuture, Sized?.withSubst()))

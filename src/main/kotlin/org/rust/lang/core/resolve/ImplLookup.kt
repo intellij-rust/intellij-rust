@@ -173,9 +173,11 @@ interface ParamEnv {
                             add(TraitRef(TyTypeParameter.self(), owner.trait.withDefaultSubst()))
                             addAll(owner.trait.bounds)
                         }
+
                         is RsAbstractableOwner.Impl -> {
                             addAll(owner.impl.bounds)
                         }
+
                         else -> Unit
                     }
                 }
@@ -217,6 +219,7 @@ class LazyParamEnv(private val parentItem: RsGenericDeclaration) : ParamEnv {
                 } else {
                     emptySequence()
                 }
+
                 TyTypeParameter.Self -> if (parentItem !is RsTraitOrImpl) {
                     parentItem.whereClause?.wherePredList.orEmpty().asSequence()
                         .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.kind == PathKind.CSELF }
@@ -302,11 +305,13 @@ class ImplLookup(
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
                 findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
             }
-            is TyFunction -> {
+
+            is TyFunctionBase -> {
                 findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
                 listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
             }
+
             is TyAnon -> {
                 ty.getTraitBoundsTransitively()
                     .distinctBy { it.element }
@@ -317,6 +322,7 @@ class ImplLookup(
                     }
                 }
             }
+
             is TyProjection -> {
                 val subst = ty.trait.subst + ty.target.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
                 implsAndTraits += ty.trait.element.bounds.asSequence()
@@ -326,6 +332,7 @@ class ImplLookup(
                     .distinct()
 
             }
+
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
@@ -586,6 +593,7 @@ class ImplLookup(
         return when {
             other is BuiltinCandidate && !other.hasNested
                 || other == ConstDestructCandidate -> true
+
             victim is BuiltinCandidate && !victim.hasNested
                 || victim == ConstDestructCandidate -> false
 
@@ -661,6 +669,7 @@ class ImplLookup(
                 assembleCandidatesFromImpls(ref, candidates)
                 assembleBuiltinBoundCandidates(copyCloneConditions(ref.selfTy), candidates)
             }
+
             items.Sized -> assembleBuiltinBoundCandidates(sizedConditions(ref), candidates)
             items.Unsize -> assembleCandidatesForUnsizing(ref, candidates)
             items.Destruct -> candidates.list.add(ConstDestructCandidate)
@@ -693,6 +702,7 @@ class ImplLookup(
             is BuiltinImplConditions.Where -> {
                 candidates.list += BuiltinCandidate(hasNested = conditions.nested.isNotEmpty())
             }
+
             BuiltinImplConditions.None -> Unit
             BuiltinImplConditions.Ambiguous -> candidates.ambiguous = true
         }
@@ -701,13 +711,15 @@ class ImplLookup(
     // https://github.com/rust-lang/rust/blob/3a90bedb332d/compiler/rustc_trait_selection/src/traits/select/mod.rs#L1820
     private fun copyCloneConditions(selfTy: Ty): BuiltinImplConditions {
         return when (selfTy) {
-            is TyInfer.IntVar, is TyInfer.FloatVar, is TyFunction, TyUnknown, is TyUnit -> {
+            is TyInfer.IntVar, is TyInfer.FloatVar, is TyFunctionBase, TyUnknown, is TyUnit -> {
                 BuiltinImplConditions.Where(emptyList())
             }
+
             is TyInteger, is TyFloat, is TyBool, is TyChar, is TyPointer, is TyNever, is TyReference, is TyArray -> {
                 // Implementations provided in libcore
                 BuiltinImplConditions.None
             }
+
             is TyTuple -> BuiltinImplConditions.Where(selfTy.types)
             else -> BuiltinImplConditions.None
         }
@@ -720,7 +732,7 @@ class ImplLookup(
             is TyInfer.FloatVar,
             is TyNumeric,
             is TyBool,
-            is TyFunction,
+            is TyFunctionBase,
             is TyPointer,
             is TyReference,
             is TyChar,
@@ -755,7 +767,7 @@ class ImplLookup(
 
     // TODO simplify
     private fun getTyFunctionImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        if (ty is TyFunction) {
+        if (ty is TyFunctionBase) {
             val fnOnceOutput = fnOnceOutput
             val args = if (ty.paramTypes.isEmpty()) TyUnit.INSTANCE else TyTuple(ty.paramTypes)
             val assoc = if (fnOnceOutput != null) mapOf(fnOnceOutput to ty.retType) else emptyMap()
@@ -887,24 +899,31 @@ class ImplLookup(
             is BuiltinCandidate -> {
                 SelectionResult.Ok(confirmBuiltinCandidate(ref, recursionDepth, candidate.hasNested))
             }
+
             is ParamCandidate -> {
                 SelectionResult.Ok(confirmParamCandidate(ref, candidate))
             }
+
             is ImplCandidate -> {
                 SelectionResult.Ok(confirmImplCandidate(ref, candidate, recursionDepth))
             }
+
             is ProjectionCandidate -> {
                 SelectionResult.Ok(confirmProjectionCandidate(ref, candidate))
             }
+
             ObjectCandidate -> {
                 SelectionResult.Ok(confirmObjectCandidate(ref))
             }
+
             BuiltinUnsizeCandidate -> {
                 confirmBuiltinUnsizeCandidate(ref, recursionDepth)
             }
+
             is FnPointerCandidate -> {
                 SelectionResult.Ok(confirmFnPointerCandidate(ref))
             }
+
             ConstDestructCandidate -> {
                 SelectionResult.Ok(Selection(ref.trait.element, emptyList()))
             }
@@ -957,6 +976,7 @@ class ImplLookup(
         when (candidate) {
             is ImplCandidate.DerivedTrait ->
                 return confirmDerivedCandidate(ref, candidate, recursionDepth)
+
             is ImplCandidate.ExplicitImpl -> Unit
         }
         testAssert { !candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java) }
@@ -1232,7 +1252,8 @@ class ImplLookup(
     }
 
     private fun lookupAssocTypeInSelection(selection: Selection, assocDef: BoundElement<RsTypeAlias>): Ty? {
-        val assocImpl = selection.impl.associatedTypesTransitively.find { it.name == assocDef.element.name } ?: return null
+        val assocImpl = selection.impl.associatedTypesTransitively.find { it.name == assocDef.element.name }
+            ?: return null
         val subst = substFromTraitToImpl(assocDef, assocImpl)
         return assocImpl.typeReference?.rawType?.substitute(selection.subst + subst)
     }
@@ -1273,8 +1294,9 @@ class ImplLookup(
     fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? =
         selectOverloadedOp(lhsType, rhsType, op).ok()?.impl
 
-    fun asTyFunction(ty: Ty): TyWithObligations<TyFunction>? {
-        return (ty as? TyFunction)?.withObligations() ?: run {
+    // TODO: return FnSig instead
+    fun asTyFunction(ty: Ty): TyWithObligations<TyFunctionBase>? {
+        return (ty as? TyFunctionBase)?.withObligations() ?: run {
             val output = fnOnceOutput ?: return@run null
 
             val inputArgVar = TyInfer.TyVar()
@@ -1282,13 +1304,20 @@ class ImplLookup(
                 .mapNotNull { ctx.commitIfNotNull { selectProjection(it to output, ty, inputArgVar).ok() } }
                 .firstOrNull() ?: return@run null
             TyWithObligations(
-                TyFunction((ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(), ok.value),
+                TyFunctionPointer(
+                    FnSig(
+                        (ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(),
+                        ok.value,
+                        Unsafety.Normal,
+                        false
+                    )
+                ),
                 ok.obligations
             )
         }
     }
 
-    fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunction? {
+    fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunctionBase? {
         return ref.asFunctionType
     }
 
@@ -1334,13 +1363,13 @@ class ImplLookup(
         return canSelect(TraitRef(this, trait.withSubst(*subst)))
     }
 
-    private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
+    private val BoundElement<RsTraitItem>.asFunctionType: TyFunctionBase?
         get() {
             val outputParam = fnOnceOutput ?: return null
             val param = element.typeParamSingle ?: return null
             val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
             val outputType = (assoc[outputParam] ?: TyUnit.INSTANCE)
-            return TyFunction(argumentTypes, outputType)
+            return TyFunctionPointer(FnSig(argumentTypes, outputType))
         }
 
     companion object {

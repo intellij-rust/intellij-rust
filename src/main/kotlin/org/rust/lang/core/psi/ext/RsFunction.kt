@@ -169,13 +169,20 @@ val RsFunction.isActuallyUnsafe: Boolean
                 // See https://github.com/rustwasm/wasm-bindgen
                 context.queryAttributes.hasAttribute("wasm_bindgen") -> false
                 // Some Rust intrinsics are safe. This info is hardcoded in compiler
-                context.externAbi.litExpr?.stringValue == "rust-intrinsic" -> name !in SAFE_INTRINSICS
+                isIntrinsic -> name !in SAFE_INTRINSICS
                 else -> true
             }
         } else {
             false
         }
     }
+
+val RsFunction.isIntrinsic: Boolean
+    get() {
+        val context = context
+        return context is RsForeignModItem && context.effectiveAbi == "rust-intrinsic"
+    }
+
 
 // Taken from https://github.com/rust-lang/rust/blob/6b4563bf93f4b103ed22507ed825008b89e4f5d9/compiler/rustc_typeck/src/check/intrinsic.rs#L65-L108
 private val SAFE_INTRINSICS: Set<String> = hashSetOf(

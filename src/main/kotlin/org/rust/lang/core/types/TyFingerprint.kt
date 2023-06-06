@@ -75,7 +75,7 @@ data class TyFingerprint constructor(
             is TyReference -> create(type.referenced)
             is TyTuple -> TyFingerprint("(tuple)")
             is TyPrimitive -> TyFingerprint(type.toString())
-            is TyFunction -> TyFingerprint("fn()")
+            is TyFunctionBase -> TyFingerprint("fn()")
             is TyTraitObject -> TyFingerprint("dyn T")
             is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
             is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT

@@ -133,8 +133,18 @@ class TyLowering private constructor(
             }
 
             is RsFnPointerType -> {
-                val paramTypes = type.valueParameters.map { p -> p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
-                TyFunction(paramTypes, type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown } ?: TyUnit.INSTANCE)
+                val paramTypes = type.valueParameters.map { p ->
+                    p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown
+                }
+                TyFunctionPointer(
+                    FnSig(
+                        paramTypes,
+                        type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
+                            ?: TyUnit.INSTANCE,
+                        Unsafety.fromBoolean(type.isUnsafe),
+                        false
+                    )
+                )
             }
 
             is RsTraitType -> {
@@ -252,6 +262,7 @@ class TyLowering private constructor(
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                     psiValue.value.toConst(expectedTy, resolver)
                 }
+
                 is RsPsiSubstitution.Value.DefaultValue -> {
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                     psiValue.value.toConst(expectedTy, resolver).substitute(constSubst.toConstSubst())
