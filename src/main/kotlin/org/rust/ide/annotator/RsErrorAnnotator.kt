@@ -419,7 +419,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun isFeatureGated(invalidContext: PsiElement): Boolean {
-        return invalidContext is RsRetType
+        return invalidContext is RsRetType && invalidContext.parent.ancestorStrict<RsTraitOrImpl>(RsAbstractable::class.java)?.implementedTrait != null
     }
 
     private fun checkTraitObjectBounds(holder: RsAnnotationHolder, traitType: RsTraitType) {
