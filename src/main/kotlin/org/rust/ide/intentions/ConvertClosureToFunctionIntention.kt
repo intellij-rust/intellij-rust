@@ -15,7 +15,7 @@ import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.ty.TyFunction
+import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -56,7 +56,7 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val useDefaultName = letBidingName == null
         val targetFunctionName = letBidingName ?: "func"
 
-        val fnType = ctx.lambda.type as? TyFunction ?: return
+        val fnType = ctx.lambda.type as? TyFunctionBase ?: return
         val parametersText = ctx.lambda.valueParameters.zip(fnType.paramTypes).joinToString(", ") { (pat, paramType) ->
             val patText = pat.patText ?: "_"
             val type = paramType.renderInsertionSafe()

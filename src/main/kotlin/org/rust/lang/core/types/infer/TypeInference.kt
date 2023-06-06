@@ -8,6 +8,7 @@ package org.rust.lang.core.types.infer
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import kotlinx.html.Unsafe
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -71,6 +72,30 @@ sealed class Adjustment: TypeFoldable<Adjustment> {
     ) : Adjustment() {
         val mutability: Mutability = target.mutability
         override fun superFoldWith(folder: TypeFolder): Adjustment = BorrowPointer(target.foldWith(folder) as TyPointer)
+    }
+
+    class ClosureFnPointer(
+        override val target: TyFunctionPointer
+    ): Adjustment() {
+        override fun superFoldWith(folder: TypeFolder): Adjustment {
+            return ClosureFnPointer(target.foldWith(folder) as TyFunctionPointer)
+        }
+    }
+
+    class ReifyFnPointer(
+        override val target: TyFunctionPointer
+    ): Adjustment() {
+        override fun superFoldWith(folder: TypeFolder): Adjustment {
+            return ReifyFnPointer(target.foldWith(folder) as TyFunctionPointer)
+        }
+    }
+
+    class UnsafeFnPointer(
+        override val target: TyFunctionPointer
+    ): Adjustment() {
+        override fun superFoldWith(folder: TypeFolder): Adjustment {
+            return UnsafeFnPointer(target.foldWith(folder) as TyFunctionPointer)
+        }
     }
 
     class MutToConstPointer(override val target: TyPointer) : Adjustment() {
@@ -140,7 +165,7 @@ class RsInferenceResult(
     fun getResolvedMethod(call: RsMethodCall): List<MethodResolveVariant> =
         resolvedMethods[call]?.resolveVariants ?: emptyList()
 
-    fun getResolvedMethodType(call: RsMethodCall): TyFunction? =
+    fun getResolvedMethodType(call: RsMethodCall): TyFunctionBase? =
         resolvedMethods[call]?.type
 
     fun getResolvedMethodSubst(call: RsMethodCall): Substitution =
@@ -429,7 +454,7 @@ class RsInferenceContext(
         resolvedMethods[call] = InferredMethodCallInfo(resolvedTo)
     }
 
-    fun writeResolvedMethodSubst(call: RsMethodCall, subst: Substitution, ty: TyFunction) {
+    fun writeResolvedMethodSubst(call: RsMethodCall, subst: Substitution, ty: TyFunctionBase) {
         resolvedMethods[call]?.let {
             it.subst = subst
             it.type = ty
@@ -582,9 +607,15 @@ class RsInferenceContext(
             ty1 is TyTuple && ty2 is TyTuple && ty1.types.size == ty2.types.size -> {
                 combineTypePairs(ty1.types.zip(ty2.types))
             }
-            ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
+            ty1 is TyFunctionBase && ty2 is TyFunctionBase && ty1.paramTypes.size == ty2.paramTypes.size
+                && (
+                (ty1 is TyFunctionPointer && ty2 is TyFunctionPointer) ||
+                    (ty1 is TyFunctionDef && ty2 is TyFunctionDef && ty1.def == ty2.def) ||
+                    (ty1 is TyClosure && ty2 is TyClosure && ty1.def == ty2.def)
+                    ) -> {
                 combineTypePairs(ty1.paramTypes.zip(ty2.paramTypes))
                     .and { combineTypes(ty1.retType, ty2.retType) }
+                    .and { combineUnsafety(ty1, ty2) }
             }
             ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
                 combineTypePairs(ty1.typeArguments.zip(ty2.typeArguments))
@@ -597,6 +628,7 @@ class RsInferenceContext(
             ty1 is TyNever || ty2 is TyNever -> Ok(Unit)
             else -> Err(TypeMismatch(ty1, ty2))
         }
+
 
     fun combineConsts(const1: Const, const2: Const): RelateResult {
         return combineConstsResolved(shallowResolve(const1), shallowResolve(const2))
@@ -627,6 +659,9 @@ class RsInferenceContext(
             const1 == const2 -> Ok(Unit)
             else -> Err(ConstMismatch(const1, const2))
         }
+
+    private fun combineUnsafety(ty1: TyFunctionBase, ty2: TyFunctionBase): RelateResult =
+        if (ty1.fnSig.unsafety == ty2.fnSig.unsafety) Ok(Unit) else Err(TypeMismatch(ty1, ty2))
 
     fun combineTypePairs(pairs: List<Pair<Ty, Ty>>): RelateResult = combinePairs(pairs, ::combineTypes)
 
@@ -695,7 +730,47 @@ class RsInferenceContext(
                 coerceMutability(inferred.mutability, expected.mutability) -> {
                 coerceReference(inferred, expected)
             }
+
+            inferred is TyClosure && expected is TyFunctionPointer -> {
+                inferred.def.move
+                // TODO: check for captured variables
+                combineTypes(TyFunctionPointer(inferred.fnSig.copy(unsafety = expected.unsafety)), expected).map {
+                    CoerceOk(adjustments = listOf(Adjustment.ClosureFnPointer(expected)))
+                }
+            }
+
+            inferred is TyFunctionDef && expected is TyFunctionPointer -> {
+                // FIXME: Provide better error messages. Current message will only mention function signature, which is not the reason for the error
+                if (inferred.def.isIntrinsic) {
+                    // Intrinsics are not coercible to function pointers
+                    Err(TypeMismatch(inferred, expected))
+                } else if (expected.unsafety == Unsafety.Normal && inferred.def.queryAttributes.hasAttribute("target_feature")) {
+                    // Safe `#[target_feature]` functions are not assignable to safe fn pointers (RFC 2396).
+                    Err(TypeMismatch(inferred, expected))
+                } else {
+                    val adjustments = listOf<Adjustment>(Adjustment.ReifyFnPointer(TyFunctionPointer(inferred.fnSig)))
+                    coerceFromSafeFn(inferred, expected, adjustments)
+                }
+            }
+
+            inferred is TyFunctionPointer && expected is TyFunctionPointer -> {
+                coerceFromSafeFn(inferred, expected)
+            }
+
             else -> combineTypes(inferred, expected).into()
+        }
+    }
+
+    private fun coerceFromSafeFn(inferred: TyFunctionBase, expected: TyFunctionPointer, adjustments: List<Adjustment> = emptyList()): RsResult<CoerceOk, TypeError> {
+        val finalAdjustments = adjustments.toMutableList()
+        val inf = if (inferred.unsafety == Unsafety.Normal && expected.unsafety == Unsafety.Unsafe) {
+            finalAdjustments.add(Adjustment.UnsafeFnPointer(expected))
+            TyFunctionPointer(inferred.fnSig.copy(unsafety = Unsafety.Unsafe))
+        } else {
+            TyFunctionPointer(inferred.fnSig)
+        }
+        return combineTypes(inf, expected).map {
+            CoerceOk(adjustments = finalAdjustments)
         }
     }
 
@@ -1375,12 +1450,12 @@ sealed class ResolvedPath {
 data class InferredMethodCallInfo(
     val resolveVariants: List<MethodResolveVariant>,
     var subst: Substitution = emptySubstitution,
-    var type: TyFunction? = null,
+    var type: TyFunctionBase? = null,
 ) : TypeFoldable<InferredMethodCallInfo> {
     override fun superFoldWith(folder: TypeFolder): InferredMethodCallInfo = InferredMethodCallInfo(
         resolveVariants,
         subst.foldValues(folder),
-        type?.foldWith(folder) as? TyFunction
+        type?.foldWith(folder) as? TyFunctionBase
     )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean {

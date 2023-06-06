@@ -23,7 +23,7 @@ import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.ReScope
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.TyFunction
+import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.isMovesByDefault
 import org.rust.lang.core.types.type
@@ -304,7 +304,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
     private fun walkCallee(callee: RsExpr) {
         when (callee.type) {
-            is TyFunction -> consumeExpr(callee)
+            is TyFunctionBase -> consumeExpr(callee)
             else -> useAllPaths(callee)
         }
     }

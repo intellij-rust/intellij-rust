@@ -16,7 +16,7 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyFunction
+import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
@@ -114,7 +114,7 @@ class RsUnnecessaryCastInspection : RsLintInspection() {
     }
 
     private fun isFunction(ty: Ty): Boolean {
-        return ty is TyFunction
+        return ty is TyFunctionBase
     }
 
     private fun isAlias(ty: Ty): Boolean {

@@ -24,7 +24,7 @@ import org.rust.lang.core.psi.ext.getLocalVariableVisibleBindings
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyFunction
+import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.type
 
 class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
@@ -93,7 +93,7 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
 
 private fun getParameterTypes(element: PsiElement): List<Ty>? {
     return when (element) {
-        is RsCallExpr -> (element.expr.type as? TyFunction)?.paramTypes
+        is RsCallExpr -> (element.expr.type as? TyFunctionBase)?.paramTypes
         is RsMethodCall -> element.inference?.getResolvedMethodType(element)?.paramTypes?.drop(1)
         else -> null
     }

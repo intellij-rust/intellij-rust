@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections.typecheck
 
+import org.junit.ComparisonFailure
+import org.junit.Test
 import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
@@ -440,5 +442,136 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
         fn foo(_: &[u8]) {}
         fn bar<T>(t: T) -> T { t }
+    """)
+
+    fun `test different closure`() = checkErrors("""
+        fn main() {
+            let mut a = |x: i32| x;
+            a = /*error*/|x: i32| x/*error**/;
+        }
+    """)
+
+    fun `test closure to function pointer`() = checkErrors("""
+        fn main() {
+            let a: fn(i32) -> i32 = |x: i32| x;
+        }
+    """)
+
+    fun `test closure to unsafe function pointer`() = checkErrors("""
+        fn main() {
+            let a: unsafe fn(i32) -> i32 = |x: i32| x;
+        }
+    """)
+
+
+    fun `test closure to function def`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let mut a = foo;
+            a = /*error*/|| {}/*error**/;
+        }
+    """)
+
+    fun `test function def to function pointer`() = checkErrors("""
+        fn main() {
+            let a: fn() = foo;
+        }
+        fn foo() {}
+    """)
+
+    fun `test unsafe function def to normal function pointer`() = checkErrors("""
+        fn main() {
+            let a: fn() = /*error descr="mismatched types [E0308]expected `fn()`, found `unsafe fn() {foo}`"*/foo/*error**/;
+        }
+        unsafe fn foo() {}
+    """)
+
+
+    fun `test function def to unsafe function pointer`() = checkErrors("""
+        fn main() {
+            let a: unsafe fn() = foo;
+        }
+        fn foo() {}
+    """)
+
+    fun `test different function`() = checkErrors("""
+        fn main() {
+            let mut a = foo;
+            a = /*error*/bar/*error**/;
+        }
+        fn foo() {}
+        fn bar() {}
+    """)
+
+    fun `test function to closure`() = checkErrors("""
+        fn main() {
+            let a = foo;
+            let mut b = || {};
+            b = /*error*/a/*error**/;
+        }
+        fn foo() {}
+    """)
+
+    fun `test normal function pointer to unsafe function pointer`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: unsafe fn() = a;
+        }
+    """)
+
+    fun `test function pointer mismatch`() = checkErrors(
+        """
+        fn main() {
+            let a: fn() = /*error descr="mismatched types [E0308]expected `fn()`, found `fn(i32) {f_a}`"*/f_a/*error**/;
+            let b: fn() = /*error descr="mismatched types [E0308]expected `fn()`, found `fn() -> i64 {f_b}`"*/f_b/*error**/;
+            let c: fn(i8) = /*error descr="mismatched types [E0308]expected `fn(i8)`, found `fn() {f_c}`"*/f_c/*error**/;
+            let d: fn(i8) = /*error descr="mismatched types [E0308]expected `fn(i8)`, found `fn(i32) {f_a}`"*/f_a/*error**/;
+        }
+        fn f_a(b: i32) {}
+        fn f_b() -> i64 { 1i64 }
+        fn f_c() {}
+    """
+    )
+
+    // FIXME: make this test pass by checking for captures in the closure
+    @Test(expected = ComparisonFailure::class)
+    fun `test capturing closure`() = checkErrors("""
+        fn main() {
+            let x = 1;
+            let a = || x;
+            let b: fn() -> i32 = /*error*/a/*error**/;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test intrinsics don't coerce to function pointer`() = checkErrors("""
+        #![feature(core_intrinsics)]
+
+        use std::intrinsics::breakpoint;
+
+        fn main() {
+            let a: unsafe fn() = /*error*/breakpoint/*error**/;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test unsafe target_feature function coerces to unsafe function pointer`() = checkErrors("""
+        #[target_feature(enable = "avx2")]
+        unsafe fn foo_avx2() {}
+
+        fn main() {
+            let a: unsafe fn() = foo_avx2;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test normal target_feature function doesn't coerce to normal function pointer`() = checkErrors("""
+        #[target_feature(enable = "avx2")]
+        fn foo_avx2() {}
+
+        fn main() {
+            let a: fn() = /*error*/foo_avx2/*error**/;
+        }
     """)
 }

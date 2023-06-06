@@ -136,7 +136,7 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
             stack.push(parentTy.elementType)
         is TyTuple ->
             parentTy.types.asReversed().forEach(stack::push)
-        is TyFunction -> {
+        is TyFunctionBase -> {
             stack.push(parentTy.retType)
             parentTy.paramTypes.asReversed().forEach(stack::push)
         }
@@ -209,5 +209,5 @@ val Ty.isScalar: Boolean
         this is TyBool ||
         this is TyChar ||
         this is TyUnit ||
-        this is TyFunction || // really TyFnDef & TyFnPtr
+        this is TyFunctionBase || // really TyFnDef & TyFnPtr
         this is TyPointer
