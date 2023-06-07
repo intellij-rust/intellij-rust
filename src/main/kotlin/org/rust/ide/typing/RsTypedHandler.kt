@@ -76,6 +76,12 @@ class RsTypedHandler : TypedHandlerDelegate() {
             }
         }
 
+        // struct literal `Foo {/*caret*/}`
+        if (charTyped == '{') {
+            AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
+            return Result.STOP
+        }
+
         return Result.CONTINUE
     }
 }

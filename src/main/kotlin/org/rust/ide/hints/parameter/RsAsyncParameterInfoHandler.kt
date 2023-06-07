@@ -7,9 +7,11 @@ package org.rust.ide.hints.parameter
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.lang.parameterInfo.ParameterInfoHandler
+import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -64,8 +66,26 @@ abstract class RsAsyncParameterInfoHandler<ParameterOwner : PsiElement, Paramete
         context.showHint(element, element.startOffset, this)
     }
 
-    private companion object {
+    companion object {
         private val executor: Executor =
             AppExecutorUtil.createBoundedApplicationPoolExecutor("Rust async parameter info handler", 1)
+
+        fun updateUI(text: String, range: TextRange, context: ParameterInfoUIContext) {
+            context.setupUIComponentPresentation(
+                text,
+                range.startOffset,
+                range.endOffset,
+                !context.isUIComponentEnabled,
+                false,
+                false,
+                context.defaultParameterColor
+            )
+        }
+
+        fun getArgumentRange(arguments: Array<String>, index: Int): TextRange {
+            if (index < 0 || index >= arguments.size) return TextRange.EMPTY_RANGE
+            val start = arguments.take(index).sumOf { it.length + 2 }
+            return TextRange(start, start + arguments[index].length)
+        }
     }
 }

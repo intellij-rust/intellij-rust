@@ -178,6 +178,7 @@
 
         <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.type.RsExpressionTypeProvider"/>
         <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.parameter.RsParameterInfoHandler"/>
+        <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.parameter.RsStructLiteralParameterInfoHandler"/>
         <codeInsight.parameterInfo language="Rust"
                                    implementationClass="org.rust.ide.hints.parameter.RsGenericParameterInfoHandler"/>
         <codeInsight.parameterNameHints language="Rust"
