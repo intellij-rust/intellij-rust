@@ -238,6 +238,7 @@ data class RsLookupElementProperties(
         DEFAULT,
         MACRO,
         DEPRECATED,
+        FROM_UNRESOLVED_IMPORT,
         // Least priority
     }
 }
