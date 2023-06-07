@@ -77,7 +77,7 @@
         <preFormatProcessor implementation="org.rust.ide.formatter.processors.RsStatementSemicolonFormatProcessor"/>
         <postFormatProcessor implementation="org.rust.ide.formatter.processors.RsTrailingCommaFormatProcessor"/>
 
-        <checkinHandlerFactory implementation="org.rust.ide.actions.RustfmtCheckingFactory" order="last"/>
+        <checkinHandlerFactory implementation="org.rust.ide.actions.RustfmtCheckinFactory" order="last"/>
         <projectService serviceImplementation="org.rust.ide.settings.RsVcsConfiguration"/>
 
         <!-- Refactoring support -->

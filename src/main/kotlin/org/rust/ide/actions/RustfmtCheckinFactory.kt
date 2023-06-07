@@ -36,7 +36,7 @@ import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.RsResult
 
-class RustfmtCheckingFactory : CheckinHandlerFactory() {
+class RustfmtCheckinFactory : CheckinHandlerFactory() {
 
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext) = object : CheckinHandler() {
         override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
@@ -51,12 +51,13 @@ class RustfmtCheckingFactory : CheckinHandlerFactory() {
             FileDocumentManager.getInstance().saveAllDocuments()
 
             val project = panel.project
-            var error: String? = null
+            var error: Pair<String, String?>? = null
 
             val applicableFiles = panel.virtualFiles.mapNotNull { fileContext(it, project) }
             for ((cargoProject, rustfmt, document) in applicableFiles) {
+                val path = document.virtualFile?.path
                 if (Rustup.checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) {
-                    error = RsBundle.message("rust.checkin.factory.fmt.rustfmt.not.installed.message")
+                    error = RsBundle.message("rust.checkin.factory.fmt.rustfmt.not.installed.message") to path
                     break
                 }
                 val e = try {
@@ -65,7 +66,7 @@ class RustfmtCheckingFactory : CheckinHandlerFactory() {
                     return ReturnResult.CANCEL
                 }
 
-                if (e != null) error = e
+                if (e != null) error = e to path
 
                 FileDocumentManager.getInstance().saveDocument(document)
             }
@@ -106,8 +107,14 @@ class RustfmtCheckingFactory : CheckinHandlerFactory() {
         }
     }
 
-    private fun showErrorMessage(panel: CheckinProjectPanel, executor: CommitExecutor?, error: String): CheckinHandler.ReturnResult {
-        val errorLines = error.split("\n", limit = 2)
+    private fun showErrorMessage(panel: CheckinProjectPanel, executor: CommitExecutor?, error: Pair<String, String?>): CheckinHandler.ReturnResult {
+        val errorLines = error.first.split("\n", limit = 2)
+        val filename = error.second
+        val errorHeader = filename?.let {
+            val header = RsBundle.message("rust.checkin.factory.fmt.header.message", it)
+            "$header:<br/>"
+        } ?: ""
+
         val (firstLineError, restOfTheError) = if (errorLines.size == 2) {
             errorLines
         } else if (errorLines.isEmpty()) {
@@ -121,7 +128,7 @@ class RustfmtCheckingFactory : CheckinHandlerFactory() {
 
         val buttons = arrayOf(commitButtonMessage(executor, panel), CommonBundle.getCancelButtonText())
         val question: String = RsBundle.message("rust.checkin.factory.fmt.commit.anyway.question")
-        val dialogText = "<html><body>$firstLineError<br/><b>$question</b> $errorDetails</body></html>\n"
+        val dialogText = "<html><body>$errorHeader$firstLineError<br/><b>$question</b> $errorDetails</body></html>\n"
         val answer = Messages.showDialog(panel.project, dialogText, "Rustfmt", null, buttons, 0, 1, UIUtil.getWarningIcon())
         return when (answer) {
             Messages.OK -> CheckinHandler.ReturnResult.COMMIT
