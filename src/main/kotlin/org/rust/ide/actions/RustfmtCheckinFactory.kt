@@ -36,7 +36,7 @@ import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.RsResult
 
-class RustfmtCheckingFactory : CheckinHandlerFactory() {
+class RustfmtCheckinFactory : CheckinHandlerFactory() {
 
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext) = object : CheckinHandler() {
         override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
