@@ -8,6 +8,7 @@ package org.rust.ide.annotator
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments
+import org.rust.lang.core.completion.WithWorkspaceAndStdLibProjectDescriptor
 import org.rust.lang.core.psi.RsDebuggerExpressionCodeFragment
 import org.rust.lang.core.psi.RsExpressionCodeFragment
 
@@ -354,6 +355,57 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let foo = Foo;
             foo.bar(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">10</error>);
             foo.bar();
+        }
+    """)
+
+    fun `test function pointers E0061`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = || {};
+            let b: fn() = foo;
+
+            a(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+            b(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+            a();
+            b();
+        }
+    """)
+
+    fun `test function reference E0061`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let a = &foo;
+            let b = &a;
+
+            a(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+            b(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+            a();
+            b();
+        }
+    """)
+
+    @ProjectDescriptor(WithWorkspaceAndStdLibProjectDescriptor::class)
+    fun `test boxed function E0061`() = checkErrors(
+        """
+        use std::boxed::Box;
+
+        fn foo() {}
+        fn main() {
+            let a = Box::new(foo);
+            a(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+            a();
+        }
+    """
+    )
+
+    fun `test non-path call expression E0061`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: fn() = foo;
+
+            (if 1 + 1 == 2 { a } else { b })(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+            (if 1 + 1 == 2 { a } else { b })();
         }
     """)
 

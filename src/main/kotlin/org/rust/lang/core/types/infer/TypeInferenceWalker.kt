@@ -624,10 +624,12 @@ class RsTypeInferenceWalker(
     private fun inferCallExprType(expr: RsCallExpr, expected: Expectation): Ty {
         val calleeExpr = expr.expr
         val baseTy = resolveTypeVarsWithObligations(calleeExpr.inferType()) // or error
-        // TODO add adjustment
-        val derefTy = lookup.coercionSequence(baseTy).mapNotNull {
+        val coercionSequence = lookup.coercionSequence(baseTy)
+        val derefTy = coercionSequence.mapNotNull {
             lookup.asTyFunction(it)
-        }.firstOrNull()
+        }.lastOrNull()
+        ctx.applyAdjustments(calleeExpr, coercionSequence.steps().toAdjustments(items))
+
         if (baseTy != TyUnknown && derefTy == null) {
             ctx.addDiagnostic(RsDiagnostic.ExpectedFunction(expr))
         }

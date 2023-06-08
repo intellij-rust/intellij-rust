@@ -1747,34 +1747,29 @@ fun RsValueArgumentList.getFunctionCallContext(): FunctionCallContext? {
 }
 
 fun RsCallExpr.getFunctionCallContext(): FunctionCallContext? {
-    val path = (expr as? RsPathExpr)?.path ?: return null
-    return when (val el = path.reference?.resolve()) {
-        is RsFieldsOwner -> FunctionCallContext(el.fields.size, FunctionType.FUNCTION)
-        is RsFunction -> {
-            val owner = el.owner
+    return when (val calleeType = expr.adjustedType) {
+        is TyFunctionDef -> {
+            val function = calleeType.def
+            val owner = function.owner
             if (owner.isTraitImpl) return null
-            val count = el.valueParameters.size
-            val s = if (el.selfParameter != null) 1 else 0
-            val functionType = if (el.isVariadic) {
+            val count = function.valueParameters.size
+            val s = if (function.selfParameter != null) 1 else 0
+            val functionType = if (function.isVariadic) {
                 FunctionType.VARIADIC_FUNCTION
             } else {
                 FunctionType.FUNCTION
             }
-            FunctionCallContext(count + s, functionType, el)
+            FunctionCallContext(count + s, functionType, function)
         }
-        is RsPatBinding -> {
-            val type = el.type.stripReferences()
-            // TODO: replace with more generic solution
-            // when https://github.com/intellij-rust/intellij-rust/issues/6391 will be implemented
-            if (type is TyFunctionBase) {
-                val letDecl = el.parent?.parent as? RsLetDecl
-                if (letDecl?.expr is RsLambdaExpr) {
-                    FunctionCallContext(type.paramTypes.size, FunctionType.CLOSURE)
-                } else null
-            } else {
-                null
-            }
+
+        is TyClosure -> {
+            FunctionCallContext(calleeType.paramTypes.size, FunctionType.CLOSURE)
         }
+
+        is TyFunctionPointer -> {
+            FunctionCallContext(calleeType.paramTypes.size, FunctionType.FUNCTION)
+        }
+
         else -> null
     }
 }
