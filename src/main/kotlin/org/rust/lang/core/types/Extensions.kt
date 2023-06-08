@@ -126,6 +126,9 @@ val RsPatField.type: Ty
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
 
+val RsExpr.adjustedType: Ty
+    get() = adjustments.lastOrNull()?.target ?: type
+
 val RsStructLiteralField.type: Ty
     get() = (if (isShorthand) resolveToBinding()?.type else expr?.type) ?: TyUnknown
 

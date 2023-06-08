@@ -112,7 +112,7 @@ class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
 
         fn main() {
             let mut x = X {};
-            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">Drop::drop/*caret*/</error>(&mut x, 123, "foo");
+            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">Drop::drop/*caret*/</error>(&mut x, /*error descr="This function takes 1 parameter but 3 parameters were supplied [E0061]"*/123, "foo"/*error**/);
         }
     """, """
         struct X;
