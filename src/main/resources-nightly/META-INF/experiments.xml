@@ -3,9 +3,6 @@
         <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="100">
             <description>Enable Cargo tasks to use Build Tool Window. Requires Rust +1.48.0</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.cargo.test.tool.window" percentOfUsers="100">
-            <description>Show test results in Test Tool Window</description>
-        </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.fetch.actual.stdlib.metadata" percentOfUsers="100">
             <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
         </experimentalFeature>

@@ -19,6 +19,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
@@ -37,6 +38,7 @@ import org.rust.cargo.runconfig.target.BuildTarget
 import org.rust.cargo.runconfig.target.RsLanguageRuntimeConfiguration
 import org.rust.cargo.runconfig.target.RsLanguageRuntimeType
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
+import org.rust.cargo.runconfig.test.CargoTestConsoleProperties.Companion.TEST_TOOL_WINDOW_SETTING_KEY
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -44,10 +46,7 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
-import org.rust.cargo.util.parseSemVer
-import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.statistics.CargoCommandUsagesCollector
-import org.rust.openapiext.isFeatureEnabled
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -204,27 +203,12 @@ open class CargoCommandConfiguration(
         }
     }
 
-    private fun showTestToolWindow(commandLine: CargoCommandLine): Boolean {
-        val isAppropriateConfiguration = when {
-            !isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) -> false
-            commandLine.command !in listOf("test", "bench") -> false
-            "--nocapture" in commandLine.additionalArguments -> false
-            Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() -> false
-            else -> !hasRemoteTarget
-        }
-        if (!isAppropriateConfiguration) return false
-
-        val rustcVersion = findCargoProject(
-            project,
-            commandLine.additionalArguments,
-            commandLine.workingDirectory
-        )?.rustcInfo?.version ?: return true
-
-        // Stable Rust test framework does not support `-Z unstable-options --format json` since 1.70.0-beta
-        // (https://github.com/rust-lang/rust/pull/109044), and we can't use the test tool window without these options
-        return rustcVersion.channel == RustChannel.NIGHTLY
-            || rustcVersion.channel == RustChannel.DEV
-            || rustcVersion.semver < RUSTC_1_70_BETA
+    private fun showTestToolWindow(commandLine: CargoCommandLine): Boolean = when {
+        !AdvancedSettings.getBoolean(TEST_TOOL_WINDOW_SETTING_KEY) -> false
+        commandLine.command !in listOf("test", "bench") -> false
+        "--nocapture" in commandLine.additionalArguments -> false
+        Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() -> false
+        else -> !hasRemoteTarget
     }
 
     override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties? {
@@ -295,9 +279,6 @@ open class CargoCommandConfiguration(
     }
 
     companion object {
-        // Stable Rust test framework does not support `-Z unstable-options --format json` since 1.70.0-beta
-        // (https://github.com/rust-lang/rust/pull/109044), and we can't use the test tool window without these options
-        private val RUSTC_1_70_BETA = "1.70.0-beta".parseSemVer()
 
         fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
             val cargoProjects = project.cargoProjects

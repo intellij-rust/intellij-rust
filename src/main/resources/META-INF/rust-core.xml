@@ -1309,6 +1309,7 @@
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsConvertJsonToStructUsagesCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCodeVisionUsageCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.CargoErrorCodesCollector"/>
+        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.CargoTestToolWindowUsagesCollector"/>
 
         <!-- Registry keys -->
 
@@ -1371,6 +1372,11 @@
             <description>Enable experimental support for structural search and replace in Rust (requires restart)</description>
         </experimentalFeature>
 
+        <advancedSetting
+            id="org.rust.cargo.test.tool.window"
+            default="true"
+            groupKey="advanced.setting.rust.group"
+        />
         <advancedSetting
             id="org.rust.convert.json.to.struct"
             enumClass="org.rust.ide.typing.paste.StoredPreference"
