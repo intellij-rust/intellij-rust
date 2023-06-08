@@ -452,11 +452,11 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
     """)
 
-    fun `test ignore byte format string`() = checkErrors("""
+    fun `test byte format string`() = checkErrors("""
         fn main() {
-            println!(b"format", 1);
-            println!(br"format", 1);
-            println!(br##"format"##, 1);
+            println!(/*error descr="Format argument must be a string literal"*/b"format"/*error**/, 1);
+            println!(/*error descr="Format argument must be a string literal"*/br"format"/*error**/, 1);
+            println!(/*error descr="Format argument must be a string literal"*/br##"format"##/*error**/, 1);
         }
     """)
 
@@ -574,6 +574,80 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         fn bar() {
             #[cfg(not(intellij_rust))]
             println!("{}");
+        }
+    """)
+
+    fun `test incorrect format string`() = checkErrors("""
+        fn main() {
+            println!(/*error descr="Format argument must be a string literal"*/1/*error**/);
+            println!(/*error descr="Format argument must be a string literal"*/x/*error**/);
+            println!(/*error descr="Format argument must be a string literal"*/foo=1/*error**/);
+            panic!(1);
+        }
+    """)
+
+    fun `test missing format string`() = checkErrors("""
+        fn main() {
+            println!();
+            /*error descr="Requires at least a format string argument"*/print!()/*error**/;
+            eprintln!();
+            /*error descr="Requires at least a format string argument"*/eprint!()/*error**/;
+            /*error descr="Requires at least a format string argument"*/format!()/*error**/;
+            /*error descr="Requires at least a format string argument"*/format_args!()/*error**/;
+            /*error descr="Requires at least a format string argument"*/format_args_nl!()/*error**/;
+            panic!();
+            /*error descr="Requires at least a format string argument"*/write!(x)/*error**/;
+            writeln!(x);
+        }
+    """)
+
+    fun `test add format string to print! macro without arguments`() = checkFixByTextWithoutHighlighting("Add format string", """
+        fn main() {
+            print!(/*caret*/);
+        }
+    """, """
+        fn main() {
+            print!("");
+        }
+    """)
+
+    fun `test add format string to print! macro with 1 argument`() = checkFixByTextWithoutHighlighting("Add format string", """
+        fn main() {
+            print!(/*caret*/1);
+        }
+    """, """
+        fn main() {
+            print!("{}", 1);
+        }
+    """)
+
+    fun `test add format string to print! macro with 2 arguments`() = checkFixByTextWithoutHighlighting("Add format string", """
+        fn main() {
+            print!(/*caret*/1, 2);
+        }
+    """, """
+        fn main() {
+            print!("{} {}", 1, 2);
+        }
+    """)
+
+    fun `test add format string to write! macro without arguments`() = checkFixByTextWithoutHighlighting("Add format string", """
+        fn main() {
+            write!(x/*caret*/);
+        }
+    """, """
+        fn main() {
+            write!(x, "");
+        }
+    """)
+
+    fun `test add format string to write! macro with 1 argument`() = checkFixByTextWithoutHighlighting("Add format string", """
+        fn main() {
+            write!(x, /*caret*/1);
+        }
+    """, """
+        fn main() {
+            write!(x, "{}", 1);
         }
     """)
 }

@@ -72,6 +72,10 @@ class RsPsiFactory(
             ?: error("Failed to create macro call")
     }
 
+    fun createFormatMacroArg(argument: String): RsFormatMacroArg =
+        createFromText("print!($argument)")
+            ?: error("Failed to create format macro argument")
+
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
