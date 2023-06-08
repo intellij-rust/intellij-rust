@@ -41,5 +41,6 @@ class CargoTestConsoleProperties(
 
     companion object {
         const val TEST_FRAMEWORK_NAME: String = "Cargo Test"
+        const val TEST_TOOL_WINDOW_SETTING_KEY: String = "org.rust.cargo.test.tool.window"
     }
 }
