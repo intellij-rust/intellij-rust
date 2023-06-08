@@ -7,7 +7,9 @@ package org.rust.lang.core.completion
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
@@ -19,6 +21,7 @@ import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.*
 import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.completion.RsLookupElementProperties.ElementKind.FROM_UNRESOLVED_IMPORT
 import org.rust.lang.core.macros.findElementExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -98,6 +101,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 is RsPath -> {
                     val processor2 = addProcessedPathName(processor, processedElements)
                     processPathVariants(element, processor2)
+                    processUnresolvedImports(element, result, context)
                 }
             }
         }
@@ -155,6 +159,26 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     filtered
                 )
             }
+        }
+    }
+
+    private fun processUnresolvedImports(path: RsPath, result: CompletionResultSet, context: RsCompletionContext) {
+        if (!context.isSimplePath) return
+
+        val unresolvedImports = hashSetOf<String>()
+        processUnresolvedImports(path) { useSpeck ->
+            val name = useSpeck.nameInScope?.takeIf { it != "_" }
+            if (name != null) {
+                unresolvedImports += name
+            }
+        }
+
+        for (unresolvedImport in unresolvedImports) {
+            val element = LookupElementBuilder.create(unresolvedImport)
+                .toRsLookupElement(RsLookupElementProperties(elementKind = FROM_UNRESOLVED_IMPORT))
+            @Suppress("UnstableApiUsage")
+            val wrapped = MLRankingIgnorable.wrap(element)
+            result.addElement(wrapped)
         }
     }
 

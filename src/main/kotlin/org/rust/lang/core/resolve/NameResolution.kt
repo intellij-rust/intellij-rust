@@ -1748,6 +1748,22 @@ inline fun processWithShadowing(
     return f(shadowingProcessor)
 }
 
+fun processUnresolvedImports(context: RsElement, processor: (RsUseSpeck) -> Unit) {
+    walkUp(context, { it is RsMod }) { _, scope ->
+        if (scope !is RsItemsOwner) return@walkUp false
+        for (import in scope.expandedItemsCached.imports) {
+            if (!import.existsAfterExpansion) continue
+            import.useSpeck?.forEachLeafSpeck { useSpeck ->
+                if (useSpeck.isStarImport) return@forEachLeafSpeck
+                if (useSpeck.path?.reference?.multiResolve()?.isEmpty() == true) {
+                    processor(useSpeck)
+                }
+            }
+        }
+        false
+    }
+}
+
 fun findPrelude(element: RsElement): RsMod? {
     val info = getModInfo(element.containingMod) ?: return null
     val prelude = info.defMap.prelude ?: return null
