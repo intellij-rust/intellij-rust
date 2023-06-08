@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.util.prevLeafs
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 
@@ -32,10 +33,34 @@ enum class TestWrapping(
      * The macro `attr_as_is` is an "identity" macro. That is, it expands to its input, just like there isn't
      * a macro invocation.
      */
-    ATTR_MACRO_AS_IS(
+    ATTR_MACRO_AS_IS_AT_CARET(
         "wrapped with `#[attr_as_is]` macro",
-        AttrMacroTestWrappingImpl("attr_as_is")
-    );
+        AttrMacroAtCaretTestWrappingImpl("attr_as_is")
+    ),
+
+    /**
+     * Adds `#[attr_as_is]` attribute macro invocation to all top level items.
+     * For example, this code snippet:
+     * ```
+     * fn foo() { /*caret*/ }
+     * fn bar() { }
+     * ```
+     * will be transformed to
+     * ```
+     * #[attr_as_is]
+     * fn foo() { /*caret*/ }
+     * #[attr_as_is]
+     * fn bar() { }
+     * ```
+     *
+     * The macro `attr_as_is` is an "identity" macro. That is, it expands to its input, just like there isn't
+     * a macro invocation.
+     */
+    ATTR_MACRO_AS_IS_ALL_ITEMS(
+        "wrapped with `#[attr_as_is]` macro",
+        AttrMacroAtAllItemsTestWrappingImpl("attr_as_is")
+    ),
+    ;
 
     override fun toString(): String = testDescription
 
@@ -59,14 +84,9 @@ private class NoneTestWrappingImpl : TestWrappingImpl {
         code to null
 }
 
-private class AttrMacroTestWrappingImpl(private val macroName: String) : TestWrappingImpl {
-    override fun wrapProjectDescriptor(originalDescriptor: RustProjectDescriptorBase): RustProjectDescriptorBase? {
-        return when {
-            originalDescriptor is WithProcMacros -> null
-            originalDescriptor === DefaultDescriptor -> WithProcMacroRustProjectDescriptor
-            else -> WithProcMacros(originalDescriptor)
-        }
-    }
+private class AttrMacroAtCaretTestWrappingImpl(private val macroName: String) : TestWrappingImpl {
+    override fun wrapProjectDescriptor(originalDescriptor: RustProjectDescriptorBase): RustProjectDescriptorBase? =
+        wrapProjectDescriptorWithProcMacros(originalDescriptor)
 
     override fun wrapCode(project: Project, code: String): Pair<String, TestUnwrapper?> {
         var caretMarker = ""
@@ -96,6 +116,31 @@ private class AttrMacroTestWrappingImpl(private val macroName: String) : TestWra
 
     companion object {
         private val CARET_MARKERS = listOf("/*caret*/", "<caret>", "<selection>")
+    }
+}
+
+private class AttrMacroAtAllItemsTestWrappingImpl(private val macroName: String) : TestWrappingImpl {
+    override fun wrapProjectDescriptor(originalDescriptor: RustProjectDescriptorBase): RustProjectDescriptorBase? =
+        wrapProjectDescriptorWithProcMacros(originalDescriptor)
+
+    override fun wrapCode(project: Project, code: String): Pair<String, TestUnwrapper?> {
+        val file = RsPsiFactory(project, markGenerated = false, eventSystemEnabled = true)
+            .createFile(code)
+        val itemOffsets = file.childrenWithLeaves
+            .filter { it is RsAttrProcMacroOwner && it.queryAttributes.langAttribute == null }
+            .map { it.prevLeafs.takeWhile { leaf -> leaf is PsiComment }.lastOrNull() ?: it }
+            .map { it.startOffset }
+            .toList()
+        val mutableText = StringBuilder(code)
+        val insertion = "#[test_proc_macros::$macroName]"
+        for ((i, offset) in itemOffsets.withIndex()) {
+            mutableText.insert(offset + i * insertion.length, insertion)
+        }
+//        val unwrappers = itemOffsets.withIndex().map { (i, offset) ->
+//            TestUnwrapperImpl(offset + i * insertion.length)
+//        }
+
+        return mutableText.toString() to null /*MultipleTestUnwrapper(unwrappers)*/
     }
 }
 
@@ -129,4 +174,10 @@ class TestUnwrapper(
             }
         }
     }
+}
+
+private fun wrapProjectDescriptorWithProcMacros(originalDescriptor: RustProjectDescriptorBase) = when {
+    originalDescriptor is WithProcMacros -> null
+    originalDescriptor === DefaultDescriptor -> WithProcMacroRustProjectDescriptor
+    else -> WithProcMacros(originalDescriptor)
 }

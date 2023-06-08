@@ -5,9 +5,12 @@
 
 package org.rust.toml.inspections
 
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.toml.ide.inspections.TomlUnresolvedReferenceInspection
 
+@RunWith(RsJUnit4TestRunner::class)
 class CargoTomlUnresolvedPathReferenceInspectionTest : RsInspectionsTestBase(TomlUnresolvedReferenceInspection::class) {
     fun `test build script found`() = checkByFileTree("""
         //- main.rs

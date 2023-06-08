@@ -57,7 +57,7 @@ class RsDefaultValueBuilder(
 
                 var default = this.defaultValue
                 val implLookup = mod.implLookup
-                if (implLookup.isDefault(ty)) {
+                if (implLookup.isDefault(ty).isTrue) {
                     default = psiFactory.createAssocFunctionCall("Default", "default", emptyList())
                 }
 
@@ -67,7 +67,7 @@ class RsDefaultValueBuilder(
                     items.String -> psiFactory.createExpression("\"\".to_string()")
                     items.Vec -> psiFactory.createExpression("vec![]")
                     is RsStructItem -> if (item.kind == RsStructKind.STRUCT && item.canBeInstantiatedIn(mod)) {
-                        if (implLookup.isDefault(ty)) {
+                        if (implLookup.isDefault(ty).isTrue) {
                             return default
                         }
 
@@ -100,7 +100,7 @@ class RsDefaultValueBuilder(
                         default
                     }
                     is RsEnumItem -> {
-                        if (implLookup.isDefault(ty)) {
+                        if (implLookup.isDefault(ty).isTrue) {
                             return default
                         }
 

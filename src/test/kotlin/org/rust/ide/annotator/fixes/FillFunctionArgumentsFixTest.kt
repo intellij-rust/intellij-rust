@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -221,6 +222,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         }
     """)
 
+    @SkipTestWrapping // TODO better syntax recovery for function arguments
     fun `test empty argument in the middle`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: u32) {}
         fn main() {
@@ -233,6 +235,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         }
     """)
 
+    @SkipTestWrapping // TODO better syntax recovery for function arguments
     fun `test empty arguments in the middle`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
@@ -257,6 +260,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         }
     """)
 
+    @SkipTestWrapping // TODO better syntax recovery for function arguments
     fun `test empty arguments at the end 1`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
@@ -269,6 +273,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         }
     """)
 
+    @SkipTestWrapping // TODO better syntax recovery for function arguments
     fun `test empty arguments at the end 2`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {
@@ -281,6 +286,7 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         }
     """)
 
+    @SkipTestWrapping // TODO better syntax recovery for function arguments
     fun `test interleaved empty arguments`() = checkFixByText("Fill missing arguments", """
         fn foo(a: u32, b: &str, c: bool, d: u32) {}
         fn main() {

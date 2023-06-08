@@ -9,6 +9,7 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.utils.import.Testmarks
 
+@SkipTestWrapping // TODO remove after enabling quick-fixes in macros
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
     @CheckTestmarkHit(Testmarks.AutoInjectedStdCrate::class)

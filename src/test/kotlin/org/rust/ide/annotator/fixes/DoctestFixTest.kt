@@ -11,7 +11,7 @@ import org.rust.ide.annotator.*
 class DoctestFixTest : RsAnnotationTestBase() {
     // Issue https://github.com/intellij-rust/intellij-rust/issues/6790
     fun `test in doctest fix const`() = doTest("Add type i32", """
-        <error descr="Missing type for `const` item">const CONST/*caret*/ = 1;</error>
+        const <error descr="Missing type for `const` item">CONST/*caret*/</error> = 1;
     """, """
         const CONST:i32/*caret*/ = 1;
     """)

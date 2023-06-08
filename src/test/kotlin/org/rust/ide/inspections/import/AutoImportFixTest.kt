@@ -11,6 +11,7 @@ import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.utils.import.Testmarks
 
+@SkipTestWrapping // TODO remove after enabling quick-fixes in macros
 class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import struct`() = checkAutoImportFixByText("""

@@ -6,9 +6,12 @@
 package org.rust.toml.inspections
 
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.cargo.CargoConstants.MANIFEST_FILE
 import org.rust.ide.inspections.RsInspectionsTestBase
 
+@RunWith(RsJUnit4TestRunner::class)
 class CargoTomlCyclicFeatureInspectionTest : RsInspectionsTestBase(CargoTomlCyclicFeatureInspection::class) {
     fun `test feature depending on itself`() = doTest("""
         [features]

@@ -7,6 +7,8 @@ package org.rust.toml.inspections
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.cargo.CargoConstants
 import org.rust.ide.annotator.RsAnnotationTestFixture
 import org.rust.ide.experiments.RsExperiments
@@ -16,6 +18,7 @@ import org.rust.toml.crates.local.CargoRegistryCrate
 import org.rust.toml.crates.local.withMockedCrates
 import kotlin.reflect.KClass
 
+@RunWith(RsJUnit4TestRunner::class)
 abstract class CargoTomlCrateInspectionTestBase(
     inspectionClass: KClass<out InspectionProfileEntry>
 ) : RsInspectionsTestBase(inspectionClass) {

@@ -18,11 +18,14 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.settings.toolchain
 import org.rust.lang.core.macros.findElementExpandedFrom
+import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
+import org.rust.lang.core.macros.mapRangeFromExpansionToCallBody
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.existsAfterExpansion
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.isUnitTestMode
 
 abstract class RsLocalInspectionTool : LocalInspectionTool() {
@@ -79,8 +82,14 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                 holder.registerProblem(element, descriptionTemplate, *fixes)
             } else {
                 // The element is expanded from a macro
-                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, descriptionTemplate /* no quick-fixes for now */)
+                val (sourceElement, sourceRangeInElement) = element.findCorrespondingElementAndRangeExpandedFrom()
+                    ?: return
+                holder.registerProblem(
+                    sourceElement,
+                    sourceRangeInElement,
+                    descriptionTemplate,
+                    /* no quick-fixes for now */
+                )
             }
         }
     }
@@ -96,8 +105,15 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                 holder.registerProblem(element, descriptionTemplate, highlightType, *fixes)
             } else {
                 // The element is expanded from a macro
-                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, descriptionTemplate, highlightType /* no quick-fixes for now */)
+                val (sourceElement, sourceRangeInElement) = element.findCorrespondingElementAndRangeExpandedFrom()
+                    ?: return
+                holder.registerProblem(
+                    sourceElement,
+                    descriptionTemplate,
+                    highlightType,
+                    sourceRangeInElement,
+                    /* no quick-fixes for now */
+                )
             }
         }
     }
@@ -109,6 +125,10 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         highlightType: ProblemHighlightType,
         vararg fixes: LocalQuickFix,
     ) {
+        if (startElement == endElement) {
+            registerProblem(startElement, descriptionTemplate, highlightType, *fixes)
+            return
+        }
         if (startElement.existsAfterExpansion && isProblemWithTypeAllowed(highlightType)) {
             val descriptor = if (startElement.containingFile == file) {
                 holder.manager.createProblemDescriptor(
@@ -142,8 +162,9 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                 holder.registerProblem(element, rangeInElement, message, *fixes)
             } else {
                 // The element is expanded from a macro
-                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, rangeInElement, message /* no quick-fixes for now */)
+                val (sourceElement, sourceRangeInElement) =
+                    element.findCorrespondingElementAndRangeExpandedFrom(rangeInElement) ?: return
+                holder.registerProblem(sourceElement, sourceRangeInElement, message /* no quick-fixes for now */)
             }
         }
     }
@@ -160,8 +181,9 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                 holder.registerProblem(element, message, highlightType, rangeInElement, *fixes)
             } else {
                 // The element is expanded from a macro
-                val sourceElement = element.findCorrespondingElementExpandedFrom() ?: return
-                holder.registerProblem(sourceElement, message, highlightType, rangeInElement /* no quick-fixes for now */)
+                val (sourceElement, sourceRangeInElement) =
+                    element.findCorrespondingElementAndRangeExpandedFrom(rangeInElement) ?: return
+                holder.registerProblem(sourceElement, message, highlightType, sourceRangeInElement /* no quick-fixes for now */)
             }
         }
     }
@@ -174,6 +196,20 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         val textLength = textLength
         val elementType = elementType
         return leaf.ancestors.find { it.textLength == textLength && it.elementType == elementType }
+    }
+
+    private fun PsiElement.findCorrespondingElementAndRangeExpandedFrom(
+        rangeInElement: TextRange = TextRange(0, textLength)
+    ): Pair<PsiElement, TextRange>? {
+        // TODO simplify: map the leaf and the text range at once
+        val macroCall = findMacroCallExpandedFromNonRecursive() ?: return null
+        val leaf = findElementExpandedFrom() ?: return null
+        val sourceRange = macroCall.mapRangeFromExpansionToCallBody(rangeInElement.shiftRight(startOffset))
+            .singleOrNull()
+            ?: return null
+        val sourceElement = leaf.ancestors.find { it.textRange.contains(sourceRange) }
+            ?: return null
+        return sourceElement to sourceRange.shiftLeft(sourceElement.startOffset)
     }
 }
 

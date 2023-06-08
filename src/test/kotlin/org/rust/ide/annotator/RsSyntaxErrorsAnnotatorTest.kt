@@ -6,7 +6,9 @@
 package org.rust.ide.annotator
 
 import org.rust.MockRustcVersion
+import org.rust.SkipTestWrapping
 
+@SkipTestWrapping
 class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
     fun `test E0379 const trait function`() = checkErrors("""
         trait Foo {
@@ -397,8 +399,8 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
     """)
 
     fun `test constants without a type`() = checkErrors("""
-        <error descr="Missing type for `const` item">const MY_CONST = 1;</error>
-        <error descr="Missing type for `static` item">static MY_STATIC = 1;</error>
+        const <error descr="Missing type for `const` item">MY_CONST</error> = 1;
+        static <error descr="Missing type for `static` item">MY_STATIC</error> = 1;
         const PARTIAL_TYPE:<error descr="<type> expected, got '='"> </error> = 1;
     """)
 

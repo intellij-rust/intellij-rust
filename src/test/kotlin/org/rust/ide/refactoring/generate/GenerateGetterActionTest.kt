@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.generate
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class GenerateGetterActionTest : RsGenerateBaseTest() {
     override val generateId: String = "Rust.GenerateGetter"
 
@@ -106,7 +107,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test copy impl`() = doTest("""
         #[derive(Copy, Clone)]
         struct Copyable {
@@ -137,7 +137,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test string`() = doTest("""
         struct S {
             a: String
@@ -158,7 +157,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test enum and struct fields`() = doTest("""
         enum E {
             E1, E2
@@ -218,7 +216,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test tuple copy`() = doTest("""
         struct S {
             a: (u32, u32)
@@ -237,7 +234,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test tuple move`() = doTest("""
         struct NoCopy;
         struct S {
@@ -410,7 +406,6 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test type alias 2`() = doTest("""
         type Alias = (u32, u32);
         struct S {

@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -106,6 +107,7 @@ class RemoveRedundantFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnot
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/7830
+    @SkipTestWrapping
     fun `test avoid infinite loop with syntax error`() = checkFixByText("Remove redundant arguments", """
         fn foo(a: &u32) {}
 

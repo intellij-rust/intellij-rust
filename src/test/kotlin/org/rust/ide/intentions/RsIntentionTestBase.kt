@@ -41,7 +41,7 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         @Parameterized.Parameters(name = "{index}: {0}")
         @JvmStatic fun data(): Iterable<TestWrapping> = listOf(
             TestWrapping.NONE,
-            TestWrapping.ATTR_MACRO_AS_IS,
+            TestWrapping.ATTR_MACRO_AS_IS_AT_CARET,
         )
     }
 

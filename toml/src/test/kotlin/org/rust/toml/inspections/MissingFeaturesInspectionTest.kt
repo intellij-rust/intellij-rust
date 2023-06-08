@@ -7,6 +7,7 @@ package org.rust.toml.inspections
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VirtualFile
+import org.junit.runner.RunWith
 import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
@@ -15,6 +16,7 @@ import org.rust.ide.annotator.RsAnnotationTestFixture
 import org.rust.ide.inspections.RsWithToolchainInspectionTestBase
 import org.rust.toml.inspections.MissingFeaturesInspectionTest.Context
 
+@RunWith(RsJUnit4TestRunner::class)
 class MissingFeaturesInspectionTest : RsWithToolchainInspectionTestBase<Context>(MissingFeaturesInspection::class) {
 
     fun `test missing dependency feature`() = doTest(

@@ -280,6 +280,7 @@ private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
 
 private fun checkConstantType(holder: AnnotationHolder, element: RsConstant) {
     if (element.colon == null && element.typeReference == null) {
+        val nameElement = element.nameLikeElement
         val typeText = if (element.isConst) {
             "const"
         } else {
@@ -288,11 +289,11 @@ private fun checkConstantType(holder: AnnotationHolder, element: RsConstant) {
         val message = "Missing type for `$typeText` item"
 
         val annotation = holder.newAnnotation(HighlightSeverity.ERROR, message)
-            .range(element.textRange)
+            .range(nameElement)
 
         val expr = element.expr
         if (expr != null) {
-            annotation.withFix(AddTypeFix(element.nameLikeElement, expr.type))
+            annotation.withFix(AddTypeFix(nameElement, expr.type))
         }
 
         annotation.create()

@@ -62,13 +62,13 @@ sealed class RsLint(
      */
     fun levelFor(el: PsiElement): RsLintLevel = explicitLevel(el) ?: superModsLevel(el) ?: defaultLevel
 
-    fun explicitLevel(el: PsiElement): RsLintLevel? = el.ancestors
+    fun explicitLevel(el: PsiElement): RsLintLevel? = el.contexts
         .filterIsInstance<RsDocAndAttributeOwner>()
         .flatMap { it.queryAttributes.metaItems.toList().asReversed().asSequence() }
         .filter { it.metaItemArgs?.metaItemList.orEmpty().any { item -> item.id == id || item.id in groupIds } }
         .firstNotNullOfOrNull { it.name?.let { name -> RsLintLevel.valueForId(name) } }
 
-    private fun superModsLevel(el: PsiElement): RsLintLevel? = el.ancestors
+    private fun superModsLevel(el: PsiElement): RsLintLevel? = el.contexts
         .filterIsInstance<RsMod>()
         .lastOrNull()
         ?.superMods

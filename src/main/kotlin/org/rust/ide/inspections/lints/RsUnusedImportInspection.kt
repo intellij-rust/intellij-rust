@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
@@ -47,7 +48,7 @@ class RsUnusedImportInspection : RsLintInspection() {
             if (ignoreDoctest && item.containingCrate is DoctestCrate) return
             if (enableOnlyIfProcMacrosEnabled && !ProcMacroApplicationService.isFullyEnabled() && !isUnitTestMode) return
 
-            val owner = item.parent as? RsItemsOwner ?: return
+            val owner = item.context as? RsItemsOwner ?: return
             val usage = owner.pathUsage
 
             val speck = item.useSpeck ?: return
@@ -262,12 +263,15 @@ fun RsElement.processReferencesWithAliases(
 ): Boolean {
     // returning `false` stops the processing
     fun processor(element: PsiElement): Boolean {
-        if (element !is RsReferenceElementBase || element.referenceName != identifier) return true
-        element.findExpansionElements()?.let { expansionElements ->
-            return expansionElements
-                .mapNotNull { it.ancestorStrict<RsElement>() }  // PsiElement(identifier)
-                .all(::processor)
+        if (element is LeafPsiElement) {
+            element.findExpansionElements()?.let { expansionElements ->
+                return expansionElements
+                    .asSequence()
+                    .flatMap { it.ancestors }
+                    .all(::processor)
+            }
         }
+        if (element !is RsReferenceElementBase || element.referenceName != identifier) return true
         return if (element is RsReferenceElement && element.reference?.isReferenceTo(this) == true) {
             originalProcessor(element)
         } else {

@@ -28,9 +28,13 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateLoses
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateWins
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.hitOnTrue
 import org.rust.openapiext.testAssert
-import org.rust.stdext.*
+import org.rust.stdext.buildList
+import org.rust.stdext.removeLast
+import org.rust.stdext.swapRemoveAt
+import org.rust.stdext.withPrevious
 import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
@@ -1345,22 +1349,21 @@ class ImplLookup(
     fun isSized(ty: Ty): Boolean {
         // Treat all types as sized if `Sized` trait is not found. This suppresses error noise in the
         // case of the toolchain misconfiguration (when there is not a `Sized` trait)
-        val sizedTrait = items.Sized ?: return true
-        return ty.isTraitImplemented(sizedTrait)
+        return ty.isTraitImplemented(items.Sized) != ThreeValuedLogic.False
     }
 
-    fun isDeref(ty: Ty): Boolean = ty.isTraitImplemented(items.Deref)
-    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.Copy)
-    fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.Clone)
-    fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.Debug)
-    fun isDefault(ty: Ty): Boolean = ty.isTraitImplemented(items.Default)
-    fun isEq(ty: Ty): Boolean = ty.isTraitImplemented(items.Eq)
-    fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
-    fun isIntoIterator(ty: Ty): Boolean = ty.isTraitImplemented(items.IntoIterator)
+    fun isDeref(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Deref)
+    fun isCopy(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Copy)
+    fun isClone(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Clone)
+    fun isDebug(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Debug)
+    fun isDefault(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Default)
+    fun isEq(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Eq)
+    fun isPartialEq(ty: Ty, rhsType: Ty = ty): ThreeValuedLogic = ty.isTraitImplemented(items.PartialEq, rhsType)
+    fun isIntoIterator(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.IntoIterator)
 
-    private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
-        if (trait == null) return false
-        return canSelect(TraitRef(this, trait.withSubst(*subst)))
+    private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): ThreeValuedLogic {
+        if (trait == null) return ThreeValuedLogic.Unknown
+        return ThreeValuedLogic.fromBoolean(canSelect(TraitRef(this, trait.withSubst(*subst))))
     }
 
     private val BoundElement<RsTraitItem>.asFunctionType: TyFunctionBase?

@@ -7,8 +7,10 @@ package org.rust.ide.annotator
 
 import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
+import org.rust.SkipTestWrapping
 import org.rust.ide.colors.RsColor
 
+@SkipTestWrapping
 class RsDocHighlightingAnnotatorTest : RsAnnotatorTestBase(RsDocHighlightingAnnotator::class, RsHighlightingAnnotator::class) {
     override fun setUp() {
         super.setUp()

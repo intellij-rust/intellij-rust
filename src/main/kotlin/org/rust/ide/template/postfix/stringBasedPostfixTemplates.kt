@@ -123,7 +123,7 @@ class OkPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfix
 class ErrPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("err", "Err(expr)", provider)
 
 private val RsExpr.isIntoIterator: Boolean
-    get() = implLookup.isIntoIterator(type)
+    get() = implLookup.isIntoIterator(type).isTrue
 
 private val RsExpr.implementsDeref: Boolean
-    get() = implLookup.isDeref(this.type)
+    get() = implLookup.isDeref(this.type).isTrue

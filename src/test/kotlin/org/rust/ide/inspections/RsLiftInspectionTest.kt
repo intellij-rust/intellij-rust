@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import org.rust.CheckTestmarkHit
+import org.rust.SkipTestWrapping
 
 class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
 
@@ -58,6 +59,7 @@ class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
         }
     """, checkWeakWarn = true)
 
+    @SkipTestWrapping // TODO remove after enabling quick-fixes
     @CheckTestmarkHit(RsLiftInspection.Testmarks.InsideRetExpr::class)
     fun `test lift return in if with return`() = checkFixByText("Lift return out of 'if'", """
         fn foo(x: bool) -> i32 {

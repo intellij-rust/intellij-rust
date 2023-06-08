@@ -146,7 +146,7 @@ class Parameter private constructor(
                 operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
             }
             val requiredBorrowing = hasRefOperator ||
-                (isUsedAfterEnd && binding.type !is TyReference && !implLookup.isCopy(binding.type))
+                (isUsedAfterEnd && binding.type !is TyReference && !implLookup.isCopy(binding.type).isTrue)
 
             val requiredMutableValue = binding.mutability.isMut && references.any {
                 if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false

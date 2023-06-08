@@ -10,6 +10,10 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsLabelDecl
 import org.rust.lang.core.psi.RsPsiFactory
 
+// Guaranteed by the grammar
+val RsLabelDecl.owner: RsLabeledExpression
+    get() = parent as RsLabeledExpression
+
 abstract class RsLabelDeclImplMixin(type: IElementType) : RsNamedElementImpl(type), RsLabelDecl {
     override fun getNameIdentifier(): PsiElement? = quoteIdentifier
 

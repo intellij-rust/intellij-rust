@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import org.rust.MockRustcVersion
+
 class RsFunctionSignatureSyntaxTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
     fun `test E0045 error when use variadic parameter on non-C ABI`() = checkErrors("""
         extern "Rust" {
@@ -30,7 +32,9 @@ class RsFunctionSignatureSyntaxTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotato
         }
     """)
 
+    @MockRustcVersion("1.60.0-nightly")
     fun `test E0045 no error when use variadic parameter in extern function declaration`() = checkErrors("""
+        #![feature(c_variadic)]
         unsafe extern fn foo(x: u8, ...) -> bool {
             x == 1
         }

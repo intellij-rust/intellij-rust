@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import org.rust.ProjectDescriptor
+import org.rust.SkipTestWrapping
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -122,6 +123,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
+    @SkipTestWrapping // TODO test live templates
     fun `test fixing by adding assigning to _ with template`() = checkFixByTextWithLiveTemplate("Add `let _ =`","""
         #[must_use]
         fn foo() -> bool { false }
@@ -168,6 +170,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
+    @SkipTestWrapping // TODO test live templates
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test fixing unused result by adding expect with template`() = checkFixByTextWithLiveTemplate("Add `.expect(\"\")`","""
         fn foo() -> Result<bool, ()> { false }

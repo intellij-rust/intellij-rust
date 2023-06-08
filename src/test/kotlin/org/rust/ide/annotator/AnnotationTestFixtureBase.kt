@@ -180,7 +180,7 @@ abstract class AnnotationTestFixtureBase(
         preview = preview,
     )
 
-    fun checkFixAvailableInSelectionOnly(
+    open fun checkFixAvailableInSelectionOnly(
         fixName: String,
         before: String,
         checkWarn: Boolean = true,
@@ -256,7 +256,7 @@ abstract class AnnotationTestFixtureBase(
         return unwrapped is SuppressIntentionActionFromFix
     }
 
-    fun registerSeverities(severities: List<HighlightSeverity>) {
+    open fun registerSeverities(severities: List<HighlightSeverity>) {
         val testSeverityProvider = TestSeverityProvider(severities)
         SeveritiesProvider.EP_NAME.point.registerExtension(testSeverityProvider, testRootDisposable)
     }
