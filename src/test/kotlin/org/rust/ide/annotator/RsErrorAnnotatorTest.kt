@@ -2574,7 +2574,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn main() {}
             """)
 
-    @MockRustcVersion("1.69.0")
     fun `test impl Trait not allowed E0562`() = checkErrors("""
         trait Debug{}
         // Allowed
@@ -2637,15 +2636,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn in_parameters(_: impl Debug);
         }
 
-        trait InTraitDefnReturn {
-            fn in_return() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>;
-        }
-
         // Allowed and disallowed in trait impls
         trait DummyTrait {
 //            type Out;
             fn in_trait_impl_parameter(_: impl Debug);
-            fn in_trait_impl_return() -> Self::Out;
             fn wrapper();
         }
         impl DummyTrait for () {
@@ -2654,9 +2648,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             fn in_trait_impl_parameter(_: impl Debug) { }
             // Allowed
-
-            fn in_trait_impl_return() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> { () }
-            //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
 
             fn wrapper() {
                 fn in_nested_impl_return() -> impl Debug { () }
@@ -2766,7 +2757,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn deref(&self) -> impl Deref<Target = impl Display> + '_;
         }
     """)
-
 
     @MockRustcVersion("1.69.0-nightly")
     fun `test feature gated impl Trait not allowed E0562 fix`() = checkFixByText("Add `return_position_impl_trait_in_trait` feature", """
