@@ -16,7 +16,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test function`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         fn foo() {}
 
         fn bar() {
@@ -25,7 +25,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test function multiple usages`() = doTest("""
-        <# block [2 usages] #>
+        /*<# block [2 usages] #>*/
         fn foo() {}
 
         fn bar() {
@@ -37,7 +37,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test struct`() = doTest("""
-        <# block [2 usages] #>
+        /*<# block [2 usages] #>*/
         struct S;
 
         fn bar(s: S) {
@@ -46,9 +46,9 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test struct field`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         struct S {
-        <# block [2 usages] #>
+        /*<# block [2 usages] #>*/
             a: u32
         }
 
@@ -59,7 +59,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test enum`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         enum E1 {
             V1,
             V2
@@ -69,9 +69,9 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test enum variant`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         enum E1 {
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
             V1,
             V2
         }
@@ -82,21 +82,21 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test trait`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         trait T {}
 
         fn bar(a: &dyn T) {}
     """)
 
     fun `test type alias`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         type T = u32;
 
         fn bar(a: T) {}
     """)
 
     fun `test constant`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         const FOO: u32 = 0;
 
         fn bar() {
@@ -105,7 +105,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test static`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         static FOO: u32 = 0;
 
         fn bar() {
@@ -115,7 +115,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
 
     /* TODO: fix
     fun `test macro`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         macro_rules! foo{ {} => {} }
 
         fn bar() {
@@ -124,7 +124,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)*/
 
     fun `test macro 2`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         macro foo() {}
 
         fn bar() {
@@ -133,9 +133,9 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     fun `test mod`() = doTest("""
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
         mod foo {
-        <# block [1 usage] #>
+        /*<# block [1 usage] #>*/
             pub struct S;
         }
 
