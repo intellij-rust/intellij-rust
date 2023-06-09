@@ -388,7 +388,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         }
     """)
 
-    fun `test fn casts`() = checkWarnings("""
+    fun `test necessary fn casts`() = checkWarnings("""
         fn main() {
             let mut a = foo as fn();
             a = bar as fn();
@@ -402,6 +402,25 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
 
         fn foo() {}
         fn bar() {}
+    """)
+
+
+    fun `test unnecessary cast as fn pointer`() = checkWarnings("""
+        fn main() {
+            let a: fn() = foo;
+            let b: fn() = a /*weak_warning descr="Unnecessary cast"*/as fn()/*weak_warning**/;
+
+            let c: fn() = || {};
+            let d: fn() = c /*weak_warning descr="Unnecessary cast"*/as fn()/*weak_warning**/;
+
+            let a: fn() = foo;
+            let b = a /*weak_warning descr="Unnecessary cast"*/as fn()/*weak_warning**/;
+
+            let c: fn() = || {};
+            let d = c /*weak_warning descr="Unnecessary cast"*/as fn()/*weak_warning**/;
+        }
+
+        fn foo() {}
     """)
 
     /**
