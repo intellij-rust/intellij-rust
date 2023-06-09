@@ -11,8 +11,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.fieldTypes
+import org.rust.lang.core.psi.ext.findPreviewCopyIfNeeded
+import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.isMovesByDefault
@@ -30,33 +35,8 @@ class DeriveCopyFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiEl
         val implLookup = ImplLookup.relativeTo(item)
         val isCloneImplemented = implLookup.isClone(type).isTrue
 
-        val psiFactory = RsPsiFactory(project)
-        val existingDeriveAttr = item.findOuterAttr("derive")
-
-        if (existingDeriveAttr != null) {
-            updateDeriveAttr(psiFactory, existingDeriveAttr, isCloneImplemented)
-        } else {
-            createDeriveAttr(psiFactory, item, isCloneImplemented)
-        }
-    }
-
-    private fun updateDeriveAttr(psiFactory: RsPsiFactory, deriveAttr: RsOuterAttr, isCloneImplemented: Boolean) {
-        val oldAttrText = deriveAttr.text
-        val newAttrText = buildString {
-            append(oldAttrText.substringBeforeLast(")"))
-            if (isCloneImplemented) append(", Copy)") else append(", Clone, Copy)")
-        }
-
-        val newDeriveAttr = psiFactory.createOuterAttr(newAttrText)
-        deriveAttr.replace(newDeriveAttr)
-    }
-
-    private fun createDeriveAttr(psiFactory: RsPsiFactory, item: RsStructOrEnumItemElement, isCloneImplemented: Boolean) {
-        val keyword = item.firstKeyword!!
-        val newAttrText = if (isCloneImplemented) "derive(Copy)" else "derive(Clone, Copy)"
-        val newDeriveAttr = psiFactory.createOuterAttr(newAttrText)
-
-        item.addBefore(newDeriveAttr, keyword)
+        val traits = if (isCloneImplemented) "Copy" else "Clone, Copy"
+        DeriveTraitsFix.invoke(item, traits)
     }
 
     companion object {
