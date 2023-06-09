@@ -9,7 +9,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
 
     fun `test should annotate unused variable`() = checkByText("""
         fn main() {
-            let <warning>mut f</warning> = 10;
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ f = 10;
         }
     """)
 
@@ -26,7 +26,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
             }
         }
         fn foo() {
-            let <warning>mut t</warning> = 10;
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ t = 10;
             let mut f = Foo { foo: true };
             f.push(t);
         }
@@ -47,7 +47,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
 
         fn main() {
-            let <warning descr="Variable `f` does not need to be mutable">mut f</warning> = 10;
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ f = 10;
             foo(f);
         }
     """)
@@ -65,7 +65,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
 
     fun `test first mut and second not mut`() = checkByText("""
         fn main() {
-            let <warning>mut f</warning> = 10;
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ f = 10;
             let mut f = 10;
             f = 20;
         }
@@ -111,15 +111,15 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
 
         fn main() {
             call_foo!();
-            let <warning>mut<caret> f</warning> = 10;
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**//*caret*/ f = 10;
         }
     """)
 
-    fun `test should annotate function parameter`() = checkFixByText("Remove mutable", """
+    fun `test remove mut function parameter`() = checkFixByText("Remove `mut`", """
         fn foo(mut test: i32) {
             test = 10;
         }
-        fn foo2(<warning>mut<caret> test</warning>: i32) {
+        fn foo2(/*weak_warning descr="Unused `mut`"*//*caret*/mut/*weak_warning**/ test: i32) {
         }
     """, """
         fn foo(mut test: i32) {
@@ -129,11 +129,11 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test first not mut and second mut`() = checkFixByText("Remove mutable", """
+    fun `test remove only unused mut`() = checkFixByText("Remove `mut`", """
         fn main() {
             let mut f = 10;
             f = 20;
-            let <warning>mut<caret> f</warning> = 10;
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**//*caret*/ f = 10;
         }
     """, """
         fn main() {

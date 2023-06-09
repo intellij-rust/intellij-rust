@@ -5,10 +5,11 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.rust.ide.fixes.RemoveMutableFix
+import org.rust.ide.fixes.RemoveElementFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.contextStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -20,16 +21,20 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
-            override fun visitPatBinding(o: RsPatBinding) {
-                if (!o.mutability.isMut) return
-                val block = o.contextStrict<RsBlock>() ?: o.contextStrict<RsFunction>() ?: return
-                if (ReferencesSearch.search(o, LocalSearchScope(block), /*ignoreAccessScope=*/true)
+            override fun visitBindingMode(o: RsBindingMode) {
+                val patBinding = o.parent as? RsPatBinding ?: return
+                if (!patBinding.mutability.isMut) return
+                val block = patBinding.contextStrict<RsBlock>() ?: patBinding.contextStrict<RsFunction>() ?: return
+                if (ReferencesSearch.search(patBinding, LocalSearchScope(block), /*ignoreAccessScope=*/true)
                         .any { checkOccurrenceNeedMutable(it.element.parent) }) return
-                if (block.descendantsOfType<RsMacroCall>().any { checkExprPosition(o, it) }) return
+                if (block.descendantsOfType<RsMacroCall>().any { checkExprPosition(patBinding, it) }) return
+
+                val mut = o.mut ?: return
                 holder.registerProblem(
-                    o,
-                    "Variable `${o.identifier.text}` does not need to be mutable",
-                    RemoveMutableFix()
+                    mut,
+                    "Unused `mut`",
+                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    RemoveElementFix(mut),
                 )
             }
         }
