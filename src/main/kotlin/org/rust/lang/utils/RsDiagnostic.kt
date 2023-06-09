@@ -1012,6 +1012,19 @@ sealed class RsDiagnostic(
         }
     }
 
+    class TraitIsNotImplemented(
+        element: RsElement,
+        private val description: String,
+        private val fix: LocalQuickFix?,
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0277,
+            description,
+            fixes = listOfFixes(fix)
+        )
+    }
+
     class SizedTraitIsNotImplemented(
         element: RsTypeReference,
         private val ty: Ty

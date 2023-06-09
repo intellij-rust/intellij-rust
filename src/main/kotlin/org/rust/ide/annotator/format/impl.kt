@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.format
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
@@ -12,11 +13,16 @@ import com.intellij.openapi.util.TextRange
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.project.workspace.PackageOrigin.WORKSPACE
 import org.rust.ide.colors.RsColor
+import org.rust.ide.fixes.DeriveTraitsFix
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.presentation.render
 import org.rust.lang.core.CompilerFeature.Companion.FORMAT_ARGS_CAPTURE
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.KnownItems
@@ -24,11 +30,9 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.containsTyOfClass
-import org.rust.lang.core.types.ty.TyInteger
-import org.rust.lang.core.types.ty.TyNever
-import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.ty.stripReferences
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.parseRustStringCharacters
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.capitalized
@@ -122,7 +126,8 @@ class ParseContext(private val sourceMap: IntArray, val offset: Int, val paramet
 data class ErrorAnnotation(
     val range: TextRange,
     @InspectionMessage val error: String,
-    val isTraitError: Boolean = false
+    val isTraitError: Boolean = false,
+    val diagnostic: RsDiagnostic? = null,
 )
 
 private val formatParser = Regex("""\{\{|}}|(\{([^}]*)}?)|(})""")
@@ -379,14 +384,55 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
     val expr = argument.expr
     if (!IGNORED_FORMAT_TYPES.any { expr.type.containsTyOfClass(it::class.java) } &&
         !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
+        val fix = createParameterTraitMismatchFix(parameter, expr, argument)
+        val error = "`${expr.type.render()}` doesn't implement `${requiredTrait.name}`" +
+            " (required by ${parameter.matchInfo.text})"
+        val diagnostic = RsDiagnostic.TraitIsNotImplemented(argument, error, fix)
         return ErrorAnnotation(
             argument.textRange,
-            "`${expr.type.render()}` doesn't implement `${requiredTrait.name}`" +
-                " (required by ${parameter.matchInfo.text})",
-            isTraitError = true
+            error,
+            isTraitError = true,
+            diagnostic = diagnostic,
         )
     }
     return null
+}
+
+private fun createParameterTraitMismatchFix(
+    parameter: FormatParameter.Value,
+    expr: RsExpr,
+    argument: RsFormatMacroArg
+): LocalQuickFix? {
+    return when (parameter.type) {
+        FormatTraitType.Display -> {
+            val debugTrait = expr.knownItems.Debug ?: return null
+            if (!expr.implLookup.canSelectWithDeref(TraitRef(expr.type, debugTrait.withSubst()))) {
+                return null
+            }
+            SubstituteTextFix.replace(
+                "Change format parameter to `{:?}`",
+                argument.containingFile,
+                parameter.range,
+                "{:?}"
+            )
+        }
+        FormatTraitType.Debug -> {
+            tailrec fun Ty.baseType(): RsElement? {
+                return when (this) {
+                    is TyAdt -> item
+                    is TyReference -> referenced.baseType()
+                    is TyArray -> base.baseType()
+                    is TySlice -> elementType.baseType()
+                    else -> null
+                }
+            }
+
+            val item = expr.type.baseType() as? RsStructOrEnumItemElement ?: return null
+            if (item.containingCrate.origin != WORKSPACE) return null
+            DeriveTraitsFix(item, "Debug")
+        }
+        else -> null
+    }
 }
 
 // i32 is allowed because of integers without a specific type
