@@ -10,9 +10,6 @@ object RsExperiments {
     const val BUILD_TOOL_WINDOW = "org.rust.cargo.build.tool.window"
 
     @EnabledInStable
-    const val TEST_TOOL_WINDOW = "org.rust.cargo.test.tool.window"
-
-    @EnabledInStable
     const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
 
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
