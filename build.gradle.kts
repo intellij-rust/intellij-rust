@@ -207,10 +207,19 @@ allprojects {
 
         tasks.withType<Test>().configureEach {
             jvmArgs = listOf("-Xmx2g", "-XX:-OmitStackTraceInFastThrow")
+
             // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
             // because otherwise it can lead to compatibility issues.
             // Also note that IDEA does the same thing at startup, and not only for tests.
             systemProperty("jna.nosys", "true")
+
+            // The factory should be set up automatically in `IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool`,
+            // but when tests are launched by Gradle this may not happen because Gradle can use the pool earlier.
+            // Setting this factory is critical for `ReadMostlyRWLock` performance, so ensure it is properly set
+            systemProperty(
+                "java.util.concurrent.ForkJoinPool.common.threadFactory",
+                "com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory"
+            )
             if (isTeamcity) {
                 // Make teamcity builds green if only muted tests fail
                 // https://youtrack.jetbrains.com/issue/TW-16784
