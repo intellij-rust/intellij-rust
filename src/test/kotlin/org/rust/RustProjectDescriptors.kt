@@ -271,6 +271,9 @@ open class WithProcMacros(
     override val rustcInfo: RustcInfo?
         get() = delegate.rustcInfo ?: ProcMacroPackageHolder.rustcInfo
 
+    override val macroExpansionCachingKey: String?
+        get() = delegate.macroExpansionCachingKey
+
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val procMacroPackage = ProcMacroPackageHolder.getOrFetchMacroPackage(module.project)
         check(procMacroPackage != null) { "Proc macro crate is not compiled successfully" }
