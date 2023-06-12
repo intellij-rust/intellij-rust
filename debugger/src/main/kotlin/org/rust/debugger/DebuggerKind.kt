@@ -6,5 +6,6 @@
 package org.rust.debugger
 
 enum class DebuggerKind {
-    LLDB
+    LLDB,
+    GDB
 }

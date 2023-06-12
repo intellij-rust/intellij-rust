@@ -5,8 +5,8 @@
 
 package org.rust.debugger.settings
 
+import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Panel
@@ -15,7 +15,9 @@ import org.rust.debugger.DebuggerKind
 import org.rust.debugger.DebuggerAvailability
 import org.rust.debugger.RsDebuggerBundle
 import org.rust.debugger.RsDebuggerToolchainService
+import java.util.*
 import javax.swing.ComboBoxModel
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JEditorPane
 
 class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
@@ -48,6 +50,11 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
                     .columns(COLUMNS_SHORT)
                     // Exact text will be set in `update` call not to duplicate the code
                     .comment("") { downloadDebugger() }
+                    .applyToComponent {
+                        whenItemSelected {
+                            update()
+                        }
+                    }
                     .comment
             }
             row { cell(downloadAutomaticallyCheckBox) }
@@ -56,8 +63,17 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
     }
 
     private fun createDebuggerKindComboBoxModel(): ComboBoxModel<DebuggerKind> {
-        val model = EnumComboBoxModel(DebuggerKind::class.java)
-        model.setSelectedItem(RsDebuggerSettings.getInstance().debuggerKind)
+        val toolchainService = RsDebuggerToolchainService.getInstance()
+        val availableKinds = mutableListOf<DebuggerKind>()
+        if (toolchainService.lldbAvailability() != DebuggerAvailability.Unavailable) {
+            availableKinds += DebuggerKind.LLDB
+        }
+        if (toolchainService.gdbAvailability() != DebuggerAvailability.Unavailable) {
+            availableKinds += DebuggerKind.GDB
+        }
+
+        val model = DefaultComboBoxModel(Vector(availableKinds))
+        model.selectedItem = RsDebuggerSettings.getInstance().debuggerKind
         return model
     }
 

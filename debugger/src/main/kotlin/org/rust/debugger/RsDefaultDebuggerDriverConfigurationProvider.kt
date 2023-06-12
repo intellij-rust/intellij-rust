@@ -12,20 +12,32 @@ import com.jetbrains.cidr.ArchitectureType
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
+import org.rust.debugger.settings.RsDebuggerSettings
 import java.io.File
 
 class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     @Suppress("MoveVariableDeclarationIntoWhen")
     override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
-        val lldbAvailability = RsDebuggerToolchainService.getInstance().lldbAvailability()
-        return when (lldbAvailability) {
-            DebuggerAvailability.Bundled -> RsLLDBDriverConfiguration(isElevated)
-            is DebuggerAvailability.Binaries -> RsCustomBinariesLLDBDriverConfiguration(lldbAvailability.binaries, isElevated)
-            else -> null
+        val debuggerKind  = RsDebuggerSettings.getInstance().debuggerKind
+        when (debuggerKind) {
+            DebuggerKind.LLDB -> {
+                val lldbAvailability = RsDebuggerToolchainService.getInstance().lldbAvailability()
+                return when (lldbAvailability) {
+                    DebuggerAvailability.Bundled -> RsLLDBDriverConfiguration(isElevated)
+                    is DebuggerAvailability.Binaries -> RsCustomBinariesLLDBDriverConfiguration(lldbAvailability.binaries, isElevated)
+                    else -> null
+                }
+            }
+            DebuggerKind.GDB -> {
+                val gdbAvailability = RsDebuggerToolchainService.getInstance().gdbAvailability()
+                return when (gdbAvailability) {
+                    DebuggerAvailability.Bundled -> RsGDBDriverConfiguration(isElevated)
+                    else -> null
+                }
+            }
         }
     }
 }
-
 
 class RsGDBDriverConfiguration(
     private val isElevated: Boolean

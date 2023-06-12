@@ -16,3 +16,4 @@ sealed class DebuggerAvailability<out T> {
 }
 
 data class LLDBBinaries(val frameworkFile: File, val frontendFile: File)
+data class GDBBinaries(val gdbFile: File)

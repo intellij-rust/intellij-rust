@@ -10,11 +10,14 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.dsl.builder.panel
 import org.rust.debugger.DebuggerAvailability
 import org.rust.debugger.RsDebuggerToolchainService
+import org.rust.debugger.isNewGdbSetupEnabled
 import javax.swing.JComponent
 
 class RsDebuggerGeneralSettingsConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
     private val needsToolchainSettings: Boolean
         get() {
+            if (isNewGdbSetupEnabled) return true
+
             val availability = RsDebuggerToolchainService.getInstance().lldbAvailability()
             // If there is bundled LLDB, no need to show this toolchain settings
             return availability !is DebuggerAvailability.Bundled

@@ -23,6 +23,7 @@ import com.intellij.util.download.DownloadableFileDescription
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
+import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBBinUrlProvider
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.debugger.settings.RsDebuggerSettings
@@ -68,6 +69,14 @@ class RsDebuggerToolchainService {
         }
 
         return DebuggerAvailability.Binaries(LLDBBinaries(frameworkFile, frontendFile))
+    }
+
+    fun gdbAvailability(): DebuggerAvailability<GDBBinaries> {
+        if (!isNewGdbSetupEnabled) return DebuggerAvailability.Unavailable
+        // Even if we have bundled GDB, it still doesn't work on macOS for local runs
+        if (SystemInfo.isMac) return DebuggerAvailability.Unavailable
+        if (CidrDebuggerPathManager.getBundledGDBBinary().exists()) return DebuggerAvailability.Bundled
+        return DebuggerAvailability.Unavailable
     }
 
     fun downloadDebugger(project: Project? = null): DownloadResult {
