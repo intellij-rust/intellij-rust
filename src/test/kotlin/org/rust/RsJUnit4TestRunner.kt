@@ -33,7 +33,7 @@ class RsJUnit4TestRunner(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass
                 val all = junit4Methods.toMutableList()
                 junit3Methods.mapTo(all) { FrameworkMethod(it) }
                 Collections.unmodifiableList(all)
-            }
+            }.sortTests()
         }
 
         private fun computeJUnit3TestMethods(testClass: TestClass): List<Method> {
@@ -62,5 +62,15 @@ class RsJUnit4TestRunner(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass
                 && Modifier.isPublic(m.modifiers)
                 && m.getAnnotation(org.junit.Test::class.java) == null
         }
+
+        private fun List<FrameworkMethod>.sortTests(): List<FrameworkMethod> {
+            // Switching between project descriptors is expensive, so let's group tests by project descriptor
+            return map { it to it.projectDescriptorName }
+                .sortedBy { it.second }
+                .map { it.first }
+        }
+
+        private val FrameworkMethod.projectDescriptorName: String
+            get() = method.getAnnotation(ProjectDescriptor::class.java)?.descriptor?.simpleName ?: ""
     }
 }
