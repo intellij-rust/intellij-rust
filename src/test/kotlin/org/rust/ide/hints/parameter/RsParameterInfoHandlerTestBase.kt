@@ -37,7 +37,7 @@ abstract class RsParameterInfoHandlerTestBase<A : PsiElement, B>(
                 assertEquals(hint, context.text)
 
                 // Check parameter index
-                val updateContext = MockUpdateParameterInfoContext(myFixture.editor, myFixture.file)
+                val updateContext = MockUpdateParameterInfoContext(myFixture.editor, myFixture.file, createContext.itemsToShow)
                 updateContext.parameterOwner = elt
                 val element = handler.findElementForUpdatingParameterInfo(updateContext) ?: error("Parameter not found")
                 handler.updateParameterInfo(element, updateContext)

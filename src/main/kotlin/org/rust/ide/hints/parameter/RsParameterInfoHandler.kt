@@ -8,7 +8,6 @@ package org.rust.ide.hints.parameter
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.ParameterInfoUtils
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.RsCallExpr
@@ -44,15 +43,8 @@ class RsParameterInfoHandler : RsAsyncParameterInfoHandler<RsValueArgumentList, 
     }
 
     override fun updateUI(p: RsArgumentsDescription, context: ParameterInfoUIContext) {
-        val range = p.getArgumentRange(context.currentParameterIndex)
-        context.setupUIComponentPresentation(
-            p.presentText,
-            range.startOffset,
-            range.endOffset,
-            !context.isUIComponentEnabled,
-            false,
-            false,
-            context.defaultParameterColor)
+        val range = getArgumentRange(p.arguments, context.currentParameterIndex)
+        updateUI(p.presentText, range, context)
     }
 }
 
@@ -62,12 +54,6 @@ class RsParameterInfoHandler : RsAsyncParameterInfoHandler<RsValueArgumentList, 
 class RsArgumentsDescription(
     val arguments: Array<String>
 ) {
-    fun getArgumentRange(index: Int): TextRange {
-        if (index < 0 || index >= arguments.size) return TextRange.EMPTY_RANGE
-        val start = arguments.take(index).sumOf { it.length + 2 }
-        return TextRange(start, start + arguments[index].length)
-    }
-
     val presentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
 
     companion object {
