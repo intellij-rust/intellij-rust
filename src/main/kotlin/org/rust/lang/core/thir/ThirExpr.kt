@@ -8,11 +8,7 @@ package org.rust.lang.core.thir
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.BinaryOperator
-import org.rust.lang.core.psi.ext.LogicOp
-import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
@@ -195,7 +191,9 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Adt(
-        val definition: RsStructItem,
+        val definition: RsStructOrEnumItemElement,
+        /** zero for structs/unions */
+        val variantIndex: MirVariantIndex,
         val fields: List<FieldExpr>,
         val base: FruInfo?,
         // TODO: more properties here
@@ -321,6 +319,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 }
 
 typealias MirFieldIndex = Int
+typealias MirVariantIndex = Int
 
 /** Represents the association of a field identifier and an expression. This is used in struct constructors. */
 class FieldExpr(val name: MirFieldIndex, val expr: ThirExpr)

@@ -88,7 +88,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -99,7 +99,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -110,7 +110,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 

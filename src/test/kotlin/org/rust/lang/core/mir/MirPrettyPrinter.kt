@@ -7,8 +7,11 @@ package org.rust.lang.core.mir
 
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.thir.variant
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.document
 import kotlin.math.max
@@ -173,17 +176,22 @@ internal class MirPrettyPrinter(
                 else -> rvalue.operands.joinToString(", ", "(", ")") { format(it) }
             }
             is MirRvalue.Aggregate.Adt -> {
-                val struct = rvalue.definition
+                val definition = rvalue.definition.variant(rvalue.variantIndex)
+                val name = when (definition) {
+                    is RsStructItem -> definition.name!!
+                    is RsEnumVariant -> "${definition.parentEnum.name!!}::${definition.name!!}"
+                    else -> error("unreachable")
+                }
                 when {
-                    struct.isFieldless -> struct.name ?: TODO()
-                    struct.isTupleStruct -> TODO()
+                    definition.isFieldless -> name
+                    definition.tupleFields != null -> TODO()
                     else -> {
-                        check(struct.fields.size == rvalue.operands.size)
-                        val fields = (struct.fields zip rvalue.operands)
+                        check(definition.fields.size == rvalue.operands.size)
+                        val fields = (definition.fields zip rvalue.operands)
                             .joinToString { (fieldDeclaration, fieldValue) ->
                                 "${fieldDeclaration.name}: ${format(fieldValue)}"
                             }
-                        "${struct.name!!} { $fields }"
+                        "$name { $fields }"
                     }
                 }
             }

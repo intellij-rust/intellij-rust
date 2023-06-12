@@ -273,7 +273,7 @@ class MirBuilder private constructor(
                     })
                 }
 
-                val fieldsNames = expr.definition.fields.indices
+                val fieldsNames = expr.definition.variant(expr.variantIndex).fields.indices
 
                 val fields = if (expr.base != null) {
                     TODO()
@@ -287,7 +287,7 @@ class MirBuilder private constructor(
 
                 this
                     .block
-                    .pushAssign(place, MirRvalue.Aggregate.Adt(expr.definition, fields), source)
+                    .pushAssign(place, MirRvalue.Aggregate.Adt(expr.definition, expr.variantIndex, fields), source)
                     .andUnit()
             }
             is ThirExpr.Borrow -> {
@@ -1353,7 +1353,7 @@ class MirBuilder private constructor(
                         is RsFile -> {}
                         is RsConstant -> add(build(child))
                         is RsFunction -> add(build(child))
-                        is RsStructItem -> {}
+                        is RsStructOrEnumItemElement -> {}
                         is PsiWhiteSpace -> {}
                         is RsImplItem -> {}
                         else -> TODO("Type ${child::class} is not supported")

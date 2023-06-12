@@ -242,15 +242,19 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
 
             is RsStructLiteral -> {
                 check(ty is TyAdt) { "Unexpected type for struct literal" }
+                val body = expr.structLiteralBody
+                val base = body.expr?.let { TODO() }
                 when (val item = ty.item) {
                     is RsStructItem -> {
-                        val body = expr.structLiteralBody
-                        val base = body.expr?.let { TODO() }
-                        val fields = fieldRefs(body.structLiteralFieldList, item.fields)
-                        ThirExpr.Adt(item, fields, base, ty, span)
+                        val fields = fieldRefs(body.structLiteralFieldList, item.namedFields)
+                        ThirExpr.Adt(item, variantIndex = 0, fields, base, ty, span)
                     }
-
-                    is RsEnumItem -> TODO()
+                    is RsEnumItem -> {
+                        val variant = expr.path.reference?.resolve() as? RsEnumVariant ?: error("Unexpected resolve result")
+                        val fields = fieldRefs(body.structLiteralFieldList, variant.namedFields)
+                        val variantIndex = item.indexOfVariant(variant) ?: error("Can't find enum variant")
+                        ThirExpr.Adt(item, variantIndex, fields, base, ty, span)
+                    }
                     else -> error("unreachable")
                 }
             }
@@ -292,7 +296,19 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
     private fun convert(resolved: RsElement, ty: Ty, source: MirSpan): ThirExpr =
         when (resolved) {
             is RsPatBinding -> ThirExpr.VarRef(LocalVar(resolved), ty, source) // TODO: captured values are not yet handled
-            is RsStructItem -> ThirExpr.Adt(resolved, fields = emptyList(), base = null, ty, source)
+            is RsFieldsOwner -> {
+                check(resolved.isFieldless)
+                val (definition, variantIndex) = when (resolved) {
+                    is RsStructItem -> resolved to 0
+                    is RsEnumVariant -> {
+                        val enum = resolved.parentEnum
+                        val variantIndex = enum.indexOfVariant(resolved) ?: error("Can't find enum variant")
+                        enum to variantIndex
+                    }
+                    else -> error("unreachable")
+                }
+                ThirExpr.Adt(definition, variantIndex, fields = emptyList(), base = null, ty, source)
+            }
             is RsFunction -> ThirExpr.ZstLiteral(ty, source)
             else -> TODO()
         }
@@ -357,3 +373,13 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
             is Adjustment.UnsafeFnPointer -> TODO()
         }
 }
+
+private fun RsEnumItem.indexOfVariant(variant: RsEnumVariant): Int? =
+    variants.indexOf(variant).takeIf { it != -1 }
+
+fun RsStructOrEnumItemElement.variant(index: MirVariantIndex): RsFieldsOwner =
+    when (this) {
+        is RsStructItem -> this
+        is RsEnumItem -> variants[index]
+        else -> error("unreachable")
+    }

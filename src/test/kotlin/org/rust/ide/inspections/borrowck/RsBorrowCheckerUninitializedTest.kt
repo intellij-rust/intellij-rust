@@ -384,4 +384,21 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             let foo2 = foo1;
         }
     """)
+
+    fun `test E0381 in enum variant literal`() = checkErrors("""
+        enum E { Foo { a: i32 } }
+        fn main() {
+            let x: i32;
+            let foo = E::Foo { a: /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/ };
+        }
+    """)
+
+    fun `test no E0381 in enum variant literal`() = checkErrors("""
+        enum E { Foo { a: i32 } }
+        fn main() {
+            let x = 1;
+            let foo1 = E::Foo { a: x };
+            let foo2 = foo1;
+        }
+    """)
 }
