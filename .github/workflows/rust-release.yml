@@ -115,7 +115,7 @@ jobs:
         env:
             ORG_GRADLE_PROJECT_buildNumber: ${{ needs.generate-build-number.outputs.build_number }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
-            ORG_GRADLE_PROJECT_enableBuildSearchableOptions: true
+            ORG_GRADLE_PROJECT_enableBuildSearchableOptions: false
             ORG_GRADLE_PROJECT_publishChannel: ${{ needs.get-channel.outputs.channel }}
             ORG_GRADLE_PROJECT_publishToken: ${{ secrets.plugin_bot_token }}
             ORG_GRADLE_PROJECT_compileNativeCode: false
