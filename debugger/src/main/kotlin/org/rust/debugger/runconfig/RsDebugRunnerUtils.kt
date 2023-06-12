@@ -21,11 +21,12 @@ import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.BuildResult
+import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.CargoTestRunState
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.debugger.DebuggerAvailability
+import org.rust.debugger.DebuggerKind
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.settings.RsDebuggerSettings
 
@@ -58,23 +59,34 @@ object RsDebugRunnerUtils {
             .runContentDescriptor
     }
 
-    fun checkToolchainSupported(project: Project, host: String): BuildResult.ToolchainError? {
+    fun checkToolchainSupported(project: Project, host: String): ToolchainError? {
         if (SystemInfo.isWindows) {
             if (project.toolchain is RsWslToolchain) {
-                return BuildResult.ToolchainError.UnsupportedWSL
+                return ToolchainError.UnsupportedWSL
             }
 
             val isGNURustToolchain = "gnu" in host
-            if (isGNURustToolchain) {
-                return BuildResult.ToolchainError.UnsupportedGNU
+            val isMSVCRustToolchain = "msvc" in host
+            val isGdbAvailable = RsDebuggerToolchainService.getInstance().gdbAvailability() !is DebuggerAvailability.Unavailable
+            val debuggerKind = RsDebuggerSettings.getInstance().debuggerKind
+
+            return when {
+                isGNURustToolchain && !isGdbAvailable -> ToolchainError.UnsupportedGNU
+                isGNURustToolchain && debuggerKind == DebuggerKind.LLDB -> ToolchainError.MSVCWithRustGNU
+                isMSVCRustToolchain && debuggerKind == DebuggerKind.GDB -> ToolchainError.GNUWithRustMSVC
+                else -> null
             }
         }
         return null
     }
 
     fun checkToolchainConfigured(project: Project): Boolean {
-        val lldbAvailability = RsDebuggerToolchainService.getInstance().lldbAvailability()
-        val (message, action) = when (lldbAvailability) {
+        val debuggerAvailability = when (RsDebuggerSettings.getInstance().debuggerKind) {
+            DebuggerKind.LLDB -> RsDebuggerToolchainService.getInstance().lldbAvailability()
+            DebuggerKind.GDB -> RsDebuggerToolchainService.getInstance().gdbAvailability()
+        }
+
+        val (message, action) = when (debuggerAvailability) {
             DebuggerAvailability.Unavailable -> return false
             DebuggerAvailability.NeedToDownload -> "Debugger is not loaded yet" to "Download"
             DebuggerAvailability.NeedToUpdate -> "Debugger is outdated" to "Update"
