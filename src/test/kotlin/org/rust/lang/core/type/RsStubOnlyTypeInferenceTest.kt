@@ -346,4 +346,32 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ S<1>
     """)
+
+    fun `test extern function to function pointer coercion`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        extern {
+            pub fn foo(a: i8) -> u64;
+        }
+    //- lib.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let f: unsafe fn(i8) -> u64 = foo;
+            f;
+        } //^ unsafe fn(i8) -> u64
+    """)
+
+    fun `test unsafe function to function pointer coercion`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        pub unsafe fn foo(a: i8) -> u64 { 1u64 }
+    //- lib.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let f: unsafe fn(i8) -> u64 = foo;
+            f;
+        } //^ unsafe fn(i8) -> u64
+    """)
 }
