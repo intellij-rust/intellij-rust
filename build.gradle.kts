@@ -350,7 +350,7 @@ project(":plugin") {
             // Otherwise, `buildSearchableOptions` task can't load the plugin and searchable options are not built.
             // Should be dropped when jar merging is implemented in `gradle-intellij-plugin` itself
             dependsOn(mergePluginJarTask)
-            enabled = prop("enableBuildSearchableOptions").toBoolean()
+            enabled = platformVersion != 232 && prop("enableBuildSearchableOptions").toBoolean()
         }
         withType<PrepareSandboxTask> {
             dependsOn(named(compileNativeCodeTaskName))
