@@ -45,7 +45,7 @@ class MirBuilder private constructor(
 
     fun build(function: RsFunction): MirBody {
         val body = function.block ?: error("Could not get block of function")
-        val expr = body.mirrorAsExpr(function, function.normReturnType)
+        val expr = MirrorContext(function).mirrorBlock(body, function.normReturnType)
         inScope(Scope.CallSite(body)) {
             val fnEndSpan = span.end
             val returnBlockAnd = inBreakableScope(null, localDecls.returnPlace(), fnEndSpan) {
@@ -63,7 +63,8 @@ class MirBuilder private constructor(
     }
 
     fun build(constant: RsConstant): MirBody {
-        val expr = constant.expr?.mirror(constant) ?: error("Could not get expression from constant")
+        val body = constant.expr ?: error("Could not get expression of constant")
+        val expr = MirrorContext(constant).mirrorExpr(body)
         basicBlocks
             .startBlock()
             .exprIntoPlace(expr, localDecls.returnPlace())
