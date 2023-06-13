@@ -335,6 +335,25 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         }
     """)
 
+    fun `test no E0381 for struct field`() = checkErrors("""
+        struct Foo { a: i32, b: i32 }
+        fn main() {
+            let foo = Foo { a: 1, b: 2 };
+            foo.a;
+            foo.b;
+        }
+    """)
+
+    fun `test no E0381 for nested struct field`() = checkErrors("""
+        struct Foo { a: i32 }
+        struct Bar { b: i32, c: Foo }
+        fn main() {
+            let foo = Foo { a: 1 };
+            let bar = Bar { b: 2, c: foo };
+            bar.foo.a;
+        }
+    """)
+
     fun `test E0381 for add assign`() = checkErrors("""
         fn main() {
             let mut x: i32;

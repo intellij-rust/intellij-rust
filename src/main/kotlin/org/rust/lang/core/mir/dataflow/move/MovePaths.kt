@@ -5,11 +5,15 @@
 
 package org.rust.lang.core.mir.dataflow.move
 
+import org.rust.lang.core.dfa.borrowck.gatherLoans.hasDestructor
 import org.rust.lang.core.mir.WithIndex
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.util.IndexAlloc
 import org.rust.lang.core.mir.util.IndexKeyMap
 import org.rust.lang.core.mir.util.LocationMap
+import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsStructKind.UNION
+import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.types.ty.*
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
@@ -216,7 +220,13 @@ private class MoveDataBuilder(
             val projectionBase = place.projections.subList(0, i)
             when (val placeTy = MirPlace.tyFrom(place.local, projectionBase).ty) {
                 is TyReference, is TyPointer -> TODO()
-                is TyAdt -> TODO()
+                is TyAdt -> {
+                    when {
+                        (placeTy.item as? RsStructItem)?.kind == UNION -> TODO()
+                        placeTy.item.hasDestructor && !placeTy.isBox -> TODO()
+                        else -> Unit
+                    }
+                }
                 is TySlice -> TODO()
                 is TyArray -> TODO()
                 else -> Unit

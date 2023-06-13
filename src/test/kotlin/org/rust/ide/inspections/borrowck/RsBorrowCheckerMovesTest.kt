@@ -121,7 +121,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S { data: T };
             x.data;
-            <error descr="Use of moved value">x.data</error>;
+            <error descr="Use of moved value [E0382]">x.data</error>;
         }
     """, checkWarn = false)
 
@@ -135,6 +135,15 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             x.data2;
         }
     """, checkWarn = false)
+
+    fun `test move struct and use field`() = checkErrors("""
+        struct S { a: i32 }
+        fn main() {
+            let x = S { a: 1 };
+            let x2 = x;
+            /*error descr="Use of moved value [E0382]"*/x.a/*error**/;
+        }
+    """)
 
     fun `test move from raw pointer`() = checkByText("""
         struct S;

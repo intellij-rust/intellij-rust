@@ -190,8 +190,16 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
                 val methodCall = expr.methodCall
                 when {
                     fieldLookup != null -> {
-                        val integerLiteral = fieldLookup.integerLiteral ?: TODO("Named fields not implemented")
-                        val fieldIndex = integerLiteral.text.toIntOrNull() ?: error("Invalid field integer literal")
+                        val fieldIndex = when (val integerLiteral = fieldLookup.integerLiteral) {
+                            null -> {
+                                val field = fieldLookup.reference.resolve() as? RsFieldDecl
+                                    ?: error("Unexpected resolve result")
+                                val owner = field.owner ?: error("Can't find owner for field")
+                                owner.indexOfField(field) ?: error("Can't find field")
+                            }
+                            else -> integerLiteral.text.toIntOrNull()
+                                ?: error("Invalid field integer literal")
+                        }
                         ThirExpr.Field(mirrorExpr(expr.expr), fieldIndex, ty, span)
                     }
 
@@ -383,3 +391,6 @@ fun RsStructOrEnumItemElement.variant(index: MirVariantIndex): RsFieldsOwner =
         is RsEnumItem -> variants[index]
         else -> error("unreachable")
     }
+
+private fun RsFieldsOwner.indexOfField(field: RsFieldDecl): Int? =
+    fields.indexOf(field).takeIf { it != -1 }
