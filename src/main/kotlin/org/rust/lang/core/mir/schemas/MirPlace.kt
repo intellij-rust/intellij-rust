@@ -6,6 +6,7 @@
 package org.rust.lang.core.mir.schemas
 
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.builtinDeref
 import org.rust.lang.core.types.ty.builtinIndex
 
 typealias PlaceElem = MirProjectionElem<Ty>
@@ -40,7 +41,11 @@ class MirPlaceTy(
         }
         return when (element) {
             is MirProjectionElem.Field -> fromTy(element.elem)
-            is MirProjectionElem.Deref -> TODO()
+            is MirProjectionElem.Deref -> {
+                val (ty, _) = ty.builtinDeref(items = null)
+                    ?: error("deref projection of non-dereferenceable ty")
+                fromTy(ty)
+            }
             is MirProjectionElem.Index,
             is MirProjectionElem.ConstantIndex -> fromTy(ty.builtinIndex()!!)
         }

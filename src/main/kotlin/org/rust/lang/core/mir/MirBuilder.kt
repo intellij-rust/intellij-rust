@@ -304,7 +304,7 @@ class MirBuilder private constructor(
     }
 
     private fun consumeByCopyOrMove(place: MirPlace): MirOperand {
-        return if (place.local.ty.isMovesByDefault(implLookup)) {
+        return if (place.ty().ty.isMovesByDefault(implLookup)) {
             MirOperand.Move(place)
         } else {
             MirOperand.Copy(place)
