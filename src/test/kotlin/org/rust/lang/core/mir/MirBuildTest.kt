@@ -14,6 +14,8 @@ import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
+import org.rust.stdext.singleOrFilter
 import org.rust.stdext.toPath
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
@@ -57,10 +59,18 @@ class MirBuildTest : RsTestBase() {
     fun `test tuple fields nested`() = doTest()
     fun `test tuple fields temporary value`() = expect<Throwable> { doTest() }
     fun `test three element tuple with tuples`() = doTest()
+    fun `test struct literal simple`() = doTest()
+    fun `test struct literal different fields order`() = doTest()
+    fun `test struct literal field shorthand`() = doTest()
+    fun `test struct literal nested 1`() = doTest()
+    fun `test struct literal nested 2`() = doTest()
     fun `test loop break`() = doTest()
     fun `test block with let`() = doTest()
     fun `test block with 3 lets`() = doTest()
     fun `test let mut and assign`() = doTest()
+    fun `test let mut and add assign`() = doTest()
+    fun `test let mut and add assign other variable`() = doTest()
+    fun `test let mut and multiple add assign`() = doTest()
     fun `test immutable move`() = doTest()
     fun `test mutable move`() = doTest()
     fun `test immutable borrow`() = doTest()
@@ -68,6 +78,22 @@ class MirBuildTest : RsTestBase() {
     fun `test empty function with return ty`() = doTest()
     fun `test mutable borrow`() = doTest()
     fun `test empty let`() = doTest()
+    fun `test array`() = doTest()
+    fun `test repeat`() = doTest()
+    fun `test zero repeat`() = doTest()
+    fun `test expr stmt`() = doTest()
+    // TODO more terminator comments
+    // TODO `foo` instead of `function` (needs type inference support)
+    fun `test function call without arguments`() = doTest()
+    fun `test function call with 1 copy argument`() = doTest()
+    fun `test function call with 2 copy arguments`() = doTest()
+    fun `test function call with 2 move arguments`() = doTest()
+    fun `test function call with return value`() = doTest()
+    fun `test nested function call`() = doTest()
+    fun `test associated function call without arguments`() = doTest()
+    fun `test deref`() = doTest()
+    fun `test index`() = doTest()
+    fun `test constant index`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
@@ -86,7 +112,9 @@ class MirBuildTest : RsTestBase() {
         fileName: String = "main.rs",
     ) {
         InlineFile(code, fileName)
-        val builtMir = MirBuilder.build(myFixture.file as RsFile).single()
+        val builtMir = MirBuilder.build(myFixture.file as RsFile)
+            .singleOrFilter { it.sourceElement.let { fn -> fn is RsFunction && fn.name == "main" }  }
+            .single()
         val builtMirStr = MirPrettyPrinter(mir = builtMir).print()
         UsefulTestCase.assertSameLinesWithFile(expectedFilePath, builtMirStr)
     }

@@ -259,7 +259,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             let mut _0: ();                      // return place in scope 0 at src/main.rs:2:19: 2:19
             let _1: i32;                         // in scope 0 at src/main.rs:3:17: 3:18
             let mut _2: !;                       // in scope 0 at src/main.rs:4:13: 6:14
-            let mut _3: ();                      // in scope 0 at src/main.rs:2:19: 7:10
+            let mut _3: ();                      // in scope 0 at src/main.rs:2:9: 7:10
             scope 1 {
                 debug a => _1;                   // in scope 1 at src/main.rs:3:17: 3:18
             }
@@ -291,6 +291,82 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             }                                    // {_1, _2}
 
             bb5 (cleanup): {                     // {_0, _1, _2, _3}
+                resume;
+            }                                    // {_0, _1, _2, _3}
+        }
+    """)
+
+    fun `test function call return value`() = doTest("""
+        fn main() {
+            let a: i32;
+            a = foo();
+        }
+        fn foo() -> i32 { 0 }
+    """, """
+        fn main() -> () {
+            let mut _0: ();                      // return place in scope 0 at src/main.rs:2:19: 2:19
+            let _1: i32;                         // in scope 0 at src/main.rs:3:17: 3:18
+            let mut _2: i32;                     // in scope 0 at src/main.rs:4:17: 4:22
+            scope 1 {
+                debug a => _1;                   // in scope 1 at src/main.rs:3:17: 3:18
+            }
+
+            bb0: {                               // {_0, _1, _2}
+                StorageLive(_1);
+                StorageLive(_2);
+                _2 = function() -> [return: bb1, unwind: bb2];
+            }                                    // {_0, _1, _2}
+
+            bb1: {                               // {_0, _1}
+                _1 = move _2;                    // +_2, -_1
+                StorageDead(_2);
+                _0 = const ();                   // -_0
+                StorageDead(_1);                 // +_1
+                return;
+            }                                    // {_1, _2}
+
+            bb2 (cleanup): {                     // {_0, _1, _2}
+                resume;
+            }                                    // {_0, _1, _2}
+        }
+    """)
+
+    fun `test function call moves argument`() = doTest("""
+        struct S;
+        fn main() {
+            let a = S;
+            foo(a);
+        }
+        fn foo(a: S) {}
+    """, """
+        fn main() -> () {
+            let mut _0: ();                      // return place in scope 0 at src/main.rs:3:19: 3:19
+            let _1: S;                           // in scope 0 at src/main.rs:4:17: 4:18
+            let _2: ();                          // in scope 0 at src/main.rs:5:13: 5:19
+            let mut _3: S;                       // in scope 0 at src/main.rs:5:17: 5:18
+            scope 1 {
+                debug a => _1;                   // in scope 1 at src/main.rs:4:17: 4:18
+            }
+
+            bb0: {                               // {_0, _1, _2, _3}
+                StorageLive(_1);
+                _1 = S;                          // -_1
+                FakeRead(ForLet(None), _1);
+                StorageLive(_2);
+                StorageLive(_3);
+                _3 = move _1;                    // +_1, -_3
+                _2 = function(move _3) -> [return: bb1, unwind: bb2]; // +_3
+            }                                    // {_0, _1, _2, _3}
+
+            bb1: {                               // {_0, _1, _3}
+                StorageDead(_3);
+                StorageDead(_2);                 // +_2
+                _0 = const ();                   // -_0
+                StorageDead(_1);
+                return;
+            }                                    // {_1, _2, _3}
+
+            bb2 (cleanup): {                     // {_0, _1, _2, _3}
                 resume;
             }                                    // {_0, _1, _2, _3}
         }

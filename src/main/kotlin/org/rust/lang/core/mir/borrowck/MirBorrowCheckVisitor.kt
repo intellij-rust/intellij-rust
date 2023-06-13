@@ -133,14 +133,21 @@ class MirBorrowCheckVisitor(
                 consumeOperand(location, rvalue.right, state)
             }
 
+            is MirRvalue.Repeat -> consumeOperand(location, rvalue.operand, state)
+
             is MirRvalue.Aggregate -> {
                 when (rvalue) {
-                    is MirRvalue.Aggregate.Adt, is MirRvalue.Aggregate.Tuple -> Unit
+                    is MirRvalue.Aggregate.Adt, is MirRvalue.Aggregate.Array, is MirRvalue.Aggregate.Tuple -> Unit
                     // is MirRvalue.Aggregate.Closure -> propagateClosureUsedMutUpvar()
                 }
                 for (operand in rvalue.operands) {
                     consumeOperand(location, operand, state)
                 }
+            }
+
+            is MirRvalue.Len -> {
+                accessPlace(location, rvalue.place, Read(Copy), state)
+                checkIfPathOrSubpathIsMoved(location, rvalue.place, state)
             }
         }
     }
@@ -281,13 +288,29 @@ class MirBorrowCheckVisitor(
     private fun checkIfPathOrSubpathIsMoved(location: MirLocation, place: MirPlace, state: BorrowCheckResults.State) {
         checkIfFullPathIsMoved(location, place, state)
 
-        // TODO subpath
+        // TODO MirProjectionElem.Subslice
+
+        val movePath = movePathForPlace(place) ?: return
+        val uninitMovePath = movePath.findInMovePathOrItsDescendants {
+            state.uninits[it.index]
+        } ?: return
+        reportUseOfMovedOrUninitialized(location, place, place, uninitMovePath)
     }
 
     private fun movePathClosestTo(place: MirPlace): MovePath =
         when (val result = moveData.revLookup.find(place)) {
             is LookupResult.Exact -> result.movePath
             is LookupResult.Parent -> result.movePath ?: error("should have move path for every Local")
+        }
+
+    /**
+     * If returns `null`, then there is no move path corresponding to a direct owner of `place`
+     * (which means there is nothing that borrowck tracks for its analysis).
+     */
+    private fun movePathForPlace(place: MirPlace): MovePath? =
+        when (val result = moveData.revLookup.find(place)) {
+            is LookupResult.Exact -> result.movePath
+            is LookupResult.Parent -> null
         }
 
     private fun reportUseOfMovedOrUninitialized(

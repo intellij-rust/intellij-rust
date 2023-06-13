@@ -8,10 +8,7 @@ package org.rust.lang.core.mir.dataflow.impls
 import org.rust.lang.core.mir.dataflow.framework.Direction
 import org.rust.lang.core.mir.dataflow.framework.Forward
 import org.rust.lang.core.mir.dataflow.framework.GenKillAnalysis
-import org.rust.lang.core.mir.dataflow.move.DropFlagState
-import org.rust.lang.core.mir.dataflow.move.MoveData
-import org.rust.lang.core.mir.dataflow.move.MovePath
-import org.rust.lang.core.mir.dataflow.move.dropFlagEffectsForLocation
+import org.rust.lang.core.mir.dataflow.move.*
 import org.rust.lang.core.mir.schemas.*
 import java.util.*
 
@@ -36,6 +33,15 @@ class MaybeUninitializedPlaces(private val moveData: MoveData) : GenKillAnalysis
     override fun applyTerminatorEffect(state: BitSet, terminator: MirTerminator<MirBasicBlock>, location: MirLocation) {
         dropFlagEffectsForLocation(moveData, location) { movePath, movePathState ->
             updateBits(state, movePath, movePathState)
+        }
+    }
+
+    override fun applyCallReturnEffect(state: BitSet, block: MirBasicBlock, returnPlace: MirPlace) {
+        val lookupResult = moveData.revLookup.find(returnPlace)
+        if (lookupResult is LookupResult.Exact) {
+            onAllChildrenBits(lookupResult.movePath) {
+                updateBits(state, it, DropFlagState.Present)
+            }
         }
     }
 

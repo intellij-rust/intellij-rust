@@ -14,7 +14,17 @@ import org.rust.lang.core.macros.MacroExpansionManager
 @WithExperimentalFeatures(MIR_BORROW_CHECK)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
-    fun `test move by call`() = checkByText("""
+    fun `test move by call 1`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let a = S;
+            foo(a, /*error descr="Use of moved value [E0382]"*/a/*error**/);
+        }
+        fn foo(a: S, b: S) {}
+    """, checkWarn = false)
+
+    fun `test move by call 2`() = checkByText("""
         struct S { data: i32 }
 
         fn f(s: S) {}
@@ -36,7 +46,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -47,7 +57,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let x = S;
             let mut y = 2;
             y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -138,6 +148,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {}
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support index in gatherMoves
     fun `test move from array`() = checkByText("""
         struct S;
 
@@ -152,7 +163,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         struct T { s1: S, s2: S }
         fn main() {
             let s = S;
-            let t = T { s1: s, s2: <error descr="Use of moved value">s</error> };
+            let t = T { s1: s, s2: <error descr="Use of moved value [E0382]">s</error> };
         }
     """, checkWarn = false)
 
@@ -162,7 +173,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             s;
-            let t = T { <error descr="Use of moved value">s</error> };
+            let t = T { <error descr="Use of moved value [E0382]">s</error> };
         }
     """, checkWarn = false)
 
@@ -234,7 +245,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    fun `test move tuple field`() = checkErrors("""
+    fun `test move tuple field, use tuple field`() = checkErrors("""
         struct Foo;
         fn main() {
             let x = (Foo, Foo);
@@ -243,12 +254,66 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """)
 
-    fun `test move tuple`() = checkErrors("""
+    fun `test move tuple field, use tuple`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, Foo);
+            let y = x.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x/*error**/;
+        }
+    """)
+
+    fun `test move tuple, use tuple field`() = checkErrors("""
         struct S;
         fn main() {
             let x = (S, S);
             let y = x;
             let z = /*error descr="Use of moved value [E0382]"*/x.0/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple field, use nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1.0/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple field, use tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple field, use tuple`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1.0;
+            let z = /*error descr="Use of moved value [E0382]"*/x/*error**/;
+        }
+    """)
+
+    fun `test move nested tuple, use nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x.1;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1.0/*error**/;
+        }
+    """)
+
+    fun `test tuple, use nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y = x;
+            let z = /*error descr="Use of moved value [E0382]"*/x.1.0/*error**/;
         }
     """)
 
@@ -427,6 +492,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move Box deref twice`() = checkByText("""
         struct S;
         fn main() {
@@ -436,6 +502,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move error when deref Rc`() = checkByText("""
         use std::rc::Rc;
         struct S;
@@ -445,6 +512,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move custom overloaded deref`() = checkByText("""
         struct S;
         struct SmartPointer {
@@ -634,7 +702,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             let t1 = T { s: s };
-            let t2 = T { s: <error descr="Use of moved value">s</error> };
+            let t2 = T { s: <error descr="Use of moved value [E0382]">s</error> };
         }
     """, checkWarn = false)
 
@@ -744,7 +812,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             (s);
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 
@@ -756,7 +824,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             my_macro_move!(s);
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 
@@ -895,7 +963,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let s = S;
             #[cfg(intellij_rust)] s;
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 

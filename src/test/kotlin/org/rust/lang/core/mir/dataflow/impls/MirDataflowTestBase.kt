@@ -15,6 +15,8 @@ import org.rust.lang.core.mir.dataflow.framework.ResultsVisitor
 import org.rust.lang.core.mir.get
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsFunction
+import org.rust.stdext.singleOrFilter
 
 abstract class MirDataflowTestBase<Domain: Any> : RsTestBase() {
     abstract fun createAnalysis(body: MirBody): Analysis<Domain>
@@ -26,7 +28,9 @@ abstract class MirDataflowTestBase<Domain: Any> : RsTestBase() {
         mir: String,
     ) {
         InlineFile(code)
-        val mirBody = MirBuilder.build(myFixture.file as RsFile).single()
+        val mirBody = MirBuilder.build(myFixture.file as RsFile)
+            .singleOrFilter { it.sourceElement.let { fn -> fn is RsFunction && fn.name == "main" }  }
+            .single()
         val analysisResult = createAnalysis(mirBody)
             .intoEngine(mirBody)
             .iterateToFixPoint()

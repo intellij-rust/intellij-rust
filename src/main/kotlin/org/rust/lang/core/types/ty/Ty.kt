@@ -80,6 +80,11 @@ enum class Mutability {
     }
 }
 
+sealed class AutoBorrowMutability {
+    data class Mutable(val allowTwoPhaseBorrow: Boolean) : AutoBorrowMutability()
+    object Immutable : AutoBorrowMutability()
+}
+
 enum class BorrowKind {
     /** `&expr` or `&mut expr` */
     REF,
@@ -148,6 +153,13 @@ fun Ty.builtinDeref(items: KnownItems, explicit: Boolean = true): Pair<Ty, Mutab
         this is TyAdt && item == items.Box -> Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
         this is TyReference -> Pair(referenced, mutability)
         this is TyPointer && explicit -> Pair(referenced, mutability)
+        else -> null
+    }
+
+fun Ty.builtinIndex(): Ty? =
+    when (this) {
+        is TyArray -> base
+        is TySlice -> elementType
         else -> null
     }
 

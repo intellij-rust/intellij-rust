@@ -10,8 +10,10 @@ import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.ArithmeticOp
+import org.rust.lang.core.psi.ext.BinaryOperator
 import org.rust.lang.core.psi.ext.LogicOp
 import org.rust.lang.core.psi.ext.UnaryOperator
+import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
@@ -33,6 +35,38 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     class Literal(
         val literal: RsLitExpr,
         val neg: Boolean,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** For literals that don't correspond to anything in the HIR */
+    class NonHirLiteral(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A literal of a ZST type. */
+    class ZstLiteral(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Associated constants and named constants */
+    class NamedConst(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class ConstParam(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /**
+     * A literal containing the address of a `static`.
+     * This is only distinguished from `Literal` so that we can register some info for diagnostics.
+     */
+    class StaticRef(
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
@@ -75,6 +109,19 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
+    class Array(
+        val fields: List<ThirExpr>,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Repeat(
+        val value: ThirExpr,
+        val count: Const,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
     class Tuple(
         val fields: List<ThirExpr>,
         ty: Ty,
@@ -109,8 +156,24 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
+    class Continue(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Return(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
     class VarRef(
         val local: LocalVar,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Used to represent upvars mentioned in a closure/generator */
+    class UpvarRef(
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
@@ -122,8 +185,19 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
+    /** A non-overloaded operation assignment, e.g. `lhs += rhs` */
+    class AssignOp(
+        val op: BinaryOperator,
+        val left: ThirExpr,
+        val right: ThirExpr,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
     class Adt(
         val definition: RsStructItem,
+        val fields: List<FieldExpr>,
+        val base: FruInfo?,
         // TODO: more properties here
         ty: Ty,
         span: MirSpan,
@@ -135,6 +209,121 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
+
+    /** A `&raw [const|mut] $place_expr` raw borrow resulting in type `*[const|mut] T`. */
+    class AddressOf(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A `box <value>` expression. */
+    class Box(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A function call. Method calls and overloaded operators are converted to plain function calls. */
+    class Call(
+        val fnTy: Ty,
+        val callee: ThirExpr,
+        val args: List<ThirExpr>,
+        val fromCall: Boolean,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A *non-overloaded* dereference. */
+    class Deref(
+        val arg: ThirExpr,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A cast: `<source> as <type>`. The type we cast to is the type of the parent expression. */
+    class Cast(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Use(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Pointer(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Let(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Match(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A *non-overloaded* indexing operation. */
+    class Index(
+        val lhs: ThirExpr,
+        val index: ThirExpr,
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** An inline `const` block, e.g. `const {}`. */
+    class ConstBlock(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A type ascription on a place. */
+    class PlaceTypeAscription(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** A type ascription on a value, e.g. `42: i32`. */
+    class ValueTypeAscription(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Closure(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Inline assembly, i.e. `asm!()`. */
+    class InlineAsm(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** Field offset (`offset_of!`) */
+    class OffsetOf(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    /** An expression taking a reference to a thread local. */
+    class ThreadLocalRef(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
+
+    class Yield(
+        ty: Ty,
+        span: MirSpan,
+    ) : ThirExpr(ty, span)
 }
 
 typealias MirFieldIndex = Int
+
+/** Represents the association of a field identifier and an expression. This is used in struct constructors. */
+class FieldExpr(val name: MirFieldIndex, val expr: ThirExpr)
+
+// `Foo { ..base }`
+class FruInfo(val base: ThirExpr, val fieldTypes: List<Ty>)

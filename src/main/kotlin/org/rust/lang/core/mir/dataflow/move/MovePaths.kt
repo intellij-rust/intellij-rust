@@ -14,6 +14,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
+import org.rust.stdext.dequeOf
 
 /**
  * [MovePath] is a canonicalized representation of a path that is moved or assigned to.
@@ -36,6 +37,23 @@ class MovePath(
 
     val ancestors: Sequence<MovePath>
         get() = generateSequence(this) { it.parent }
+
+    fun findInMovePathOrItsDescendants(predicate: (MovePath) -> Boolean): MovePath? {
+        if (predicate(this)) return this
+        return findDescendant(predicate)
+    }
+
+    private fun findDescendant(predicate: (MovePath) -> Boolean): MovePath? {
+        val firstChild = firstChild ?: return null
+        val queue = dequeOf(firstChild)
+        while (queue.isNotEmpty()) {
+            val element = queue.pop()
+            if (predicate(element)) return element
+            element.firstChild?.let { queue.push(it) }
+            element.nextSibling?.let { queue.push(it) }
+        }
+        return null
+    }
 }
 
 /**
@@ -245,6 +263,16 @@ private class MoveDataBuilder(
             is MirTerminator.Resume -> Unit
             is MirTerminator.Return -> Unit
             is MirTerminator.Unreachable -> Unit
+            is MirTerminator.Call -> {
+                gatherOperand(term.callee)
+                for (arg in term.args) {
+                    gatherOperand(arg)
+                }
+                if (term.target != null) {
+                    createMovePath(term.destination)
+                    gatherInit(term.destination, InitKind.NonPanicPathOnly)
+                }
+            }
         }
     }
 
@@ -265,6 +293,7 @@ private class MoveDataBuilder(
     private fun gatherRvalue(rvalue: MirRvalue) {
         when (rvalue) {
             is MirRvalue.Use -> gatherOperand(rvalue.operand)
+            is MirRvalue.Repeat -> gatherOperand(rvalue.operand)
             is MirRvalue.Aggregate -> {
                 for (operand in rvalue.operands) {
                     gatherOperand(operand)
@@ -282,7 +311,7 @@ private class MoveDataBuilder(
             }
 
             is MirRvalue.UnaryOpUse -> gatherOperand(rvalue.operand)
-            is MirRvalue.Ref -> Unit
+            is MirRvalue.Ref, is MirRvalue.Len -> Unit
         }
     }
 

@@ -6,6 +6,7 @@
 package org.rust.lang.core.mir.schemas
 
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.builtinIndex
 
 typealias PlaceElem = MirProjectionElem<Ty>
 
@@ -40,6 +41,8 @@ class MirPlaceTy(
         return when (element) {
             is MirProjectionElem.Field -> fromTy(element.elem)
             is MirProjectionElem.Deref -> TODO()
+            is MirProjectionElem.Index,
+            is MirProjectionElem.ConstantIndex -> fromTy(ty.builtinIndex()!!)
         }
     }
 

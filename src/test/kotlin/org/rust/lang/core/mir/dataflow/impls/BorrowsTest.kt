@@ -229,4 +229,67 @@ class BorrowsTest : MirDataflowTestBase<BitSet>() {
             }                                    // {}
         }
     """)
+
+    fun `test function call`() = doTest("""
+        struct S;
+        fn main() {
+            let a = S;
+            let b = foo(&a);
+            let c = a; // E0505
+            let d = b;
+        }
+        fn foo<T>(a: T) -> T {}
+    """, """
+        fn main() -> () {
+            let mut _0: ();                      // return place in scope 0 at src/main.rs:3:19: 3:19
+            let _1: S;                           // in scope 0 at src/main.rs:4:17: 4:18
+            let mut _3: &S;                      // in scope 0 at src/main.rs:5:25: 5:27
+            scope 1 {
+                debug a => _1;                   // in scope 1 at src/main.rs:4:17: 4:18
+                let _2: &S;                      // in scope 1 at src/main.rs:5:17: 5:18
+                scope 2 {
+                    debug b => _2;               // in scope 2 at src/main.rs:5:17: 5:18
+                    let _4: S;                   // in scope 2 at src/main.rs:6:17: 6:18
+                    scope 3 {
+                        debug c => _4;           // in scope 3 at src/main.rs:6:17: 6:18
+                        let _5: &S;              // in scope 3 at src/main.rs:7:17: 7:18
+                        scope 4 {
+                            debug d => _5;       // in scope 4 at src/main.rs:7:17: 7:18
+                        }
+                    }
+                }
+            }
+
+            bb0: {                               // {}
+                StorageLive(_1);
+                _1 = S;
+                FakeRead(ForLet(None), _1);
+                StorageLive(_2);
+                StorageLive(_3);
+                _3 = &_1;                        // +_0
+                _2 = function(move _3) -> [return: bb1, unwind: bb2];
+            }                                    // {_0}
+
+            bb1: {                               // {_0}
+                StorageDead(_3);
+                FakeRead(ForLet(None), _2);
+                StorageLive(_4);
+                _4 = move _1;
+                FakeRead(ForLet(None), _4);
+                StorageLive(_5);
+                _5 = _2;
+                FakeRead(ForLet(None), _5);
+                _0 = const ();
+                StorageDead(_5);
+                StorageDead(_4);
+                StorageDead(_2);
+                StorageDead(_1);                 // -_0
+                return;
+            }                                    // {}
+
+            bb2 (cleanup): {                     // {_0}
+                resume;
+            }                                    // {_0}
+        }
+    """)
 }

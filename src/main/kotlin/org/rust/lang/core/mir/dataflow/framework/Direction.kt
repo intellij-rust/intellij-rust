@@ -13,6 +13,7 @@ sealed interface Direction {
     fun <Domain> applyEffectsInBlock(analysis: Analysis<Domain>, state: Domain, block: MirBasicBlock)
 
     fun <Domain> joinStateIntoSuccessorsOf(
+        analysis: Analysis<Domain>,
         exitState: Domain,
         block: MirBasicBlock,
         propagate: (MirBasicBlock, Domain) -> Unit
@@ -37,6 +38,7 @@ object Forward : Direction {
     }
 
     override fun <Domain> joinStateIntoSuccessorsOf(
+        analysis: Analysis<Domain>,
         exitState: Domain,
         block: MirBasicBlock,
         propagate: (MirBasicBlock, Domain) -> Unit
@@ -55,6 +57,14 @@ object Forward : Direction {
             is MirTerminator.SwitchInt -> {
                 for (target in terminator.targets.targets) {
                     propagate(target, exitState)
+                }
+            }
+
+            is MirTerminator.Call -> {
+                terminator.unwind?.let { propagate(it, exitState) }
+                if (terminator.target != null) {
+                    analysis.applyCallReturnEffect(exitState, block, terminator.destination)
+                    propagate(terminator.target, exitState)
                 }
             }
         }

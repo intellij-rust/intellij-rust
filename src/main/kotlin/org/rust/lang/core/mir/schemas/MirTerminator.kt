@@ -51,6 +51,16 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
         override val source: MirSourceInfo,
     ) : MirTerminator<Nothing>
 
+    data class Call<BB : MirBasicBlock>(
+        val callee: MirOperand,
+        val args: List<MirOperand>,
+        val destination: MirPlace,
+        val target: BB?,
+        val unwind: BB?,
+        val fromCall: Boolean,
+        override val source: MirSourceInfo,
+    ) : MirTerminator<BB>
+
     val successors: List<MirBasicBlock>
         get() = when (this) {
             is Return, is Resume, is Unreachable -> emptyList()
@@ -58,6 +68,7 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
             is Goto -> listOf(target)
             is SwitchInt -> targets.targets
             is FalseUnwind -> listOfNotNull(realTarget, unwind)
+            is Call -> listOfNotNull(target, unwind)
         }
 
     companion object {

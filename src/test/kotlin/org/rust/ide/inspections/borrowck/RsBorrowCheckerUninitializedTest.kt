@@ -18,7 +18,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
     fun `test E0381 error no init`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;
-            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            <error descr="Use of possibly uninitialized variable [E0381]">x<caret></error>;
         }
     """, """
         fn main() {
@@ -36,7 +36,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
 
         fn main() {
             let x: A;
-            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            <error descr="Use of possibly uninitialized variable [E0381]">x<caret></error>;
         }
     """, """
         #[derive(Default)]
@@ -59,7 +59,7 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         fn main() {
             let a: u64 = 1;
             let x: A;
-            <error descr="Use of possibly uninitialized variable">x<caret></error>;
+            <error descr="Use of possibly uninitialized variable [E0381]">x<caret></error>;
         }
     """, """
         struct A {
@@ -322,6 +322,66 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             let x = (Foo, Foo);
             let y = x.0;
             let z = x.1;
+        }
+    """)
+
+    fun `test no E0381 for nested tuple field`() = checkErrors("""
+        struct Foo;
+        fn main() {
+            let x = (Foo, (Foo, Foo));
+            let y1 = x.0;
+            let y2 = x.1.0;
+            let y3 = x.1.1;
+        }
+    """)
+
+    fun `test E0381 for add assign`() = checkErrors("""
+        fn main() {
+            let mut x: i32;
+            /*error descr="Use of possibly uninitialized variable [E0381]"*/x += 1/*error**/;
+        }
+    """)
+
+    fun `test no E0381 for add assign`() = checkErrors("""
+        fn main() {
+            let mut x = 0;
+            x += 1;
+            let mut y = 0;
+            y += 1;
+        }
+    """)
+
+    fun `test E0381 in function argument`() = checkErrors("""
+        fn main() {
+            let x: i32;
+            foo(/*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/);
+        }
+        fn foo(_a: i32) {}
+    """)
+
+    fun `test no E0381 for variable assigned in function call`() = checkErrors("""
+        fn main() {
+            let mut a: i32;
+            a = foo();
+            let b = a;
+        }
+        fn foo() -> i32 { 0 }
+    """)
+
+    fun `test E0381 in struct literal`() = checkErrors("""
+        struct Foo { a: i32 }
+        fn main() {
+            let x: i32;
+            let foo = Foo { a: /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/ };
+        }
+    """)
+
+    fun `test no E0381 in struct literal`() = checkErrors("""
+        struct Foo { a: i32 }
+        fn main() {
+            let x = 1;
+            let foo1 = Foo { a: x };
+            let foo2 = foo1;
         }
     """)
 }

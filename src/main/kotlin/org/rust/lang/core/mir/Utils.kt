@@ -39,6 +39,7 @@ val Ty.needsDrop: Boolean
             is TyTuple -> types.any { it.needsDrop }
             is TyAdt -> false // TODO: usually not false actually
             is TyReference -> false
+            is TyFunctionBase -> false
             else -> true
         }
     }

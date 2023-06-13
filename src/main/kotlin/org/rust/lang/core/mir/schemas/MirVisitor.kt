@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 
 interface MirVisitor {
@@ -39,18 +40,12 @@ interface MirVisitor {
     }
 
     fun visitBasicBlock(block: MirBasicBlock) {
-        var index = 0
-        for (statement in block.statements) {
+        for ((index, statement) in block.statements.withIndex()) {
             val location = MirLocation(block, index)
             visitStatement(statement, location)
-            index += 1
         }
 
-        val terminator = block.terminator
-        if (terminator != null) {
-            val location = MirLocation(block, index)
-            visitTerminator(terminator, location)
-        }
+        visitTerminator(block.terminator, block.terminatorLocation)
     }
 
     fun visitSourceScope(scope: MirSourceScope) {
@@ -77,13 +72,13 @@ interface MirVisitor {
             }
 
             is MirVarDebugInfo.Contents.Place -> {
-                visitPlace(value.place, MirPlaceContext.NonUse(NonUseContext.VarDebugInfo), location)
+                visitPlace(value.place, MirPlaceContext.NonUse.VarDebugInfo, location)
             }
 
             is MirVarDebugInfo.Contents.Composite -> {
                 visitTy(value.ty, TyContext.Location(location))
                 for (fragment in value.fragments) {
-                    visitPlace(fragment.contents, MirPlaceContext.NonUse(NonUseContext.VarDebugInfo), location)
+                    visitPlace(fragment.contents, MirPlaceContext.NonUse.VarDebugInfo, location)
                 }
             }
         }
@@ -94,9 +89,9 @@ interface MirVisitor {
         if (place.projections.isNotEmpty()) {
             if (currentContext.isUse) {
                 currentContext = if (currentContext.isMutatingUse) {
-                    MirPlaceContext.MutatingUse(MutatingUseContext.Projection)
+                    MirPlaceContext.MutatingUse.Projection
                 } else {
-                    MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Projection)
+                    MirPlaceContext.NonMutatingUse.Projection
                 }
             }
         }
@@ -116,7 +111,11 @@ interface MirVisitor {
                 visitTy(elem.elem, TyContext.Location(location))
             }
 
-            is MirProjectionElem.Deref -> {}
+            is MirProjectionElem.Index -> {
+                visitLocal(elem.index, MirPlaceContext.NonMutatingUse.Copy, location)
+            }
+
+            is MirProjectionElem.Deref, is MirProjectionElem.ConstantIndex -> {}
         }
     }
 
@@ -139,21 +138,21 @@ interface MirVisitor {
             }
 
             is MirStatement.FakeRead -> {
-                visitPlace(statement.place, MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Inspect), location)
+                visitPlace(statement.place, MirPlaceContext.NonMutatingUse.Inspect, location)
             }
 
             is MirStatement.StorageDead -> {
-                visitLocal(statement.local, MirPlaceContext.NonUse(NonUseContext.StorageLive), location)
+                visitLocal(statement.local, MirPlaceContext.NonUse.StorageLive, location)
             }
 
             is MirStatement.StorageLive -> {
-                visitLocal(statement.local, MirPlaceContext.NonUse(NonUseContext.StorageDead), location)
+                visitLocal(statement.local, MirPlaceContext.NonUse.StorageDead, location)
             }
         }
     }
 
     fun visitAssign(place: MirPlace, rvalue: MirRvalue, location: MirLocation) {
-        visitPlace(place, MirPlaceContext.MutatingUse(MutatingUseContext.Store), location)
+        visitPlace(place, MirPlaceContext.MutatingUse.Store, location)
         visitRvalue(rvalue, location)
     }
 
@@ -163,13 +162,18 @@ interface MirVisitor {
                 visitOperand(rvalue.operand, location)
             }
 
+            is MirRvalue.Repeat -> {
+                visitOperand(rvalue.operand, location)
+                visitTyConst(rvalue.count, location)
+            }
+
             is MirRvalue.Ref -> {
                 // TODO: visitRegion(rvalue.region, location)
                 val context = when (rvalue.borrowKind) {
-                    MirBorrowKind.Shared -> MirPlaceContext.NonMutatingUse(NonMutatingUseContext.SharedBorrow)
-                    MirBorrowKind.Shallow -> MirPlaceContext.NonMutatingUse(NonMutatingUseContext.ShallowBorrow)
-                    MirBorrowKind.Unique -> MirPlaceContext.NonMutatingUse(NonMutatingUseContext.UniqueBorrow)
-                    is MirBorrowKind.Mut -> MirPlaceContext.MutatingUse(MutatingUseContext.Borrow)
+                    MirBorrowKind.Shared -> MirPlaceContext.NonMutatingUse.SharedBorrow
+                    MirBorrowKind.Shallow -> MirPlaceContext.NonMutatingUse.ShallowBorrow
+                    MirBorrowKind.Unique -> MirPlaceContext.NonMutatingUse.UniqueBorrow
+                    is MirBorrowKind.Mut -> MirPlaceContext.MutatingUse.Borrow
                 }
                 visitPlace(rvalue.place, context, location)
             }
@@ -194,12 +198,24 @@ interface MirVisitor {
                         // TODO: visitSubsts(rvalue.substs, location)
                     }
 
+                    is MirRvalue.Aggregate.Array -> {
+                        visitTy(rvalue.ty, TyContext.Location(location))
+                    }
+
                     is MirRvalue.Aggregate.Tuple -> {}
                 }
 
                 for (operand in rvalue.operands) {
                     visitOperand(operand, location)
                 }
+            }
+
+            is MirRvalue.Len -> {
+                visitPlace(
+                    rvalue.place,
+                    MirPlaceContext.NonMutatingUse.Inspect,
+                    location,
+                )
             }
         }
     }
@@ -213,7 +229,7 @@ interface MirVisitor {
             }
 
             is MirTerminator.Return -> {
-                visitLocal(returnPlace(), MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Move), location)
+                visitLocal(returnPlace(), MirPlaceContext.NonMutatingUse.Move, location)
             }
 
             is MirTerminator.SwitchInt -> {
@@ -225,17 +241,29 @@ interface MirVisitor {
             is MirTerminator.Unreachable,
             is MirTerminator.FalseUnwind -> {
             }
+
+            is MirTerminator.Call -> {
+                visitOperand(terminator.callee, location)
+                for (arg in terminator.args) {
+                    visitOperand(arg, location)
+                }
+                visitPlace(
+                    terminator.destination,
+                    MirPlaceContext.MutatingUse.Call,
+                    location,
+                )
+            }
         }
     }
 
     fun visitOperand(operand: MirOperand, location: MirLocation) {
         when (operand) {
             is MirOperand.Copy -> {
-                visitPlace(operand.place, MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Copy), location)
+                visitPlace(operand.place, MirPlaceContext.NonMutatingUse.Copy, location)
             }
 
             is MirOperand.Move -> {
-                visitPlace(operand.place, MirPlaceContext.NonMutatingUse(NonMutatingUseContext.Move), location)
+                visitPlace(operand.place, MirPlaceContext.NonMutatingUse.Move, location)
             }
 
             is MirOperand.Constant -> {
@@ -262,6 +290,11 @@ interface MirVisitor {
             is MirAssertKind.ReminderByZero -> {
                 visitOperand(msg.arg, location)
             }
+
+            is MirAssertKind.BoundsCheck -> {
+                visitOperand(msg.len, location)
+                visitOperand(msg.index, location)
+            }
         }
     }
 
@@ -270,39 +303,39 @@ interface MirVisitor {
         visitSourceScope(source.scope)
     }
 
-    fun visitTy(ty: Ty, localDecl: Any) {
+    fun visitTy(ty: Ty, context: TyContext) {
+    }
+
+    fun visitTyConst(const: Const, location: MirLocation) {
     }
 }
 
 sealed class MirPlaceContext {
-    data class NonMutatingUse(val context: NonMutatingUseContext) : MirPlaceContext()
-    data class MutatingUse(val context: MutatingUseContext) : MirPlaceContext()
-    data class NonUse(val context: NonUseContext) : MirPlaceContext()
+    sealed class NonMutatingUse : MirPlaceContext() {
+        object Projection : NonMutatingUse()
+        object Inspect : NonMutatingUse()
+        object Copy : NonMutatingUse()
+        object Move : NonMutatingUse()
+        object SharedBorrow : NonMutatingUse()
+        object ShallowBorrow : NonMutatingUse()
+        object UniqueBorrow : NonMutatingUse()
+    }
+
+    sealed class MutatingUse : MirPlaceContext() {
+        object Projection : MutatingUse()
+        object Store : MutatingUse()
+        object Borrow : MutatingUse()
+        object Call : MutatingUse()
+    }
+
+    sealed class NonUse : MirPlaceContext() {
+        object VarDebugInfo : NonUse()
+        object StorageLive : NonUse()
+        object StorageDead : NonUse()
+    }
 
     val isUse: Boolean get() = this !is NonUse
     val isMutatingUse: Boolean get() = this is MutatingUse
-}
-
-enum class NonMutatingUseContext {
-    Projection,
-    Inspect,
-    Copy,
-    Move,
-    SharedBorrow,
-    ShallowBorrow,
-    UniqueBorrow
-}
-
-enum class MutatingUseContext {
-    Projection,
-    Store,
-    Borrow
-}
-
-enum class NonUseContext {
-    VarDebugInfo,
-    StorageLive,
-    StorageDead
 }
 
 /** Extra information passed to `visitTy` and friends to give context about where the type etc appears. */

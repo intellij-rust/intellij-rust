@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.document
-import java.util.*
 import kotlin.math.max
 
 internal class MirPrettyPrinter(
@@ -39,11 +38,11 @@ internal class MirPrettyPrinter(
         block.statements.forEach { stmt ->
             val statement = when (stmt) {
                 is MirStatement.Assign -> {
-                    "$INDENT${INDENT}_${stmt.place.local.index} = ${format(stmt.rvalue)};"
+                    "$INDENT${INDENT}${format(stmt.place)} = ${format(stmt.rvalue)};"
                 }
-                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(_${stmt.local.index});"
-                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(_${stmt.local.index});"
-                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, _${stmt.place.local.index});"
+                is MirStatement.StorageLive -> "$INDENT${INDENT}StorageLive(${format(stmt.local)});"
+                is MirStatement.StorageDead -> "$INDENT${INDENT}StorageDead(${format(stmt.local)});"
+                is MirStatement.FakeRead -> "$INDENT${INDENT}FakeRead(${format(stmt.cause)}, ${format(stmt.place.local)});"
             }
             appendLine(statement.withComment(commentSupplier.statementComment(stmt)))
         }
@@ -92,8 +91,23 @@ internal class MirPrettyPrinter(
             is MirTerminator.Unreachable -> {
                 appendLine("$INDENT${INDENT}unreachable;".withComment(comment))
             }
+
+            is MirTerminator.Call -> {
+                val args = terminator.args.joinToString(separator = ", ") { format(it) }
+                appendLine(
+                    buildString {
+                        append("$INDENT${INDENT}_${terminator.destination.local.index} = ")
+                        append("${format(terminator.callee)}($args) -> ")
+                        append("[return: bb${terminator.target?.index}, unwind: bb${terminator.unwind?.index}];")
+                    }.withComment(comment)
+                )
+            }
         }
         appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
+    }
+
+    private fun format(local: MirLocal): String {
+        return "_${local.index}"
     }
 
     private fun format(msg: MirAssertKind): String {
@@ -111,6 +125,7 @@ internal class MirPrettyPrinter(
             }
             is MirAssertKind.DivisionByZero -> ", \"attempt to divide `{}` by zero\", ${format(msg.arg)}"
             is MirAssertKind.ReminderByZero -> ", \"attempt to calculate the remainder of `{}` with a divisor of zero\", ${format(msg.arg)}"
+            is MirAssertKind.BoundsCheck -> ", \"index out of bounds: the length is {} but the index is {}\", ${format(msg.len)}, ${format(msg.index)}"
         }
     }
 
@@ -123,7 +138,13 @@ internal class MirPrettyPrinter(
                         EqualityOp.EQ -> "Eq"
                         EqualityOp.EXCLEQ -> TODO()
                     }
-                    else -> TODO()
+                    is MirBinaryOperator.Comparison -> when (op.op) {
+                        ComparisonOp.LT -> "Lt"
+                        ComparisonOp.GT -> TODO()
+                        ComparisonOp.GTEQ -> TODO()
+                        ComparisonOp.LTEQ -> TODO()
+                    }
+                    MirBinaryOperator.Offset -> TODO()
                 }
                 "$opName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
@@ -136,24 +157,52 @@ internal class MirPrettyPrinter(
                 }
                 "$funName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
+            is MirRvalue.Repeat -> {
+                val value = format(rvalue.operand)
+                val count = rvalue.count
+                "[$value; $count]"
+            }
+            is MirRvalue.Aggregate.Array -> when (rvalue.operands.size) {
+                0 -> "[]"
+                1 -> "[${format(rvalue.operands.single())}]"
+                else -> rvalue.operands.joinToString(", ", "[", "]") { format(it) }
+            }
             is MirRvalue.Aggregate.Tuple -> when (rvalue.operands.size) {
                 0 -> "()"
                 1 -> "(${format(rvalue.operands.single())},)"
-                else -> StringJoiner(", ", "(", ")").run {
-                    rvalue.operands.forEach {
-                        add(format(it))
+                else -> rvalue.operands.joinToString(", ", "(", ")") { format(it) }
+            }
+            is MirRvalue.Aggregate.Adt -> {
+                val struct = rvalue.definition
+                when {
+                    struct.isFieldless -> struct.name ?: TODO()
+                    struct.isTupleStruct -> TODO()
+                    else -> {
+                        check(struct.fields.size == rvalue.operands.size)
+                        val fields = (struct.fields zip rvalue.operands)
+                            .joinToString { (fieldDeclaration, fieldValue) ->
+                                "${fieldDeclaration.name}: ${format(fieldValue)}"
+                            }
+                        "${struct.name!!} { $fields }"
                     }
-                    toString()
                 }
             }
-            is MirRvalue.Aggregate.Adt -> rvalue.definition.name ?: TODO()
             is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
+            is MirRvalue.Len -> "Len(${format(rvalue.place)})"
         }
     }
 
     private fun format(operand: MirOperand): String {
         return when (operand) {
-            is MirOperand.Constant -> "const ${format(operand.constant)}"
+            is MirOperand.Constant -> {
+                val constant = operand.constant
+                val formattedConst = format(constant)
+                if (constant is MirConstant.Value && constant.ty is TyFunctionBase) {
+                    formattedConst
+                } else {
+                    "const $formattedConst"
+                }
+            }
             is MirOperand.Move -> "move ${format(operand.place)}"
             is MirOperand.Copy -> format(operand.place)
         }
@@ -166,7 +215,9 @@ internal class MirPrettyPrinter(
             for (projection in place.projections.asReversed()) {
                 when (projection) {
                     is MirProjectionElem.Field -> append("(")
-                    is MirProjectionElem.Deref -> TODO()
+                    is MirProjectionElem.Deref -> append("(*")
+                    is MirProjectionElem.Index,
+                    is MirProjectionElem.ConstantIndex -> Unit
                 }
             }
 
@@ -175,7 +226,9 @@ internal class MirPrettyPrinter(
             for (projection in place.projections) {
                 when (projection) {
                     is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
-                    is MirProjectionElem.Deref -> TODO()
+                    is MirProjectionElem.Deref -> append(")")
+                    is MirProjectionElem.Index -> append("[_${projection.index.index}]")
+                    is MirProjectionElem.ConstantIndex -> append("[${projection.offset} of ${projection.minLength}]")
                 }
             }
         }
@@ -188,7 +241,7 @@ internal class MirPrettyPrinter(
                     is MirScalar.Int -> value.scalarInt.data.toString()
                 }
                 when (val type = constant.ty as TyPrimitive) {
-                    is TyInteger -> if (type.minValue.toString() == value) {
+                    is TyInteger -> if (type.isSigned && type.minValue.toString() == value) {
                         "${type.name}::MIN"
                     } else {
                         "${value}_${type.name}"
@@ -206,6 +259,7 @@ internal class MirPrettyPrinter(
             constant is MirConstant.Value && constant.constValue is MirConstValue.ZeroSized -> {
                 when (constant.ty) {
                     is TyUnit -> "()"
+                    is TyFunctionBase -> "function"
                     else -> TODO()
                 }
             }
@@ -245,6 +299,7 @@ internal class MirPrettyPrinter(
     private fun format(cause: MirStatement.FakeRead.Cause): String {
         return when (cause) {
             is MirStatement.FakeRead.Cause.ForLet -> "ForLet(None)".also { assert(cause.element == null) }
+            MirStatement.FakeRead.Cause.ForIndex -> "ForIndex"
         }
     }
 
@@ -253,19 +308,20 @@ internal class MirPrettyPrinter(
             is TyUnit -> "()"
             TyNever -> "!"
             is TyPrimitive -> ty.name
+            is TyArray -> if (ty.size == null) {
+                "[${format(ty.base)}]"
+            } else {
+                "[${format(ty.base)}; ${ty.size}]"
+            }
             is TyTuple -> if (ty.types.size == 1) {
                 "(${format(ty.types.single())},)"
             } else {
-                StringJoiner(", ", "(", ")").run {
-                    ty.types.forEach {
-                        add(format(it))
-                    }
-                    toString()
-                }
+                ty.types.joinToString(", ", "(", ")") { format(it) }
             }
             is TyAdt -> ty.item.name ?: TODO()
             is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"
-            else -> TODO()
+            is TyFunctionBase -> "function"
+            else -> TODO("Unknown type: $ty")
         }
     }
 

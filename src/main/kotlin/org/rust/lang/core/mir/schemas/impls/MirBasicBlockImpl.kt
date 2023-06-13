@@ -41,7 +41,7 @@ class MirBasicBlockImpl(
     }
 
     fun pushFakeRead(
-        cause: MirStatement.FakeRead.Cause.ForLet,
+        cause: MirStatement.FakeRead.Cause,
         place: MirPlace,
         source: MirSourceInfo,
     ): MirBasicBlockImpl {
@@ -103,6 +103,26 @@ class MirBasicBlockImpl(
         terminator = MirTerminator.Resume(getTerminatorSource(source))
     }
 
+    fun terminateWithCall(
+        callee: MirOperand,
+        args: List<MirOperand>,
+        destination: MirPlace,
+        target: MirBasicBlockImpl?,
+        unwind: MirBasicBlockImpl?,
+        fromCall: Boolean,
+        source: MirSourceInfo?
+    ) {
+        terminator = MirTerminator.Call(
+            callee,
+            args,
+            destination,
+            target,
+            unwind,
+            fromCall,
+            getTerminatorSource(source)
+        )
+    }
+
     private fun getTerminatorSource(source: MirSourceInfo?): MirSourceInfo {
         require((source == null) xor (terminatorSource == null)) {
             if (source != null) "Source can't be specified when terminator source is specified"
@@ -121,6 +141,7 @@ class MirBasicBlockImpl(
             terminator.isDummy() -> error("Terminator is expected to be specified by this moment")
             terminator is MirTerminator.Assert -> this.terminator = terminator.copy(unwind = block)
             terminator is MirTerminator.FalseUnwind -> this.terminator = terminator.copy(unwind = block)
+            terminator is MirTerminator.Call -> this.terminator = terminator.copy(unwind = block)
             else -> error("Terminator is not unwindable")
         }
     }
