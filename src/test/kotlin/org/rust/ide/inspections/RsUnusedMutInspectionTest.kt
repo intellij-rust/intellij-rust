@@ -5,7 +5,10 @@
 
 package org.rust.ide.inspections
 
-class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableInspection::class) {
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
+
+class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::class) {
 
     fun `test should annotate unused variable`() = checkByText("""
         fn main() {
@@ -150,4 +153,18 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
             foo();
         }
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test should not annotate in comments`() = checkByFileTree("""
+        //- lib.rs
+        struct A {}
+        impl A {
+            /// ## Example
+            /// ```rust
+            /// let mut a = 1;
+            /// ```
+            pub fn foo() {}
+        }
+        /*caret*/
+    """, checkWeakWarn = true)
 }
