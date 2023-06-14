@@ -141,13 +141,13 @@ internal class MirPrettyPrinter(
                     is MirBinaryOperator.Arithmetic -> op.op.traitName
                     is MirBinaryOperator.Equality -> when (op.op) {
                         EqualityOp.EQ -> "Eq"
-                        EqualityOp.EXCLEQ -> TODO()
+                        EqualityOp.EXCLEQ -> "Ne"
                     }
                     is MirBinaryOperator.Comparison -> when (op.op) {
                         ComparisonOp.LT -> "Lt"
-                        ComparisonOp.GT -> TODO()
-                        ComparisonOp.GTEQ -> TODO()
-                        ComparisonOp.LTEQ -> TODO()
+                        ComparisonOp.GT -> "Gt"
+                        ComparisonOp.GTEQ -> "Ge"
+                        ComparisonOp.LTEQ -> "Le"
                     }
                     MirBinaryOperator.Offset -> TODO()
                 }

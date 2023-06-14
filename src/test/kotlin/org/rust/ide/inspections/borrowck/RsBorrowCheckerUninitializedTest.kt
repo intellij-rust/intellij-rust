@@ -420,4 +420,16 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             let foo2 = foo1;
         }
     """)
+
+    fun `test no E0381 in builtin operators`() = checkErrors("""
+        fn main() {
+            let x = 1;
+            let y = 2;
+            x + y; x - y; x * y; x / y; x % y;
+            x & y; x | y; x ^ y; x << y; x >> y;
+            x > y; x >= y; x < y; x <= y;
+            x == y; x != y;
+            x; y;
+        }
+    """)
 }

@@ -1,0 +1,8 @@
+const FOO: bool = {
+    let mut _0: bool;                    // return place in scope 0 at src/main.rs:1:12: 1:16
+
+    bb0: {
+        _0 = Le(const 1_i32, const 2_i32); // scope 0 at src/main.rs:1:19: 1:25
+        return;                          // scope 0 at src/main.rs:1:1: 1:26
+    }
+}

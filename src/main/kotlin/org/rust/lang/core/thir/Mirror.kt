@@ -149,7 +149,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             is RsLitExpr -> ThirExpr.Literal(expr, false, ty, span)
             is RsBinaryExpr -> {
                 when (val operator = expr.binaryOp.operatorType) {
-                    is ArithmeticOp -> ThirExpr.Binary(
+                    is ArithmeticOp, is ComparisonOp, is EqualityOp -> ThirExpr.Binary(
                         op = operator,
                         left = mirrorExpr(expr.left),
                         right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of arithmetic operator"),
@@ -182,8 +182,6 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                             span = span
                         )
                     }
-
-                    else -> TODO()
                 }
             }
 

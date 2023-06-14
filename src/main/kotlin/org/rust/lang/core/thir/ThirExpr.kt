@@ -8,7 +8,10 @@ package org.rust.lang.core.thir
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.BinaryOperator
+import org.rust.lang.core.psi.ext.LogicOp
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
+import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
@@ -83,7 +86,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Binary(
-        val op: ArithmeticOp,
+        val op: BinaryOperator,
         val left: ThirExpr,
         val right: ThirExpr,
         ty: Ty,

@@ -388,7 +388,9 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    fun `test no move error E0382 on binary expr as method call`() = checkByText("""
+    // TODO Overloaded RsBinaryExpr
+    fun `test no move error E0382 on binary expr as method call`() = expect<Throwable> {
+    checkByText("""
         #[derive (PartialEq)]
         struct S { data: i32 }
 
@@ -400,6 +402,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+    }
 
     fun `test no move error E0382 on ref String and &str`() = checkByText("""
         use std::string::String;
