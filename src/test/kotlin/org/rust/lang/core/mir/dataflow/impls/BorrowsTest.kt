@@ -193,7 +193,7 @@ class BorrowsTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_3);
                 StorageLive(_4);
                 _4 = const false;
-                switchInt(move _4) -> [false: bb2, otherwise: bb1];
+                switchInt(move _4) -> [0: bb2, otherwise: bb1];
             }                                    // {}
 
             bb1: {                               // {}

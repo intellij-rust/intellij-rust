@@ -70,7 +70,7 @@ internal class MirPrettyPrinter(
                 val cases = buildString {
                     append("[")
                     // TODO: hardcoded as hell
-                    append("false: bb${terminator.targets.targets[0].index}")
+                    append("${terminator.targets.values.single()}: bb${terminator.targets.targets[0].index}")
                     append(", ")
                     append("otherwise: bb${terminator.targets.targets[1].index}")
                     append("]")

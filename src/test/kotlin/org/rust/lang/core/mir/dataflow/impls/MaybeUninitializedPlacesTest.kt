@@ -172,7 +172,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_1);
                 StorageLive(_2);
                 _2 = const true;                 // -_2
-                switchInt(move _2) -> [false: bb2, otherwise: bb1]; // +_2
+                switchInt(move _2) -> [0: bb2, otherwise: bb1]; // +_2
             }                                    // {_0, _1, _2}
 
             bb1: {                               // {_0, _1, _2}
@@ -220,7 +220,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_1);
                 StorageLive(_2);
                 _2 = const true;                 // -_2
-                switchInt(move _2) -> [false: bb2, otherwise: bb1]; // +_2
+                switchInt(move _2) -> [0: bb2, otherwise: bb1]; // +_2
             }                                    // {_0, _1, _2}
 
             bb1: {                               // {_0, _1, _2}
