@@ -53,8 +53,12 @@ class CompilerFeature(
         val rsElement = element.ancestorOrSelf<RsElement>() ?: return UNKNOWN
         val version = rsElement.cargoProject?.rustcInfo?.version ?: return UNKNOWN
 
-        if (state == ACCEPTED && (since == null || version.semver.isGreaterOrEqualThan(since.major, since.minor, since.patch))) {
-            return AVAILABLE
+        if (since == null || version.semver.isGreaterOrEqualThan(since.major, since.minor, since.patch)) {
+            when (state) {
+                ACCEPTED -> return AVAILABLE
+                FeatureState.REMOVED -> return REMOVED
+                else -> {}
+            }
         }
 
         when (rsElement.areUnstableFeaturesAvailable(version)) {
@@ -82,50 +86,85 @@ class CompilerFeature(
         holder: RsAnnotationHolder,
         element: PsiElement,
         presentableFeatureName: String,
-        vararg fixes: LocalQuickFix
-    ) = check(holder, element, null, "$presentableFeatureName is experimental", *fixes)
+        experimentalFixes: List<LocalQuickFix> = emptyList(),
+        removedFixes: List<LocalQuickFix> = emptyList()
+    ) = check(
+        holder,
+        element,
+        null,
+        "$presentableFeatureName is experimental",
+        "$presentableFeatureName has been removed",
+        experimentalFixes,
+        removedFixes
+    )
 
     fun check(
         holder: AnnotationHolder,
         element: PsiElement,
         presentableFeatureName: String,
-        vararg fixes: LocalQuickFix
-    ) = check(holder, element, null, "$presentableFeatureName is experimental", *fixes)
+        experimentalFixes: List<LocalQuickFix> = emptyList(),
+        removedFixes: List<LocalQuickFix> = emptyList()
+    ) = check(
+        holder,
+        element,
+        null,
+        "$presentableFeatureName is experimental",
+        "$presentableFeatureName has been removed",
+        experimentalFixes,
+        removedFixes
+    )
 
     fun check(
         holder: AnnotationHolder,
         startElement: PsiElement,
         endElement: PsiElement?,
-        message: String,
-        vararg fixes: LocalQuickFix
-    ) {
-        getDiagnostic(startElement, endElement, message, *fixes)?.addToHolder(holder)
-    }
+        experimentalMessage: String,
+        removedMessage: String = "`$name` has been removed",
+        experimentalFixes: List<LocalQuickFix> = emptyList(),
+        removedFixes: List<LocalQuickFix> = emptyList()
+    ) = getDiagnostic(
+        startElement,
+        endElement,
+        experimentalMessage,
+        removedMessage,
+        experimentalFixes,
+        removedFixes
+    )?.addToHolder(holder)
 
     fun check(
         holder: RsAnnotationHolder,
         startElement: PsiElement,
         endElement: PsiElement?,
-        @InspectionMessage message: String,
-        vararg fixes: LocalQuickFix
-    ) {
-        getDiagnostic(startElement, endElement, message, *fixes)?.addToHolder(holder)
-    }
+        @InspectionMessage experimentalMessage: String,
+        @InspectionMessage removedMessage: String = "`$name` has been removed",
+        experimentalFixes: List<LocalQuickFix> = emptyList(),
+        removedFixes: List<LocalQuickFix> = emptyList()
+    ) = getDiagnostic(
+        startElement,
+        endElement,
+        experimentalMessage,
+        removedMessage,
+        experimentalFixes,
+        removedFixes
+    )?.addToHolder(holder)
 
-    fun addFeatureFix(element: PsiElement) =
-        AddFeatureAttributeFix(name, element)
+    fun addFeatureFix(element: PsiElement) = AddFeatureAttributeFix(name, element)
 
     private fun getDiagnostic(
         startElement: PsiElement,
         endElement: PsiElement?,
-        message: String,
-        vararg fixes: LocalQuickFix
+        experimentalMessage: String,
+        removedMessage: String,
+        experimentalFixes: List<LocalQuickFix>,
+        removedFixes: List<LocalQuickFix>
     ) = when (availability(startElement)) {
-        NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
+        NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, experimentalMessage, experimentalFixes)
         CAN_BE_ADDED -> {
             val fix = addFeatureFix(startElement)
-            RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
+            RsDiagnostic.ExperimentalFeature(startElement, endElement, experimentalMessage, experimentalFixes + fix)
         }
+
+        REMOVED -> RsDiagnostic.RemovedFeature(startElement, endElement, removedMessage, removedFixes)
         else -> null
     }
 
@@ -147,7 +186,7 @@ class CompilerFeature(
                     LOG.error("Can't find `$COMPILER_FEATURES_PATH` file in resources")
                     return emptyMap()
                 }
-                 stream.buffered().use {
+                stream.buffered().use {
                     MAPPER.readValue(it)
                 }
             } catch (e: IOException) {
@@ -225,21 +264,25 @@ enum class FeatureState {
      * Such features can be used only with nightly compiler with the corresponding feature attribute
      */
     ACTIVE,
+
     /**
      * Represents incomplete features that may not be safe to use and/or cause compiler crashes.
      * Such features can be used only with nightly compiler with the corresponding feature attribute
      */
     INCOMPLETE,
+
     /**
      * Those language feature has since been Accepted (it was once Active)
      * so such language features can be used with stable/beta compiler since some version
      * without any additional attributes
      */
     ACCEPTED,
+
     /**
      * Represents unstable features which have since been removed (it was once Active)
      */
     REMOVED,
+
     /**
      * Represents stable features which have since been removed (it was once Accepted)
      */
@@ -255,5 +298,6 @@ enum class FeatureAvailability {
     AVAILABLE,
     CAN_BE_ADDED,
     NOT_AVAILABLE,
+    REMOVED,
     UNKNOWN
 }

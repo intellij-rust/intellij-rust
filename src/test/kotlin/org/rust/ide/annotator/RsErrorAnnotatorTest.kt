@@ -1594,6 +1594,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.70.0")
+    fun `test box expression feature removed`() = checkErrors("""
+        struct S;
+        fn main() {
+            let x = <error descr="`box` expression syntax has been removed">box</error> S;
+        }
+    """)
+
     @MockRustcVersion("1.41.0")
     fun `test raw address of feature E0658 1`() = checkErrors("""
         fn main() {

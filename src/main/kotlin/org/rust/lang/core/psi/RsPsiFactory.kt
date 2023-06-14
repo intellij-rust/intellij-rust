@@ -457,6 +457,8 @@ class RsPsiFactory(
         return createFromText("fn main() { $labelText loop $blockText }")!!
     }
 
+    fun createBox(exprText: String): RsCallExpr = createFromText("fn main() { Box::new($exprText); }")!!
+
     private fun tryCreateLambda(text: String): RsLambdaExpr? = createFromText("fn main() { let _ = $text }")
 
     fun createRetType(ty: String): RsRetType =
