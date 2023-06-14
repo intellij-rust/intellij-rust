@@ -10,11 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.fixes.RemoveElementFix
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.contextStrict
-import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.psi.ext.mutability
-import org.rust.lang.core.psi.ext.selfParameter
+import org.rust.lang.core.psi.ext.*
 
 class RsVariableMutableInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "No mutable required"
@@ -24,6 +22,11 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
             override fun visitBindingMode(o: RsBindingMode) {
                 val patBinding = o.parent as? RsPatBinding ?: return
                 if (!patBinding.mutability.isMut) return
+
+                if (patBinding.isDoctestInjection){
+                    return
+                }
+
                 val block = patBinding.contextStrict<RsBlock>() ?: patBinding.contextStrict<RsFunction>() ?: return
                 if (ReferencesSearch.search(patBinding, LocalSearchScope(block), /*ignoreAccessScope=*/true)
                         .any { checkOccurrenceNeedMutable(it.element.parent) }) return
