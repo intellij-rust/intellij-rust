@@ -1056,6 +1056,20 @@ sealed class RsDiagnostic(
         )
     }
 
+    class RemovedFeature(
+        element: PsiElement,
+        endElement: PsiElement?,
+        private val message: String,
+        private val fixes: List<LocalQuickFix>
+    ) : RsDiagnostic(element, endElement) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            header = message,
+            fixes = fixes.toQuickFixInfo()
+        )
+    }
+
     class UndeclaredTypeOrModule(
         element: PsiElement
     ) : RsDiagnostic(element) {

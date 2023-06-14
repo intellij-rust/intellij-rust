@@ -26,7 +26,7 @@ import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.refactoring.findBinding
-import org.rust.lang.core.*
+import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.CompilerFeature.Companion.ADT_CONST_PARAMS
 import org.rust.lang.core.CompilerFeature.Companion.ARBITRARY_ENUM_DISCRIMINANT
 import org.rust.lang.core.CompilerFeature.Companion.ASSOCIATED_TYPE_DEFAULTS
@@ -60,7 +60,9 @@ import org.rust.lang.core.CompilerFeature.Companion.PARAM_ATTRS
 import org.rust.lang.core.CompilerFeature.Companion.RAW_REF_OP
 import org.rust.lang.core.CompilerFeature.Companion.SLICE_PATTERNS
 import org.rust.lang.core.CompilerFeature.Companion.START
+import org.rust.lang.core.CompilerFeature.Companion.UNBOXED_CLOSURES
 import org.rust.lang.core.FeatureAvailability.*
+import org.rust.lang.core.FeatureState
 import org.rust.lang.core.completion.isFnLikeTrait
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
@@ -75,9 +77,12 @@ import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.*
+import org.rust.lang.utils.QuickFixWithRange
+import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
 import org.rust.lang.utils.RsErrorCode.*
+import org.rust.lang.utils.SUPPORTED_CALLING_CONVENTIONS
+import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.capitalized
@@ -490,22 +495,30 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkNotCallingDrop(o, holder)
     }
 
-    private fun checkTraitRef(holder: RsAnnotationHolder, o: RsTraitRef) {
-        val item = o.path.reference?.resolve() as? RsItemElement ?: return
+    private fun checkTraitRef(holder: RsAnnotationHolder, traitRef: RsTraitRef) {
+        val item = traitRef.path.reference?.resolve() as? RsItemElement ?: return
         if (item !is RsTraitItem && item !is RsTraitAlias) {
-            RsDiagnostic.NotTraitError(o, item).addToHolder(holder)
+            RsDiagnostic.NotTraitError(traitRef, item).addToHolder(holder)
         }
 
-        if (item.isFnLikeTrait && !o.parenthesized) {
-            CompilerFeature.UNBOXED_CLOSURES.check(holder, o, o,
+        if (item.isFnLikeTrait && !traitRef.parenthesized) {
+            UNBOXED_CLOSURES.check(
+                holder,
+                traitRef,
+                traitRef,
                 "The precise format of `Fn`-family traits' type parameters is subject to change",
-                CompilerFeature.UNBOXED_CLOSURES.addFeatureFix(o))
+                experimentalFixes = listOf(UNBOXED_CLOSURES.addFeatureFix(traitRef))
+            )
         }
 
-        if (!item.isFnLikeTrait && o.parenthesized) {
-            CompilerFeature.UNBOXED_CLOSURES.check(holder, o, o,
+        if (!item.isFnLikeTrait && traitRef.parenthesized) {
+            UNBOXED_CLOSURES.check(
+                holder,
+                traitRef,
+                traitRef,
                 "Parenthetical notation is only stable when used with `Fn`-family traits",
-                CompilerFeature.UNBOXED_CLOSURES.addFeatureFix(o))
+                experimentalFixes = listOf(UNBOXED_CLOSURES.addFeatureFix(traitRef))
+            )
         }
     }
 
@@ -601,8 +614,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val featureName = metaItems.singleOrNull { it.name == "feature" }?.value ?: continue
             val reason = metaItems.singleOrNull { it.name == "reason" }?.value
             val reasonSuffix = if (reason != null) ": $reason" else ""
-            val feature = CompilerFeature.find(featureName)
-                ?: CompilerFeature(featureName, FeatureState.ACTIVE, null)
+            val feature = CompilerFeature.find(featureName) ?: CompilerFeature(featureName, FeatureState.ACTIVE, null)
             feature.check(holder, startElement, null, "`$featureName` is unstable$reasonSuffix")
         }
     }
@@ -862,13 +874,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 // sure that a mod is not a directory owner.
                 if (modDecl.cargoWorkspace != null) {
                     val addModule = AddModuleFileFix.createFixes(modDecl, expandModuleFirst = true)
-                        .toTypedArray()
-                    NON_MODRS_MODS.check(
-                        holder,
-                        modDecl,
-                        "mod statements in non-mod.rs files",
-                        *addModule
-                    )
+                    NON_MODRS_MODS.check(holder, modDecl, "mod statements in non-mod.rs files", addModule)
                 }
                 return
             }
@@ -1120,7 +1126,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkUnary(holder: RsAnnotationHolder, o: RsUnaryExpr) {
         val box = o.box
         if (box != null) {
-            BOX_SYNTAX.check(holder, box, "`box` expression syntax")
+            val fix = ReplaceBoxSyntaxFix(o)
+            BOX_SYNTAX.check(holder, box, "`box` expression syntax", removedFixes = listOf(fix))
         }
 
         val raw = o.raw
