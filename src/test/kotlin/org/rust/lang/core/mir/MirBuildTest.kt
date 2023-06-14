@@ -101,6 +101,7 @@ class MirBuildTest : RsTestBase() {
     fun `test deref`() = doTest()
     fun `test index`() = doTest()
     fun `test constant index`() = doTest()
+    fun `test function in impl`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)

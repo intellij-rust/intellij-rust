@@ -5,10 +5,12 @@
 
 package org.rust.lang.core.mir
 
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.thir.variant
@@ -295,7 +297,22 @@ internal class MirPrettyPrinter(
             }
             is RsFunction -> {
                 append("fn ")
-                append(reference.name)
+                val prefix = reference
+                    .parent
+                    ?.parent
+                    ?.let { it as? RsImplItem }
+                    ?.let {
+                        val impl = it.impl
+                        val name = it.typeReference ?: error("Could not find type reference of impl")
+                        val fileName = it.contextualFile.originalFile.name
+                        val location = LocationRange(
+                            fileName = "$filenamePrefix$fileName",
+                            start = getStartLocation(impl),
+                            end = getEndLocation(name)
+                        )
+                        "<impl at $location>::"
+                    }
+                append("${prefix.orEmpty()}${reference.name}")
                 append("(")
                 // TODO: arguments
                 append(") -> ${format(mir.returnLocal.ty)} ")
@@ -411,42 +428,56 @@ internal class MirPrettyPrinter(
         }
     }
 
+    private data class Location(val line: Int, val lineOffset: Int) {
+        init {
+            assert(lineOffset >= 0)
+        }
+        val previous get() = Location(line, lineOffset - 1)
+        override fun toString() = "${line + 1}:${lineOffset + 1}"
+    }
+
+    private data class LocationRange(val fileName: String, val start: Location, val end: Location) {
+        override fun toString() = "$fileName:$start: $end"
+    }
+
     companion object {
         private const val INDENT = "    "
         private const val ALIGN = 40
 
         private fun createComment(filenamePrefix: String, source: MirSourceInfo): String {
             val scope = source.scope.index
-            val fileName = source.span.reference.contextualFile.originalFile.name
-            val startOffset = source.span.reference.startOffset
-            val endOffset = source.span.reference.endOffset
-            val startLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
-            val endLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
-            val startLineOffset = startOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
-            val endLineOffset = endOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
+            val scopeAt = "scope $scope at"
+            val location = getLocationRange(filenamePrefix, source.span.reference)
             return when (source.span) {
-                is MirSpan.Full -> {
-                    "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
-                        "${endLine + 1}:${endLineOffset + 1}"
-                }
-
-                is MirSpan.EndPoint -> {
-                    "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset}: " +
-                        "${endLine + 1}:${endLineOffset + 1}"
-                }
-
-                is MirSpan.End -> {
-                    "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset + 1}: " +
-                        "${endLine + 1}:${endLineOffset + 1}"
-                }
-
-                is MirSpan.Start -> {
-                    "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
-                        "${startLine + 1}:${startLineOffset + 1}"
-                }
-
+                is MirSpan.Full -> "$scopeAt $location"
+                is MirSpan.EndPoint -> "$scopeAt ${LocationRange(location.fileName, location.end.previous, location.end)}"
+                is MirSpan.End -> "$scopeAt ${LocationRange(location.fileName, location.end, location.end)}"
+                is MirSpan.Start -> "$scopeAt ${LocationRange(location.fileName, location.start, location.start)}"
                 MirSpan.Fake -> error("can't print fake source info")
             }
+        }
+
+        private fun getLocationRange(filePrefix: String, element: PsiElement): LocationRange {
+            val fileName = element.contextualFile.originalFile.name
+            return LocationRange(
+                fileName = "$filePrefix$fileName",
+                start = getStartLocation(element),
+                end = getEndLocation(element),
+            )
+        }
+
+        private fun getStartLocation(element: PsiElement): Location {
+            val startOffset = element.startOffset
+            val startLine = element.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
+            val startLineOffset = startOffset - element.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
+            return Location(startLine, startLineOffset)
+        }
+
+        private fun getEndLocation(element: PsiElement): Location {
+            val endOffset = element.endOffset
+            val endLine = element.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
+            val endLineOffset = endOffset - element.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
+            return Location(endLine, endLineOffset)
         }
     }
 }

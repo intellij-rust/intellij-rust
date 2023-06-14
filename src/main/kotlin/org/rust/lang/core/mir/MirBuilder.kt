@@ -20,6 +20,7 @@ import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.*
+import org.rust.openapiext.forEachChild
 import org.rust.openapiext.testAssert
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
@@ -1358,17 +1359,16 @@ class MirBuilder private constructor(
 
     companion object {
         fun build(file: RsFile): List<MirBody> {
-            return buildList {
-                file.children.forEach { child ->
-                    when (child) {
-                        is RsFile -> {}
-                        is RsConstant -> add(build(child))
-                        is RsFunction -> add(build(child))
-                        is RsStructOrEnumItemElement -> {}
-                        is PsiWhiteSpace -> {}
-                        is RsImplItem -> {}
-                        else -> TODO("Type ${child::class} is not supported")
-                    }
+            return buildList { buildToList(file) }
+        }
+
+        private fun MutableList<MirBody>.buildToList(element: RsElement) {
+            element.children.forEach { child ->
+                when (child) {
+                    is RsConstant -> add(build(child))
+                    is RsFunction -> add(build(child))
+                    is RsImplItem -> child.members?.let { buildToList(it) }
+                    else -> Unit
                 }
             }
         }
