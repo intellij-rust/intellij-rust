@@ -14,7 +14,7 @@ import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
-class RsVariableMutableInspection : RsLocalInspectionTool() {
+class RsUnusedMutInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "No mutable required"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =

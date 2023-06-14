@@ -516,7 +516,7 @@
         <localInspection language="Rust" groupName="Rust"
                          displayName="Unused mut modifier"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsUnusedMutInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Wrong generic arguments number"

@@ -7,9 +7,8 @@ package org.rust.ide.inspections
 
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
 
-class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableInspection::class) {
+class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::class) {
 
     fun `test should annotate unused variable`() = checkByText("""
         fn main() {
