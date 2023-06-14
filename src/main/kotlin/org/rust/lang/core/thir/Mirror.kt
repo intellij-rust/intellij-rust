@@ -10,18 +10,23 @@ import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.RvalueScopes
 import org.rust.lang.core.types.adjustments
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.Adjustment
 import org.rust.lang.core.types.regions.Scope
+import org.rust.lang.core.types.regions.ScopeTree
+import org.rust.lang.core.types.regions.getRegionScopeTree
+import org.rust.lang.core.types.resolveRvalueScopes
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyArray
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
-// TODO: [contextOwner] is unused now, but it will be needed for rvalue scopes in loop (and more I think)
-class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
+class MirrorContext(contextOwner: RsInferenceContextOwner) {
+    val regionScopeTree: ScopeTree = getRegionScopeTree(contextOwner)
+    private val rvalueScopes: RvalueScopes = resolveRvalueScopes(regionScopeTree)
 
     fun mirrorBlock(block: RsBlock, ty: Ty, span: MirSpan = block.asSpan): ThirExpr {
         val mirrored = mirror(block, ty, span)
@@ -51,6 +56,7 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
         adjustments: List<Adjustment>,
         span: MirSpan
     ): ThirExpr {
+        // Now apply adjustments, if any.
         // TODO: this is just hardcoded for now
         val adjusted = if (element is RsBreakExpr) {
             applyAdjustment(element, mirrored, Adjustment.NeverToAny(TyUnit.INSTANCE))
@@ -60,14 +66,23 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
             }
         }
 
-        return ThirExpr.Scope(Scope.Node(span.reference), adjusted, adjusted.ty, span)
-        // TODO:
-        //  1. there are some rvalue scopes stored in thir expression
-        //  2. something about destruction scope
+        // Next, wrap this up in the expr's scope.
+        var expr = ThirExpr.Scope(Scope.Node(span.reference), adjusted, adjusted.ty, span)
+            .withLifetime(mirrored.tempLifetime)
+
+        // Finally, create a destruction scope, if any.
+        val regionScope = regionScopeTree.getDestructionScope(span.reference)
+        if (regionScope != null) {
+            expr = ThirExpr.Scope(regionScope, expr, expr.ty, span)
+                .withLifetime(expr.tempLifetime)
+        }
+
+        return expr
     }
 
     private fun mirrorUnadjusted(expr: RsExpr, span: MirSpan): ThirExpr {
         val ty = expr.type
+        val tempLifetime = rvalueScopes.temporaryScope(regionScopeTree, expr)
         return when (expr) {
             is RsParenExpr -> expr.expr?.let { mirrorExpr(it, span) } ?: error("Could not get expr of paren expression")
             is RsCallExpr -> {
@@ -99,7 +114,8 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
                         } else {
                             ThirExpr.Unary(
                                 op = UnaryOperator.MINUS,
-                                arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of unary operator"),
+                                arg = expr.expr?.let { mirrorExpr(it) }
+                                    ?: error("Could not get expr of unary operator"),
                                 ty = ty,
                                 span = span,
                             )
@@ -210,9 +226,9 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
             // TODO: `for`s should be also handled into ThirExpr.Loop
             is RsLoopExpr -> {
                 val blockTy = TyUnit.INSTANCE // compiler forces it to be unit
-                // TODO: proper rvalue scopes, it is needed to be in ThirExpr (not only in loop)
+                val nestedTempLifetime = rvalueScopes.temporaryScope(regionScopeTree, expr)
                 val block = expr.block?.let { mirrorBlock(it, span) } ?: error("Could not find body of loop")
-                val body = ThirExpr.Block(block, blockTy, block.source)
+                val body = ThirExpr.Block(block, blockTy, block.source).withLifetime(nestedTempLifetime)
                 ThirExpr.Loop(body, ty, span)
             }
 
@@ -278,7 +294,7 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
             }
 
             else -> TODO("Not implemented for ${expr::class}")
-        }
+        }.withLifetime(tempLifetime)
     }
 
     private fun fieldRefs(
@@ -327,7 +343,8 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
     private fun mirrorBlock(block: RsBlock, source: MirSpan): ThirBlock {
         val (stmts, expr) = block.expandedStmtsAndTailExpr
         return ThirBlock(
-            scope = Scope.Node(source.reference),
+            regionScope = Scope.Node(source.reference),
+            destructionScope = regionScopeTree.getDestructionScope(block),
             statements = mirror(stmts, block),
             expr = expr?.let { mirrorExpr(it) },
             source = block.asSpan
@@ -336,6 +353,7 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
 
     private fun mirror(statements: List<RsStmt>, block: RsBlock): List<ThirStatement> =
         statements.map { stmt ->
+            val destructionScope = regionScopeTree.getDestructionScope(stmt)
             when (stmt) {
                 is RsLetDecl -> {
                     val remainderScope = Scope.Remainder(block, stmt)
@@ -345,16 +363,18 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
                     ThirStatement.Let(
                         remainderScope = remainderScope,
                         initScope = Scope.Node(stmt),
+                        destructionScope = destructionScope,
                         pattern = pattern,
                         initializer = stmt.expr?.let { mirrorExpr(it) },
-                        elseBlock = elseBlock,
+                        elseBlock = elseBlock
                     )
                 }
 
                 is RsExprStmt -> {
                     ThirStatement.Expr(
                         scope = Scope.Node(stmt),
-                        expr = mirrorExpr(stmt.expr),
+                        destructionScope = destructionScope,
+                        expr = mirrorExpr(stmt.expr)
                     )
                 }
 
@@ -364,7 +384,11 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
 
     private fun applyAdjustment(psiExpr: RsElement, thirExpr: ThirExpr, adjustment: Adjustment): ThirExpr =
         when (adjustment) {
-            is Adjustment.NeverToAny -> ThirExpr.NeverToAny(thirExpr, adjustment.target, thirExpr.span)
+            is Adjustment.NeverToAny -> {
+                ThirExpr.NeverToAny(thirExpr, adjustment.target, thirExpr.span)
+                    .withLifetime(thirExpr.tempLifetime)
+            }
+
             is Adjustment.BorrowPointer -> TODO()
             is Adjustment.BorrowReference -> {
                 // TODO: See fix_scalar_builtin_expr - borrow adjustment for binary operators on scalars should be removed before MIR building
@@ -373,6 +397,7 @@ class MirrorContext(private val contextOwner: RsInferenceContextOwner) {
                 // val borrowKind = adjustment.mutability.toBorrowKind()
                 // ThirExpr.Borrow(borrowKind, thirExpr, adjustment.target, thirExpr.span)
             }
+
             is Adjustment.Deref -> TODO()
             is Adjustment.MutToConstPointer -> TODO()
             is Adjustment.Unsize -> TODO()

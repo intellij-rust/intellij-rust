@@ -19,7 +19,15 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
      * The lifetime of this expression if it should be spilled into a temporary;
      * Should be `null` only if in a constant context
      */
-    val tempLifetime: RegionScope? = null  // TODO
+    private var _tempLifetime: RegionScope? = null
+    var tempLifetime: RegionScope?
+        get() = _tempLifetime
+        set(value) { _tempLifetime = value }
+
+    fun withLifetime(tempLifetime: RegionScope?): ThirExpr {
+        this.tempLifetime = tempLifetime
+        return this
+    }
 
     class Scope(
         val regionScope: RegionScope,

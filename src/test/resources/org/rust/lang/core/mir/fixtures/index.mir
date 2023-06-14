@@ -34,6 +34,7 @@ fn main() -> () {
     bb1: {
         _3 = _2[_4];                     // scope 2 at src/main.rs:4:13: 4:17
         FakeRead(ForLet(None), _3);      // scope 2 at src/main.rs:4:9: 4:10
+        StorageDead(_4);                 // scope 2 at src/main.rs:4:17: 4:18
         _0 = const ();                   // scope 0 at src/main.rs:1:11: 5:2
         StorageDead(_3);                 // scope 2 at src/main.rs:5:1: 5:2
         StorageDead(_2);                 // scope 1 at src/main.rs:5:1: 5:2

@@ -19,7 +19,6 @@ import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
-import org.rust.lang.core.types.regions.getRegionScopeTree
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.testAssert
 import org.rust.lang.core.types.regions.Scope as RegionScope
@@ -27,13 +26,14 @@ import org.rust.lang.core.types.regions.Scope as RegionScope
 class MirBuilder private constructor(
     private val element: RsElement,
     private val implLookup: ImplLookup,
-    private val regionScopeTree: ScopeTree,
+    private val mirrorContext: MirrorContext,
     private val checkOverflow: Boolean,
     private val span: MirSpan,
     private val argCount: Int,
     returnTy: Ty,
     returnSpan: MirSpan,
 ) {
+    private val regionScopeTree: ScopeTree get() = mirrorContext.regionScopeTree
     private val basicBlocks = BasicBlocksBuilder()
     private val scopes = Scopes()
     private val sourceScopes = SourceScopesBuilder(span)
@@ -546,10 +546,11 @@ class MirBuilder private constructor(
         place: MirPlace,
         span: MirSpan,
     ): BlockAnd<Unit> {
-        // TODO: something about destruction scopes
-        return inScope(block.scope) {
-            // TODO: add case if targeted by break
-            astBlockStmtsIntoPlace(block, place, span)
+        return inScope(block.destructionScope) {
+            inScope(block.regionScope) {
+                // TODO: add case if targeted by break
+                astBlockStmtsIntoPlace(block, place, span)
+            }
         }
     }
 
@@ -570,24 +571,28 @@ class MirBuilder private constructor(
                     val remainderSourceInfo = statement.remainderScope.span
                     val visibilityScope = sourceScopes.newSourceScope(remainderSourceInfo)
                     if (statement.initializer != null) {
-                        blockAnd = inScope(statement.initScope) {
-                            declareBindings(
-                                visibilityScope,
-                                remainderSourceInfo,
-                                statement.pattern,
-                                null to statement.initializer.span
-                            )
-                            blockAnd.exprIntoPattern(statement.pattern, statement.initializer)
+                        blockAnd = inScope(statement.destructionScope) {
+                            inScope(statement.initScope) {
+                                declareBindings(
+                                    visibilityScope,
+                                    remainderSourceInfo,
+                                    statement.pattern,
+                                    null to statement.initializer.span
+                                )
+                                blockAnd.exprIntoPattern(statement.pattern, statement.initializer)
+                            }
                         }
                     } else {
-                        blockAnd = inScope(statement.initScope) {
-                            declareBindings(
-                                visibilityScope,
-                                remainderSourceInfo,
-                                statement.pattern,
-                                null,
-                            )
-                            blockAnd
+                        blockAnd = inScope(statement.destructionScope) {
+                            inScope(statement.initScope) {
+                                declareBindings(
+                                    visibilityScope,
+                                    remainderSourceInfo,
+                                    statement.pattern,
+                                    null,
+                                )
+                                blockAnd
+                            }
                         }
                         visitPrimaryBindings(statement.pattern) { _, _, _, node, span, _ ->
                             blockAnd.block.storageLiveBinding(node, span, true)
@@ -597,8 +602,10 @@ class MirBuilder private constructor(
                     sourceScopes.sourceScope = visibilityScope
                 }
                 statement is ThirStatement.Expr -> {
-                    blockAnd = inScope(statement.scope) {
-                        blockAnd.statementExpr(statement.expr, statement.scope)
+                    blockAnd = inScope(statement.destructionScope) {
+                        inScope(statement.scope) {
+                            blockAnd.statementExpr(statement.expr, statement.scope)
+                        }
                     }
                 }
                 else -> TODO()
@@ -1096,11 +1103,17 @@ class MirBuilder private constructor(
     }
 
     private inline fun <R> inScope(
-        scope: Scope,
+        scope: Scope?,
         crossinline body: () -> BlockAnd<R>,
     ): BlockAnd<R> {
-        scopes.push(MirScope(scope))
-        return body().popScope()
+        if (scope != null) {
+            scopes.push(MirScope(scope))
+        }
+        var res = body()
+        if (scope != null) {
+            res = res.popScope()
+        }
+        return res
     }
 
     private inline fun inIfThenScope(
@@ -1250,9 +1263,9 @@ class MirBuilder private constructor(
         }
     }
 
-    private fun BlockAnd<*>.toTemp(expr: ThirExpr, scope: Scope?, mutability: Mutability): BlockAnd<MirLocal> {
+    private fun BlockAnd<*>.toTemp(expr: ThirExpr, tempLifetime: Scope?, mutability: Mutability): BlockAnd<MirLocal> {
         if (expr is ThirExpr.Scope) {
-            return inScope(expr.regionScope) { toTemp(expr.expr, scope, mutability) }
+            return inScope(expr.regionScope) { toTemp(expr.expr, tempLifetime, mutability) }
         }
         val localPlace = localDecls.tempPlace(expr.ty, expr.span, mutability = mutability)
         val source = sourceInfo(expr.span)
@@ -1261,20 +1274,17 @@ class MirBuilder private constructor(
             is ThirExpr.Block -> TODO()
             else -> {
                 block.pushStorageLive(localPlace.local, source)
-                if (scope != null) {
-                    scheduleDrop(scope, localPlace.local, Drop.Kind.STORAGE)
+                if (tempLifetime != null) {
+                    scheduleDrop(tempLifetime, localPlace.local, Drop.Kind.STORAGE)
                 }
             }
         }
 
-        return this
-            .exprIntoPlace(expr, localPlace)
-            .also {
-                if (scope != null) {
-                    scheduleDrop(scope, localPlace.local, Drop.Kind.VALUE)
-                }
-            }
-            .map { localPlace.local }
+        if (tempLifetime != null) {
+            scheduleDrop(tempLifetime, localPlace.local, Drop.Kind.VALUE)
+        }
+
+        return exprIntoPlace(expr, localPlace).map { localPlace.local }
     }
 
     private fun scheduleDrop(regionScope: Scope, local: MirLocal, dropKind: Drop.Kind) {
@@ -1372,7 +1382,7 @@ class MirBuilder private constructor(
                 argCount = 0,
                 returnTy = constant.typeReference?.normType ?: error("Could not get return type"),
                 returnSpan = constant.typeReference?.asSpan ?: error("Could not find return type source"),
-                regionScopeTree = getRegionScopeTree(constant),
+                mirrorContext = MirrorContext(constant)
             )
             return builder.build(constant)
         }
@@ -1391,7 +1401,7 @@ class MirBuilder private constructor(
                 argCount = function.valueParameterList?.valueParameterList?.size ?: error("Could not get parameters"),
                 returnTy = function.normReturnType,
                 returnSpan = returnSpan,
-                regionScopeTree = getRegionScopeTree(function)
+                mirrorContext = MirrorContext(function)
             )
 
             return builder.build(function)

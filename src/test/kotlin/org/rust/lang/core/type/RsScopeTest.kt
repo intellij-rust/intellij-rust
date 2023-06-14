@@ -97,13 +97,13 @@ class RsScopeTest : RsTestBase() {
         }/*end*/
     """)
 
-    fun `test match arm scope is match expr scope`() = doTest("""
+    fun `test match arm scope`() = doTest("""
         fn foo() -> i32 {
             let x = 42;
-    /*start*/match x {
-                y => { 42 }
-              //^
-            }/*end*/
+            match x {
+       /*start*/y => { 42 }/*end*/
+     //^
+            }
         }
     """)
 

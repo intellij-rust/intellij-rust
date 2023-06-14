@@ -57,7 +57,7 @@ class MirBuildTest : RsTestBase() {
     fun `test unit type`() = doTest()
     fun `test tuple fields simple`() = doTest()
     fun `test tuple fields nested`() = doTest()
-    fun `test tuple fields temporary value`() = expect<Throwable> { doTest() }
+    fun `test tuple fields temporary value`() = doTest()
     fun `test three element tuple with tuples`() = doTest()
     fun `test struct named fields simple`() = doTest()
     fun `test struct named fields complex`() = doTest()

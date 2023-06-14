@@ -27,6 +27,7 @@ fn main() -> () {
     bb1: {
         _2 = _1[_3];                     // scope 1 at src/main.rs:3:13: 3:17
         FakeRead(ForLet(None), _2);      // scope 1 at src/main.rs:3:9: 3:10
+        StorageDead(_3);                 // scope 1 at src/main.rs:3:17: 3:18
         _0 = const ();                   // scope 0 at src/main.rs:1:11: 4:2
         StorageDead(_2);                 // scope 1 at src/main.rs:4:1: 4:2
         StorageDead(_1);                 // scope 0 at src/main.rs:4:1: 4:2
