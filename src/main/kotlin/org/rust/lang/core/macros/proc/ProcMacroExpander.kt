@@ -116,9 +116,9 @@ class ProcMacroExpander private constructor(
         val envMapped = env.mapValues { (_, v) -> toolchain?.toRemotePath(v) ?: v }
         val version = server.requestExpanderVersion().unwrapOrElse { return Err(it.toProcMacroExpansionError()) }
         val request = Request.ExpandMacro(
-            FlatTree.fromSubtree(macroCallBody),
+            FlatTree.fromSubtree(macroCallBody, version),
             macroName,
-            attributes?.let { FlatTree.fromSubtree(it) },
+            attributes?.let { FlatTree.fromSubtree(it, version) },
             remoteLib,
             envMapped.map { listOf(it.key, it.value) },
             envMapped["CARGO_MANIFEST_DIR"],
@@ -126,7 +126,7 @@ class ProcMacroExpander private constructor(
         val response = server.send(request, timeout).unwrapOrElse { return Err(it.toProcMacroExpansionError()) }
         check(response is Response.ExpandMacro)
         return response.expansion.map {
-            it.toTokenTree()
+            it.toTokenTree(version)
         }.mapErr {
             ProcMacroExpansionError.ServerSideError(it.message)
         }
