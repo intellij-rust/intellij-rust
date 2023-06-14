@@ -5,38 +5,27 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.refactoring.extractTrait.makeAbstract
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
-class AddDefinitionToTraitFix(member: RsAbstractable) : LocalQuickFixAndIntentionActionOnPsiElement(member) {
-
+class AddDefinitionToTraitFix(member: RsAbstractable) : RsQuickFixBase<RsAbstractable>(member) {
     override fun getText() = "Add definition to trait"
     override fun getFamilyName(): String = text
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val member = startElement as? RsAbstractable ?: return
-        val impl = member.parent?.parent as? RsImplItem ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsAbstractable) {
+        val impl = element.parent?.parent as? RsImplItem ?: return
         val traitRef = impl.traitRef ?: return
-        val trait = traitRef.resolveToTrait()?.findPreviewCopyIfNeeded(file) ?: return
+        val trait = traitRef.resolveToTrait()?.findPreviewCopyIfNeeded() ?: return
 
         val factory = RsPsiFactory(project)
-        val newMember = member.copy().makeAbstract(factory) as RsAbstractable
+        val newMember = element.copy().makeAbstract(factory) as RsAbstractable
         val traitMembers = trait.members ?: return
 
-        val anchor = findAnchor(impl, trait, member)
+        val anchor = findAnchor(impl, trait, element)
             ?: traitMembers.rbrace?.prevSibling
             ?: return
         traitMembers.addAfter(newMember, anchor)
@@ -45,7 +34,7 @@ class AddDefinitionToTraitFix(member: RsAbstractable) : LocalQuickFixAndIntentio
         }
 
         if (trait.containingMod != impl.containingMod) {
-            RsImportHelper.importTypeReferencesFromElement(trait, member)
+            RsImportHelper.importTypeReferencesFromElement(trait, element)
         }
     }
 

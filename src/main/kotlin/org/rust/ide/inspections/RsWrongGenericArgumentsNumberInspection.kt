@@ -74,11 +74,11 @@ class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
 
 private fun getFixes(
     declaration: RsGenericDeclaration,
-    element: RsElement,
+    element: RsMethodOrPath,
     actualArgs: Int,
     expectedTotalParams: Int
 ): List<LocalQuickFix> = when {
-    actualArgs > expectedTotalParams -> listOf(RemoveGenericArguments(expectedTotalParams, actualArgs))
+    actualArgs > expectedTotalParams -> listOf(RemoveGenericArguments(element, expectedTotalParams, actualArgs))
     actualArgs < expectedTotalParams -> listOf(AddGenericArguments(declaration.createSmartPointer(), element))
     else -> emptyList()
 }

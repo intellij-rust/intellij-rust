@@ -165,8 +165,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
 
         /*weak_warning descr="Different impl member order from the trait"*//*caret*/impl Foo for ()/*weak_warning**/ {
-            fn bar() {
-            }
+            fn bar() {}
             type bar = ();
         }
     """, """
@@ -177,8 +176,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
 
         impl Foo for () {
             type bar = ();
-            fn bar() {
-            }
+            fn bar() {}
         }
     """, checkWeakWarn = true)
 

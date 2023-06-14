@@ -5,7 +5,6 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.ty.Ty
@@ -14,7 +13,7 @@ abstract class ConvertToTyFix(
     expr: RsExpr,
     private val tyName: String,
     private val convertSubject: String
-) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+) : RsQuickFixBase<RsExpr>(expr) {
 
     constructor(expr: RsExpr, ty: Ty, convertSubject: String) :
         this(expr, ty.render(), convertSubject)

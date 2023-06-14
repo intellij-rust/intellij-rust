@@ -158,7 +158,9 @@ sealed class RsDiagnostic(
                                 add(ConvertToRefTyFix(element, expectedTy))
                             }
                         } else if (expectedTy.mutability == Mutability.MUTABLE) {
-                            if (actualTy is TyReference && actualTy.mutability == Mutability.IMMUTABLE) {
+                            if (actualTy is TyReference && actualTy.mutability == Mutability.IMMUTABLE &&
+                                element is RsUnaryExpr && element.operatorType == UnaryOperator.REF
+                            ) {
                                 add(ChangeRefToMutableFix(element))
                             }
 
@@ -1706,7 +1708,7 @@ sealed class RsDiagnostic(
     }
 
     class MissingAssocTypeBindings(
-        element: PsiElement,
+        element: RsElement,
         private val missingTypes: List<RsWrongAssocTypeArgumentsInspection.MissingAssocTypeBinding>
     ) : RsDiagnostic(element) {
         private fun getText(): String {
@@ -1719,7 +1721,7 @@ sealed class RsDiagnostic(
             ERROR,
             E0191,
             getText(),
-            fixes = listOfFixes(AddAssocTypeBindingsFix(element, missingTypes.map { it.name }))
+            fixes = listOfFixes(AddAssocTypeBindingsFix(element as RsElement, missingTypes.map { it.name }))
         )
     }
 

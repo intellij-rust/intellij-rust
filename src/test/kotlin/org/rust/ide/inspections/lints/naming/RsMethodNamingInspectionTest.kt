@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsMethodNamingInspection
 
@@ -25,6 +26,7 @@ class RsMethodNamingInspectionTest : RsInspectionsTestBase(RsMethodNamingInspect
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test methods fix`() = checkFixByText("Rename to `met_bar`", """
         struct Foo;
         impl Foo {

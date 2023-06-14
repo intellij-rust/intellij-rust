@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsModuleNamingInspection
 
@@ -38,6 +39,7 @@ class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspect
         mod moduleA {}
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test modules fix`() = checkFixByText("Rename to `mod_foo`", """
         mod <warning descr="Module `modFoo` should have a snake case name such as `mod_foo`">modF<caret>oo</warning> {
             pub const ONE: u32 = 1;

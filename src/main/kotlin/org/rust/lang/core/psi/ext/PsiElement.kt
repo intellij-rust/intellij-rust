@@ -347,7 +347,9 @@ val PsiElement.isIntentionPreviewElement: Boolean
  * We will have an exception if we try to modify the original element.
  * Thus, we should call this function on `resolve` result to obtain element in the copy of the original file.
  */
-fun <T: PsiElement> T.findPreviewCopyIfNeeded(copyFile: PsiFile): T {
+fun <T: PsiElement> T.findPreviewCopyIfNeeded(): T {
+    val previewEditor = IntentionPreviewUtils.getPreviewEditor() ?: return this
+    val copyFile = PsiDocumentManager.getInstance(project).getPsiFile(previewEditor.document) ?: return this
     if (!copyFile.isIntentionPreviewElement) return this
     return when (containingFile) {
         copyFile -> this

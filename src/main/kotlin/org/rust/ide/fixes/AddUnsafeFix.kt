@@ -5,11 +5,9 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
@@ -17,7 +15,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.isMain
 
-class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+class AddUnsafeFix private constructor(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
     private val _text = run {
         val item = when (element) {
             is RsBlockExpr -> "block"
@@ -30,7 +28,7 @@ class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIn
     override fun getFamilyName() = text
     override fun getText() = _text
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, element: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val unsafe = RsPsiFactory(project).createUnsafeKeyword()
 
         when (element) {

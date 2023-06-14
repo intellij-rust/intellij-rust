@@ -6,11 +6,8 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPsiFactory
@@ -24,21 +21,14 @@ class ConvertLetDeclTypeFix(
     private val fixText: String,
     @SafeFieldForPreview
     private val ty: Ty
-) : LocalQuickFixAndIntentionActionOnPsiElement(decl) {
+) : RsQuickFixBase<RsLetDecl>(decl) {
     override fun getFamilyName(): String = "Convert type of local variable"
     override fun getText(): String = fixText
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val decl = startElement as? RsLetDecl ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsLetDecl) {
         val factory = RsPsiFactory(project)
         val type = factory.tryCreateType(ty.renderInsertionSafe()) ?: return
 
-        decl.typeReference?.replace(type)
+        element.typeReference?.replace(type)
     }
 }

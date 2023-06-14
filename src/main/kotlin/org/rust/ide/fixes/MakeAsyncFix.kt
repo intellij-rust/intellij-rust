@@ -5,18 +5,15 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsFunctionOrLambda
 import org.rust.lang.core.psi.ext.isAsync
 
-class MakeAsyncFix(function: RsFunctionOrLambda) : LocalQuickFixAndIntentionActionOnPsiElement(function) {
+class MakeAsyncFix(function: RsFunctionOrLambda) : RsQuickFixBase<RsFunctionOrLambda>(function) {
 
     private val isFunction: Boolean = function is RsFunction
 
@@ -27,20 +24,13 @@ class MakeAsyncFix(function: RsFunctionOrLambda) : LocalQuickFixAndIntentionActi
 
     override fun getFamilyName(): String = "Make async"
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val function = startElement as? RsFunctionOrLambda ?: return
-        if (function.isAsync) return
-        val anchor = when (function) {
-            is RsFunction -> function.unsafe ?: function.externAbi ?: function.fn
-            is RsLambdaExpr -> function.move ?: function.valueParameterList
+    override fun invoke(project: Project, editor: Editor?, element: RsFunctionOrLambda) {
+        if (element.isAsync) return
+        val anchor = when (element) {
+            is RsFunction -> element.unsafe ?: element.externAbi ?: element.fn
+            is RsLambdaExpr -> element.move ?: element.valueParameterList
             else -> error("unreachable")
         }
-        function.addBefore(RsPsiFactory(project).createAsyncKeyword(), anchor)
+        element.addBefore(RsPsiFactory(project).createAsyncKeyword(), anchor)
     }
 }

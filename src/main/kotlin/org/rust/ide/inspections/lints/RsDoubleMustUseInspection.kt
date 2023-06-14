@@ -5,23 +5,26 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.RsBundle
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.RsAttr
 import org.rust.lang.core.psi.ext.findFirstMetaItem
 import org.rust.lang.core.psi.ext.normReturnType
 import org.rust.lang.core.types.ty.TyAdt
 
-private class FixRemoveMustUseAttr : LocalQuickFix {
-    override fun getFamilyName() = RsBundle.message("inspection.DoubleMustUse.FixRemoveMustUseAttr.name")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        descriptor.psiElement?.delete()
+private class FixRemoveMustUseAttr(
+    element: PsiElement,
+) : RsQuickFixBase<PsiElement>(element) {
+    override fun getText(): String = RsBundle.message("inspection.DoubleMustUse.FixRemoveMustUseAttr.name")
+    override fun getFamilyName(): String = text
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+        element.delete()
     }
 }
 
@@ -32,13 +35,15 @@ class RsDoubleMustUseInspection : RsLintInspection() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitFunction2(o: RsFunction) {
             val mustUseAttrName = "must_use"
-            val attrFunc = o.findFirstMetaItem(mustUseAttrName)
+            val metaItemOnFunc = o.findFirstMetaItem(mustUseAttrName)
             val type = o.normReturnType as? TyAdt
             val attrType = type?.item?.findFirstMetaItem(mustUseAttrName)
-            if (attrFunc != null && attrType != null) {
+            if (metaItemOnFunc != null && attrType != null) {
                 val description = RsBundle.message("inspection.DoubleMustUse.description")
                 val highlighting = RsLintHighlightingType.WEAK_WARNING
-                holder.registerLintProblem(attrFunc.parent, description, highlighting, fixes = listOf(FixRemoveMustUseAttr()))
+                val attr = metaItemOnFunc.parent.takeIf { it is RsAttr } ?: metaItemOnFunc
+                val fixes = if (attr is RsAttr) listOf(FixRemoveMustUseAttr(attr)) else emptyList()
+                holder.registerLintProblem(attr, description, highlighting, fixes)
             }
         }
     }

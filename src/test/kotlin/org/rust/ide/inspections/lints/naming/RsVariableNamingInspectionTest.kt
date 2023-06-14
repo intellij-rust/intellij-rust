@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints.naming
 
 import org.rust.ProjectDescriptor
+import org.rust.SkipTestWrapping
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsVariableNamingInspection
@@ -32,6 +33,7 @@ class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingIns
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test variables fix`() = checkFixByText("Rename to `dwarfs_count`", """
         fn test() {
             let <warning descr="Variable `DWARFS_COUNT` should have a snake case name such as `dwarfs_count`">DWARF<caret>S_COUNT</warning> = 7;
@@ -51,6 +53,7 @@ class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingIns
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test tuple variables fix`() = checkFixByText("Rename to `real`", """
         fn test() {
             let (<warning descr="Variable `Real` should have a snake case name such as `real`">Re<caret>al</warning>, imaginary) = (7.2, 3.5);

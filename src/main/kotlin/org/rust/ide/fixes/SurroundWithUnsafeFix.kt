@@ -5,22 +5,19 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
 
-class SurroundWithUnsafeFix(expr: RsExpr) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class SurroundWithUnsafeFix(expr: RsExpr) : RsQuickFixBase<RsExpr>(expr) {
     override fun getFamilyName() = text
     override fun getText() = "Surround with unsafe block"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, expr: PsiElement, endElement: PsiElement) {
-        val target = expr.ancestorStrict<RsExprStmt>() ?: expr
+    override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
+        val target = element.ancestorStrict<RsExprStmt>() ?: element
         val unsafeBlockExpr = RsPsiFactory(project).createUnsafeBlockExprOrStmt(target)
         target.replace(unsafeBlockExpr)
     }

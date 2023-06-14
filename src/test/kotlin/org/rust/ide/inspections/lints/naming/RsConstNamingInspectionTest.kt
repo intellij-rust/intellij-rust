@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsConstNamingInspection
 
@@ -24,6 +25,7 @@ class RsConstNamingInspectionTest : RsInspectionsTestBase(RsConstNamingInspectio
         const const_foo: u32 = 12;
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test constants fix`() = checkFixByText("Rename to `CONST_FOO`", """
         const <warning descr="Constant `ConstFoo` should have an upper case name such as `CONST_FOO`">Con<caret>stFoo</warning>: u32 = 42;
         fn const_use() {

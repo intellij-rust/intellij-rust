@@ -5,11 +5,8 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -19,18 +16,18 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.type
 
-class InitializeWithDefaultValueFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+class InitializeWithDefaultValueFix(element: RsElement) : RsQuickFixBase<RsElement>(element) {
     override fun getText() = "Initialize with a default value"
     override fun getFamilyName() = name
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val variable = startElement.ancestorOrSelf<RsExpr>() ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsElement) {
+        val variable = element.ancestorOrSelf<RsExpr>() ?: return
         val patBinding = variable.declaration as? RsPatBinding ?: return
         val declaration = patBinding.ancestorOrSelf<RsLetDecl>() ?: return
         val semicolon = declaration.semicolon ?: return
         val psiFactory = RsPsiFactory(project)
         val initExpr = RsDefaultValueBuilder(declaration.knownItems, declaration.containingMod, psiFactory, true)
-            .buildFor(patBinding.type, (startElement as RsElement).getLocalVariableVisibleBindings())
+            .buildFor(patBinding.type, element.getLocalVariableVisibleBindings())
 
         if (declaration.eq == null) {
             declaration.addBefore(psiFactory.createEq(), semicolon)

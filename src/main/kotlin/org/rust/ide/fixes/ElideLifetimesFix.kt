@@ -5,19 +5,17 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
-class ElideLifetimesFix : LocalQuickFix {
-    override fun getName() = "Elide lifetimes"
-    override fun getFamilyName() = name
+class ElideLifetimesFix(element: RsFunction) : RsQuickFixBase<RsFunction>(element) {
+    override fun getText() = "Elide lifetimes"
+    override fun getFamilyName() = text
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val fn = descriptor.psiElement as? RsFunction ?: return
-        LifetimeRemover().visitFunction(fn)
+    override fun invoke(project: Project, editor: Editor?, element: RsFunction) {
+        LifetimeRemover().visitFunction(element)
     }
 }
 

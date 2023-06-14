@@ -6,10 +6,9 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.util.text.EditDistance
 
 /**
@@ -20,13 +19,13 @@ class NameSuggestionFix<T : PsiElement>(
     private val newName: String,
     @SafeFieldForPreview
     private val elementFactory: (name: String) -> T
-): LocalQuickFixOnPsiElement(element) {
+): RsQuickFixBase<T>(element) {
     override fun getFamilyName(): String = "Change name of element"
     override fun getText(): String = "Change to `$newName`"
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, editor: Editor?, element: T) {
         val newElement = elementFactory(newName)
-        startElement.replace(newElement)
+        element.replace(newElement)
     }
 
     companion object {

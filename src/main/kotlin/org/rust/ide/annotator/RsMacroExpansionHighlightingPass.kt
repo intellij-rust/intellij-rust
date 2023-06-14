@@ -8,7 +8,10 @@ package org.rust.ide.annotator
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
+import com.intellij.codeInsight.daemon.impl.FileStatusMap
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.Annotator
@@ -22,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.annotator.format.RsFormatMacroAnnotator
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.RsFile
@@ -135,7 +139,16 @@ class RsMacroExpansionHighlightingPass(
         val originInfo = HighlightInfo.fromAnnotation(ann)
         val mappedRanges = mapRangeFromExpansionToCallBody(macro.expansion, macro.macroCall, originRange)
         for (mappedRange in mappedRanges) {
-            results += originInfo.copyWithRange(mappedRange)
+            val newInfo = originInfo.copyWithRange(mappedRange)
+            originInfo.findRegisteredQuickFix<Any> { descriptor, quickfixTextRange ->
+                val mappedQfRanges = mapRangeFromExpansionToCallBody(macro.expansion, macro.macroCall, quickfixTextRange)
+                for (mappedQfRange in mappedQfRanges) {
+                    if (descriptor.action !is RsQuickFixBase<*>) continue
+                    newInfo.registerFix(descriptor.action, emptyList(), descriptor.displayName, mappedQfRange, null)
+                }
+                null
+            }
+            results += newInfo.createUnconditionally()
         }
     }
 
@@ -152,7 +165,7 @@ class RsMacroExpansionHighlightingPass(
     }
 }
 
-private fun HighlightInfo.copyWithRange(newRange: TextRange): HighlightInfo {
+private fun HighlightInfo.copyWithRange(newRange: TextRange): HighlightInfo.Builder {
     val forcedTextAttributesKey = forcedTextAttributesKey
     val forcedTextAttributes = forcedTextAttributes
     val description = description
@@ -178,5 +191,5 @@ private fun HighlightInfo.copyWithRange(newRange: TextRange): HighlightInfo {
         b.endOfLine()
     }
 
-    return b.createUnconditionally()
+    return b
 }

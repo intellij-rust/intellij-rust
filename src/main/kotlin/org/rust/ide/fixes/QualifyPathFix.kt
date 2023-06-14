@@ -6,10 +6,8 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.utils.import.ImportInfo
 import org.rust.ide.utils.import.insertExternCrateIfNeeded
 import org.rust.lang.core.psi.RsPath
@@ -23,13 +21,12 @@ class QualifyPathFix(
     path: RsPath,
     @SafeFieldForPreview
     private val importInfo: ImportInfo
-) : LocalQuickFixOnPsiElement(path) {
+) : RsQuickFixBase<RsPath>(path) {
     override fun getText(): String = "Qualify path to `${importInfo.usePath}`"
     override fun getFamilyName(): String = "Qualify path"
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-        val path = startElement as? RsPath ?: return
-        qualify(path, importInfo)
+    override fun invoke(project: Project, editor: Editor?, element: RsPath) {
+        qualify(element, importInfo)
     }
 
     companion object {

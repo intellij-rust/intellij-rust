@@ -46,7 +46,7 @@ class RsNeedlessLifetimesInspection : RsLintInspection() {
                 fn.block?.getPrevNonCommentSibling()?.endOffsetInParent ?: fn.identifier.endOffsetInParent
             ),
             RsLintHighlightingType.WEAK_WARNING,
-            listOf(ElideLifetimesFix())
+            listOf(ElideLifetimesFix(fn))
         )
     }
 }

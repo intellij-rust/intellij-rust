@@ -5,11 +5,9 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.utils.expandStructFields
 import org.rust.ide.utils.expandTupleStructFields
 import org.rust.lang.core.psi.RsPatStruct
@@ -18,17 +16,17 @@ import org.rust.lang.core.psi.RsPsiFactory
 
 class AddStructFieldsPatFix(
     element: PsiElement
-) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+) : RsQuickFixBase<PsiElement>(element) {
     override fun getText() = "Add missing fields"
 
     override fun getFamilyName() = text
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, pat: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val factory = RsPsiFactory(project)
-        if (pat is RsPatStruct) {
-            expandStructFields(factory, pat)
-        } else if (pat is RsPatTupleStruct) {
-            expandTupleStructFields(factory, editor, pat)
+        if (element is RsPatStruct) {
+            expandStructFields(factory, element)
+        } else if (element is RsPatTupleStruct) {
+            expandTupleStructFields(factory, editor, element)
         }
     }
 }

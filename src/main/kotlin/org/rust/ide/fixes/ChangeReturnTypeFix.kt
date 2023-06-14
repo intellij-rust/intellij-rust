@@ -6,11 +6,9 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
@@ -30,7 +28,7 @@ class ChangeReturnTypeFix(
     element: RsElement,
     @SafeFieldForPreview
     private val actualTy: Ty
-) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+) : RsQuickFixBase<RsElement>(element) {
     private val _text: String = run {
         val callable = findCallableOwner(startElement)
 
@@ -60,14 +58,8 @@ class ChangeReturnTypeFix(
     override fun getText(): String = _text
     override fun getFamilyName(): String = "Change return type"
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val owner = findCallableOwner(startElement) ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsElement) {
+        val owner = findCallableOwner(element) ?: return
         val oldRetType = owner.retType
 
         if (actualTy is TyUnit) {
@@ -78,7 +70,7 @@ class ChangeReturnTypeFix(
         val oldTy = oldRetType?.typeReference?.rawType ?: TyUnknown
         val (_, useQualifiedName) = getTypeReferencesInfoFromTys(owner, actualTy, oldTy)
         val text = actualTy.renderInsertionSafe(
-            context = startElement as? RsElement,
+            context = element,
             useQualifiedName = useQualifiedName,
             includeLifetimeArguments = true
         )

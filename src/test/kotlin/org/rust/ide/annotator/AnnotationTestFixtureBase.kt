@@ -37,6 +37,7 @@ abstract class AnnotationTestFixtureBase(
     lateinit var enabledInspections: List<InspectionProfileEntry>
 
     protected abstract val baseFileName: String
+    protected open val isWrappingActive: Boolean get() = false
 
     override fun setUp() {
         super.setUp()
@@ -115,7 +116,7 @@ abstract class AnnotationTestFixtureBase(
         before,
         after,
         configure = this::configureByText,
-        checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
+        checkBefore = { checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false) },
         checkAfter = this::checkByText,
         preview = preview,
     )
@@ -128,7 +129,7 @@ abstract class AnnotationTestFixtureBase(
         checkWeakWarn: Boolean = false
     ) = checkFix(fixName, before, before,
         configure = this::configureByText,
-        checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
+        checkBefore = { checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false) },
         checkAfter = { },
         preview = SamePreviewAsResult,
     )
@@ -188,7 +189,7 @@ abstract class AnnotationTestFixtureBase(
         checkWeakWarn: Boolean = false,
     ) {
         configureByText(before.replace("<selection>", "<selection><caret>"))
-        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn)
+        checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
         val selections = codeInsightFixture.editor.selectionModel.let { model ->
             model.blockSelectionStarts.zip(model.blockSelectionEnds)
                 .map { TextRange(it.first, it.second + 1) }
@@ -214,7 +215,7 @@ abstract class AnnotationTestFixtureBase(
         configure: (T) -> Unit,
     ) {
         configure(content)
-        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
+        checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
     }
 
     protected open fun checkFix(
@@ -232,7 +233,16 @@ abstract class AnnotationTestFixtureBase(
         checkAfter(after)
     }
 
-    fun checkByText(text: String) {
+    protected open fun checkHighlighting(
+        checkWarn: Boolean,
+        checkInfo: Boolean,
+        checkWeakWarn: Boolean,
+        ignoreExtraHighlighting: Boolean,
+    ) {
+        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
+    }
+
+    open fun checkByText(text: String) {
         codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
@@ -241,7 +251,7 @@ abstract class AnnotationTestFixtureBase(
         if (!skipPreview(action)) {
             if (preview != null) {
                 val previewText = (preview as? ExplicitPreview)?.text
-                codeInsightFixture.checkPreviewAndLaunchAction(action, previewText)
+                codeInsightFixture.checkPreviewAndLaunchAction(action, previewText, isWrappingActive)
             } else {
                 codeInsightFixture.checkNoPreview(action)
                 codeInsightFixture.launchAction(action)

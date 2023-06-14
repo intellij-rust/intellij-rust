@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsTypeParameterNamingInspection
 
@@ -34,6 +35,7 @@ class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParamete
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test type parameters with where fix`() = checkFixByText("Rename to `Base`", """
         fn type_params<<warning descr="Type parameter `base` should have a camel case name such as `Base`">b<caret>ase</warning>>(b: &base) where base: Clone {}
     """, """

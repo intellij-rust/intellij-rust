@@ -5,11 +5,11 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.utils.skipParenExprDown
@@ -34,7 +34,7 @@ class RsWhileTrueLoopInspection : RsLintInspection() {
                     "Denote infinite loops with `loop { ... }`",
                     TextRange.create(o.`while`.startOffsetInParent, condition.endOffsetInParent),
                     RsLintHighlightingType.WEAK_WARNING,
-                    listOf(UseLoopFix())
+                    listOf(UseLoopFix(o))
                 )
             }
         }
@@ -42,11 +42,11 @@ class RsWhileTrueLoopInspection : RsLintInspection() {
 
     override val isSyntaxOnly: Boolean = true
 
-    private class UseLoopFix : LocalQuickFix {
+    private class UseLoopFix(element: RsWhileExpr) : RsQuickFixBase<RsWhileExpr>(element) {
         override fun getFamilyName(): String = "Use `loop`"
+        override fun getText(): String = familyName
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val element = descriptor.psiElement as? RsWhileExpr ?: return
+        override fun invoke(project: Project, editor: Editor?, element: RsWhileExpr) {
             val block = element.block ?: return
             val label = element.labelDecl?.text ?: ""
             val loopExpr = RsPsiFactory(project).createExpression("${label}loop ${block.text}") as RsLoopExpr

@@ -6,15 +6,12 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.RsBundle
 import org.rust.ide.annotator.getFunctionCallContext
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.utils.template.newTemplateBuilder
@@ -31,14 +28,13 @@ private fun RsExpr.returnsStdResult(): Boolean {
     return type.item == knownItems.Result
 }
 
-private class FixAddLetUnderscore(anchor: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(anchor) {
+private class FixAddLetUnderscore(anchor: RsExpr) : RsQuickFixBase<RsExpr>(anchor) {
     override fun getFamilyName() = RsBundle.message("inspection.UnusedMustUse.FixAddLetUnderscore.name")
     override fun getText() = familyName
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val originalExpr = startElement as RsExpr
-        val letExpr = RsPsiFactory(project).createLetDeclaration("_", originalExpr)
-        val newLetExpr = originalExpr.parent.replace(letExpr) as RsLetDecl
+    override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
+        val letExpr = RsPsiFactory(project).createLetDeclaration("_", element)
+        val newLetExpr = element.parent.replace(letExpr) as RsLetDecl
         val pat = newLetExpr.pat ?: return
         val tpl = editor?.newTemplateBuilder(newLetExpr) ?: return
         tpl.replaceElement(pat)
@@ -46,26 +42,26 @@ private class FixAddLetUnderscore(anchor: PsiElement) : LocalQuickFixAndIntentio
     }
 }
 
-private class FixAddUnwrap : LocalQuickFix {
+private class FixAddUnwrap(element: RsExpr) : RsQuickFixBase<RsExpr>(element) {
     override fun getFamilyName() = RsBundle.message("inspection.UnusedMustUse.FixAddUnwrap.name")
+    override fun getText() = familyName
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val expr = descriptor.psiElement as RsExpr
-        expr.replace(RsPsiFactory(project).createExpression("${expr.text}.unwrap()"))
+    override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
+        element.replace(RsPsiFactory(project).createExpression("${element.text}.unwrap()"))
     }
 }
 
-private class FixAddExpect(anchor: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(anchor) {
+private class FixAddExpect(anchor: RsExpr) : RsQuickFixBase<RsExpr>(anchor) {
     override fun getFamilyName() = RsBundle.message("inspection.UnusedMustUse.FixAddExpect.family.name")
     override fun getText() = familyName
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val dotExpr = RsPsiFactory(project).createExpression("${startElement.text}.expect(\"\")")
-        val newDotExpr = startElement.replace(dotExpr) as RsDotExpr
+    override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
+        val dotExpr = RsPsiFactory(project).createExpression("${element.text}.expect(\"TODO: panic message\")")
+        val newDotExpr = element.replace(dotExpr) as RsDotExpr
         val expectArgs = newDotExpr.methodCall?.valueArgumentList?.exprList
         val stringLiteral = expectArgs?.singleOrNull() as RsLitExpr
         val tpl = editor?.newTemplateBuilder(newDotExpr) ?: return
-        val rangeWithoutQuotes = TextRange(1, stringLiteral.textRange.length - 1)
+        val rangeWithoutQuotes = (stringLiteral.kind as? RsLiteralKind.String)?.offsets?.value ?: return
         tpl.replaceElement(stringLiteral, rangeWithoutQuotes, "TODO: panic message")
         tpl.runInline()
     }
@@ -91,7 +87,7 @@ private fun inspectAndProposeFixes(expr: RsExpr): InspectionResult? {
     val fixes: MutableList<LocalQuickFix> = mutableListOf(FixAddLetUnderscore(expr))
     if (expr.returnsStdResult()) {
         fixes += FixAddExpect(expr)
-        fixes += FixAddUnwrap()
+        fixes += FixAddUnwrap(expr)
     }
     return InspectionResult(description, fixes)
 }
