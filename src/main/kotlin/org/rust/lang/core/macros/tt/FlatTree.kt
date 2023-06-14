@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros.tt
 
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import org.rust.lang.core.macros.proc.ProMacroExpanderVersion
 import org.rust.lang.core.psi.MacroBraces
 import org.rust.stdext.dequeOf
 import java.util.*
@@ -21,15 +22,19 @@ class FlatTree(
     val tokenTree: IntArrayList,
     val text: List<String>,
 ) {
-    fun toTokenTree(): TokenTree.Subtree {
+    fun toTokenTree(version: ProMacroExpanderVersion): TokenTree.Subtree {
+        val encodeCloseSpan = version >= ProMacroExpanderVersion.ENCODE_CLOSE_SPAN_VERSION
+        val offset = if (encodeCloseSpan) 1 else 0
+        val stepSize = if (encodeCloseSpan) 5 else 4
+
         val res: MutableList<TokenTree.Subtree?> = ArrayList(subtree.size)
         repeat(subtree.size) { res.add(null) }
 
-        for (i in (0 until subtree.size).step(4).reversed()) {
+        for (i in (0 until subtree.size).step(stepSize).reversed()) {
             val delimiterId = subtree.getInt(i)
-            val kind = subtree.getInt(i + 1)
-            val lo = subtree.getInt(i + 2)
-            val len = subtree.getInt(i + 3)
+            val kind = subtree.getInt(i + offset + 1)
+            val lo = subtree.getInt(i + offset + 2)
+            val len = subtree.getInt(i + offset + 3)
 
             val rawTokenTrees = tokenTree
             val tokenTrees = ArrayList<TokenTree>(len - lo)
@@ -74,7 +79,7 @@ class FlatTree(
                 else -> error("Unknown kind $kind")
             }
 
-            res[i / 4] = TokenTree.Subtree(
+            res[i / stepSize] = TokenTree.Subtree(
                 delimiterKind?.let { Delimiter(delimiterId, delimiterKind) },
                 tokenTrees,
             )
@@ -84,12 +89,12 @@ class FlatTree(
     }
 
     companion object {
-        fun fromSubtree(root: TokenTree.Subtree): FlatTree =
-            FlatTreeBuilder().apply { write(root) }.toFlatTree()
+        fun fromSubtree(root: TokenTree.Subtree, version: ProMacroExpanderVersion): FlatTree =
+            FlatTreeBuilder(version >= ProMacroExpanderVersion.ENCODE_CLOSE_SPAN_VERSION).apply { write(root) }.toFlatTree()
     }
 }
 
-private class FlatTreeBuilder {
+private class FlatTreeBuilder(private val encodeCloseSpan: Boolean) {
     private val work: Deque<Pair<Int, TokenTree.Subtree>> = dequeOf()
     private val stringTable: HashMap<String, Int> = hashMapOf()
 
@@ -118,8 +123,11 @@ private class FlatTreeBuilder {
             tokenTree.add(-1)
         }
 
-        this.subtree[subtreeId * 4 + 2] = firstTt
-        this.subtree[subtreeId * 4 + 3] = firstTt + nTt
+        val offset = if (encodeCloseSpan) 1 else 0
+        val stepSize = if (encodeCloseSpan) 5 else 4
+
+        this.subtree[subtreeId * stepSize + offset + 2] = firstTt
+        this.subtree[subtreeId * stepSize + offset + 3] = firstTt + nTt
 
         for (child in subtree.tokenTrees) {
             val idxTag = when (child) {
@@ -158,11 +166,15 @@ private class FlatTreeBuilder {
     }
 
     private fun enqueue(subtree: TokenTree.Subtree): Int {
-        val idx = this.subtree.size / 4
+        val stepSize = if (encodeCloseSpan) 5 else 4
+        val idx = this.subtree.size / stepSize
         val delimiterId = subtree.delimiter?.id ?: -1
         val delimiterKind = subtree.delimiter?.kind
         this.subtree.apply {
             add(delimiterId)
+            if (encodeCloseSpan) {
+                add(-1) // closeId
+            }
             add(when (delimiterKind) {
                 null -> 0
                 MacroBraces.PARENS -> 1
