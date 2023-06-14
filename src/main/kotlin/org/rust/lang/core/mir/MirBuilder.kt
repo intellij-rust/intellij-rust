@@ -180,7 +180,8 @@ class MirBuilder private constructor(
                     expr.`else`?.let { `else` ->
                         it.andUnit().exprIntoPlace(`else`, place).block
                     } ?: run {
-                        TODO()
+                        it.pushAssignUnit(place, sourceInfo(expr.span.end))
+                        it
                     }
                 }
 
