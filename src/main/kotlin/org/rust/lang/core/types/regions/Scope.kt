@@ -485,7 +485,7 @@ private class RegionResolutionVisitor {
                 expr.elseBranch?.block?.let { terminatingScopes.add(it) }
             }
 
-            expr is RsLoopExpr -> {
+            expr is RsLooplikeExpr -> {
                 expr.block?.let { terminatingScopes.add(it) }
             }
 
@@ -601,6 +601,12 @@ private class RegionResolutionVisitor {
             }
 
             is RsLoopExpr -> expr.block?.let(::visitBlock)
+
+            is RsWhileExpr -> {
+                expr.condition?.expr?.let(::visitExpr)
+                expr.block?.let(::visitBlock)
+            }
+
             is RsMatchExpr -> {
                 expr.expr?.let(::visitExpr)
                 expr.matchBody?.matchArmList?.forEach(::visitMatchArm)

@@ -18,10 +18,7 @@ import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.regions.getRegionScopeTree
 import org.rust.lang.core.types.resolveRvalueScopes
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.TyArray
-import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class MirrorContext(contextOwner: RsInferenceContextOwner) {
@@ -239,6 +236,37 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 val block = expr.block?.let { mirrorBlock(it, span) } ?: error("Could not find body of loop")
                 val body = ThirExpr.Block(block, blockTy, block.source).withLifetime(nestedTempLifetime)
                 ThirExpr.Loop(body, ty, span)
+            }
+
+            // We desugar: `'label: while $cond $body` into:
+            //
+            // ```
+            // 'label: loop {
+            //   if { let _t = $cond; _t } {
+            //     $body
+            //   }
+            //   else {
+            //     break;
+            //   }
+            // }
+            // ```
+            //
+            // Wrap in a construct equivalent to `{ let _t = $cond; _t }` to preserve drop semantics since
+            // `while $cond { ... }` does not let temporaries live outside of `cond`.
+            is RsWhileExpr -> {
+                var condExpr = expr.condition?.expr?.let { mirrorExpr(it) } ?: error("Can't get condition of while loop")
+                condExpr = ThirExpr.Use(condExpr, condExpr.ty, condExpr.span).withLifetime(condExpr.tempLifetime)
+                val thenBlock = expr.block?.let { mirrorBlock(it, span) } ?: error("Could not find body of loop")
+                val lifetime = rvalueScopes.temporaryScope(regionScopeTree, expr)
+                val thenExpr = ThirExpr.Block(thenBlock, ty, thenBlock.source).withLifetime(lifetime)
+                var breakExpr: ThirExpr = ThirExpr.Break(Scope.Node(span.reference), null, TyNever, span)
+                breakExpr = ThirExpr.NeverToAny(breakExpr, ty, breakExpr.span).withLifetime(breakExpr.tempLifetime)
+                val breakStatement = ThirStatement.Expr(Scope.Node(span.reference), null, breakExpr)
+                val elseBlock = ThirBlock(Scope.Node(span.reference), null, listOf(breakStatement), null, span)
+                var elseExpr: ThirExpr = ThirExpr.Block(elseBlock, TyNever, span)
+                elseExpr = ThirExpr.NeverToAny(elseExpr, elseExpr.ty, elseExpr.span).withLifetime(elseExpr.tempLifetime)
+                val ifExpr = ThirExpr.If(Scope.IfThen(span.reference), condExpr, thenExpr, elseExpr, ty, span)
+                ThirExpr.Loop(ifExpr, ty, span)
             }
 
             is RsBreakExpr -> {

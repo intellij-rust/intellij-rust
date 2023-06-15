@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.mir
 
-import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.mir.building.*
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.schemas.MirBinaryOperator.Companion.toMir
@@ -20,7 +19,6 @@ import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.*
-import org.rust.openapiext.forEachChild
 import org.rust.openapiext.testAssert
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
@@ -292,6 +290,7 @@ class MirBuilder private constructor(
                     .pushAssign(place, MirRvalue.Aggregate.Adt(expr.definition, expr.variantIndex, fields), source)
                     .andUnit()
             }
+            is ThirExpr.Use -> exprIntoPlace(expr.source, place)
             is ThirExpr.Borrow -> {
                 val blockAnd = when (expr.kind) {
                     MirBorrowKind.Shared -> this.toReadOnlyPlace(expr.arg)
@@ -386,6 +385,7 @@ class MirBuilder private constructor(
             is ThirExpr.Block,
             is ThirExpr.Assign,
             is ThirExpr.Break,
+            is ThirExpr.Use,
             is ThirExpr.Literal -> {
                 toTemp(expr, expr.tempLifetime, mutability)
                     .map { PlaceBuilder(it) }
@@ -1270,9 +1270,11 @@ class MirBuilder private constructor(
         }
         val localPlace = localDecls.tempPlace(expr.ty, expr.span, mutability = mutability)
         val source = sourceInfo(expr.span)
-        when (expr) {
-            is ThirExpr.Break, is ThirExpr.Continue, is ThirExpr.Return -> Unit
-            is ThirExpr.Block -> TODO()
+        when {
+            expr is ThirExpr.Break || expr is ThirExpr.Continue || expr is ThirExpr.Return -> Unit
+            expr is ThirExpr.Block && expr.block.expr == null && expr.ty == TyNever -> {
+                // TODO: check `targeted_by_break`
+            }
             else -> {
                 block.pushStorageLive(localPlace.local, source)
                 if (tempLifetime != null) {

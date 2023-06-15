@@ -109,6 +109,8 @@ class MirBuildTest : RsTestBase() {
     fun `test index`() = doTest()
     fun `test constant index`() = doTest()
     fun `test function in impl`() = doTest()
+    fun `test while`() = expect<Throwable> { doTest() }
+    fun `test while count`() = expect<Throwable> { doTest() }
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)

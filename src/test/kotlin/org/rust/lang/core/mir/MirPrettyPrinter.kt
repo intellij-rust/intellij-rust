@@ -84,7 +84,7 @@ internal class MirPrettyPrinter(
                     append("[")
                     append("real: bb${terminator.realTarget.index}")
                     append(", ")
-                    append("cleanup: bb${terminator.unwind!!.index}")
+                    append("unwind: bb${terminator.unwind!!.index}")
                     append("]")
                 }
                 appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(comment))
