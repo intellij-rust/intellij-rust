@@ -6,11 +6,12 @@
 package org.rustSlowTests
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.stubs.RsLazyBlockStubCreationTestBase
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsCompilerSourcesLazyBlockStubCreationTest : RsLazyBlockStubCreationTestBase() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test stdlib source`() {
         val sources = rustSrcDir()
@@ -20,5 +21,5 @@ class RsCompilerSourcesLazyBlockStubCreationTest : RsLazyBlockStubCreationTestBa
         )
     }
 
-    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
+    private fun rustSrcDir(): VirtualFile = WithStdlibRustProjectDescriptor.stdlib!!
 }

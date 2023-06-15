@@ -5,22 +5,17 @@
 
 package org.rust
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.Urls
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
-import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.*
 import org.rust.cargo.project.workspace.CargoWorkspace.*
@@ -35,8 +30,6 @@ import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
-import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.HashCode
 import org.rust.stdext.unwrapOrThrow
@@ -47,8 +40,6 @@ import java.nio.file.Paths
 import java.util.*
 
 object DefaultDescriptor : RustProjectDescriptorBase()
-
-object EmptyDescriptor : LightProjectDescriptor()
 
 object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 
@@ -72,29 +63,15 @@ object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectD
 object WithProcMacroRustProjectDescriptor : WithProcMacros(DefaultDescriptor)
 object WithProcMacroAndDependencyRustProjectDescriptor : WithProcMacros(WithDependencyRustProjectDescriptor)
 
-open class RustProjectDescriptorBase : LightProjectDescriptor() {
+open class RustProjectDescriptorBase {
 
     open val skipTestReason: String? = null
     open val rustcInfo: RustcInfo? = null
     open val macroExpansionCachingKey: String? = null
 
-    final override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-        super.configureModule(module, model, contentEntry)
-        if (skipTestReason != null) return
-
-        val projectDir = contentEntry.file!!
-        val ws = testCargoProject(module, projectDir.url)
-        module.project.testCargoProjects.createTestProject(projectDir, ws, rustcInfo)
-
-        val disposable = module.project.macroExpansionManager
-            .setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, macroExpansionCachingKey.orEmpty())
-        @Suppress("IncorrectParentDisposable") // It's fine for a unit test
-        Disposer.register(module, disposable)
-    }
-
     open fun setUp(fixture: CodeInsightTestFixture) {}
 
-    open fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+    open fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace? {
         val packages = listOf(testCargoPackage(contentRoot))
         return CargoWorkspace.deserialize(
             Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
@@ -174,6 +151,12 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         Target(crateRootUrl, name, kind, DEFAULT_EDITION_FOR_TESTS, doctest, requiredFeatures = emptyList())
 }
 
+object EmptyDescriptor : RustProjectDescriptorBase() {
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace? {
+        return null
+    }
+}
+
 open class WithRustup(
     private val delegate: RustProjectDescriptorBase,
     private val fetchActualStdlibMetadata: Boolean = false
@@ -240,14 +223,14 @@ open class WithRustup(
         }
     }
 
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace {
         val stdlib = if (fetchActualStdlibMetadata) {
-            getOrFetchActualStdlib(module.project)
+            getOrFetchActualStdlib(project)
         } else {
-            getOrFetchHardcodedStdlib(module.project)
+            getOrFetchHardcodedStdlib(project)
         }!!
         val cfgOptions = cfgOptions!!
-        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, cfgOptions, rustcInfo)
+        return delegate.createTestCargoWorkspace(project, contentRoot)!!.withStdlib(stdlib, cfgOptions, rustcInfo)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
@@ -274,10 +257,10 @@ open class WithProcMacros(
     override val macroExpansionCachingKey: String?
         get() = delegate.macroExpansionCachingKey
 
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val procMacroPackage = ProcMacroPackageHolder.getOrFetchMacroPackage(module.project)
-        check(procMacroPackage != null) { "Proc macro crate is not compiled successfully" }
-        return delegate.testCargoProject(module, contentRoot).withImplicitDependency(procMacroPackage)
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace {
+        val procMacroPackage1 = ProcMacroPackageHolder.getOrFetchMacroPackage(project)
+        check(procMacroPackage1 != null) { "Proc macro crate is not compiled successfully" }
+        return delegate.createTestCargoWorkspace(project, contentRoot)!!.withImplicitDependency(procMacroPackage1)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
@@ -363,9 +346,10 @@ open class WithCustomStdlibRustProjectDescriptor(
             return delegate.skipTestReason
         }
 
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val stdlib = StandardLibrary.fromPath(module.project, explicitStdlibPath()!!, rustcInfo)!!
-        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT)
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace? {
+        val path = explicitStdlibPath() ?: return null
+        val stdlib = StandardLibrary.fromPath(project, path, rustcInfo)!!
+        return delegate.createTestCargoWorkspace(project, contentRoot)!!.withStdlib(stdlib, CfgOptions.DEFAULT)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
@@ -378,7 +362,7 @@ open class WithCustomStdlibRustProjectDescriptor(
 
 object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
 
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace {
         val testProcMacroArtifact1 = CargoWorkspaceData.ProcMacroArtifact(
             Path.of("/test/proc_macro_artifact"), // The file does not exists
             HashCode.compute("test")
@@ -459,7 +443,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
 }
 
 private class WithStdlibLikeDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace {
         val packages = listOf(
             testCargoPackage(contentRoot),
             externalPackage("$contentRoot/core", "lib.rs", "core"),

@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -292,14 +293,14 @@ class MacroExpansionManagerImpl(
         check(isUnitTestMode)
         val dir = updateDirs(cacheDirectory.ifEmpty { null })
         val impl = MacroExpansionServiceBuilder.build(project, dir)
-        this.dirs = dir
-        this.inner = impl
         impl.macroExpansionMode = mode
         impl.enabledInUnitTests = true
 
         runWriteAction {
+            this.dirs = dir
+            this.inner = impl
             ProjectRootManagerEx.getInstanceEx(project)
-                .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+                .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
         }
 
         val saveCacheOnDispose = cacheDirectory.isNotEmpty()
