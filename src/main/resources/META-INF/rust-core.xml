@@ -1148,23 +1148,28 @@
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RsProjectConfigurable"
                              groupId="language"
-                             id="language.rust"/>
+                             id="language.rust"
+                             bundle="messages.RsBundle" key="settings.rust.toolchain.name"/>
 
         <projectConfigurable provider="org.rust.cargo.project.configurable.CargoBuildToolConfigurableProvider"
                              parentId="build.tools"
-                             id="language.rust.build.tool.cargo"/>
+                             id="language.rust.build.tool.cargo"
+                             bundle="messages.RsBundle" key="settings.rust.cargo.name"/>
 
         <projectConfigurable provider="org.rust.cargo.project.configurable.CargoProjectConfigurableProvider"
                              parentId="language.rust"
-                             id="language.rust.cargo"/>
+                             id="language.rust.cargo"
+                             bundle="messages.RsBundle" key="settings.rust.cargo.name"/>
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RsExternalLinterConfigurable"
                              parentId="language.rust"
-                             id="language.rust.cargo.check"/>
+                             id="language.rust.cargo.check"
+                             bundle="messages.RsBundle" key="settings.rust.external.linters.name"/>
 
         <projectConfigurable instance="org.rust.cargo.project.configurable.RustfmtConfigurable"
                              parentId="language.rust"
-                             id="language.rust.rustfmt"/>
+                             id="language.rust.rustfmt"
+                             bundle="messages.RsBundle" key="settings.rust.rustfmt.name"/>
 
         <projectService serviceImplementation="org.rust.cargo.project.settings.RustProjectSettingsService"/>
 
