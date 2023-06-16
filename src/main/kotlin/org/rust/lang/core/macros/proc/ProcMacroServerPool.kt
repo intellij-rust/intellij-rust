@@ -31,6 +31,8 @@ import org.rust.lang.core.macros.tt.FlatTreeJsonSerializer
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.*
+import org.rust.stdext.RsResult.Err
+import org.rust.stdext.RsResult.Ok
 import java.io.*
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -42,21 +44,51 @@ import kotlin.concurrent.withLock
 
 class ProcMacroServerPool private constructor(
     toolchain: RsToolchainBase,
+    private val needsVersionCheck: Boolean,
     expanderExecutable: Path
 ) : Disposable {
     private val pool = Pool(4) {
         ProcMacroServerProcess.createAndRun(toolchain, expanderExecutable) // Throws ProcessCreationException
     }
 
+    private val expanderVersion: RsResult<ProMacroExpanderVersion, RequestSendError> by cancelableLazy {
+        sendInner(Request.ApiVersionCheck, 10_000).andThen {
+            val i = (it as Response.ApiVersionCheck).version.toInt()
+            when (val version = ProMacroExpanderVersion.from(i)) {
+                null -> Err(RequestSendError.UnknownVersion(i))
+                else -> Ok(version)
+            }
+        }
+    }
+
+    fun requestExpanderVersion(): RsResult<ProMacroExpanderVersion, RequestSendError> {
+        if (!needsVersionCheck) {
+            return Ok(ProMacroExpanderVersion.NO_VERSION_CHECK_VERSION)
+        }
+        return expanderVersion
+    }
+
     init {
         Disposer.register(this, pool)
     }
 
-    @Throws(ProcessCreationException::class, IOException::class, TimeoutException::class)
-    fun send(request: Request, timeout: Long): Response {
-        val io = pool.alloc() // Throws ProcessCreationException
+    fun send(request: Request, timeout: Long): RsResult<Response, RequestSendError> {
+        requestExpanderVersion().unwrapOrElse { return Err(it) }
+        return sendInner(request, timeout)
+    }
+
+    private fun sendInner(request: Request, timeout: Long): RsResult<Response, RequestSendError> {
+        val io = try {
+            pool.alloc() // Throws ProcessCreationException
+        } catch (e: ProcessCreationException) {
+            return Err(RequestSendError.ProcessCreation(e))
+        }
         return try {
-            io.send(request, timeout) // Throws IOException, TimeoutException
+            Ok(io.send(request, timeout)) // Throws IOException, TimeoutException
+        } catch(e: IOException) {
+            Err(RequestSendError.IO(e))
+        } catch(e: TimeoutException) {
+            Err(RequestSendError.Timeout(e))
         } finally {
             pool.free(io)
         }
@@ -65,8 +97,13 @@ class ProcMacroServerPool private constructor(
     override fun dispose() {}
 
     companion object {
-        fun new(toolchain: RsToolchainBase, expanderExecutable: Path, parentDisposable: Disposable): ProcMacroServerPool {
-            return ProcMacroServerPool(toolchain, expanderExecutable)
+        fun new(
+            toolchain: RsToolchainBase,
+            needsVersionCheck: Boolean,
+            expanderExecutable: Path,
+            parentDisposable: Disposable
+        ): ProcMacroServerPool {
+            return ProcMacroServerPool(toolchain, needsVersionCheck, expanderExecutable)
                 .also { Disposer.register(parentDisposable, it) }
         }
 
@@ -91,6 +128,13 @@ class ProcMacroServerPool private constructor(
             return RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         }
     }
+}
+
+sealed interface RequestSendError {
+    class ProcessCreation(val e: ProcessCreationException): RequestSendError
+    class IO(val e: IOException): RequestSendError
+    class Timeout(val e: TimeoutException): RequestSendError
+    class UnknownVersion(val version: Int): RequestSendError
 }
 
 private class Pool(
