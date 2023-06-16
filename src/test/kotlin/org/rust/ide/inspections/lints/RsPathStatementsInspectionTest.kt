@@ -43,4 +43,35 @@ class RsPathStatementsInspectionTest : RsInspectionsTestBase(RsPathStatementsIns
             let n = 0;
         /*caret*/}
     """, checkWeakWarn = true)
+
+    fun `test path statement drops value`() = checkByText("""
+        #[lang = "drop"]   pub trait Drop {}
+        struct Droppable;
+        impl Drop for Droppable {}
+
+        fn main() {
+            let n = Droppable {};
+            /*weak_warning descr="Path statement drops value"*/n;/*weak_warning**/
+        }
+    """, checkWeakWarn = true)
+
+    fun `test fix by replacing with drop`() = checkFixByText("Use `drop` to clarify the intent: `drop(n);`", """
+        #[lang = "drop"] pub trait Drop {}
+        struct Droppable;
+        impl Drop for Droppable {}
+
+        fn main() {
+            let n = Droppable {};
+            /*caret*//*weak_warning descr="Path statement drops value"*/n;/*weak_warning**/
+        }
+    """, """
+        #[lang = "drop"] pub trait Drop {}
+        struct Droppable;
+        impl Drop for Droppable {}
+
+        fn main() {
+            let n = Droppable {};
+            /*caret*/drop(n);
+        }
+    """, checkWeakWarn = true)
 }

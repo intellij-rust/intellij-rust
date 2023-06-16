@@ -8,11 +8,16 @@ package org.rust.ide.inspections.lints
 import com.intellij.psi.PsiElement
 import org.rust.RsBundle
 import org.rust.ide.fixes.RemoveElementFix
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.isTailStmt
+import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.infer.needsDrop
+import org.rust.lang.core.types.type
+import org.rust.lang.utils.evaluation.ThreeValuedLogic
 
 // TODO: Future improvements: https://github.com/intellij-rust/intellij-rust/issues/9555
 //  The inspection is currently disabled by default.
@@ -27,8 +32,17 @@ class RsPathStatementsInspection : RsLintInspection() {
             val expr = exprStmt.expr
             if (expr is RsPathExpr && !exprStmt.isTailStmt) {
                 val highlighting = RsLintHighlightingType.WEAK_WARNING
-                val description = RsBundle.message("inspection.PathStatementsInspection.description.no.effect")
-                val fixes = listOf(RemoveElementFix(exprStmt))
+                val (description, fixes) = when (expr.implLookup.needsDrop(expr.type, expr)) {
+                    ThreeValuedLogic.True ->
+                        RsBundle.message("inspection.PathStatementsInspection.description.drops.value") to
+                            listOf(SubstituteTextFix.replace("Use `drop` to clarify the intent: `drop(${expr.text});`", expr.containingFile, expr.textRange, "drop(${expr.text})"))
+
+                    ThreeValuedLogic.False ->
+                        RsBundle.message("inspection.PathStatementsInspection.description.no.effect") to
+                            listOf(RemoveElementFix(exprStmt))
+
+                    ThreeValuedLogic.Unknown -> return
+                }
                 holder.registerLintProblem(exprStmt, description, highlighting, fixes)
             }
         }

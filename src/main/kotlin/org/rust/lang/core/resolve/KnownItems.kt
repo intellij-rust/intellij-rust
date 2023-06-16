@@ -143,6 +143,7 @@ class KnownItems(
     val Debug: RsTraitItem? get() = findLangItem("debug_trait") ?: findItem("core::fmt::Debug")
     val Box: RsStructOrEnumItemElement? get() = findLangItem("owned_box", "alloc")
     val Pin: RsStructOrEnumItemElement? get() = findLangItem("pin", "core")
+    val ManuallyDrop: RsStructOrEnumItemElement? get() = findLangItem("manually_drop")
 
     val drop: RsFunction? get() = findItem("core::mem::drop")
 
