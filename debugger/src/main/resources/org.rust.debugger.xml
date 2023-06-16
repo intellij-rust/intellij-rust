@@ -28,6 +28,10 @@
                        implementation="org.rust.debugger.runconfig.legacy.RsDebugRunnerLegacy"/>
 
         <statistics.counterUsagesCollector implementationClass="org.rust.debugger.statistics.RsDebuggerUsageCollector"/>
+
+        <registryKey key="org.rust.debugger.gdb.setup.v2"
+                     defaultValue="false"
+                     description="Enables new way how GDB is set up for Rust"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.rust">

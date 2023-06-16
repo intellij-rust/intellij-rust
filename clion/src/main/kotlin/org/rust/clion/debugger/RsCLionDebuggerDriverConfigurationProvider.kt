@@ -13,9 +13,13 @@ import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.createDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import org.rust.debugger.RsDebuggerDriverConfigurationProvider
+import org.rust.debugger.isNewGdbSetupEnabled
 
 class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
+        // Delegate to `RsDefaultDebuggerDriverConfigurationProvider`
+        if (isNewGdbSetupEnabled) return null
+
         val toolchain = CPPToolchains.getInstance().defaultToolchain ?: return null
         val isLLDBRustMSVCSupportEnabled = Registry.`is`("org.rust.debugger.lldb.rust.msvc", false)
 
