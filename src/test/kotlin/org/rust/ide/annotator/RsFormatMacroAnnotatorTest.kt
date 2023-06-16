@@ -266,18 +266,18 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
         fn main() {
             let s = S;
-            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Display` (required by {})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:?})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>x?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:x?})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>X?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:X?})">s</error>);
-            println!("<FORMAT_PARAMETER>{:#<FUNCTION>?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:#?})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>o</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Octal` (required by {:o})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>x</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `LowerHex` (required by {:x})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>X</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `UpperHex` (required by {:X})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>p</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Pointer` (required by {:p})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>b</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Binary` (required by {:b})">s</error>);
-            println!("<FORMAT_PARAMETER>{:<FUNCTION>e</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `LowerExp` (required by {:e})">s</error>);
-            println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>:<FUNCTION>E</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `UpperExp` (required by {0:E})">s</error>);
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Display` (required by {}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:?}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>x?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:x?}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>X?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:X?}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:#<FUNCTION>?</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Debug` (required by {:#?}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>o</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Octal` (required by {:o}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>x</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `LowerHex` (required by {:x}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>X</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `UpperHex` (required by {:X}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>p</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Pointer` (required by {:p}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>b</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `Binary` (required by {:b}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{:<FUNCTION>e</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `LowerExp` (required by {:e}) [E0277]">s</error>);
+            println!("<FORMAT_PARAMETER>{<FORMAT_SPECIFIER>0</FORMAT_SPECIFIER>:<FUNCTION>E</FUNCTION>}</FORMAT_PARAMETER>", <error descr="`S` doesn't implement `UpperExp` (required by {0:E}) [E0277]">s</error>);
         }
     """)
 
@@ -466,18 +466,18 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
         fn main() {
             let s = S;
-            println!("{}", <error descr="`S` doesn't implement `Display` (required by {})">s</error>);
-            println!("{:?}", <error descr="`S` doesn't implement `Debug` (required by {:?})">s</error>);
-            println!("{:x?}", <error descr="`S` doesn't implement `Debug` (required by {:x?})">s</error>);
-            println!("{:X?}", <error descr="`S` doesn't implement `Debug` (required by {:X?})">s</error>);
-            println!("{:#?}", <error descr="`S` doesn't implement `Debug` (required by {:#?})">s</error>);
-            println!("{:o}", <error descr="`S` doesn't implement `Octal` (required by {:o})">s</error>);
-            println!("{:x}", <error descr="`S` doesn't implement `LowerHex` (required by {:x})">s</error>);
-            println!("{:X}", <error descr="`S` doesn't implement `UpperHex` (required by {:X})">s</error>);
-            println!("{:p}", <error descr="`S` doesn't implement `Pointer` (required by {:p})">s</error>);
-            println!("{:b}", <error descr="`S` doesn't implement `Binary` (required by {:b})">s</error>);
-            println!("{:e}", <error descr="`S` doesn't implement `LowerExp` (required by {:e})">s</error>);
-            println!("{0:E}", <error descr="`S` doesn't implement `UpperExp` (required by {0:E})">s</error>);
+            println!("{}", <error descr="`S` doesn't implement `Display` (required by {}) [E0277]">s</error>);
+            println!("{:?}", <error descr="`S` doesn't implement `Debug` (required by {:?}) [E0277]">s</error>);
+            println!("{:x?}", <error descr="`S` doesn't implement `Debug` (required by {:x?}) [E0277]">s</error>);
+            println!("{:X?}", <error descr="`S` doesn't implement `Debug` (required by {:X?}) [E0277]">s</error>);
+            println!("{:#?}", <error descr="`S` doesn't implement `Debug` (required by {:#?}) [E0277]">s</error>);
+            println!("{:o}", <error descr="`S` doesn't implement `Octal` (required by {:o}) [E0277]">s</error>);
+            println!("{:x}", <error descr="`S` doesn't implement `LowerHex` (required by {:x}) [E0277]">s</error>);
+            println!("{:X}", <error descr="`S` doesn't implement `UpperHex` (required by {:X}) [E0277]">s</error>);
+            println!("{:p}", <error descr="`S` doesn't implement `Pointer` (required by {:p}) [E0277]">s</error>);
+            println!("{:b}", <error descr="`S` doesn't implement `Binary` (required by {:b}) [E0277]">s</error>);
+            println!("{:e}", <error descr="`S` doesn't implement `LowerExp` (required by {:e}) [E0277]">s</error>);
+            println!("{0:E}", <error descr="`S` doesn't implement `UpperExp` (required by {0:E}) [E0277]">s</error>);
         }
     """)
 
@@ -648,6 +648,66 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """, """
         fn main() {
             write!(x, "{}", 1);
+        }
+    """)
+
+    fun `test derive debug fix`() = checkFixByTextWithoutHighlighting("Add #[derive(Debug)] to `Foo`", """
+        struct Foo {}
+        fn func(foo: Foo) {
+            println!("{:?}", /*caret*/foo);
+        }
+    """, """
+        #[derive(Debug)]
+        struct Foo {}
+        fn func(foo: Foo) {
+            println!("{:?}", foo);
+        }
+    """)
+
+    fun `test derive debug fix (reference)`() = checkFixByTextWithoutHighlighting("Add #[derive(Debug)] to `Foo`", """
+        struct Foo {}
+        fn func(foo: &Foo) {
+            println!("{:?}", /*caret*/foo);
+        }
+    """, """
+        #[derive(Debug)]
+        struct Foo {}
+        fn func(foo: &Foo) {
+            println!("{:?}", foo);
+        }
+    """)
+
+    fun `test derive debug fix (slice)`() = checkFixByTextWithoutHighlighting("Add #[derive(Debug)] to `Foo`", """
+        struct Foo {}
+        fn func(foos: &[Foo]) {
+            println!("{:?}", /*caret*/foos[0]);
+        }
+    """, """
+        #[derive(Debug)]
+        struct Foo {}
+        fn func(foos: &[Foo]) {
+            println!("{:?}", foos[0]);
+        }
+    """)
+
+    fun `test change Display to Debug 1`() = checkFixByTextWithoutHighlighting("Change format parameter to `{:?}`", """
+        #[derive(Debug)]
+        struct Foo {}
+        fn func(foo: Foo) {
+            println!("{}", /*caret*/foo);
+        }
+    """, """
+        #[derive(Debug)]
+        struct Foo {}
+        fn func(foo: Foo) {
+            println!("{:?}", foo);
+        }
+    """)
+
+    fun `test change Display to Debug 2`() = checkFixIsUnavailable("Change format parameter to `{:?}`", """
+        struct Foo {}
+        fn func(foo: Foo) {
+            println!("/*FORMAT_PARAMETER*/{}/*FORMAT_PARAMETER**/", /*error descr="`Foo` doesn't implement `Display` (required by {}) [E0277]"*/foo/*error**/);
         }
     """)
 }
