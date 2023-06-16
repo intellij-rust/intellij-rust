@@ -12,6 +12,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.util.parseSemVer
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.errors.ProcMacroExpansionError
@@ -30,8 +31,6 @@ import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.toResult
 import org.rust.stdext.unwrapOrElse
-import java.io.IOException
-import java.util.concurrent.TimeoutException
 
 class ProcMacroExpander private constructor(
     private val project: Project,
@@ -115,6 +114,7 @@ class ProcMacroExpander private constructor(
     ): RsResult<TokenTree.Subtree, ProcMacroExpansionError> {
         val remoteLib = toolchain?.toRemotePath(lib) ?: lib
         val envMapped = env.mapValues { (_, v) -> toolchain?.toRemotePath(v) ?: v }
+        val version = server.requestExpanderVersion().unwrapOrElse { return Err(it.toProcMacroExpansionError()) }
         val request = Request.ExpandMacro(
             FlatTree.fromSubtree(macroCallBody),
             macroName,
@@ -123,26 +123,32 @@ class ProcMacroExpander private constructor(
             envMapped.map { listOf(it.key, it.value) },
             envMapped["CARGO_MANIFEST_DIR"],
         )
-        val response = try {
-            server.send(request, timeout)
-        } catch (ignored: TimeoutException) {
-            return Err(ProcMacroExpansionError.Timeout(timeout))
-        } catch (e: ProcessCreationException) {
-            MACRO_LOG.warn("Failed to run `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
-            return Err(ProcMacroExpansionError.CantRunExpander)
-        } catch (e: ProcessAbortedException) {
-            return Err(ProcMacroExpansionError.ProcessAborted(e.exitCode))
-        } catch (e: IOException) {
-            if (!isUnitTestMode) {
-                MACRO_LOG.error("Error communicating with `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
-            }
-            return Err(ProcMacroExpansionError.IOExceptionThrown)
-        }
+        val response = server.send(request, timeout).unwrapOrElse { return Err(it.toProcMacroExpansionError()) }
         check(response is Response.ExpandMacro)
         return response.expansion.map {
             it.toTokenTree()
         }.mapErr {
             ProcMacroExpansionError.ServerSideError(it.message)
+        }
+    }
+
+    private fun RequestSendError.toProcMacroExpansionError(): ProcMacroExpansionError {
+        return when (this) {
+            is RequestSendError.Timeout -> ProcMacroExpansionError.Timeout(timeout)
+            is RequestSendError.ProcessCreation -> {
+                MACRO_LOG.warn("Failed to run `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
+                ProcMacroExpansionError.CantRunExpander
+            }
+            is RequestSendError.IO -> when (e) {
+                is ProcessAbortedException -> ProcMacroExpansionError.ProcessAborted(e.exitCode)
+                else -> {
+                    if (!isUnitTestMode) {
+                        MACRO_LOG.error("Error communicating with `$INTELLIJ_RUST_NATIVE_HELPER` process", e)
+                    }
+                    ProcMacroExpansionError.IOExceptionThrown
+                }
+            }
+            is RequestSendError.UnknownVersion -> ProcMacroExpansionError.UnsupportedExpanderVersion(version)
         }
     }
 
@@ -210,14 +216,17 @@ class ProcMacroExpander private constructor(
         psi !is RsDotExpr && psi.childrenWithLeaves.any { it is PsiErrorElement || it !is RsExpr && hasErrorToHandle(it) }
 
     companion object {
-        const val EXPANDER_VERSION: Int = 10
+        const val EXPANDER_VERSION: Int = 11
+        private val MIN_RUSTC_VERSION_WITH_EXPANDER_VERSION_CHECK = "1.70.0".parseSemVer()
 
         fun forCrate(crate: Crate): ProcMacroExpander {
             val project = crate.project
             val toolchain = project.toolchain
+            val rustcVersion = crate.cargoProject?.rustcInfo?.realVersion?.semver
             val procMacroExpanderPath = crate.cargoProject?.procMacroExpanderPath
-            val server = if (toolchain != null && procMacroExpanderPath != null) {
-                ProcMacroApplicationService.getInstance().getServer(toolchain, procMacroExpanderPath)
+            val server = if (toolchain != null && rustcVersion != null && procMacroExpanderPath != null) {
+                val needsVersionCheck = rustcVersion >= MIN_RUSTC_VERSION_WITH_EXPANDER_VERSION_CHECK
+                ProcMacroApplicationService.getInstance().getServer(toolchain, needsVersionCheck, procMacroExpanderPath)
             } else {
                 null
             }

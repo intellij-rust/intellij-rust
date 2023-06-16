@@ -48,14 +48,18 @@ class ProcMacroApplicationService : Disposable {
     }
 
     @Synchronized
-    fun getServer(toolchain: RsToolchainBase, procMacroExpanderPath: Path): ProcMacroServerPool? {
+    fun getServer(
+        toolchain: RsToolchainBase,
+        needsVersionCheck: Boolean,
+        procMacroExpanderPath: Path
+    ): ProcMacroServerPool? {
         if (!isAnyEnabled()) return null
 
         val id = toolchain.distributionId
-        val key = DistributionIdAndExpanderPath(id, procMacroExpanderPath)
+        val key = DistributionIdAndExpanderPath(id, needsVersionCheck, procMacroExpanderPath)
         var server = servers[key]
         if (server == null) {
-            server = ProcMacroServerPool.new(toolchain, procMacroExpanderPath, this)
+            server = ProcMacroServerPool.new(toolchain, needsVersionCheck, procMacroExpanderPath, this)
             servers[key] = server
         }
         return server
@@ -81,6 +85,7 @@ class ProcMacroApplicationService : Disposable {
 
     private data class DistributionIdAndExpanderPath(
         val distributionId: String,
+        val needsVersionCheck: Boolean,
         val procMacroExpanderPath: Path,
     )
 
