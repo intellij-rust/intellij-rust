@@ -153,14 +153,33 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
         }
     }
 
-    fun registerProblem(element: PsiElement, rangeInElement: TextRange, @InspectionMessage message: String, vararg fixes: LocalQuickFix) {
+    fun registerProblem(
+        element: PsiElement,
+        rangeInElement: TextRange,
+        @InspectionMessage message: String,
+        vararg fixes: LocalQuickFix,
+        // A temporary hack; should actually always be true
+        alwaysShowInMacros: Boolean = false
+    ) {
         if (element.existsAfterExpansion) {
             if (element.containingFile == file) {
                 holder.registerProblem(element, rangeInElement, message, *fixes)
             } else {
                 // The element is expanded from a macro
                 val (sourceElement, sourceRangeInElement) =
-                    element.findCorrespondingElementAndRangeExpandedFrom(rangeInElement) ?: return
+                    element.findCorrespondingElementAndRangeExpandedFrom(rangeInElement) ?: run {
+                        if (alwaysShowInMacros) {
+                            val macroPath = element.findMacroCallExpandedFromNonRecursive()?.path ?: return
+                            registerProblem(
+                                macroPath,
+                                TextRange(0, macroPath.textLength),
+                                message,
+                                *fixes,
+                                alwaysShowInMacros = true
+                            )
+                        }
+                        return
+                    }
                 holder.registerProblem(sourceElement, sourceRangeInElement, message, *fixes.filterSupportingMacros())
             }
         }

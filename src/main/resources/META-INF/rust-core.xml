@@ -698,6 +698,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnusedLabelsInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Compile Error macro"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsCompileErrorMacroInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

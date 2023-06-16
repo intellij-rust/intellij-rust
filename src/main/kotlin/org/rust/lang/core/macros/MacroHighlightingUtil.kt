@@ -31,6 +31,11 @@ data class MacroCallPreparedForHighlighting(
     val elementsForHighlighting: List<PsiElement>
         get() {
             if (expansion.ranges.isEmpty()) return emptyList()
+            return elementsForErrorHighlighting
+        }
+
+    val elementsForErrorHighlighting: List<PsiElement>
+        get() {
             // Don't try to restrict range by `getElementsInRange`: it does not return all ancestors
             // even if `includeAllParents = true`
             return CollectHighlightsUtil.getElementsInRange(expansion.file, 0, expansion.file.textLength)

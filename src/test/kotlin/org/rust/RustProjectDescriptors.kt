@@ -62,6 +62,7 @@ object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectD
  */
 object WithProcMacroRustProjectDescriptor : WithProcMacros(DefaultDescriptor)
 object WithProcMacroAndDependencyRustProjectDescriptor : WithProcMacros(WithDependencyRustProjectDescriptor)
+object WithProcMacroAndStdlibRustProjectDescriptor : WithProcMacros(WithStdlibRustProjectDescriptor)
 
 open class RustProjectDescriptorBase {
 

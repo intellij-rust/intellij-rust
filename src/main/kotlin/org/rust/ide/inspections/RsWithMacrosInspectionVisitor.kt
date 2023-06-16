@@ -162,7 +162,7 @@ abstract class RsWithMacrosInspectionVisitor : RsVisitor() {
 
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
-            for (element in macro.elementsForHighlighting) {
+            for (element in macro.elementsForErrorHighlighting) {
                 element.accept(this)
                 if (element is RsAttrProcMacroOwner) {
                     macros += element.procMacroAttribute?.attr?.prepareForExpansionHighlighting(macro) ?: continue
