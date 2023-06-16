@@ -5,25 +5,23 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeReference
 
 private const val FAMILY_NAME: String = "Convert to Sized type"
 
-abstract class ConvertToSizedTypeFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+abstract class ConvertToSizedTypeFix(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
 
     override fun getFamilyName(): String = FAMILY_NAME
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, typeReference: PsiElement, endElement: PsiElement) {
-        if (typeReference !is RsTypeReference) return
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+        if (element !is RsTypeReference) return
         val factory = RsPsiFactory(project)
-        val newTypeReference = newTypeReference(factory, typeReference)
-        typeReference.replace(newTypeReference)
+        val newTypeReference = newTypeReference(factory, element)
+        element.replace(newTypeReference)
     }
 
     protected abstract fun newTypeReference(factory: RsPsiFactory, typeReference: RsTypeReference): RsTypeReference

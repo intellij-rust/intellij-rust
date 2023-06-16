@@ -5,9 +5,9 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
@@ -38,7 +38,7 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             holder.registerProblem(
                 o,
                 "assert!(a $operator b) can be $macroName!(a, b)",
-                SpecializedAssertQuickFix(macroName)
+                SpecializedAssertQuickFix(o, macroName)
             )
         }
 
@@ -62,14 +62,15 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
         }
     }
 
-    private class SpecializedAssertQuickFix(private val assertName: String) : LocalQuickFix {
-        override fun getName() = "Convert to $assertName!"
+    private class SpecializedAssertQuickFix(
+        element: RsMacroCall,
+        private val assertName: String
+    ) : RsQuickFixBase<RsMacroCall>(element) {
+        override fun getText() = "Convert to $assertName!"
+        override fun getFamilyName(): String = text
 
-        override fun getFamilyName(): String = name
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val macro = descriptor.psiElement as RsMacroCall
-            val assertArg = macro.assertMacroArgument!!
+        override fun invoke(project: Project, editor: Editor?, element: RsMacroCall) {
+            val assertArg = element.assertMacroArgument!!
 
             val (left, right) = comparedAssertArgs(assertArg) ?: return
             val formatArgs = assertArg.formatMacroArgList
@@ -79,12 +80,12 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
                 ""
             }
             val newAssert = RsPsiFactory(project).createMacroCall(
-                macro.expansionContext,
-                macro.bracesKind ?: return,
+                element.expansionContext,
+                element.bracesKind ?: return,
                 assertName,
                 "${left.text}, ${right.text}$appendix"
             )
-            macro.replace(newAssert)
+            element.replace(newAssert)
         }
 
         private fun comparedAssertArgs(arg: RsAssertMacroArgument): Pair<RsExpr, RsExpr>? {

@@ -6,11 +6,8 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.parentStructLiteral
@@ -26,31 +23,24 @@ class CreateStructFieldFromConstructorFix private constructor(
     private val fieldName: String,
     @SafeFieldForPreview
     private val fieldType: Ty,
-) : LocalQuickFixAndIntentionActionOnPsiElement(struct) {
+) : RsQuickFixBase<RsStructItem>(struct) {
     override fun getText() = "Create field"
 
     override fun getFamilyName(): String = text
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val struct = startElement as? RsStructItem ?: return
-        val pub = struct.visibility == RsVisibility.Public
+    override fun invoke(project: Project, editor: Editor?, element: RsStructItem) {
+        val pub = element.visibility == RsVisibility.Public
         val psiFactory = RsPsiFactory(project)
-        val structBlockFields = struct.blockFields
+        val structBlockFields = element.blockFields
         if (structBlockFields != null) {
             val rBrace = structBlockFields.rbrace ?: return
             ensureTrailingComma(structBlockFields.namedFieldDeclList)
             structBlockFields.addBefore(psiFactory.createBlockFields(pub, fieldName, fieldType).children.first(), rBrace)
             structBlockFields.addBefore(psiFactory.createComma(), rBrace)
         } else {
-            val identifier = struct.identifier ?: return
-            val blockFields = struct.addAfter(psiFactory.createBlockFields(pub, fieldName, fieldType), identifier) as RsBlockFields
-            struct.semicolon?.delete()
+            val identifier = element.identifier ?: return
+            val blockFields = element.addAfter(psiFactory.createBlockFields(pub, fieldName, fieldType), identifier) as RsBlockFields
+            element.semicolon?.delete()
             blockFields.addBefore(psiFactory.createComma(), blockFields.rbrace)
         }
     }

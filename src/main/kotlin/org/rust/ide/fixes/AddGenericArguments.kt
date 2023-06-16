@@ -6,11 +6,9 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
 import org.rust.ide.utils.template.buildAndRunTemplate
@@ -24,19 +22,12 @@ import org.rust.lang.core.psi.ext.*
 class AddGenericArguments(
     @SafeFieldForPreview
     private val declaration: SmartPsiElementPointer<RsGenericDeclaration>,
-    element: RsElement
-) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+    element: RsMethodOrPath
+) : RsQuickFixBase<RsMethodOrPath>(element) {
     override fun getText(): String = "Add missing $argumentsName"
     override fun getFamilyName() = "Add missing generic arguments"
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val element = startElement as? RsMethodOrPath ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsMethodOrPath) {
         val inserted = insertGenericArgumentsIfNeeded(element) ?: return
         editor?.buildAndRunTemplate(element, inserted.map { it })
     }

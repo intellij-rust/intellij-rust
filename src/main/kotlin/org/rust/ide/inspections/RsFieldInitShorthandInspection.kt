@@ -20,7 +20,7 @@ class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
                 o,
                 "Expression can be simplified",
                 ProblemHighlightType.WEAK_WARNING,
-                ChangeToFieldShorthandFix()
+                ChangeToFieldShorthandFix(o)
             )
         }
     }

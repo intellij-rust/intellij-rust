@@ -5,17 +5,15 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.ImportingPsiRenderer
 import org.rust.ide.presentation.PsiRenderingOptions
 import org.rust.ide.presentation.renderTraitRef
 import org.rust.ide.presentation.renderTypeReference
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
 import org.rust.ide.utils.GenericConstraints
+import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -39,23 +37,16 @@ import org.rust.lang.core.types.infer.substitute
  * impl A for S {}
  * ```
  */
-class AddMissingSupertraitImplFix(implItem: RsImplItem) : LocalQuickFixAndIntentionActionOnPsiElement(implItem) {
+class AddMissingSupertraitImplFix(implItem: RsImplItem) : RsQuickFixBase<RsImplItem>(implItem) {
     override fun getText(): String = "Implement missing supertrait(s)"
     override fun getFamilyName(): String = text
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val impl = startElement as? RsImplItem ?: return
-        val traitRef = impl.traitRef ?: return
-        val trait = impl.implementedTrait ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsImplItem) {
+        val traitRef = element.traitRef ?: return
+        val trait = element.implementedTrait ?: return
 
-        val typeRef = impl.typeReference ?: return
-        val implLookup = impl.implLookup
+        val typeRef = element.typeReference ?: return
+        val implLookup = element.implLookup
         val type = typeRef.normType(implLookup)
 
         val traits = mutableListOf<Pair<BoundElement<RsTraitItem>, RsTraitRef>>()
@@ -65,7 +56,7 @@ class AddMissingSupertraitImplFix(implItem: RsImplItem) : LocalQuickFixAndIntent
         for ((superTrait, ref) in traits) {
             if (superTrait == trait) continue
             if (!implLookup.canSelect(TraitRef(type, superTrait))) {
-                implementTrait(impl, ref, typeRef, trait, substitutions, editor)
+                implementTrait(element, ref, typeRef, trait, substitutions, editor)
             }
         }
     }
@@ -99,11 +90,13 @@ private fun implementTrait(
     val text = "impl$typeParameters $traitText for $typeText $whereClause{}"
     val impl = factory.tryCreateImplItem(text) ?: return
 
-    val inserted = context.parent.addBefore(impl, context) as RsImplItem
+    val placeForImpl = PsiInsertionPlace.forItemBefore(context) ?: return
+
+    val inserted = placeForImpl.insert(impl)
     for (importCandidate in renderer.itemsToImport) {
         importCandidate.import(inserted)
     }
-    generateMissingTraitMembers(inserted, editor)
+    generateMissingTraitMembers(inserted, superTraitRef, editor)
 }
 
 private fun collectSuperTraits(

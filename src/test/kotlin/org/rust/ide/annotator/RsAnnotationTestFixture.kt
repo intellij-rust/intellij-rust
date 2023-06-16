@@ -15,6 +15,7 @@ import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.lang.core.macros.MacroExpansionManager
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import kotlin.reflect.KClass
 
 open class RsAnnotationTestFixture<C>(
@@ -27,6 +28,8 @@ open class RsAnnotationTestFixture<C>(
 
     private val extraSeverities: MutableSet<String> = mutableSetOf()
     private val testWrapping: TestWrapping = (testCase as? RsTestBase)?.testWrapping ?: TestWrapping.NONE
+    private var testWrappingUnwrapper: TestUnwrapper? = null
+    override val isWrappingActive: Boolean get() = testWrappingUnwrapper != null
 
     fun checkByFileTree(
         @Language("Rust") text: String,
@@ -127,24 +130,6 @@ open class RsAnnotationTestFixture<C>(
         }
     }
 
-    // TODO remove after supporting quick-fixes in macros
-    override fun checkFix(
-        fixName: String,
-        before: String,
-        after: String,
-        configure: (String) -> Unit,
-        checkBefore: () -> Unit,
-        checkAfter: (String) -> Unit,
-        preview: Preview?,
-    ) {
-        if (testWrapping == TestWrapping.NONE) {
-            super.checkFix(fixName, before, after, configure, checkBefore, checkAfter, preview)
-        } else {
-            configure(before)
-            checkBefore()
-        }
-    }
-
     private fun checkByFileTree(text: String) {
         fileTreeFromText(replaceCaretMarker(text)).check(codeInsightFixture)
     }
@@ -153,12 +138,23 @@ open class RsAnnotationTestFixture<C>(
         if (testWrapping == TestWrapping.NONE) {
             super.configureByText(text.replaceHighlightingCommentsWithXmlTags())
         } else {
-            val (text2, _) = testWrapping.wrapCode(
+            val (text2, unwrapper) = testWrapping.wrapCode(
                 project,
                 text.trimIndent().replaceHighlightingXmlTagsWithRustComments()
             )
-            super.configureByText(text2.replaceHighlightingCommentsWithXmlTags())
+            codeInsightFixture.configureByText(
+                baseFileName,
+                replaceCaretMarker(text2.replaceHighlightingCommentsWithXmlTags())
+            )
+            codeInsightFixture.project.macroExpansionManagerIfCreated?.updateInUnitTestMode()
+            unwrapper?.init(codeInsightFixture.file)
+            this.testWrappingUnwrapper = unwrapper
         }
+    }
+
+    override fun checkByText(text: String) {
+        testWrappingUnwrapper?.unwrap()
+        codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
     private fun configureByFileTree(text: String, stubOnly: Boolean) {

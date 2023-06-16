@@ -6,11 +6,9 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.PriorityAction
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.annotator.getFunctionCallContext
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.changeSignature.*
@@ -37,7 +35,7 @@ class ChangeFunctionSignatureFix private constructor(
     function: RsFunction,
     private val signature: Signature,
     private val priority: PriorityAction.Priority? = null
-) : LocalQuickFixAndIntentionActionOnPsiElement(argumentList), PriorityAction {
+) : RsQuickFixBase<RsValueArgumentList>(argumentList), PriorityAction {
     private val fixText: String = run {
         val callableType = if (function.isMethod) "method" else "function"
         val name = function.name
@@ -86,15 +84,8 @@ class ChangeFunctionSignatureFix private constructor(
 
     override fun getPriority(): PriorityAction.Priority = priority ?: PriorityAction.Priority.NORMAL
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val args = startElement as? RsValueArgumentList ?: return
-        val context = args.getFunctionCallContext() ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsValueArgumentList) {
+        val context = element.getFunctionCallContext() ?: return
         val function = context.function ?: return
 
         val usedNames = mutableSetOf<String>()
@@ -103,7 +94,7 @@ class ChangeFunctionSignatureFix private constructor(
         val config = RsChangeFunctionSignatureConfig.create(function)
         val factory = RsPsiFactory(project)
 
-        val arguments = getEffectiveArguments(args, function)
+        val arguments = getEffectiveArguments(element, function)
         var parameterIndex = 0
         for ((index, item) in signature.actions.withIndex()) {
             when (item) {

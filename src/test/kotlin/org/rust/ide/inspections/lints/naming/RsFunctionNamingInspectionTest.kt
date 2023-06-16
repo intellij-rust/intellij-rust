@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsFunctionNamingInspection
 
@@ -23,6 +24,7 @@ class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingIns
         fn FN_BAR() {}
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test functions fix`() = checkFixByText("Rename to `fun_foo`", """
         fn <warning descr="Function `FUN_FOO` should have a snake case name such as `fun_foo`">F<caret>UN_FOO</warning>() {}
         fn fun_use() {
@@ -35,6 +37,7 @@ class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingIns
         }
     """, preview = null)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test function with raw identifier`() = checkFixByText("Rename to `extern`", """
         fn <warning descr="Function `Extern` should have a snake case name such as `extern`">r#Extern/*caret*/</warning>() {}
         fn main() {

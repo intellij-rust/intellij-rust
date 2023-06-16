@@ -5,22 +5,20 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.unwrapReference
 
-class ReplaceWithStdMemDropFix(call: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(call) {
+class ReplaceWithStdMemDropFix(call: PsiElement) : RsQuickFixBase<PsiElement>(call) {
     override fun getFamilyName() = text
     override fun getText() = "Replace with `std::mem::drop`"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val (old, args) = when (startElement) {
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+        val (old, args) = when (element) {
             is RsCallExpr -> {
-                val args = startElement.valueArgumentList.exprList
+                val args = element.valueArgumentList.exprList
 
                 val dropArgs = if (args.size == 1) {
                     // Change `Foo::drop(&mut x)` to `std::mem::drop(x)`
@@ -32,16 +30,16 @@ class ReplaceWithStdMemDropFix(call: PsiElement) : LocalQuickFixAndIntentionActi
                     // (handles incorrect code gracefully)
                     args
                 }
-                startElement to dropArgs
+                element to dropArgs
             }
             is RsMethodCall -> {
                 // RsMethodCall   -> drop()
                 // RsDotExpr      -> foo.drop()
                 // RsDotExpr.expr -> foo
-                val dotExpr = startElement.parent as? RsDotExpr ?: return
+                val dotExpr = element.parent as? RsDotExpr ?: return
                 val expr = dotExpr.expr
                 // args inside the drop method. Should be empty but check them just in case (drop(x, y, z) -> x, y, z)
-                val args = startElement.valueArgumentList.exprList
+                val args = element.valueArgumentList.exprList
 
                 val dropArgs = if (args.isEmpty()) {
                     // Change `foo.drop()` to `std::mem::drop(foo)`

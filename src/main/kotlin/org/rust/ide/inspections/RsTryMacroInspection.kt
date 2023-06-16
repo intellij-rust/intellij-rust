@@ -26,7 +26,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
             holder.registerProblem(
                 o,
                 "try! macro can be replaced with ? operator",
-                ChangeTryMacroToTryOperator()
+                ChangeTryMacroToTryOperator(o)
             )
         }
     }

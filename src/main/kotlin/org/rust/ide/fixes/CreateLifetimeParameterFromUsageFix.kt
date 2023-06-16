@@ -5,22 +5,19 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsLifetime
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 
-class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : LocalQuickFixAndIntentionActionOnPsiElement(lifetime) {
+class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : RsQuickFixBase<RsLifetime>(lifetime) {
 
     override fun getFamilyName(): String = "Create lifetime parameter"
     override fun getText(): String = familyName
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val context = gatherContext(startElement) ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsLifetime) {
+        val context = gatherContext(element) ?: return
         insertLifetime(context.declaration, project, context.lifetime)
     }
 
@@ -55,8 +52,7 @@ private class Context(
     val declaration: RsGenericDeclaration
 )
 
-private fun gatherContext(element: PsiElement): Context? {
-    if (element !is RsLifetime) return null
+private fun gatherContext(element: RsLifetime): Context? {
     val genericDeclaration = element.ancestorOrSelf<RsGenericDeclaration>()
     if (genericDeclaration !is RsNameIdentifierOwner) return null
     return Context(element, genericDeclaration)

@@ -8,8 +8,6 @@ package org.rust.ide.fixes
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFunctionOrLambda
@@ -34,11 +32,10 @@ abstract class ConvertToTyUsingTryTraitFix(
     private val fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr, Ty) -> RsExpr
 ) : ConvertToTyUsingTraitFix(expr, ty, traitName) {
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        if (startElement !is RsExpr) return
+    override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
         val psiFactory = RsPsiFactory(project)
-        val fromCall = fromCallMaker(psiFactory, startElement, ty)
-        addFromCall(psiFactory, startElement, fromCall)
+        val fromCall = fromCallMaker(psiFactory, element, ty)
+        addFromCall(psiFactory, element, fromCall)
     }
 
     open fun addFromCall(psiFactory: RsPsiFactory, expr: RsExpr, fromCall: RsExpr) {

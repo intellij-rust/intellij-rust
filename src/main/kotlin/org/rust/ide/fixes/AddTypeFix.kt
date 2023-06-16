@@ -5,11 +5,9 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.RsPsiFactory
@@ -18,24 +16,18 @@ import org.rust.lang.core.types.ty.Ty
 /**
  * Adds type ascription after the given element.
  */
-class AddTypeFix(anchor: PsiElement, ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(anchor) {
+class AddTypeFix(anchor: PsiElement, ty: Ty) : RsQuickFixBase<PsiElement>(anchor) {
     private val typeText: String = ty.renderInsertionSafe()
 
     override fun getFamilyName(): String = "Add type"
     override fun getText(): String = "Add type $typeText"
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val factory = RsPsiFactory(project)
-        val parent = startElement.parent
+        val parent = element.parent
 
         val colon = factory.createColon()
-        val anchor = parent.addAfter(colon, startElement)
+        val anchor = parent.addAfter(colon, element)
 
         val type = factory.createType(typeText)
         val insertedType = parent.addAfter(type, anchor)

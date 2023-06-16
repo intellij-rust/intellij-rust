@@ -7,16 +7,13 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.macros.findElementExpandedFrom
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.mapRangeFromExpansionToCallBody
@@ -88,7 +85,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                     sourceElement,
                     sourceRangeInElement,
                     descriptionTemplate,
-                    /* no quick-fixes for now */
+                    *fixes.filterSupportingMacros()
                 )
             }
         }
@@ -112,7 +109,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                     descriptionTemplate,
                     highlightType,
                     sourceRangeInElement,
-                    /* no quick-fixes for now */
+                    *fixes.filterSupportingMacros()
                 )
             }
         }
@@ -149,7 +146,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                     descriptionTemplate,
                     highlightType,
                     holder.isOnTheFly,
-                    /* no quick-fixes for now */
+                    *fixes.filterSupportingMacros()
                 )
             }
             holder.registerProblem(descriptor)
@@ -164,7 +161,7 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                 // The element is expanded from a macro
                 val (sourceElement, sourceRangeInElement) =
                     element.findCorrespondingElementAndRangeExpandedFrom(rangeInElement) ?: return
-                holder.registerProblem(sourceElement, sourceRangeInElement, message /* no quick-fixes for now */)
+                holder.registerProblem(sourceElement, sourceRangeInElement, message, *fixes.filterSupportingMacros())
             }
         }
     }
@@ -183,7 +180,13 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
                 // The element is expanded from a macro
                 val (sourceElement, sourceRangeInElement) =
                     element.findCorrespondingElementAndRangeExpandedFrom(rangeInElement) ?: return
-                holder.registerProblem(sourceElement, message, highlightType, sourceRangeInElement /* no quick-fixes for now */)
+                holder.registerProblem(
+                    sourceElement,
+                    message,
+                    highlightType,
+                    sourceRangeInElement,
+                    *fixes.filterSupportingMacros()
+                )
             }
         }
     }
@@ -211,11 +214,12 @@ class RsProblemsHolder(private val holder: ProblemsHolder) {
             ?: return null
         return sourceElement to sourceRange.shiftLeft(sourceElement.startOffset)
     }
-}
 
-fun ProblemDescriptor.findExistingEditor(): Editor? {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
-    val file = (this as? ProblemDescriptorBase)?.containingFile ?: return null
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-    return EditorFactory.getInstance().getEditors(document).firstOrNull()
+    private fun Array<out LocalQuickFix>.filterSupportingMacros(): Array<LocalQuickFix> {
+        if (!isOnTheFly) {
+            // Quick fixes in macros does not allowed in batch mode for now
+            return LocalQuickFix.EMPTY_ARRAY
+        }
+        return filterIsInstance<RsQuickFixBase<*>>().toTypedArray()
+    }
 }

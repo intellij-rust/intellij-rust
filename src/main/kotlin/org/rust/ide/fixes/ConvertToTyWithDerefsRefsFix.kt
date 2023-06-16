@@ -8,8 +8,6 @@ package org.rust.ide.fixes
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Mutability
@@ -32,16 +30,9 @@ class ConvertToTyWithDerefsRefsFix(
     @SafeFieldForPreview
     private val path: DerefRefPath
 ) : ConvertToTyFix(expr, ty, formatRefs(path)) {
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        if (startElement !is RsExpr) return
+    override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
         val psiFactory = RsPsiFactory(project)
-        startElement.replace(psiFactory.createRefExpr(psiFactory.createDerefExpr(startElement, path.derefs), path.refs))
+        element.replace(psiFactory.createRefExpr(psiFactory.createDerefExpr(element, path.derefs), path.refs))
     }
 }
 

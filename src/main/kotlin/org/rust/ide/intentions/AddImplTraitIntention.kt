@@ -75,7 +75,7 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
             null
         }
 
-        generateMissingTraitMembers(impl, editor)
+        generateMissingTraitMembers(impl, traitRef, editor)
 
         showGenericArgumentsTemplate(
             editor,

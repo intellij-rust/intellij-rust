@@ -5,11 +5,11 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
+import org.rust.lang.core.completion.safeGetOriginalOrSelf
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -17,32 +17,38 @@ import org.rust.lang.core.psi.ext.*
 /**
  * Fix that removes a parameter and all its usages at call sites.
  */
-class RemoveParameterFix(binding: RsPatBinding, private val bindingName: String) : LocalQuickFixOnPsiElement(binding) {
+class RemoveParameterFix(
+    binding: RsPatBinding,
+    private val bindingName: String
+) : RsQuickFixBase<RsPatBinding>(binding) {
     override fun getText() = "Remove parameter `${bindingName}`"
     override fun getFamilyName() = "Remove parameter"
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-        val binding = startElement as? RsPatBinding ?: return
-        val patIdent = binding.topLevelPattern as? RsPatIdent ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsPatBinding) {
+        val patIdent = element.topLevelPattern as? RsPatIdent ?: return
         val parameter = patIdent.parent as? RsValueParameter ?: return
         val function = parameter.parentOfType<RsFunction>() ?: return
+        val originalFunction = function.safeGetOriginalOrSelf()
+        val calls = if (function.isIntentionPreviewElement) {
+            emptyList()
+        } else {
+            (originalFunction.findFunctionCalls() + originalFunction.findMethodCalls()).toList()
+        }
 
         val parameterIndex = function.valueParameterList?.valueParameterList?.indexOf(parameter) ?: -1
         if (parameterIndex == -1) return
 
         parameter.deleteWithSurroundingCommaAndWhitespace()
-        removeArguments(function, parameterIndex)
+        removeArguments(function, calls, parameterIndex)
     }
 }
 
-private fun removeArguments(function: RsFunction, parameterIndex: Int) {
-    if (function.isIntentionPreviewElement) return
-    val calls = function.findFunctionCalls() + function.findMethodCalls()
-    calls.forEach { call ->
+private fun removeArguments(function: RsFunction, calls: List<PsiElement>, parameterIndex: Int) {
+    for (call in calls) {
         val arguments = when (call) {
             is RsCallExpr -> call.valueArgumentList
             is RsMethodCall -> call.valueArgumentList
-            else -> return@forEach
+            else -> continue
         }
         val isMethod = function.hasSelfParameters
         val argumentIndex = when {

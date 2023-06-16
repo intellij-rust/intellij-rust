@@ -5,17 +5,18 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.kind
 
-class ConvertToUnsuffixedIntegerFix private constructor(element: RsLitExpr, private val textTemplate: String): LocalQuickFixAndIntentionActionOnPsiElement(element) {
+class ConvertToUnsuffixedIntegerFix private constructor(
+    element: RsLitExpr,
+    private val textTemplate: String
+): RsQuickFixBase<RsLitExpr>(element) {
     override fun getFamilyName(): String = "Convert to unsuffixed integer"
 
     override fun getText(): String {
@@ -23,10 +24,10 @@ class ConvertToUnsuffixedIntegerFix private constructor(element: RsLitExpr, priv
     }
 
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val integer = convertToUnsuffixedInteger(startElement) ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsLitExpr) {
+        val integer = convertToUnsuffixedInteger(element) ?: return
         val psiFactory = RsPsiFactory(project)
-        startElement.replace(psiFactory.createExpression(integer))
+        element.replace(psiFactory.createExpression(integer))
     }
 
 

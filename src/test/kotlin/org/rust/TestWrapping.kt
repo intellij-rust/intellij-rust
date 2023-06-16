@@ -6,11 +6,14 @@
 package org.rust
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.util.prevLeafs
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.document
 
 enum class TestWrapping(
     private val testDescription: String,
@@ -89,33 +92,39 @@ private class AttrMacroAtCaretTestWrappingImpl(private val macroName: String) : 
         wrapProjectDescriptorWithProcMacros(originalDescriptor)
 
     override fun wrapCode(project: Project, code: String): Pair<String, TestUnwrapper?> {
-        var caretMarker = ""
-        var caretOffset = -1
-        for (m in CARET_MARKERS) {
-            caretMarker = m
-            caretOffset = code.indexOf(m)
-            if (caretOffset != -1) break
-        }
-        if (caretOffset == -1) {
-            error("No /*caret*/ marker provided")
-        }
-
-        val file = RsPsiFactory(project, markGenerated = false, eventSystemEnabled = true)
-            .createFile(code.replaceFirst(caretMarker, ""))
-        val owner = file.findElementAt(caretOffset)
-            ?.contexts
-            ?.toList()
-            ?.findLast { it is RsAttrProcMacroOwner }
-            ?: return code to null
-
-        val mutableText = StringBuilder(code)
-        mutableText.insert(owner.startOffset, "#[test_proc_macros::$macroName]")
-
-        return mutableText.toString() to TestUnwrapper(owner.startOffset)
+        return tryWrapCodeAtCaret(project, code, macroName) ?: error("No /*caret*/ marker provided")
     }
 
     companion object {
         private val CARET_MARKERS = listOf("/*caret*/", "<caret>", "<selection>")
+
+        fun tryWrapCodeAtCaret(project: Project, code: String, macroName: String): Pair<String, TestUnwrapper?>? {
+            var caretMarker = ""
+            var caretOffset = -1
+            for (m in CARET_MARKERS) {
+                caretMarker = m
+                caretOffset = code.indexOf(m)
+                if (caretOffset != -1) break
+            }
+            if (caretOffset == -1) {
+                return null
+            }
+
+            val file = RsPsiFactory(project, markGenerated = false, eventSystemEnabled = true)
+                .createFile(code.replaceFirst(caretMarker, ""))
+            val owner = file.findElementAt(caretOffset)
+                ?.contexts
+                ?.toList()
+                ?.findLast { it is RsAttrProcMacroOwner }
+                ?: return code to null
+
+            val ownerStart = owner.prevLeafs.takeWhile { leaf -> leaf is PsiComment }.lastOrNull() ?: owner
+
+            val mutableText = StringBuilder(code)
+            mutableText.insert(ownerStart.startOffset, "#[test_proc_macros::$macroName]")
+
+            return mutableText.toString() to TestUnwrapperImpl(ownerStart.startOffset)
+        }
     }
 }
 
@@ -124,6 +133,9 @@ private class AttrMacroAtAllItemsTestWrappingImpl(private val macroName: String)
         wrapProjectDescriptorWithProcMacros(originalDescriptor)
 
     override fun wrapCode(project: Project, code: String): Pair<String, TestUnwrapper?> {
+        AttrMacroAtCaretTestWrappingImpl.tryWrapCodeAtCaret(project, code, macroName)?.let {
+            return it
+        }
         val file = RsPsiFactory(project, markGenerated = false, eventSystemEnabled = true)
             .createFile(code)
         val itemOffsets = file.childrenWithLeaves
@@ -136,45 +148,71 @@ private class AttrMacroAtAllItemsTestWrappingImpl(private val macroName: String)
         for ((i, offset) in itemOffsets.withIndex()) {
             mutableText.insert(offset + i * insertion.length, insertion)
         }
-//        val unwrappers = itemOffsets.withIndex().map { (i, offset) ->
-//            TestUnwrapperImpl(offset + i * insertion.length)
-//        }
+        val unwrappers = itemOffsets.withIndex().map { (i, offset) ->
+            TestUnwrapperImpl(offset + i * insertion.length)
+        }
 
-        return mutableText.toString() to null /*MultipleTestUnwrapper(unwrappers)*/
+        return mutableText.toString() to MultipleTestUnwrapper(unwrappers)
     }
 }
 
 /**
  * Removes the [TestUnwrapper] applied by [TestWrapping.wrapCode]
  */
-class TestUnwrapper(
+interface TestUnwrapper {
+    fun init(file: PsiFile)
+    fun unwrap()
+}
+
+class TestUnwrapperImpl(
     val offset: Int,
     var file: PsiFile? = null,
-    var attr: SmartPsiElementPointer<RsAttr>? = null
-) {
-    fun init(file: PsiFile) {
+    var range: RangeMarker? = null
+): TestUnwrapper {
+    override fun init(file: PsiFile) {
         this.file = file
-        val attr = file.findElementAt(offset)?.ancestorOrSelf<RsAttr>() ?: return
-        this.attr = SmartPointerManager.createPointer(attr)
+        val document = file.document ?: return
+        val leafAtOffset = file.findElementAt(offset) ?: return
+        range = document.createRangeMarker(leafAtOffset.textRange)
     }
 
-    fun unwrap() {
-        val file = file
-        if (file != null) {
-            PsiDocumentManager.getInstance(file.project).commitDocument(file.viewProvider.document)
-        }
-        val attr = attr?.element
-        if (attr != null) {
-            val toDelete = mutableListOf<PsiElement>(attr)
-            attr.rightSiblings.takeWhile { it is PsiWhiteSpace }.toCollection(toDelete)
-            runUndoTransparentWriteAction {
-                for (element in toDelete.asReversed()) {
+    override fun unwrap() {
+        val file = file ?: return
+        PsiDocumentManager.getInstance(file.project).commitDocument(file.viewProvider.document)
+        val range = range ?: return
+        val attr = file.findElementAt(range.startOffset)?.ancestorOrSelf<RsAttr>() ?: return
+
+        val toDelete = mutableListOf<PsiElement>(attr)
+        attr.rightSiblings.takeWhile { it is PsiWhiteSpace }.toCollection(toDelete)
+        runUndoTransparentWriteAction {
+            for (element in toDelete.asReversed()) {
+                CodeEditUtil.allowToMarkNodesForPostponedFormatting(false)
+                try {
                     element.delete()
+                } finally {
+                    CodeEditUtil.allowToMarkNodesForPostponedFormatting(true)
                 }
             }
         }
     }
 }
+
+class MultipleTestUnwrapper(
+    private val list: List<TestUnwrapper>
+) : TestUnwrapper {
+    override fun init(file: PsiFile) {
+        for (unwrapper in list) {
+            unwrapper.init(file)
+        }
+    }
+
+    override fun unwrap() {
+        for (unwrapper in list) {
+            unwrapper.unwrap()
+        }
+    }
+}
+
 
 private fun wrapProjectDescriptorWithProcMacros(originalDescriptor: RustProjectDescriptorBase) = when {
     originalDescriptor is WithProcMacros -> null

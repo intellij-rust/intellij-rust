@@ -5,10 +5,8 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatBinding
@@ -22,13 +20,15 @@ import org.rust.lang.core.psi.ext.topLevelPattern
  * Fix that removes a variable.
  * A heuristic is used whether to also remove its expression or not.
  */
-class RemoveVariableFix(binding: RsPatBinding, private val bindingName: String) : LocalQuickFixOnPsiElement(binding) {
+class RemoveVariableFix(
+    binding: RsPatBinding,
+    private val bindingName: String
+) : RsQuickFixBase<RsPatBinding>(binding) {
     override fun getText() = "Remove variable `${bindingName}`"
     override fun getFamilyName() = "Remove variable"
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-        val binding = startElement as? RsPatBinding ?: return
-        val patIdent = binding.topLevelPattern as? RsPatIdent ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsPatBinding) {
+        val patIdent = element.topLevelPattern as? RsPatIdent ?: return
         deleteVariable(patIdent)
     }
 }

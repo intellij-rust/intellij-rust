@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsStaticConstNamingInspection
 
@@ -19,6 +20,7 @@ class RsStaticConstNamingInspectionTest : RsInspectionsTestBase(RsStaticConstNam
         static static_foo: u32 = 12;
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test statics fix`() = checkFixByText("Rename to `STATIC_FOO`", """
         static <warning descr="Static constant `staticFoo` should have an upper case name such as `STATIC_FOO`">sta<caret>ticFoo</warning>: u32 = 43;
         fn static_use() {

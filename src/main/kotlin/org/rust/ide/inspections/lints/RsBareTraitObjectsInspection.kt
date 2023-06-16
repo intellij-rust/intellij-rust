@@ -5,10 +5,10 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.*
@@ -36,20 +36,20 @@ class RsBareTraitObjectsInspection : RsLintInspection() {
                 holder.registerLintProblem(
                     typeReference,
                     "Trait objects without an explicit 'dyn' are deprecated",
-                    fixes = listOf(AddDynKeywordFix())
+                    fixes = listOf(AddDynKeywordFix(typeReference))
                 )
             }
         }
 
-    private class AddDynKeywordFix : LocalQuickFix {
-        override fun getFamilyName(): String = "Add 'dyn' keyword to trait object"
+    private class AddDynKeywordFix(element: RsTypeReference) : RsQuickFixBase<RsTypeReference>(element) {
+        override fun getText(): String = "Add 'dyn' keyword to trait object"
+        override fun getFamilyName(): String = text
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val target = descriptor.psiElement as RsTypeReference
-            val typeElement = target.skipParens()
+        override fun invoke(project: Project, editor: Editor?, element: RsTypeReference) {
+            val typeElement = element.skipParens()
             val traitText = (typeElement as? RsPathType)?.path?.text ?: (typeElement as RsTraitType).text
             val new = RsPsiFactory(project).createDynTraitType(traitText)
-            target.replace(new)
+            element.replace(new)
         }
     }
 }

@@ -5,12 +5,11 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.utils.import.stdlibAttributes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes
@@ -42,16 +41,16 @@ class RsApproxConstantInspection : RsLocalInspectionTool() {
     }
 
     private class ReplaceWithPredefinedQuickFix(
-        element: PsiElement,
+        element: RsLitExpr,
         private val path: String
-    ) : LocalQuickFixOnPsiElement(element) {
+    ) : RsQuickFixBase<RsLitExpr>(element) {
 
         override fun getFamilyName() = "Replace with predefined constant"
         override fun getText() = "Replace with `$path`"
 
-        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+        override fun invoke(project: Project, editor: Editor?, element: RsLitExpr) {
             val pathExpr = RsPsiFactory(project).createExpression(path)
-            startElement.replace(pathExpr)
+            element.replace(pathExpr)
         }
 
     }

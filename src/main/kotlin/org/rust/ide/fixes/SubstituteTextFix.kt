@@ -6,14 +6,13 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
-import org.rust.lang.core.psi.ext.findPreviewCopyIfNeeded
 import org.rust.openapiext.document
 
 /**
@@ -25,36 +24,36 @@ import org.rust.openapiext.document
  */
 class SubstituteTextFix private constructor(
     @IntentionName private val fixName: String = "Substitute",
-    file: PsiFile,
+    element: PsiElement,
     range: TextRange,
     private val substitution: String?
-) : LocalQuickFix {
+) : RsQuickFixBase<PsiElement>(element) {
 
     @SafeFieldForPreview
-    private val fileWithRange = SmartPointerManager.getInstance(file.project)
-        .createSmartPsiFileRangePointer(file, range)
+    private val fileWithRange = SmartPointerManager.getInstance(element.project)
+        .createSmartPsiFileRangePointer(element.containingFile, range)
 
-    override fun getName(): String = fixName
+    override fun getText(): String = fixName
     override fun getFamilyName() = "Substitute one text to another"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val file = fileWithRange.containingFile?.findPreviewCopyIfNeeded(descriptor.startElement.containingFile) ?: return
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val range = fileWithRange.range ?: return
-        val document = file.document
-        document?.deleteString(range.startOffset, range.endOffset)
+        val document = element.containingFile.document ?: return
         if (substitution != null) {
-            document?.insertString(range.startOffset, substitution)
+            document.replaceString(range.startOffset, range.endOffset, substitution)
+        } else {
+            document.deleteString(range.startOffset, range.endOffset)
         }
     }
 
     companion object {
         fun delete(@IntentionName fixName: String, file: PsiFile, range: TextRange) =
-            SubstituteTextFix(fixName, file, range, null)
+            SubstituteTextFix(fixName, file.findElementAt(range.startOffset)!!, range, null)
 
-        fun insert(@IntentionName fixName: String, file: PsiFile, offsetInElement: Int, text: String) =
-            SubstituteTextFix(fixName, file, TextRange(offsetInElement, offsetInElement), text)
+        fun insert(@IntentionName fixName: String, file: PsiFile, offset: Int, text: String) =
+            SubstituteTextFix(fixName, file.findElementAt(offset)!!, TextRange(offset, offset), text)
 
         fun replace(@IntentionName fixName: String, file: PsiFile, range: TextRange, text: String) =
-            SubstituteTextFix(fixName, file, range, text)
+            SubstituteTextFix(fixName, file.findElementAt(range.startOffset)!!, range, text)
     }
 }

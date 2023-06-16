@@ -132,7 +132,7 @@ sealed interface PsiInsertionPlace {
             }
         }
 
-        private fun forItemBefore(context: RsElement): PsiInsertionPlace? {
+        fun forItemBefore(context: RsElement): PsiInsertionPlace? {
             val topLevelItem = context.contexts.firstOrNull {
                 it is RsItemElement && (it !is RsAbstractable || it.owner is RsAbstractableOwner.Free)
             } ?: return null

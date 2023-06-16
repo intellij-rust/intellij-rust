@@ -5,10 +5,10 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsPatFieldFull
@@ -28,21 +28,24 @@ class RsNonShorthandFieldPatternsInspection : RsLintInspection() {
                 o,
                 "The `$identifier:` in this pattern is redundant",
                 RsLintHighlightingType.WEAK_WARNING,
-                listOf(UseShorthandFieldPatternFix(identifier))
+                listOf(UseShorthandFieldPatternFix(o, identifier))
             )
         }
     }
 
     override val isSyntaxOnly: Boolean get() = true
 
-    private class UseShorthandFieldPatternFix(private val identifier: String) : LocalQuickFix {
-        override fun getFamilyName(): String = "Use shorthand field pattern: `$identifier`"
+    private class UseShorthandFieldPatternFix(
+        element: RsPatFieldFull,
+        private val identifier: String
+    ) : RsQuickFixBase<RsPatFieldFull>(element) {
+        override fun getFamilyName(): String = "Use shorthand field pattern"
+        override fun getText(): String = "Use shorthand field pattern: `$identifier`"
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val field = descriptor.psiElement as RsPatFieldFull
-            val patBinding = RsPsiFactory(field.project).createPatBinding(field.pat.text)
-            field.parent.addBefore(patBinding, field)
-            field.delete()
+        override fun invoke(project: Project, editor: Editor?, element: RsPatFieldFull) {
+            val patBinding = RsPsiFactory(project).createPatBinding(element.pat.text)
+            element.parent.addBefore(patBinding, element)
+            element.delete()
         }
     }
 }

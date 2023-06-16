@@ -5,16 +5,16 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsStructLiteralField
 
-class ChangeToFieldShorthandFix : LocalQuickFix {
-    override fun getFamilyName(): String = "Use initialization shorthand"
+class ChangeToFieldShorthandFix(element: RsStructLiteralField) : RsQuickFixBase<RsStructLiteralField>(element) {
+    override fun getText(): String = "Use initialization shorthand"
+    override fun getFamilyName(): String = text
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        applyShorthandInit(descriptor.psiElement as RsStructLiteralField)
+    override fun invoke(project: Project, editor: Editor?, element: RsStructLiteralField) {
+        applyShorthandInit(element)
     }
 
     companion object {

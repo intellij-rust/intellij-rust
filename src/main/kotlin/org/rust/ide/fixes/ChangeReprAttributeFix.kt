@@ -5,11 +5,8 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsExpr
@@ -39,7 +36,7 @@ class ChangeReprAttributeFix(
     element: RsElement,
     enumName: String,
     private val actualTy: String
-) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+) : RsQuickFixBase<RsElement>(element) {
     private val _text: String = run {
         "Change representation of enum `$enumName` to `#[repr($actualTy)]`"
     }
@@ -47,14 +44,8 @@ class ChangeReprAttributeFix(
     override fun getText(): String = _text
     override fun getFamilyName(): String = "Change `repr` attribute"
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val owner = findEnumOwner(startElement) as? RsDocAndAttributeOwner ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsElement) {
+        val owner = findEnumOwner(element) as? RsDocAndAttributeOwner ?: return
         val reprAttributes = owner.queryAttributes.reprAttributes.toList()
         val newOuterAttribute = RsPsiFactory(project).createOuterAttr("repr($actualTy)")
 
@@ -69,7 +60,7 @@ class ChangeReprAttributeFix(
     }
 
     companion object {
-        private fun findEnumOwner(element: PsiElement): RsEnumItem? {
+        private fun findEnumOwner(element: RsElement): RsEnumItem? {
             return if (element is RsExpr && element.context is RsVariantDiscriminant) {
                 element.contextStrict()
             } else {

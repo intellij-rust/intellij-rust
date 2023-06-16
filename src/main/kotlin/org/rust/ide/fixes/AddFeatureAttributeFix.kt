@@ -6,7 +6,6 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -21,20 +20,18 @@ import org.rust.lang.core.psi.ext.name
 class AddFeatureAttributeFix(
     private val featureName: String,
     element: PsiElement
-) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-
+) : RsQuickFixBase<PsiElement>(element) {
     override fun getFamilyName(): String = "Add feature attribute"
     override fun getText(): String = "Add `$featureName` feature"
 
     // TODO: Add intention preview
     override fun getFileModifierForPreview(target: PsiFile): FileModifier? = null
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        addFeatureAttribute(project, startElement, featureName)
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+        addFeatureAttribute(project, element, featureName)
     }
 
     companion object {
-
         fun addFeatureAttribute(project: Project, context: PsiElement, featureName: String) {
             val mod = context.ancestorOrSelf<RsElement>()?.crateRoot ?: return
             val lastFeatureAttribute = mod.childrenOfType<RsInnerAttr>()

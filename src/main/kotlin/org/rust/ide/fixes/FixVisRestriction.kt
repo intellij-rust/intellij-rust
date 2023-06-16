@@ -5,21 +5,17 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsVisRestriction
 
-class FixVisRestriction(visRestriction: RsVisRestriction) : LocalQuickFixAndIntentionActionOnPsiElement(visRestriction) {
+class FixVisRestriction(visRestriction: RsVisRestriction) : RsQuickFixBase<RsVisRestriction>(visRestriction) {
 
     override fun getText(): String = "Fix visibility restriction"
     override fun getFamilyName(): String = text
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        if (startElement !is RsVisRestriction) return
-        startElement.addBefore(RsPsiFactory(project).createIn(), startElement.path)
+    override fun invoke(project: Project, editor: Editor?, element: RsVisRestriction) {
+        element.addBefore(RsPsiFactory(project).createIn(), element.path)
     }
 }

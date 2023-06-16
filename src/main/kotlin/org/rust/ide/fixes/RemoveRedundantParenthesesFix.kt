@@ -5,22 +5,17 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsParenExpr
 
-class RemoveRedundantParenthesesFix(element: RsParenExpr) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+class RemoveRedundantParenthesesFix(element: RsParenExpr) : RsQuickFixBase<RsParenExpr>(element) {
     override fun getText(): String = "Remove parentheses from expression"
 
     override fun getFamilyName(): String = text
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        if (startElement is RsParenExpr) {
-            val wrapped = startElement.expr ?: return
-            startElement.replace(wrapped)
-        }
+    override fun invoke(project: Project, editor: Editor?, element: RsParenExpr) {
+        val wrapped = element.expr ?: return
+        element.replace(wrapped)
     }
 }

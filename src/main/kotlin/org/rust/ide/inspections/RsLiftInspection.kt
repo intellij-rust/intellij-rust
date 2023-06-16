@@ -5,10 +5,10 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -45,25 +45,27 @@ class RsLiftInspection : RsLocalInspectionTool() {
             expr,
             keyword.textRangeInParent,
             "Return can be lifted out of '$keywordName'",
-            LiftReturnOutFix(keywordName)
+            LiftReturnOutFix(expr, keywordName)
         )
     }
 
-    private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {
-        override fun getName(): String = "Lift return out of '$keyword'"
+    private class LiftReturnOutFix(
+        element: RsExpr,
+        private val keyword: String
+    ) : RsQuickFixBase<RsExpr>(element) {
         override fun getFamilyName(): String = "Lift return"
+        override fun getText(): String = "Lift return out of '$keyword'"
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val expr = descriptor.psiElement as RsExpr
-            val foldableReturns = expr.getFoldableReturns() ?: return
+        override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
+            val foldableReturns = element.getFoldableReturns() ?: return
             val factory = RsPsiFactory(project)
             for (foldableReturn in foldableReturns) {
                 foldableReturn.elementToReplace.replaceWithTailExpr(factory.createExpression(foldableReturn.expr.text))
             }
-            val parent = expr.parent
+            val parent = element.parent
             if (parent !is RsRetExpr) {
                 (parent as? RsMatchArm)?.addCommaIfNeeded(factory)
-                expr.replace(factory.createRetExpr(expr.text))
+                element.replace(factory.createRetExpr(element.text))
             } else {
                 Testmarks.InsideRetExpr.hit()
             }

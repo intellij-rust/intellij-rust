@@ -5,11 +5,8 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -19,22 +16,15 @@ import org.rust.lang.core.psi.ext.firstKeyword
 class DeriveTraitsFix(
     item: RsStructOrEnumItemElement,
     private val traits: String,  // comma separated
-) : LocalQuickFixAndIntentionActionOnPsiElement(item) {
+) : RsQuickFixBase<RsStructOrEnumItemElement>(item) {
 
     private val itemName: String? = item.name
 
     override fun getText(): String = "Add #[derive($traits)] to `$itemName`"
     override fun getFamilyName(): String = "Derive trait"
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val item = startElement as? RsStructOrEnumItemElement ?: return
-        invoke(item, traits)
+    override fun invoke(project: Project, editor: Editor?, element: RsStructOrEnumItemElement) {
+        invoke(element, traits)
     }
 
     companion object {
@@ -50,11 +40,11 @@ class DeriveTraitsFix(
         }
 
         private fun updateDeriveAttr(psiFactory: RsPsiFactory, deriveAttr: RsOuterAttr, traits: String) {
-            val oldAttrText = deriveAttr.text
+            val oldAttrText = deriveAttr.metaItem.text
             val newAttrText = oldAttrText.substringBeforeLast(")") + ", $traits)"
 
-            val newDeriveAttr = psiFactory.createOuterAttr(newAttrText)
-            deriveAttr.replace(newDeriveAttr)
+            val newDeriveAttr = psiFactory.createMetaItem(newAttrText)
+            deriveAttr.metaItem.replace(newDeriveAttr)
         }
 
         private fun createDeriveAttr(psiFactory: RsPsiFactory, item: RsStructOrEnumItemElement, traits: String) {

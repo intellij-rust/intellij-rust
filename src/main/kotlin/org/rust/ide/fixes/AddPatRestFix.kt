@@ -5,11 +5,9 @@
 
 package org.rust.ide.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsPatStruct
 import org.rust.lang.core.psi.RsPatTupleStruct
@@ -17,21 +15,15 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
-class AddPatRestFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+class AddPatRestFix(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
     override fun getText() = "Add '..'"
 
     override fun getFamilyName() = text
 
-    override fun invoke(
-        project: Project,
-        file: PsiFile,
-        editor: Editor?,
-        startElement: PsiElement,
-        endElement: PsiElement
-    ) {
-        val (pat, lBraceOrParen, rBraceOrParen) = when (startElement) {
-            is RsPatStruct -> Triple(startElement, startElement.lbrace, startElement.rbrace)
-            is RsPatTupleStruct -> Triple(startElement, startElement.lparen, startElement.rparen)
+    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+        val (pat, lBraceOrParen, rBraceOrParen) = when (element) {
+            is RsPatStruct -> Triple(element, element.lbrace, element.rbrace)
+            is RsPatTupleStruct -> Triple(element, element.lparen, element.rparen)
             else -> return
         }
         val lastSibling = rBraceOrParen.getPrevNonCommentSibling() ?: return

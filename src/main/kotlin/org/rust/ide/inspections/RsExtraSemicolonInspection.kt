@@ -32,7 +32,7 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
                         holder.registerProblem(
                             exitPoint.stmt,
                             "Function returns () instead of ${retType.text}",
-                            RemoveSemicolonFix()
+                            RemoveSemicolonFix(exitPoint.stmt)
                         )
                     }
                 }
