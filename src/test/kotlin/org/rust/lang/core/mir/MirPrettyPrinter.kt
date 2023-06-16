@@ -7,11 +7,7 @@ package org.rust.lang.core.mir
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.mir.schemas.*
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsEnumVariant
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.thir.variant
 import org.rust.lang.core.types.ty.*
@@ -186,7 +182,9 @@ internal class MirPrettyPrinter(
                 }
                 when {
                     definition.isFieldless -> name
-                    definition.tupleFields != null -> TODO()
+                    definition.tupleFields != null -> {
+                        rvalue.operands.joinToString(", ", "$name(", ")") { format(it) }
+                    }
                     else -> {
                         check(definition.fields.size == rvalue.operands.size)
                         val fields = (definition.fields zip rvalue.operands)

@@ -74,6 +74,7 @@ class MirBuildTest : RsTestBase() {
     fun `test struct literal nested 2`() = doTest()
     fun `test enum variant literal simple`() = doTest()
     fun `test enum variant literal complex`() = doTest()
+    fun `test tuple struct literals`() = doTest()
     fun `test loop break`() = doTest()
     fun `test block with let`() = doTest()
     fun `test block with 3 lets`() = doTest()

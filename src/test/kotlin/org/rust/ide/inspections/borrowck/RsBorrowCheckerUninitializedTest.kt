@@ -404,6 +404,23 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         }
     """)
 
+    fun `test E0381 in tuple struct literal`() = checkErrors("""
+        struct Foo(i32);
+        fn main() {
+            let x: i32;
+            let foo = Foo(/*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/);
+        }
+    """)
+
+    fun `test no E0381 in tuple struct literal`() = checkErrors("""
+        struct Foo(i32);
+        fn main() {
+            let x = 1;
+            let foo1 = Foo(x);
+            let foo2 = foo1;
+        }
+    """)
+
     fun `test E0381 in enum variant literal`() = checkErrors("""
         enum E { Foo { a: i32 } }
         fn main() {
