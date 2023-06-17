@@ -10,19 +10,19 @@ import org.rust.WithDependencyRustProjectDescriptor
 
 class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::class) {
 
-    fun `test should annotate unused variable`() = checkByText("""
+    fun `test should annotate unused variable`() = checkWarnings("""
         fn main() {
             let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ f = 10;
         }
     """)
 
-    fun `test should not annotate if there is not mut`() = checkByText("""
+    fun `test should not annotate if there is not mut`() = checkWarnings("""
         fn main() {
             let f = 10;
         }
     """)
 
-    fun `test should not annotate self methods`() = checkByText("""
+    fun `test should not annotate self methods`() = checkWarnings("""
         struct Foo { foo: bool }
         impl Foo {
             fn push(&mut self, test: i32) {
@@ -35,7 +35,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test should not annotate mutated fields`() = checkByText("""
+    fun `test should not annotate mutated fields`() = checkWarnings("""
         struct Foo { foo: bool }
         fn foo(b: &mut bool) {}
         fn bar() {
@@ -44,7 +44,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test should annotate mutated parameter`() = checkByText("""
+    fun `test should annotate mutated parameter`() = checkWarnings("""
         fn foo(i: i32) {
             println!("{:?}", i);
         }
@@ -55,7 +55,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test should not annotate mutated parameter`() = checkByText("""
+    fun `test should not annotate mutated parameter`() = checkWarnings("""
         fn foo(i: &mut i32) {
             *i = 20;
         }
@@ -66,7 +66,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test first mut and second not mut`() = checkByText("""
+    fun `test first mut and second not mut`() = checkWarnings("""
         fn main() {
             let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ f = 10;
             let mut f = 10;
@@ -74,7 +74,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test tuple`() = checkByText("""
+    fun `test tuple`() = checkWarnings("""
         fn bar(s: &mut (u8, u8)) {}
 
         fn main() {
@@ -84,7 +84,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test match arms`() = checkByText("""
+    fun `test match arms`() = checkWarnings("""
         fn main() {
             let mut a = Some(20);
             if let Some(ref mut b) = a { *b = 10; }
@@ -96,18 +96,16 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test should not annotate if macro after expr`() = checkByText("""
-        fn foo(a: &mut u32) { }
-
-        macro_rules! call_foo { () => { w = 20; } }
+    fun `test should not annotate if macro after expr`() = checkWarnings("""
+        macro_rules! assign { ($ i:ident) => { $ i = 20; } }
 
         fn main() {
             let mut w = 10;
-            call_foo!();
+            assign!(w);
         }
     """)
 
-    fun `test should annotate if macro before expr`() = checkByText("""
+    fun `test should annotate if macro before expr`() = checkWarnings("""
         fn foo(a: &mut u32) { }
 
         macro_rules! call_foo { () => { let mut w = 20; w = 20; } }
@@ -146,13 +144,105 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
     """)
 
-    fun `test function`() = checkByText("""
+    fun `test function`() = checkWarnings("""
         fn main() {
             let mut a = 10;
             let mut foo = || a = 20;
             foo();
         }
     """)
+
+    fun `test mutation in macro`() = checkWarnings("""
+        macro_rules! assign {
+            ($ i:ident = $ e:expr) => { $ i = $ e; };
+        }
+        fn main() {
+            let mut a = 1;
+            assign!(a = 2);
+        }
+    """)
+
+    fun `test no mutation in macro`() = checkWarnings("""
+        macro_rules! assign {
+            ($ i:ident = $ e:expr) => { $ i = $ e; };
+        }
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = 1;
+            let mut b = 2;
+            assign!(b = a);
+        }
+    """)
+
+    fun `test format macro argument`() = checkWarnings("""
+        use std::fmt::format;
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = 1;
+            println!("{}", a);
+            print!("{}", a);
+            format!("{}", a);
+            panic!("{}", a)
+        }
+    """)
+
+
+    fun `test assert macro argument`() = checkWarnings("""
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = true;
+            assert!(a);
+            assert_eq!(a, true);
+            assert_ne!(a, false);
+            debug_assert!(a);
+        }
+    """)
+
+    fun `test vec macro argument`() = checkWarnings("""
+        use std::fmt::format;
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = 1;
+            let mut b = vec![a];
+            b = vec![];
+        }
+    """)
+
+    fun `test expr macro argument`() = checkWarnings("""
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = 1;
+            dbg!(a);
+
+            let mut b = 2;
+            dbg!(b = 10);
+        }
+    """)
+
+    fun `test concat macro argument`() = checkWarnings("""
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = 1;
+            concat!(a, "5");
+        }
+    """)
+
+    fun `test env macro argument`() = checkWarnings("""
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = "PATH";
+            env!(a);
+        }
+    """)
+
+    fun `test asm macro argument`() = checkWarnings(
+        """
+        use std::arch::asm;
+        fn main() {
+            let mut a: u64 = 4;
+            unsafe {
+                asm!(
+                    "add {a}, 2",
+                    a = inout(reg) a,
+                );
+            }
+            assert_eq!(a, 6);
+        }
+    """
+    )
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test should not annotate in comments`() = checkByFileTree("""

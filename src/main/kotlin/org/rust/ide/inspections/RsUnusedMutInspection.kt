@@ -7,11 +7,12 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.mutability
+import org.rust.lang.core.psi.ext.searchReferencesAfterExpansion
+import org.rust.lang.core.psi.ext.selfParameter
 import org.rust.lang.core.psi.ext.*
 
 class RsUnusedMutInspection : RsLocalInspectionTool() {
@@ -22,15 +23,12 @@ class RsUnusedMutInspection : RsLocalInspectionTool() {
             override fun visitBindingMode(o: RsBindingMode) {
                 val patBinding = o.parent as? RsPatBinding ?: return
                 if (!patBinding.mutability.isMut) return
-
-                if (patBinding.isDoctestInjection){
+                if (patBinding.isDoctestInjection) {
                     return
                 }
 
-                val block = patBinding.contextStrict<RsBlock>() ?: patBinding.contextStrict<RsFunction>() ?: return
-                if (ReferencesSearch.search(patBinding, LocalSearchScope(block), /*ignoreAccessScope=*/true)
+                if (patBinding.searchReferencesAfterExpansion()
                         .any { checkOccurrenceNeedMutable(it.element.parent) }) return
-                if (block.descendantsOfType<RsMacroCall>().any { checkExprPosition(patBinding, it) }) return
 
                 val mut = o.mut ?: return
                 holder.registerProblem(
@@ -41,8 +39,6 @@ class RsUnusedMutInspection : RsLocalInspectionTool() {
                 )
             }
         }
-
-    fun checkExprPosition(o: RsPatBinding, expr: RsMacroCall): Boolean = o.textOffset < expr.textOffset
 
     fun checkOccurrenceNeedMutable(occurrence: PsiElement): Boolean {
         when (val parent = occurrence.parent) {
@@ -58,6 +54,7 @@ class RsUnusedMutInspection : RsLocalInspectionTool() {
                 return expr.isMutable
             }
             is RsValueArgumentList -> return false
+            is RsFormatMacroArg, is RsExprMacroArgument, is RsVecMacroArgument, is RsAssertMacroArgument, is RsConcatMacroArgument, is RsEnvMacroArgument -> return false
         }
         return true
     }
