@@ -257,4 +257,12 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
         /*caret*/
     """, checkWeakWarn = true)
+
+
+    fun `test should not annotate allowed unused variable`() = checkWarnings("""
+        #[allow(unused_mut)]
+        fn main() {
+            let mut f = 10;
+        }
+    """)
 }

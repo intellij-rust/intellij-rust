@@ -26,6 +26,7 @@ sealed class RsLint(
     object Deprecated : RsLint("deprecated")
     object UnusedVariables : RsLint("unused_variables", listOf("unused"))
     object UnusedImports : RsLint("unused_imports", listOf("unused"))
+    object UnusedMut : RsLint("unused_mut", listOf("unused"))
     object UnreachablePattern : RsLint("unreachable_patterns", listOf("unused"))
     object WhileTrue : RsLint("while_true")
     object UnreachableCode : RsLint("unreachable_code")
