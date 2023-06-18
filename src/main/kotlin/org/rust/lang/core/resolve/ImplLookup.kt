@@ -1312,8 +1312,7 @@ class ImplLookup(
                     FnSig(
                         (ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(),
                         ok.value,
-                        Unsafety.Normal,
-                        false
+                        Unsafety.Normal
                     )
                 ),
                 ok.obligations

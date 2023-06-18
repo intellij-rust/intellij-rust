@@ -141,8 +141,7 @@ class TyLowering private constructor(
                         paramTypes,
                         type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
                             ?: TyUnit.INSTANCE,
-                        Unsafety.fromBoolean(type.isUnsafe),
-                        false
+                        Unsafety.fromBoolean(type.isUnsafe)
                     )
                 )
             }

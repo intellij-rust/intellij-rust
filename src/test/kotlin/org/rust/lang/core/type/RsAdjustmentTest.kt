@@ -628,6 +628,27 @@ class RsAdjustmentTest : RsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test enum variant to function pointer`() = testExpr("""
+        enum X {
+            A(i32)
+        }
+        fn main() {
+            let a: fn(i32) -> X = X::A;
+                                //^ reifyFnPointer(fn(i32) -> X)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test struct constructor to function pointer`() = testExpr("""
+        struct S(i32);
+
+        fn main() {
+            let a: fn(i32) -> S = S;
+                                //^ reifyFnPointer(fn(i32) -> S)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test function def to unsafe function pointer`() = testExpr("""
         fn foo() {}
         fn main() {

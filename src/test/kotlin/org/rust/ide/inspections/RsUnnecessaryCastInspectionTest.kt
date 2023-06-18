@@ -423,6 +423,35 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {}
     """)
 
+    fun `test enum variant cast`() = checkWarnings("""
+        fn foo() {
+            enum Foo {
+                Y(u32),
+                Z(u32)
+            }
+
+            let mut a = Foo::Y as fn(u32) -> Foo;
+            a = Foo::Z as fn(u32) -> Foo;
+    }
+    """)
+
+    fun `test struct cast`() = checkWarnings("""
+        struct S(i32, u8);
+        fn foo() {
+            let a = S as fn(i32, u8) -> S;
+        }
+    """)
+
+    fun `test struct impl cast`() = checkWarnings("""
+        struct S(i32);
+
+        impl S {
+            fn new() {
+                let a = Self as fn(i32) -> S;
+            }
+        }
+    """)
+
     /**
      * TODO: fix this false-positive
      *
