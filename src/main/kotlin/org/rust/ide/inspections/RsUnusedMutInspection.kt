@@ -9,14 +9,17 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.inspections.lints.RsLint
+import org.rust.ide.inspections.lints.RsLintInspection
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.psi.ext.searchReferencesAfterExpansion
 import org.rust.lang.core.psi.ext.selfParameter
 import org.rust.lang.core.psi.ext.*
 
-class RsUnusedMutInspection : RsLocalInspectionTool() {
+class RsUnusedMutInspection : RsLintInspection() {
     override fun getDisplayName(): String = "No mutable required"
+    override fun getLint(element: PsiElement): RsLint = RsLint.UnusedMut
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
