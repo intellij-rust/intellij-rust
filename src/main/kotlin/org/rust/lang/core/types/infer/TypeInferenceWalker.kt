@@ -417,12 +417,10 @@ class RsTypeInferenceWalker(
     ): Ty {
         if (element is RsImplItem) {
             val implForTy = element.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown
-            val tupleFields = ((implForTy as? TyAdt)?.item as? RsFieldsOwner)?.tupleFields
+            val item = (implForTy as? TyAdt)?.item
+            val tupleFields = (item as? RsFieldsOwner)?.tupleFields
             return if (tupleFields != null) {
-                // Treat tuple constructor as a function
-                // TODO: This is actually TyFunctionBase, but can't find RsFunction
-                TyFunctionPointer(FnSig(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy))
-                    .substitute(implForTy.typeParameterValues)
+                callableTy(tupleFields, implForTy, item).substitute(implForTy.typeParameterValues)
             } else {
                 implForTy
             }.foldWith(associatedTypeNormalizer)
@@ -502,12 +500,20 @@ class RsTypeInferenceWalker(
         }
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
-            // Treat tuple constructor as a function
-            // TODO: This is actually TyFunctionBase, but can't find RsFunction
-            TyFunctionPointer(FnSig(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, type))
+            callableTy(tupleFields, type, element)
         } else {
             type
         }.substitute(typeParameters).foldWith(associatedTypeNormalizer)
+    }
+
+    private fun callableTy(tupleFields: RsTupleFields, implForTy: Ty, item: RsFieldsOwner): TyFunctionBase {
+        // Treat tuple constructor as a function
+        val fnSig = FnSig(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy)
+        return when (item) {
+            is RsEnumVariant -> TyFunctionDef(RsCallable.EnumVariant(item), fnSig)
+            is RsStructItem -> TyFunctionDef(RsCallable.StructItem(item), fnSig)
+            else -> TyFunctionPointer(fnSig)
+        }
     }
 
     private fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T): T {
@@ -1586,7 +1592,7 @@ private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
 }
 
 val RsFunction.type: TyFunctionDef
-    get() = TyFunctionDef(this)
+    get() = TyFunctionDef(RsCallable.Function(this))
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }

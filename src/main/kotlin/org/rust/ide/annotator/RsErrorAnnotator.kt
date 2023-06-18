@@ -1761,17 +1761,17 @@ fun RsValueArgumentList.getFunctionCallContext(): FunctionCallContext? {
 fun RsCallExpr.getFunctionCallContext(): FunctionCallContext? {
     return when (val calleeType = expr.adjustedType) {
         is TyFunctionDef -> {
-            val function = calleeType.def
-            val owner = function.owner
+            val callable = calleeType.def
+            val owner = callable.owner
             if (owner.isTraitImpl) return null
-            val count = function.valueParameters.size
-            val s = if (function.selfParameter != null) 1 else 0
-            val functionType = if (function.isVariadic) {
+            val count = callable.parameterTypes.size
+            val s = if (callable.selfParameter != null) 1 else 0
+            val functionType = if (callable.isVariadic) {
                 FunctionType.VARIADIC_FUNCTION
             } else {
                 FunctionType.FUNCTION
             }
-            FunctionCallContext(count + s, functionType, function)
+            FunctionCallContext(count + s, functionType, (callable as? RsCallable.Function)?.fn)
         }
 
         is TyClosure -> {

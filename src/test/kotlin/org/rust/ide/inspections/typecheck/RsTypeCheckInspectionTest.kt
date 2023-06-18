@@ -531,8 +531,7 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         fn f_a(b: i32) {}
         fn f_b() -> i64 { 1i64 }
         fn f_c() {}
-    """
-    )
+    """)
 
     // FIXME: make this test pass by checking for captures in the closure
     @Test(expected = ComparisonFailure::class)
@@ -572,6 +571,61 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
 
         fn main() {
             let a: fn() = /*error*/foo_avx2/*error**/;
+        }
+    """)
+
+    fun `test enum variant to function pointer coercion`() = checkErrors("""
+        enum X {
+            A,
+            B(i32),
+            C(u8, i64)
+        }
+        fn main() {
+            let a: fn() -> X = /*error descr="mismatched types [E0308]expected `fn() -> X`, found `X`"*/X::A/*error**/;
+            let b: fn(i32) -> X = X::B;
+            let c: fn(u8, i64) -> X = X::C;
+
+            let d: fn(i32) -> X = /*error descr="mismatched types [E0308]expected `fn(i32) -> X`, found `X`"*/X::A/*error**/;
+            let e: fn() -> X = /*error descr="mismatched types [E0308]expected `fn() -> X`, found `fn(i32) -> X {B}`"*/X::B/*error**/;
+            let f: fn(i64) -> X = /*error descr="mismatched types [E0308]expected `fn(i64) -> X`, found `fn(u8, i64) -> X {C}`"*/X::C/*error**/;
+        }
+    """)
+
+    fun `test struct constructor to function pointer coercion`() = checkErrors("""
+        struct A;
+        struct B(i32);
+        struct C(u8, i64);
+        fn main() {
+            let a: fn() -> A = /*error descr="mismatched types [E0308]expected `fn() -> A`, found `A`"*/A/*error**/;
+            let b: fn(i32) -> B = B;
+            let c: fn(u8, i64) -> C = C;
+
+            let d: fn(i32) -> A = /*error descr="mismatched types [E0308]expected `fn(i32) -> A`, found `A`"*/A/*error**/;
+            let e: fn() -> B = /*error descr="mismatched types [E0308]expected `fn() -> B`, found `fn(i32) -> B {B}`"*/B/*error**/;
+            let f: fn(i64) -> C = /*error descr="mismatched types [E0308]expected `fn(i64) -> C`, found `fn(u8, i64) -> C {C}`"*/C/*error**/;
+        }
+    """)
+
+    fun `test impl item to function pointer coercion`() = checkErrors("""
+        struct S(i32);
+
+        impl S {
+            fn new() {
+                let a: fn(i32) -> S = Self;
+                let b: fn() -> S = /*error descr="mismatched types [E0308]expected `fn() -> S`, found `fn(i32) -> S {S}`"*/Self/*error**/;
+            }
+        }
+    """)
+
+    fun `test self constructor substitution`() = checkErrors("""
+        struct S<const N: usize>([u8; N]);
+        trait From<T> {
+            fn from(value: T) -> Self;
+        }
+        impl<const N: usize> From<[u8; N]> for S<N> {
+            fn from(value: [u8; N]) -> Self {
+                Self(value)
+            }
         }
     """)
 }
