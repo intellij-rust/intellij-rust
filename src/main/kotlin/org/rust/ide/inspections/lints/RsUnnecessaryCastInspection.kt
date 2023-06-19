@@ -3,20 +3,18 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.fixes.RemoveCastFix
-import org.rust.ide.inspections.lints.RsLint
-import org.rust.ide.inspections.lints.RsLintHighlightingType
-import org.rust.ide.inspections.lints.RsLintInspection
+import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 

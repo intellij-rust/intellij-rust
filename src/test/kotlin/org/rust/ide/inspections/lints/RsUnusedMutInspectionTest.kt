@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::class) {
 
