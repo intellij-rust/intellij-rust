@@ -3,19 +3,18 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.injected.isDoctestInjection
-import org.rust.ide.inspections.lints.RsLint
-import org.rust.ide.inspections.lints.RsLintInspection
+import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.psi.ext.searchReferencesAfterExpansion
 import org.rust.lang.core.psi.ext.selfParameter
-import org.rust.lang.core.psi.ext.*
 
 class RsUnusedMutInspection : RsLintInspection() {
     override fun getDisplayName(): String = "No mutable required"

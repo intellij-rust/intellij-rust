@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import org.junit.ComparisonFailure
 import org.junit.Test
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)// for arithmetic type inference
 class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastInspection::class) {

@@ -488,10 +488,10 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsTryMacroInspection"/>
 
-        <localInspection language="Rust" groupName="Rust"
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unnecessary cast"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsUnnecessaryCastInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryCastInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="While true loop"
@@ -513,10 +513,10 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsConstantConditionIfInspection"/>
 
-        <localInspection language="Rust" groupName="Rust"
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unused mut modifier"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsUnusedMutInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedMutInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Wrong generic arguments number"
