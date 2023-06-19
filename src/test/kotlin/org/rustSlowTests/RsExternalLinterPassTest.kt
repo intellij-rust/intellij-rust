@@ -6,6 +6,7 @@
 package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.xml.util.XmlStringUtil
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
@@ -261,6 +262,8 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         val highlight = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING)
             .single { it.description == RsExternalLinterUtils.TEST_MESSAGE }
-        assertEquals(tooltip.trimIndent().replace("\n", "<br>"), highlight.toolTip)
+        // Since 2023.2 `highlight.toolTip` is always wrapped into `html` tag
+        val toolTip = highlight.toolTip?.let { XmlStringUtil.stripHtml(it) }
+        assertEquals(tooltip.trimIndent().replace("\n", "<br>"), toolTip)
     }
 }
