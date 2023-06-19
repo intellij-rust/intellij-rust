@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.injected.isDoctestInjection
@@ -33,11 +32,11 @@ class RsUnusedMutInspection : RsLintInspection() {
                         .any { checkOccurrenceNeedMutable(it.element.parent) }) return
 
                 val mut = o.mut ?: return
-                holder.registerProblem(
+                holder.registerLintProblem(
                     mut,
                     "Unused `mut`",
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                    RemoveElementFix(mut),
+                    RsLintHighlightingType.UNUSED_SYMBOL,
+                    listOf(RemoveElementFix(mut)),
                 )
             }
         }
