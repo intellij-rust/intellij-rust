@@ -265,4 +265,11 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
             let mut f = 10;
         }
     """)
+
+    fun `test use error highlighting with deny unused_mut`() = checkWarnings("""
+        #[deny(unused_mut)]
+        fn main() {
+            let /*error descr="Unused `mut`"*/mut/*error**/ f = 10;
+        }
+    """)
 }
