@@ -123,6 +123,20 @@ class MirBasicBlockImpl(
         )
     }
 
+    fun terminateWithDrop(
+        place: MirPlace,
+        target: MirBasicBlockImpl,
+        unwind: MirBasicBlockImpl?,
+        source: MirSourceInfo?
+    ) {
+        terminator = MirTerminator.Drop(
+            place,
+            target,
+            unwind,
+            getTerminatorSource(source)
+        )
+    }
+
     private fun getTerminatorSource(source: MirSourceInfo?): MirSourceInfo {
         require((source == null) xor (terminatorSource == null)) {
             if (source != null) "Source can't be specified when terminator source is specified"
@@ -142,6 +156,7 @@ class MirBasicBlockImpl(
             terminator is MirTerminator.Assert -> this.terminator = terminator.copy(unwind = block)
             terminator is MirTerminator.FalseUnwind -> this.terminator = terminator.copy(unwind = block)
             terminator is MirTerminator.Call -> this.terminator = terminator.copy(unwind = block)
+            terminator is MirTerminator.Drop -> this.terminator = terminator.copy(unwind = block)
             else -> error("Terminator is not unwindable")
         }
     }

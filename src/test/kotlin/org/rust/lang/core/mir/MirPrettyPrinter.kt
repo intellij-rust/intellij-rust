@@ -103,6 +103,16 @@ internal class MirPrettyPrinter(
                     }.withComment(comment)
                 )
             }
+
+            is MirTerminator.Drop -> {
+                appendLine(
+                    buildString {
+                        append("$INDENT${INDENT}drop")
+                        append("(_${terminator.place.local.index}) -> ")
+                        append("[return: bb${terminator.target.index}, unwind: bb${terminator.unwind?.index}];")
+                    }.withComment(comment)
+                )
+            }
         }
         appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
     }

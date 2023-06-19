@@ -236,6 +236,10 @@ interface MirVisitor {
                 visitOperand(terminator.discriminant, location)
             }
 
+            is MirTerminator.Drop -> {
+                visitPlace(terminator.place, MirPlaceContext.MutatingUse.Drop, location)
+            }
+
             is MirTerminator.Goto,
             is MirTerminator.Resume,
             is MirTerminator.Unreachable,
@@ -326,6 +330,7 @@ sealed class MirPlaceContext {
         object Store : MutatingUse()
         object Borrow : MutatingUse()
         object Call : MutatingUse()
+        object Drop : MutatingUse()
     }
 
     sealed class NonUse : MirPlaceContext() {

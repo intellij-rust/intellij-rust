@@ -94,6 +94,7 @@ class MirBuildTest : RsTestBase() {
     fun `test empty let`() = doTest()
     fun `test array`() = doTest()
     fun `test repeat`() = doTest()
+    fun `test non-const zero repeat`() = doTest()
     fun `test zero repeat`() = doTest()
     fun `test expr stmt`() = doTest()
     // TODO more terminator comments

@@ -61,6 +61,13 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
         override val source: MirSourceInfo,
     ) : MirTerminator<BB>
 
+    data class Drop<BB : MirBasicBlock>(
+        val place: MirPlace,
+        val target: BB,
+        val unwind: BB?,
+        override val source: MirSourceInfo,
+    ) : MirTerminator<BB>
+
     val successors: List<MirBasicBlock>
         get() = when (this) {
             is Return, is Resume, is Unreachable -> emptyList()
@@ -69,6 +76,7 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
             is SwitchInt -> targets.targets
             is FalseUnwind -> listOfNotNull(realTarget, unwind)
             is Call -> listOfNotNull(target, unwind)
+            is Drop -> listOfNotNull(target, unwind)
         }
 
     companion object {

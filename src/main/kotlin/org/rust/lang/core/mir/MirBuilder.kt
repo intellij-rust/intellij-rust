@@ -829,14 +829,11 @@ class MirBuilder private constructor(
                 blockAnd.block and MirRvalue.Aggregate.Array(elementType, fields)
             }
             is ThirExpr.Repeat -> {
-                var blockAnd: BlockAnd<*> = this
                 if (expr.count.asLong() == 0L) {
-                    // TODO: For a non-const, we may need to generate an appropriate `Drop`
-                    val elementType = expr.value.ty
-                    blockAnd.block and MirRvalue.Aggregate.Array(elementType, emptyList())
+                    buildZeroRepeat(expr.value, scope, sourceInfo(expr.span))
                 } else {
-                    blockAnd = blockAnd.toOperand(expr.value, scope, NeedsTemporary.No)
-                    blockAnd.block and MirRvalue.Repeat(blockAnd.elem as MirOperand, expr.count)
+                    val (block, elem) = this.toOperand(expr.value, scope, NeedsTemporary.No)
+                    block and MirRvalue.Repeat(elem, expr.count)
                 }
             }
             is ThirExpr.Tuple -> {
@@ -890,6 +887,40 @@ class MirBuilder private constructor(
             }
             else -> TODO()
         }
+    }
+
+    private fun BlockAnd<*>.buildZeroRepeat(
+        value: ThirExpr,
+        scope: RegionScope?,
+        outerSourceInfo: MirSourceInfo
+    ): BlockAnd<MirRvalue> {
+        var block = block
+        when (value) {
+            is ThirExpr.ConstBlock,
+            is ThirExpr.Literal,
+            is ThirExpr.NonHirLiteral,
+            is ThirExpr.ZstLiteral,
+            is ThirExpr.ConstParam,
+            is ThirExpr.StaticRef,
+            is ThirExpr.NamedConst -> {
+                // Repeating a const does nothing
+            }
+            else -> {
+                // For a non-const, we may need to generate an appropriate `Drop`
+                val blockAnd  = this.toOperand(value, scope, NeedsTemporary.No)
+                block = blockAnd.block
+                val valueOperand = blockAnd.elem
+                if (valueOperand is MirOperand.Move) {
+                    val toDrop = valueOperand.place
+                    val success = basicBlocks.new()
+                    block.terminateWithDrop(toDrop, success, null, outerSourceInfo)
+                    divergeFrom(block)
+                    block = success
+                }
+                // TODO: record_operands_moved(&[value_operand])
+            }
+        }
+        return block and MirRvalue.Aggregate.Array(value.ty, emptyList())
     }
 
     private fun BlockAnd<*>.statementExpr(expr: ThirExpr, statementScope: Scope?): BlockAnd<Unit> {
@@ -1239,7 +1270,7 @@ class MirBuilder private constructor(
 
     private fun BlockAnd<*>.toOperand(
         expr: ThirExpr,
-        scope: Scope,
+        scope: Scope?,
         needsTemporary: NeedsTemporary,
     ): BlockAnd<MirOperand> {
         if (expr is ThirExpr.Scope) {
@@ -1297,7 +1328,7 @@ class MirBuilder private constructor(
         }
         scopes.scopes(reversed = true).forEach { scope ->
             if (needsDrop) scope.invalidateCaches()
-            if (scope.scope == regionScope) {
+            if (scope.regionScope == regionScope) {
                 val regionScopeSource = regionScope.span
                 scope.addDrop(Drop(local, dropKind, sourceInfo(regionScopeSource.endPoint)))
                 return

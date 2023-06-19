@@ -50,6 +50,10 @@ object Forward : Direction {
                 terminator.unwind?.let { propagate(it, exitState) }
                 propagate(terminator.target, exitState)
             }
+            is MirTerminator.Drop -> {
+                terminator.unwind?.let { propagate(it, exitState) }
+                propagate(terminator.target, exitState)
+            }
             is MirTerminator.FalseUnwind -> {
                 terminator.unwind?.let { propagate(it, exitState) }
                 propagate(terminator.realTarget, exitState)

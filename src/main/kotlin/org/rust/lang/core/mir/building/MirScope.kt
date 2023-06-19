@@ -7,8 +7,9 @@ package org.rust.lang.core.mir.building
 
 import org.rust.lang.core.types.regions.Scope
 
-data class MirScope(val scope: Scope) {
+data class MirScope(val regionScope: Scope) {
     private val drops = mutableListOf<Drop>()
+
     var cachedUnwindDrop: DropTree.DropNode? = null
         private set
 
@@ -18,7 +19,7 @@ data class MirScope(val scope: Scope) {
 
     fun reversedDrops(): Iterator<Drop> = drops.asReversed().iterator()
 
-    fun drops(): Iterator<Drop> = drops.iterator()
+    fun drops(): Sequence<Drop> = drops.asSequence()
 
     fun addDrop(drop: Drop) {
         drops.add(drop)

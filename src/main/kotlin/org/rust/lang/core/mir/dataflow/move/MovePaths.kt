@@ -266,13 +266,21 @@ private class MoveDataBuilder(
     fun gatherTerminator(loc: MirLocation, term: MirTerminator<*>) {
         this.loc = loc
         when (term) {
-            is MirTerminator.Assert -> gatherOperand(term.cond)
-            is MirTerminator.SwitchInt -> gatherOperand(term.discriminant)
-            is MirTerminator.FalseUnwind -> Unit
-            is MirTerminator.Goto -> Unit
-            is MirTerminator.Resume -> Unit
-            is MirTerminator.Return -> Unit
-            is MirTerminator.Unreachable -> Unit
+            is MirTerminator.Goto,
+            is MirTerminator.FalseUnwind,
+            is MirTerminator.Return,
+            is MirTerminator.Resume,
+            is MirTerminator.Unreachable,
+            is MirTerminator.Drop -> Unit
+
+            is MirTerminator.Assert -> {
+                gatherOperand(term.cond)
+            }
+
+            is MirTerminator.SwitchInt -> {
+                gatherOperand(term.discriminant)
+            }
+
             is MirTerminator.Call -> {
                 gatherOperand(term.callee)
                 for (arg in term.args) {
