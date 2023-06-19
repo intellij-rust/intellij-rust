@@ -17,6 +17,7 @@ import java.io.IOException
 sealed class Response {
     // data class ListMacros(...)
     data class ExpandMacro(val expansion: RsResult<FlatTree, PanicMessage>) : Response()
+    data class ApiVersionCheck(val version: Long) : Response()
 }
 
 data class PanicMessage(val message: String)
@@ -35,6 +36,9 @@ class ResponseJsonDeserializer : RsJacksonDeserializer<Response>(Response::class
                         }
                     }
                     Response.ExpandMacro(r)
+                }
+                "ApiVersionCheck" -> {
+                    Response.ApiVersionCheck(context.readLong())
                 }
                 else -> context.reportInputMismatch("Unknown response kind `$key`")
             }

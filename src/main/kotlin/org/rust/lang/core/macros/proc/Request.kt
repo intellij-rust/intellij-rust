@@ -22,6 +22,8 @@ sealed class Request {
         val env: List<List<String>>,
         val currentDir: String?,
     ) : Request()
+
+    object ApiVersionCheck : Request()
 }
 
 class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) {
@@ -40,6 +42,10 @@ class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) 
                     }
                     writeStringField("current_dir", request.currentDir)
                 }
+            }
+
+            Request.ApiVersionCheck -> gen.writeJsonObjectWithSingleField("ApiVersionCheck") {
+                writeJsonObject {}
             }
         }
     }

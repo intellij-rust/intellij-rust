@@ -73,6 +73,10 @@ sealed class GetMacroExpansionError {
                 "macro definition pattern(s)"
             is ProcMacroExpansionError.ServerSideError -> "a procedural macro error occurred:\n${e.message}"
             is ProcMacroExpansionError.Timeout -> "procedural macro expansion timeout exceeded (${e.timeout} ms)"
+            is ProcMacroExpansionError.UnsupportedExpanderVersion -> "IntelliJ Rust can't expand procedural macros using " +
+                "your Rust toolchain version. It looks like the version is too recent. " +
+                "Consider downgrading your Rust toolchain to a previous version or try to update IntelliJ Rust plugin. " +
+                "(unsupported macro expander version ${e.version})"
             is ProcMacroExpansionError.ProcessAborted -> "the procedural macro expander process unexpectedly exited " +
                 "with code ${e.exitCode}"
             is ProcMacroExpansionError.IOExceptionThrown -> "an exception thrown during communicating with proc " +

@@ -140,7 +140,13 @@ data class RustcInfo(
     val sysroot: String,
     val version: RustcVersion?,
     val rustupActiveToolchain: String? = null,
-    val targets: List<String>? = null
+    val targets: List<String>? = null,
+
+    /**
+     * In production environments it is always equal to [version].
+     * In unit tests it is real, non-mocked toolchain version
+     */
+    val realVersion: RustcVersion? = version,
 )
 
 fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
