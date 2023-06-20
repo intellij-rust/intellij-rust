@@ -58,6 +58,10 @@ object Forward : Direction {
                 terminator.unwind?.let { propagate(it, exitState) }
                 propagate(terminator.realTarget, exitState)
             }
+            is MirTerminator.FalseEdge -> {
+                propagate(terminator.realTarget, exitState)
+                terminator.imaginaryTarget?.let { propagate(it, exitState) }
+            }
             is MirTerminator.SwitchInt -> {
                 for (target in terminator.targets.targets) {
                     propagate(target, exitState)

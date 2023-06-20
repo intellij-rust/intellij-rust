@@ -95,6 +95,27 @@ class MirBasicBlockImpl(
         )
     }
 
+    /**
+     * Creates a false edge to [imaginaryTarget] and a real edge to [realTarget].
+     * If [imaginaryTarget] is null, or is the same as the real target,
+     * a Goto is generated instead to simplify the generated MIR.
+     */
+    fun terminateWithFalseEdges(
+        realTarget: MirBasicBlockImpl,
+        imaginaryTarget: MirBasicBlockImpl?,
+        source: MirSourceInfo?
+    ) {
+        if (imaginaryTarget != null && imaginaryTarget != realTarget) {
+            terminator = MirTerminator.FalseEdge(
+                realTarget = realTarget,
+                imaginaryTarget = imaginaryTarget,
+                source = getTerminatorSource(source),
+            )
+        } else {
+            terminateWithGoto(realTarget, source)
+        }
+    }
+
     fun terminateWithUnreachable(source: MirSourceInfo?) {
         terminator = MirTerminator.Unreachable(getTerminatorSource(source))
     }

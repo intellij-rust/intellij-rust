@@ -269,6 +269,7 @@ private class MoveDataBuilder(
         this.loc = loc
         when (term) {
             is MirTerminator.Goto,
+            is MirTerminator.FalseEdge,
             is MirTerminator.FalseUnwind,
             is MirTerminator.Return,
             is MirTerminator.Resume,

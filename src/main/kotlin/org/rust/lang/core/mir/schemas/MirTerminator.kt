@@ -41,6 +41,12 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
         override val source: MirSourceInfo,
     ) : MirTerminator<BB>
 
+    data class FalseEdge<BB : MirBasicBlock>(
+        val realTarget: BB,
+        val imaginaryTarget: BB?,
+        override val source: MirSourceInfo,
+    ) : MirTerminator<BB>
+
     data class FalseUnwind<BB : MirBasicBlock>(
         val realTarget: BB,
         val unwind: BB?,
@@ -77,6 +83,7 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
             is FalseUnwind -> listOfNotNull(realTarget, unwind)
             is Call -> listOfNotNull(target, unwind)
             is Drop -> listOfNotNull(target, unwind)
+            is FalseEdge -> listOfNotNull(realTarget, imaginaryTarget)
         }
 
     companion object {

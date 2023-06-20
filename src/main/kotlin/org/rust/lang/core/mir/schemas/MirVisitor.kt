@@ -243,6 +243,7 @@ interface MirVisitor {
             is MirTerminator.Goto,
             is MirTerminator.Resume,
             is MirTerminator.Unreachable,
+            is MirTerminator.FalseEdge,
             is MirTerminator.FalseUnwind -> {
             }
 
