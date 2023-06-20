@@ -6,6 +6,7 @@
 package org.rust.lang.core.thir
 
 import org.rust.lang.core.mir.asSpan
+import org.rust.lang.core.mir.schemas.MirArm
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.*
@@ -330,8 +331,21 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 )
             }
 
+            is RsMatchExpr -> {
+                val scrutinee = mirrorExpr(expr.expr ?: error("match without expr"))
+                val arms = expr.arms.map { convertArm(it) }
+                ThirExpr.Match(scrutinee, arms, ty, span)
+            }
+
             else -> TODO("Not implemented for ${expr::class}")
         }.withLifetime(tempLifetime)
+    }
+
+    private fun convertArm(arm: RsMatchArm): MirArm {
+        val pattern = ThirPat.from(arm.pat)
+        val guard = arm.matchArmGuard?.let { TODO() }
+        val body = mirrorExpr(arm.expr ?: error("match arm without body"))
+        return MirArm(pattern, guard, body, Scope.Node(arm), arm.asSpan)
     }
 
     private fun fieldRefs(

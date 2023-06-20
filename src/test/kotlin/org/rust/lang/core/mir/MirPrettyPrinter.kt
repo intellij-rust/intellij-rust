@@ -344,6 +344,7 @@ internal class MirPrettyPrinter(
 
     private fun format(cause: MirStatement.FakeRead.Cause): String {
         return when (cause) {
+            is MirStatement.FakeRead.Cause.ForMatchedPlace -> "ForMatchedPlace(None)".also { assert(cause.element == null) }
             is MirStatement.FakeRead.Cause.ForLet -> "ForLet(None)".also { assert(cause.element == null) }
             MirStatement.FakeRead.Cause.ForIndex -> "ForIndex"
         }

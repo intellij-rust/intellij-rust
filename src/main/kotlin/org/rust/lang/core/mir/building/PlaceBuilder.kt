@@ -15,7 +15,9 @@ import org.rust.lang.core.types.ty.Ty
 class PlaceBuilder(private val base: PlaceBase, private val projections: MutableList<PlaceElem>) {
     constructor(local: MirLocal) : this(PlaceBase.Local(local), mutableListOf())
 
-    fun toPlace(): MirPlace {
+    fun toPlace(): MirPlace = tryToPlace()!!
+
+    fun tryToPlace(): MirPlace? {
         when (base) {
             is PlaceBase.Local -> return MirPlace(base.local, projections.toList())
         }

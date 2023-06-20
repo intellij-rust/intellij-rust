@@ -14,10 +14,13 @@ import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
 
+/** See also [org.rust.ide.utils.checkMatch.PatternKind] */
 sealed class ThirPat(
     val ty: Ty,
     val source: MirSpan,
 ) {
+    class Wild(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+
     class Binding(
         val mutability: Mutability,
         val name: String,
@@ -30,6 +33,15 @@ sealed class ThirPat(
         source: MirSpan,
     ) : ThirPat(ty, source)
 
+    class Variant(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Leaf(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Deref(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Const(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Range(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Slice(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Array(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Or(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+
     companion object {
         // TODO: adjustments
         fun from(pattern: RsPat): ThirPat {
@@ -40,7 +52,7 @@ sealed class ThirPat(
                     val mutability: Mutability
                     when (bindingMode.ref) {
                         null -> {
-                            mode = ThirBindingMode.ByValue(bindingMode)
+                            mode = ThirBindingMode.ByValue
                             mutability = if (bindingMode.mut == null) Mutability.IMMUTABLE else Mutability.MUTABLE
                         }
                         else -> TODO()

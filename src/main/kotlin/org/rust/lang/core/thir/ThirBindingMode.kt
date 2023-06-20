@@ -5,10 +5,9 @@
 
 package org.rust.lang.core.thir
 
-import org.rust.lang.core.mir.RsBindingModeWrapper
+import org.rust.lang.core.mir.schemas.MirBorrowKind
 
 sealed class ThirBindingMode {
-    abstract val rs: RsBindingModeWrapper
-
-    data class ByValue(override val rs: RsBindingModeWrapper) : ThirBindingMode()
+    object ByValue : ThirBindingMode()
+    data class ByRef(val kind: MirBorrowKind) : ThirBindingMode()
 }

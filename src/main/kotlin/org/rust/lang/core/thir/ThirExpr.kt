@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.thir
 
+import org.rust.lang.core.mir.schemas.MirArm
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsLitExpr
@@ -271,6 +272,8 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Match(
+        val expr: ThirExpr,
+        val arms: List<MirArm>,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

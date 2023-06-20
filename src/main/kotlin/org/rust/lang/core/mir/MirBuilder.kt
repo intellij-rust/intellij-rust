@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.mir
 
+import com.intellij.openapi.util.Ref
 import org.rust.lang.core.mir.building.*
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.schemas.MirBinaryOperator.Companion.toMir
@@ -358,6 +359,7 @@ class MirBuilder private constructor(
                 blockAnd.block.pushAssign(place, borrow, source)
                 blockAnd.block.andUnit()
             }
+            is ThirExpr.Match -> matchExpr(place, expr.span, expr.expr, expr.arms)
             else -> TODO()
         }
     }
@@ -610,6 +612,353 @@ class MirBuilder private constructor(
         this.setTerminatorSource(source)
     }
 
+    private fun BlockAnd<*>.matchExpr(
+        destination: MirPlace,
+        span: MirSpan,
+        scrutinee: ThirExpr,
+        arms: List<MirArm>
+    ): BlockAnd<Unit> {
+        val blockAndScrutinee = lowerScrutinee(scrutinee)
+
+        val candidates = arms.map {
+            MirCandidate(blockAndScrutinee.elem, it.pattern, it.guard != null)
+        }
+        val matchHasGuard = candidates.any { it.hasGuard }
+
+        lowerMatchTree(blockAndScrutinee.block, scrutinee.span, matchHasGuard, candidates)
+
+        return lowerMatchArms(
+            destination,
+            blockAndScrutinee.elem,
+            scrutinee.span,
+            arms zip candidates,
+            sourceInfo(span)
+        )
+    }
+
+    private fun BlockAnd<*>.lowerScrutinee(scrutinee: ThirExpr): BlockAnd<PlaceBuilder> {
+        val result = toPlaceBuilder(scrutinee)
+        result.elem.tryToPlace()?.let { scrutineePlace ->
+            val cause = MirStatement.FakeRead.Cause.ForMatchedPlace(null)
+            val sourceInfo = sourceInfo(scrutinee.span)
+            result.block.pushFakeRead(cause, scrutineePlace, sourceInfo)
+        }
+        return result
+    }
+
+    private fun lowerMatchTree(
+        block: MirBasicBlockImpl,
+        scrutineeSpan: MirSpan,
+        matchHasGuard: Boolean,
+        candidates: List<MirCandidate>
+    ) {
+        val otherwise = Ref<MirBasicBlockImpl>(null)
+        matchCandidates(scrutineeSpan, block, otherwise, candidates)
+
+        if (!otherwise.isNull) {
+            val sourceInfo = sourceInfo(scrutineeSpan)
+            otherwise.get().terminateWithUnreachable(sourceInfo)
+        }
+
+        // Link each leaf candidate to the `preBindingBlock` of the next one.
+        var previousCandidate: MirCandidate? = null
+        for (candidate in candidates) {
+            candidate.visitLeaves { leafCandidate ->
+                previousCandidate?.nextCandidatePreBindingBlock = leafCandidate.preBindingBlock
+                previousCandidate = leafCandidate
+            }
+        }
+
+        // TODO fake borrows
+    }
+
+    /**
+     * Lower the bindings, guards and arm bodies of a `match` expression.
+     * The decision tree should have already been created by [lowerMatchTree].
+     * [outerSourceInfo] is the [MirSourceInfo] for the whole match.
+     */
+    private fun lowerMatchArms(
+        destination: MirPlace,
+        scrutineePlaceBuilder: PlaceBuilder,
+        scrutineeSpan: MirSpan,
+        armCandidates: List<Pair<MirArm, MirCandidate>>,
+        outerSourceInfo: MirSourceInfo
+    ): BlockAnd<Unit> {
+        val armEndBlocks = armCandidates.map { (arm, candidate) ->
+            val matchScope = localScope()
+            inScope(arm.scope) {
+                val scrutineePlace = scrutineePlaceBuilder.tryToPlace()
+                val optScrutineePlace = scrutineePlace?.let { it to scrutineeSpan }
+                val scope = declareBindings(null, arm.span, arm.pattern, arm.guard, optScrutineePlace)
+
+                val armBlock = bindPattern(
+                    outerSourceInfo,
+                    candidate,
+                    scrutineeSpan,
+                    arm to matchScope,
+                    storagesAlive = false
+                )
+
+                scope?.let {
+                    sourceScopes.sourceScope = it
+                }
+
+                armBlock.andUnit().exprIntoPlace(arm.body, destination)
+            }
+        }
+
+        // all the arm blocks will rejoin here
+        val endBlock = basicBlocks.new()
+        val endBrace = sourceInfo(outerSourceInfo.span.endPoint)
+        for (armBlock in armEndBlocks) {
+            val block = armBlock.block
+            val lastLocation = block.statements.lastOrNull()?.source
+            block.terminateWithGoto(endBlock, lastLocation ?: endBrace)
+        }
+
+        sourceScopes.sourceScope = outerSourceInfo.scope
+        return endBlock.andUnit()
+    }
+
+    /**
+     * Binds the variables and ascribes types for a given `match` arm or `let` binding.
+     *
+     * Also check if the guard matches, if it's provided.
+     * [armMatchScope] should be not null if and only if this is called for a `match` arm.
+     */
+    private fun bindPattern(
+        outerSourceInfo: MirSourceInfo,
+        candidate: MirCandidate,
+        scrutineeSpan: MirSpan,
+        armMatchScope: Pair<MirArm, Scope>,
+        storagesAlive: Boolean
+    ): MirBasicBlockImpl {
+        return if (candidate.subcandidates.isEmpty()) {
+            // Avoid generating another `BasicBlock` when we only have one candidate.
+            bindAndGuardMatchedCandidate(
+                candidate,
+                parentBindings = emptyList(),
+                scrutineeSpan,
+                armMatchScope,
+                scheduleDrops = true,
+                storagesAlive,
+            )
+        } else {
+            TODO()
+        }
+    }
+
+    private fun bindAndGuardMatchedCandidate(
+        candidate: MirCandidate,
+        parentBindings: List<MirBinding>,
+        scrutineeSpan: MirSpan,
+        armMatchScope: Pair<MirArm, Scope>?,
+        scheduleDrops: Boolean,
+        storagesAlive: Boolean
+    ): MirBasicBlockImpl {
+        testAssert { candidate.matchPairs.isEmpty() }
+        val candidateSourceInfo = sourceInfo(candidate.span)
+        var block = candidate.preBindingBlock!!
+        if (candidate.nextCandidatePreBindingBlock != null) {
+            val freshBlock = basicBlocks.new()
+            block.terminateWithFalseEdges(freshBlock, candidate.nextCandidatePreBindingBlock, candidateSourceInfo)
+            block = freshBlock
+        }
+
+        // TODO ascribe_types
+
+        return if (armMatchScope != null && armMatchScope.first.guard != null) {
+            TODO()
+        } else {
+            bindMatchedCandidateForArmBody(block, scheduleDrops, parentBindings + candidate.bindings, storagesAlive)
+            block
+        }
+    }
+
+    private fun bindMatchedCandidateForArmBody(
+        block: MirBasicBlockImpl,
+        scheduleDrops: Boolean,
+        bindings: List<MirBinding>,
+        storagesAlive: Boolean
+    ) {
+        for (binding in bindings) {
+            val sourceInfo = sourceInfo(binding.span)
+            val local = if (storagesAlive) {
+                // Here storages are already alive, probably because this is a binding from let-else.
+                // We just need to schedule drop for the value.
+                varLocal(binding.variable).intoPlace()
+            } else {
+                block.storageLiveBinding(binding.variable, binding.span, scheduleDrops)
+            }
+            if (scheduleDrops) {
+                scheduleDropForBinding(binding.variable, binding.span)
+            }
+            val rvalue = when (val bindingMode = binding.bindingMode) {
+                ThirBindingMode.ByValue -> MirRvalue.Use(consumeByCopyOrMove(binding.source))
+                is ThirBindingMode.ByRef -> MirRvalue.Ref(bindingMode.kind, binding.source)
+            }
+            block.pushAssign(local, rvalue, sourceInfo)
+        }
+    }
+
+    private fun matchCandidates(
+        scrutineeSpan: MirSpan,
+        startBlock: MirBasicBlockImpl,
+        otherwiseBlock: Ref<MirBasicBlockImpl>,
+        candidates: List<MirCandidate>
+    ) {
+        var splitOrCandidate = false
+        for (candidate in candidates) {
+            if (simplifyCandidate(candidate)) {
+                splitOrCandidate = true
+            }
+        }
+
+        if (splitOrCandidate) {
+            val newCandidates = mutableListOf<MirCandidate>()
+            for (candidate in candidates) {
+                candidate.visitLeaves {
+                    newCandidates += it
+                }
+            }
+            matchSimplifiedCandidates(scrutineeSpan, startBlock, otherwiseBlock, newCandidates)
+        } else {
+            matchSimplifiedCandidates(scrutineeSpan, startBlock, otherwiseBlock, candidates)
+        }
+    }
+
+    private fun simplifyCandidate(candidate: MirCandidate): Boolean {
+        val existingBindings = candidate.bindings
+        candidate.bindings = mutableListOf()
+        var newBindings = mutableListOf<MirBinding>()
+        while (true) {
+            val matchPairs = candidate.matchPairs
+            candidate.matchPairs = mutableListOf()
+
+            if (matchPairs.singleOrNull()?.pattern is ThirPat.Or) {
+                TODO()
+            }
+
+            var changed = false
+            for (matchPair in matchPairs) {
+                if (simplifyMatchPair(matchPair, candidate)) {
+                    changed = true
+                } else {
+                    candidate.matchPairs += matchPair
+                }
+            }
+
+            // order is important - https://github.com/rust-lang/rust/issues/69971
+            newBindings = (candidate.bindings + newBindings).toMutableList()
+            candidate.bindings.clear()
+
+            if (!changed) {
+                candidate.bindings = (existingBindings + newBindings).toMutableList()
+                existingBindings.clear()
+                // Move or-patterns to the end, because they can result in us creating additional candidates,
+                // so we want to test them as late as possible.
+                candidate.matchPairs.sortBy { it.pattern is ThirPat.Or }
+                return false // if we were not able to simplify any, done.
+            }
+        }
+    }
+
+    private fun simplifyMatchPair(matchPair: MirMatchPair, candidate: MirCandidate): Boolean {
+        return when (val pattern = matchPair.pattern) {
+            is ThirPat.Wild -> true
+            is ThirPat.Binding -> {
+                matchPair.place.tryToPlace()?.let { source ->
+                    candidate.bindings += MirBinding(
+                        matchPair.pattern.source,
+                        source,
+                        pattern.variable,
+                        pattern.mode,
+                    )
+                }
+                if (pattern.subpattern != null) {
+                    TODO()
+                }
+                true
+            }
+            is ThirPat.Const -> TODO()
+            is ThirPat.Range -> TODO()
+            is ThirPat.Slice -> TODO()
+            is ThirPat.Variant -> TODO()
+            is ThirPat.Array -> TODO()
+            is ThirPat.Leaf -> TODO()
+            is ThirPat.Deref -> TODO()
+            is ThirPat.Or -> TODO()
+        }
+    }
+
+    private fun matchSimplifiedCandidates(
+        scrutineeSpan: MirSpan,
+        startBlock: MirBasicBlockImpl,
+        otherwiseBlock: Ref<MirBasicBlockImpl>,
+        candidates: List<MirCandidate>
+    ) {
+        val matchedCandidates = candidates.takeWhile { it.matchPairs.isEmpty() }
+        val unmatchedCandidates = candidates.subList(matchedCandidates.size, candidates.size)
+
+        val block = if (matchedCandidates.isNotEmpty()) {
+            selectMatchedCandidates(matchedCandidates, startBlock)
+                ?: run {
+                    if (unmatchedCandidates.isEmpty()) {
+                        // Any remaining candidates are unreachable.
+                        return
+                    }
+                    basicBlocks.new()
+                }
+        } else {
+            startBlock
+        }
+
+        if (unmatchedCandidates.isEmpty()) {
+            if (!otherwiseBlock.isNull) {
+                val sourceInfo = sourceInfo(span)
+                block.terminateWithGoto(otherwiseBlock.get(), sourceInfo)
+            } else {
+                otherwiseBlock.set(block)
+            }
+            return
+        }
+
+        TODO("test_candidates_with_or")
+    }
+
+    private fun selectMatchedCandidates(
+        matchedCandidates: List<MirCandidate>,
+        startBlock: MirBasicBlockImpl
+    ): MirBasicBlockImpl? {
+        testAssert { matchedCandidates.isNotEmpty() }
+        testAssert { matchedCandidates.all { it.subcandidates.isEmpty() } }
+
+        // TODO fake borrows
+
+        val fullyMatchedWithGuard = matchedCandidates.indexOfFirst { !it.hasGuard }
+        val reachableCandidates = matchedCandidates.subList(0, fullyMatchedWithGuard + 1)
+        val unreachableCandidates = matchedCandidates.subList(fullyMatchedWithGuard + 1, matchedCandidates.size)
+
+        var nextPrebinding = startBlock
+        for (candidate in reachableCandidates) {
+            testAssert { candidate.otherwiseBlock == null }
+            testAssert { candidate.preBindingBlock == null }
+            candidate.preBindingBlock = nextPrebinding
+            if (candidate.hasGuard) {
+                // Create the otherwise block for this candidate, which is the pre-binding block for the next candidate.
+                nextPrebinding = basicBlocks.new()
+                candidate.otherwiseBlock = nextPrebinding
+            }
+        }
+
+        for (candidate in unreachableCandidates) {
+            testAssert { candidate.preBindingBlock == null }
+            candidate.preBindingBlock = basicBlocks.new()
+        }
+
+        return reachableCandidates.last().otherwiseBlock
+    }
+
     private fun BlockAnd<*>.astBlockIntoPlace(
         block: ThirBlock,
         place: MirPlace,
@@ -646,6 +995,7 @@ class MirBuilder private constructor(
                                     visibilityScope,
                                     remainderSourceInfo,
                                     statement.pattern,
+                                    guard = null,
                                     null to statement.initializer.span
                                 )
                                 blockAnd.exprIntoPattern(statement.pattern, statement.initializer)
@@ -658,6 +1008,7 @@ class MirBuilder private constructor(
                                     visibilityScope,
                                     remainderSourceInfo,
                                     statement.pattern,
+                                    guard = null,
                                     null,
                                 )
                                 blockAnd
@@ -753,6 +1104,7 @@ class MirBuilder private constructor(
         visibilityScope: MirSourceScope?,
         scopeSource: MirSpan,
         pattern: ThirPat,
+        guard: Any?,
         matchPlace: Pair<MirPlace?, MirSpan>?,
     ): MirSourceScope? {
         var actualVisibilityScope = visibilityScope
@@ -772,7 +1124,9 @@ class MirBuilder private constructor(
                 patternSource = pattern.source,
             )
         }
-        // TODO: guard handling
+        if (guard != null) {
+            TODO()
+        }
         return actualVisibilityScope
     }
 
@@ -787,18 +1141,11 @@ class MirBuilder private constructor(
         matchPlace: Pair<MirPlace?, MirSpan>?,
         patternSource: MirSpan,
     ) {
-        // this assert is needed because I use original mode from ThirBindingMode and
-        // only hope that it will be the same
-        testAssert {
-            val refCorrect = when (mode) {
-                is ThirBindingMode.ByValue -> mode.rs.ref == null
-            }
-            val mutCorrect = @Suppress("USELESS_IS_CHECK") when (mode) {
-                is ThirBindingMode.ByValue -> true
-            }
-            refCorrect && mutCorrect
-        }
         val debugSource = MirSourceInfo(source.span, visibilityScope)
+        val bindingMode = when (mode) {
+            ThirBindingMode.ByValue -> MirBindingMode.BindByValue(mutability)
+            is ThirBindingMode.ByRef -> MirBindingMode.BindByReference(mutability)
+        }
         val localForArmBody = localDecls.newLocal(
             mutability = mutability,
             ty = variableTy,
@@ -809,7 +1156,7 @@ class MirBuilder private constructor(
                 MirClearCrossCrate.Set(
                     MirBindingForm.Var(
                         MirVarBindingForm(
-                            bindingMode = MirBindingMode.from(mode.rs),
+                            bindingMode = bindingMode,
                             tyInfo = null,
                             matchPlace = matchPlace,
                             patternSource = patternSource,
@@ -827,6 +1174,7 @@ class MirBuilder private constructor(
         action: (Mutability, name: String, ThirBindingMode, LocalVar, MirSpan, Ty) -> Unit,
     ) {
         when (pattern) {
+            is ThirPat.Wild -> TODO()
             is ThirPat.Binding -> {
                 if (pattern.isPrimary) {
                     action(pattern.mutability, pattern.name, pattern.mode, pattern.variable, pattern.source, pattern.ty)
@@ -835,6 +1183,14 @@ class MirBuilder private constructor(
                     visitPrimaryBindings(pattern.subpattern, action)
                 }
             }
+            is ThirPat.Const -> TODO()
+            is ThirPat.Range -> TODO()
+            is ThirPat.Slice -> TODO()
+            is ThirPat.Variant -> TODO()
+            is ThirPat.Array -> TODO()
+            is ThirPat.Leaf -> TODO()
+            is ThirPat.Deref -> TODO()
+            is ThirPat.Or -> TODO()
         }
     }
 
@@ -1211,6 +1567,8 @@ class MirBuilder private constructor(
             )
             .and(elem)
     }
+
+    private fun localScope(): Scope = scopes.topmost()
 
     private inline fun <R> inScope(
         scope: Scope?,

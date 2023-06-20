@@ -113,6 +113,8 @@ class MirBuildTest : RsTestBase() {
     fun `test while`() = expect<Throwable> { doTest() }
     fun `test while count`() = expect<Throwable> { doTest() }
     fun `test fun with args`() = doTest()
+    fun `test match pat binding 1`() = doTest()
+    fun `test match pat binding 2`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)

@@ -449,4 +449,14 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             x; y;
         }
     """)
+
+    fun `test no E0381 in match pat binding`() = checkErrors("""
+        fn main() {
+            let e = 1;
+            let e3 = match e {
+                e2 => e2,
+            };
+            e3;
+        }
+    """)
 }
