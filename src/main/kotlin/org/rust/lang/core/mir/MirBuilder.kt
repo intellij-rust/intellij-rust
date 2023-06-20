@@ -40,18 +40,23 @@ class MirBuilder private constructor(
     private val varDebugInfo = mutableListOf<MirVarDebugInfo>()
     private val varIndices = mutableMapOf<LocalVar, MirLocalForNode>()
 
-    private val unitTemp by lazy { localDecls.tempPlace(TyUnit.INSTANCE, span) }
+    private val unitTemp by lazy {
+        localDecls
+            .newLocal(
+                ty = TyUnit.INSTANCE,
+                source = MirSourceInfo.outermost(span),
+            )
+            .intoPlace()
+    }
 
-    fun build(function: RsFunction): MirBody {
-        val body = function.block ?: error("Could not get block of function")
-        val expr = MirrorContext(function).mirrorBlock(body, function.normReturnType)
+    fun buildFunction(thir: Thir, body: RsElement): MirBody {
         inScope(Scope.CallSite(body)) {
             val fnEndSpan = span.end
             val returnBlockAnd = inBreakableScope(null, localDecls.returnPlace(), fnEndSpan) {
                 inScope(Scope.Arguments(body)) {
                     basicBlocks
                         .startBlock()
-                        .argsAndBody(expr)
+                        .argsAndBody(thir.expr, thir.params, Scope.Arguments(body))
                 }
             }
             returnBlockAnd.block.terminateWithReturn(sourceInfo(fnEndSpan))
@@ -61,14 +66,12 @@ class MirBuilder private constructor(
         return finish()
     }
 
-    fun build(constant: RsConstant): MirBody {
-        val body = constant.expr ?: error("Could not get expression of constant")
-        val expr = MirrorContext(constant).mirrorExpr(body)
+    fun buildConstant(thir: Thir): MirBody {
         basicBlocks
             .startBlock()
-            .exprIntoPlace(expr, localDecls.returnPlace())
+            .exprIntoPlace(thir.expr, localDecls.returnPlace())
             .block
-            .terminateWithReturn(sourceInfo(constant.asSpan))
+            .terminateWithReturn(sourceInfo(element.asSpan))
         buildDropTrees()
         return finish()
     }
@@ -85,10 +88,65 @@ class MirBuilder private constructor(
         )
     }
 
-    // TODO:
-    //  1. function arguments
-    //  2. captured values
-    private fun BlockAnd<*>.argsAndBody(expr: ThirExpr): BlockAnd<Unit> {
+    // TODO: captured values
+    private fun BlockAnd<*>.argsAndBody(
+        expr: ThirExpr,
+        arguments: List<ThirParam>,
+        argumentScope: Scope,
+    ): BlockAnd<Unit> {
+        arguments.forEachIndexed { index, param ->
+            val sourceInfo = MirSourceInfo.outermost(param.pat?.source ?: span)
+            val argLocal = localDecls.newLocal(ty = param.ty, source = sourceInfo).intoPlace()
+            param.pat?.simpleIdent?.let { name ->
+                val info = MirVarDebugInfo(
+                    name = name,
+                    source = sourceInfo,
+                    contents = MirVarDebugInfo.Contents.Place(argLocal),
+                    argumentIndex = index + 1,
+                )
+                varDebugInfo.add(info)
+            }
+        }
+        // TODO: insert upvars
+        var scope: MirSourceScope? = null
+        for ((index, param) in arguments.withIndex()) {
+            val local = localDecls[index + 1]
+            scheduleDrop(argumentScope, local, Drop.Kind.VALUE)
+            if (param.pat == null) continue
+            val originalSourceScope = sourceScopes.sourceScope
+            // TODO: set_correct_source_scope_for_arg
+            when {
+                param.pat is ThirPat.Binding
+                    && param.pat.mode is ThirBindingMode.ByValue
+                    && param.pat.subpattern == null -> {
+                    localDecls.update(
+                        index = index + 1,
+                        mutability = param.pat.mutability,
+                        source = MirSourceInfo(local.source.span, sourceScopes.sourceScope),
+                        localInfo = if (param.selfKind != null) {
+                            MirLocalInfo.User(MirClearCrossCrate.Set(MirBindingForm.ImplicitSelf(param.selfKind)))
+                        } else {
+                            MirLocalInfo.User(
+                                MirClearCrossCrate.Set(
+                                    MirBindingForm.Var(
+                                        MirVarBindingForm(
+                                            bindingMode = MirBindingMode.BindByValue(param.pat.mutability),
+                                            tyInfo = param.tySpan,
+                                            matchPlace = Pair(null, param.pat.source),
+                                            patternSource = param.pat.source
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                    )
+                    varIndices[param.pat.variable] = MirLocalForNode.One(localDecls[index + 1])
+                }
+                else -> TODO()
+            }
+            sourceScopes.sourceScope = originalSourceScope
+        }
+        scope?.let { sourceScopes.sourceScope = it }
         return exprIntoPlace(expr, localDecls.returnPlace())
     }
 
@@ -439,8 +497,18 @@ class MirBuilder private constructor(
         val usizeTy = TyInteger.USize.INSTANCE
         val boolTy = TyBool.INSTANCE
         // bounds check:
-        val len = localDecls.tempPlace(usizeTy, span)
-        val lt = localDecls.tempPlace(boolTy, span)
+        val len = localDecls
+            .newLocal(
+                ty = usizeTy,
+                source = MirSourceInfo.outermost(span),
+            )
+            .intoPlace()
+        val lt = localDecls
+            .newLocal(
+                ty = boolTy,
+                source = MirSourceInfo.outermost(span),
+            )
+            .intoPlace()
 
         // len = len(slice)
         var blockTemp = block.pushAssign(len, MirRvalue.Len(slice.toPlace()), sourceInfo)
@@ -741,7 +809,7 @@ class MirBuilder private constructor(
                 MirClearCrossCrate.Set(
                     MirBindingForm.Var(
                         MirVarBindingForm(
-                            bindingMode = mode.rs,
+                            bindingMode = MirBindingMode.from(mode.rs),
                             tyInfo = null,
                             matchPlace = matchPlace,
                             patternSource = patternSource,
@@ -1024,7 +1092,12 @@ class MirBuilder private constructor(
         val source = sourceInfo(span)
         return if (checkOverflow && op is ArithmeticOp && op.isCheckable && ty.isIntegral) {
             val resultTy = TyTuple(listOf(ty, TyBool.INSTANCE))
-            val resultPlace = localDecls.tempPlace(resultTy, span)
+            val resultPlace = localDecls
+                .newLocal(
+                    ty = resultTy,
+                    source = MirSourceInfo.outermost(span),
+                )
+                .intoPlace()
             val value = resultPlace.makeField(0, ty)
             val overflow = resultPlace.makeField(1, TyBool.INSTANCE)
             block
@@ -1053,7 +1126,12 @@ class MirBuilder private constructor(
             }
             val overflowAssert = MirAssertKind.Overflow(op, left.toCopy(), right.toCopy())
 
-            val isZero = localDecls.tempPlace(TyBool.INSTANCE, span)
+            val isZero = localDecls
+                .newLocal(
+                    ty = TyBool.INSTANCE,
+                    source = MirSourceInfo.outermost(span),
+                )
+                .intoPlace()
             val zero = MirOperand.Constant(toConstant(0, ty, span))
             block.pushAssign(
                 place = isZero,
@@ -1080,9 +1158,9 @@ class MirBuilder private constructor(
         val negOne = MirOperand.Constant(toConstant(-1, ty, source.span))
         val min = MirOperand.Constant(toConstant(ty.minValue, ty, source.span))
 
-        val isNegOne = localDecls.newTempPlace(TyBool.INSTANCE, source)
-        val isMin = localDecls.newTempPlace(TyBool.INSTANCE, source)
-        val overflow = localDecls.newTempPlace(TyBool.INSTANCE, source)
+        val isNegOne = localDecls.newLocal(ty = TyBool.INSTANCE, source = source).intoPlace()
+        val isMin = localDecls.newLocal(ty = TyBool.INSTANCE, source = source).intoPlace()
+        val overflow = localDecls.newLocal(ty = TyBool.INSTANCE, source = source).intoPlace()
 
         return block
             .pushAssign(
@@ -1117,7 +1195,7 @@ class MirBuilder private constructor(
         val needsAssertion = checkOverflow && kind.op == UnaryOperator.MINUS && type.isSigned
         if (!needsAssertion) return this
         check(type is TyInteger) // TODO: guess it can also be boolean or reference
-        val isMin = localDecls.newTempPlace(TyBool.INSTANCE, source)
+        val isMin = localDecls.newLocal(ty = TyBool.INSTANCE, source = source).intoPlace()
         val eq = MirRvalue.BinaryOpUse(
             op = EqualityOp.EQ.toMir(),
             left = elem.toCopy(),
@@ -1299,7 +1377,13 @@ class MirBuilder private constructor(
         if (expr is ThirExpr.Scope) {
             return inScope(expr.regionScope) { toTemp(expr.expr, tempLifetime, mutability) }
         }
-        val localPlace = localDecls.tempPlace(expr.ty, expr.span, mutability = mutability)
+        val localPlace = localDecls
+            .newLocal(
+                mutability = mutability,
+                ty = expr.ty,
+                source = MirSourceInfo.outermost(expr.span),
+            )
+            .intoPlace()
         val source = sourceInfo(expr.span)
         when {
             expr is ThirExpr.Break || expr is ThirExpr.Continue || expr is ThirExpr.Return -> Unit
@@ -1381,15 +1465,6 @@ class MirBuilder private constructor(
         return MirSourceInfo(span, sourceScopes.sourceScope)
     }
 
-    private fun LocalsBuilder.tempPlace(
-        ty: Ty,
-        span: MirSpan,
-        internal: Boolean = false,
-        mutability: Mutability = Mutability.MUTABLE,
-    ): MirPlace {
-        return newTempPlace(ty, MirSourceInfo.outermost(span), internal, mutability)
-    }
-
     companion object {
         fun build(file: RsFile): List<MirBody> {
             return buildList { buildToList(file) }
@@ -1417,7 +1492,7 @@ class MirBuilder private constructor(
                 returnSpan = constant.typeReference?.asSpan ?: error("Could not find return type source"),
                 mirrorContext = MirrorContext(constant)
             )
-            return builder.build(constant)
+            return builder.buildConstant(Thir.from(constant))
         }
 
         fun build(function: RsFunction): MirBody {
@@ -1426,18 +1501,22 @@ class MirBuilder private constructor(
                 ?: function.block?.asStartSpan
                 ?: error("Could not get block of function")
 
+            val body = function.block ?: error("Could not get block of function")
+
+            val thir = Thir.from(function)
+
             val builder = MirBuilder(
                 element = function,
                 implLookup = ImplLookup.relativeTo(function),
                 checkOverflow = true,
                 span = function.asSpan,
-                argCount = function.valueParameterList?.valueParameterList?.size ?: error("Could not get parameters"),
+                argCount = thir.params.size,
                 returnTy = function.normReturnType,
                 returnSpan = returnSpan,
                 mirrorContext = MirrorContext(function)
             )
 
-            return builder.build(function)
+            return builder.buildFunction(thir, body)
         }
     }
 }

@@ -322,7 +322,10 @@ internal class MirPrettyPrinter(
                     }
                 append("${prefix.orEmpty()}${reference.name}")
                 append("(")
-                // TODO: arguments
+                mir.args.forEachIndexed { index, arg ->
+                    if (index != 0) append(", ")
+                    append("${format(arg)}: ${format(arg.ty)}")
+                }
                 append(") -> ${format(mir.returnLocal.ty)} ")
             }
             else -> TODO("Unsupported type ${reference::class}")
@@ -354,6 +357,7 @@ internal class MirPrettyPrinter(
             is TyAdt -> ty.item.name ?: TODO()
             is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"
             is TyFunctionBase -> "function"
+            TyUnknown -> "<unknown>"
             else -> TODO("Unknown type: $ty")
         }
     }
@@ -371,12 +375,13 @@ internal class MirPrettyPrinter(
             appendLine(debugInfo.withComment("in ${createComment(varDebugInfo.source)}"))
         }
         for (local in mir.localDecls) {
+            if (local.index in (1..mir.argCount)) continue
             if (local.source.scope != parent) continue
             val mut = when (local.mutability) {
                 Mutability.MUTABLE -> "mut "
                 Mutability.IMMUTABLE -> ""
             }
-            val definition = "${indent}let ${mut}_${local.index}: ${format(local.ty)};"
+            val definition = "${indent}let ${mut}${format(local)}: ${format(local.ty)};"
             val localName = if (local.index == 0) " return place" else ""
             val comment = createComment(local.source)
             appendLine(definition.withCommentAsIs(" //$localName in $comment"))

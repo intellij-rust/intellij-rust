@@ -5,10 +5,8 @@
 
 package org.rust.lang.core.mir.schemas
 
-import org.rust.lang.core.mir.RsBindingModeWrapper
-
 class MirVarBindingForm(
-    val bindingMode: RsBindingModeWrapper,
+    val bindingMode: MirBindingMode,
     val tyInfo: MirSpan?,
     val matchPlace: Pair<MirPlace?, MirSpan>?,
     val patternSource: MirSpan,

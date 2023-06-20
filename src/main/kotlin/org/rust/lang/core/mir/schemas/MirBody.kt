@@ -30,6 +30,8 @@ interface MirBody {
             }
         }
 
+    val args: List<MirLocal> get() = localDecls.subList(1, argCount + 1)
+
     fun returnPlace(): MirLocal = localDecls.first()
 
     fun alwaysStorageLiveLocals(): Set<MirLocal> {

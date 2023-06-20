@@ -34,7 +34,13 @@ class MirLocal(
 
     override fun toString(): String = "_$index: $ty"
 
+    fun copy(mutability: Mutability, source: MirSourceInfo, localInfo: MirLocalInfo): MirLocal {
+        return MirLocal(index, mutability, internal, localInfo, blockTail, ty, source)
+    }
+
     companion object {
         val fake = MirLocal(-1, Mutability.MUTABLE, true, null, null, TyUnknown, MirSourceInfo.fake)
     }
 }
+
+fun MirLocal.intoPlace(): MirPlace = MirPlace(this)

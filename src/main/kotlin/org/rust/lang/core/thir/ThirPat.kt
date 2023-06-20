@@ -63,3 +63,8 @@ sealed class ThirPat(
         }
     }
 }
+
+val ThirPat.simpleIdent: String? get() = when {
+    this is ThirPat.Binding && this.mode is ThirBindingMode.ByValue && this.subpattern == null -> this.name
+    else -> null
+}

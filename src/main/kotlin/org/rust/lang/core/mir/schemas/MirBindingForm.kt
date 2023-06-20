@@ -5,14 +5,10 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.thir.ImplicitSelfKind
+
 sealed class MirBindingForm {
     data class Var(val varBinding: MirVarBindingForm) : MirBindingForm()
     object ReferenceForGuard : MirBindingForm()
-    sealed class ImplicitSelf : MirBindingForm() {
-        object Immutable : ImplicitSelf()
-        object Mutable: ImplicitSelf()
-        object ImmutableReference : ImplicitSelf()
-        object MutableReference : ImplicitSelf()
-        object None : ImplicitSelf()
-    }
+    data class ImplicitSelf(val kind: ImplicitSelfKind) : MirBindingForm()
 }

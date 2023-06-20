@@ -354,7 +354,8 @@ class MirBorrowCheckVisitor(
         var reachedStart = false
 
         /* Check if the mpi is initialized as an argument */
-        val isArgument = false  // TODO
+        val isArgument =
+            body.args.any { movePaths.contains(moveData.revLookup.find(it)) }
 
         val visited = linkedSetOf<MirLocation>()
         val result = mutableListOf<MoveOut>()

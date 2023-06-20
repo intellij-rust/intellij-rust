@@ -151,7 +151,7 @@ interface MoveData {
         fun gatherMoves(body: MirBody): MoveData {
             val builder = MoveDataBuilder.new(body)
 
-            // TODO gather args
+            builder.gatherArgs()
 
             for (bb in body.basicBlocks) {
                 for ((i, stmt) in bb.statements.withIndex()) {
@@ -194,6 +194,8 @@ class MovePathLookup(
         }
         return LookupResult.Exact(result)
     }
+
+    fun find(local: MirLocal): MovePath = locals[local]!!
 }
 
 
@@ -351,6 +353,16 @@ private class MoveDataBuilder(
         val moveOut = data.moves.allocate { MoveOut(it, path, loc) }
         data.pathMap[path]!!.add(moveOut)
         data.locMap.getOrPut(loc) { mutableListOf() }.add(moveOut)
+    }
+
+    fun gatherArgs() {
+        for (arg in arg) {
+            val path = data.revLookup.find(arg)
+            val init = data.inits.allocate { index ->
+                Init(index, path, InitLocation.Argument(arg), InitKind.Deep)
+            }
+            data.initPathMap[path]!!.add(init)
+        }
     }
 
     fun finalize(): MoveDataImpl {

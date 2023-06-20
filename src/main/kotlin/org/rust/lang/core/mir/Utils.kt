@@ -62,6 +62,8 @@ val Scope.span: MirSpan get() { // TODO: it can be more complicated in case of r
 value class RsBindingModeWrapper(private val bindingMode: RsBindingMode?) {
     val mut: PsiElement? get() = bindingMode?.mut
     val ref: PsiElement? get() = bindingMode?.ref
+
+    val mutability: Mutability get() = if (mut == null) Mutability.IMMUTABLE else Mutability.MUTABLE
 }
 
 val RsBindingMode?.wrapper get() = RsBindingModeWrapper(this)

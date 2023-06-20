@@ -10,7 +10,12 @@ import org.rust.lang.core.types.ty.Ty
 data class MirVarDebugInfo(
     val name: String,
     val source: MirSourceInfo,
-    val contents: Contents
+    val contents: Contents,
+    /**
+     * When present, indicates what argument number this variable is in the function that it
+     * originated from (starting from 1).
+     */
+    val argumentIndex: Int? = null,
 ) {
     sealed class Contents {
         data class Place(val place: MirPlace) : Contents()

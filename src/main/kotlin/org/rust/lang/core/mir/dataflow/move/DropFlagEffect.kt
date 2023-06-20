@@ -6,7 +6,9 @@
 package org.rust.lang.core.mir.dataflow.move
 
 import org.rust.lang.core.dfa.borrowck.gatherLoans.hasDestructor
+import org.rust.lang.core.mir.schemas.MirBody
 import org.rust.lang.core.mir.schemas.MirLocation
+import org.rust.lang.core.mir.schemas.MirPlace
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsStructKind
 import org.rust.lang.core.psi.ext.kind
@@ -62,6 +64,29 @@ fun onAllChildrenBits(
     while (nextChild != null) {
         onAllChildrenBits(nextChild, eachChild)
         nextChild = nextChild.nextSibling
+    }
+}
+
+fun dropFlagEffectsForFunctionEntry(
+    body: MirBody,
+    moveData: MoveData,
+    callback: (MovePath, DropFlagState) -> Unit,
+) {
+    body.args.forEach { arg ->
+        val lookupResult = moveData.revLookup.find(MirPlace(arg))
+        onLookupResultBits(lookupResult) {
+            callback(it, DropFlagState.Present)
+        }
+    }
+}
+
+private fun onLookupResultBits(
+    lookupResult: LookupResult,
+    eachChild: (MovePath) -> Unit
+) {
+    when (lookupResult) {
+        is LookupResult.Exact -> onAllChildrenBits(lookupResult.movePath, eachChild)
+        is LookupResult.Parent -> Unit // access to untracked value - do not touch children
     }
 }
 

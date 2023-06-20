@@ -371,4 +371,27 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             }                                    // {_0, _1, _2, _3}
         }
     """)
+
+    fun `test function with arguments`() = doTest("""
+        fn foo(n: i32, m: i32, mut k: i32) {
+            k = n;
+        }
+    """, """
+        fn foo(_1: i32, _2: i32, _3: i32) -> () {
+            debug n => _1;                       // in scope 0 at src/main.rs:2:16: 2:17
+            debug m => _2;                       // in scope 0 at src/main.rs:2:24: 2:25
+            debug k => _3;                       // in scope 0 at src/main.rs:2:32: 2:37
+            let mut _0: ();                      // return place in scope 0 at src/main.rs:2:44: 2:44
+            let mut _4: i32;                     // in scope 0 at src/main.rs:3:17: 3:18
+
+            bb0: {                               // {_0, _4}
+                StorageLive(_4);
+                _4 = _1;                         // -_4
+                _3 = move _4;                    // +_4
+                StorageDead(_4);
+                _0 = const ();                   // -_0
+                return;
+            }                                    // {_4}
+        }
+    """)
 }
