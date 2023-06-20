@@ -271,7 +271,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             }                                    // {_0, _1, _2, _3}
 
             bb1: {                               // {_0, _1, _2, _3}
-                falseUnwind -> [real: bb2, cleanup: bb5];
+                falseUnwind -> [real: bb2, unwind: bb5];
             }                                    // {_0, _1, _2, _3}
 
             bb2: {                               // {_0, _1, _2, _3}

@@ -966,7 +966,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn foo() {
             let s = S;
             async { s; };
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 

@@ -356,7 +356,7 @@ private class MoveDataBuilder(
     }
 
     fun gatherArgs() {
-        for (arg in arg) {
+        for (arg in body.args) {
             val path = data.revLookup.find(arg)
             val init = data.inits.allocate { index ->
                 Init(index, path, InitLocation.Argument(arg), InitKind.Deep)
