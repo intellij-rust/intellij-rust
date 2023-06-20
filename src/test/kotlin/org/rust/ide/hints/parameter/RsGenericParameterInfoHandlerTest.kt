@@ -128,6 +128,27 @@ class RsGenericParameterInfoHandlerTest
         fn main() { foo::</*caret*/>(); }
     """, "T: OtherTrait + Trait", "", 0)
 
+    fun `test fn with lifetime`() = checkByText("""
+        fn a<'b, C, D, E>() {}
+        fn f<'d>() {
+            a::</*caret*/>()
+        }
+    """, "'b, C, D, E", "", 0)
+
+    fun `test fn with multiple lifetimes`() = checkByText("""
+        fn a<'a, 'b, C, D, E>() {}
+        fn f<'d, 'e>() {
+            a::<'d, /*caret*/>()
+        }
+    """, "'a, 'b, C, D, E", "", 1)
+
+    fun `test fn with multiple lifetimes and bounds`() = checkByText("""
+        fn a<'a: 'a + 'b, 'b: 'b, C, D, E>() {}
+        fn f<'d, 'e>() {
+            a::</*caret*/>()
+        }
+    """, "'a: 'b, 'b, C, D, E", "", 0)
+
     fun `test enum`() = checkByText("""
         enum E<T> { Foo(T) }
         fn main() { E::</*caret*/>::Foo(); }

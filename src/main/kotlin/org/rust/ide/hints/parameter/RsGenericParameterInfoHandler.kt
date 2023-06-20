@@ -31,7 +31,7 @@ class RsGenericParameterInfoHandler : RsAsyncParameterInfoHandler<RsTypeArgument
         } else {
             return null
         }
-        val paramsWithBounds = genericDeclaration.getGenericParameters(includeLifetimes = false)
+        val paramsWithBounds = genericDeclaration.getGenericParameters()
         if (paramsWithBounds.isEmpty()) return null
         return listOfNotNull(firstLine(paramsWithBounds), secondLine(paramsWithBounds)).toTypedArray()
     }
@@ -88,6 +88,13 @@ private fun firstLine(params: List<RsGenericParameter>): HintLine {
     val renderer = RsPsiRenderer(PsiRenderingOptions(renderLifetimes = false))
     val splited = params.map { param ->
         when (param) {
+            is RsLifetimeParameter -> {
+                val bounds = param.bounds
+                    .filter { it.name?.equals(param.name) == false }
+                    .mapNotNull { it.name }
+                    .nullize()?.joinToString(prefix = ": ", separator = " + ") ?: ""
+                "${param.name ?: "'_"}$bounds"
+            }
             is RsTypeParameter -> {
                 param.name ?: return@map ""
                 val qSizedBound = if (!param.isSized) listOf("?Sized") else emptyList()
