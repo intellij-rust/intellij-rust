@@ -10,7 +10,9 @@ import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsBindingMode
 import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.thir.LocalVar
 import org.rust.lang.core.types.regions.Scope
+import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.*
 
 val Ty.isSigned: Boolean
@@ -28,7 +30,7 @@ val TyInteger.minValue: Long
         return Int.MIN_VALUE.toLong()
     }
 
-val RsElement.asSpan: MirSpan get() = MirSpan(this)
+val RsElement.asSpan: MirSpan get() = MirSpan.Full(this)
 val RsElement.asStartSpan: MirSpan get() = MirSpan.Start(this)
 
 val Ty.needsDrop: Boolean
@@ -51,9 +53,10 @@ val ArithmeticOp.isCheckable: Boolean
         || this == ArithmeticOp.SHL
         || this == ArithmeticOp.SHR
 
-val Scope.span: MirSpan get() { // TODO: it can be more complicated in case of remainder
-    return element.asSpan
-}
+val Scope.span: MirSpan
+    get() { // TODO: it can be more complicated in case of remainder
+        return element.asSpan
+    }
 
 /**
  * This class exists because in case of `let x = 3` there is no binding mode created in PSI
@@ -67,3 +70,10 @@ value class RsBindingModeWrapper(private val bindingMode: RsBindingMode?) {
 }
 
 val RsBindingMode?.wrapper get() = RsBindingModeWrapper(this)
+
+fun ScopeTree.getVariableScope(variable: LocalVar): Scope? {
+    return when (variable) {
+        is LocalVar.FromPatBinding -> getVariableScope(variable.pat)
+        is LocalVar.FromSelfParameter -> getVariableScope(variable.self)
+    }
+}

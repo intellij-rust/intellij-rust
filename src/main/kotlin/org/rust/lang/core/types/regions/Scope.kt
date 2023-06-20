@@ -121,7 +121,7 @@ class ScopeTree {
     private val parentMap: MutableMap<Scope, ScopeInfo> = hashMapOf()
 
     /** Maps from a variable or binding to the block in which that variable is declared. */
-    private val varMap: MutableMap<RsPatBinding, Scope> = hashMapOf()
+    private val varMap = VarMap()
 
     /** Maps from a `element` to the associated destruction scope (if any). */
     private val destructionScopes: MutableMap<RsElement, Scope> = hashMapOf()
@@ -153,6 +153,11 @@ class ScopeTree {
         varMap[variable] = lifetime
     }
 
+    fun recordVarScope(variable: RsSelfParameter, lifetime: Scope) {
+        check(variable != lifetime.element)
+        varMap[variable] = lifetime
+    }
+
     fun recordRvalueCandidate(expr: RsExpr, candidateType: RvalueCandidateType) {
         val lifetime = candidateType.lifetime
         if (lifetime != null) {
@@ -166,6 +171,9 @@ class ScopeTree {
 
     /** Returns the lifetime of the local [variable], if any. */
     fun getVariableScope(variable: RsPatBinding): Scope? = varMap[variable]
+
+    /** Returns the lifetime of the local [variable], if any. */
+    fun getVariableScope(variable: RsSelfParameter): Scope? = varMap[variable]
 
     /**
      * Finds the lowest common ancestor of two scopes.
@@ -376,6 +384,7 @@ private class RegionResolutionVisitor {
         ctx.varParent = ctx.parent
         ctx.parent = null
         if (owner is RsFunction) {
+            owner.selfParameter?.let(::visitSelfParam)
             for (param in owner.valueParameters) {
                 param.pat?.let(::visitPat)
             }
@@ -416,6 +425,14 @@ private class RegionResolutionVisitor {
     fun visitPat(pat: RsPat) {
         recordChildScope(Node(pat))
         walkPat(pat)
+    }
+
+    fun visitSelfParam(self: RsSelfParameter) {
+        recordChildScope(Node(self))
+        val parentScope = ctx.varParent?.scope
+        if (parentScope != null) {
+            scopeTree.recordVarScope(self, parentScope)
+        }
     }
 
     fun visitPatBinding(binding: RsPatBinding) {
@@ -824,4 +841,21 @@ fun getRegionScopeTree(contextOwner: RsInferenceContextOwner): ScopeTree {
     visitor.scopeTree.rootBody = body
     visitor.visitBody(contextOwner)
     return visitor.scopeTree
+}
+
+/**
+ * This class is made in order to support different function parameter definition of self parameter and all other,
+ * where in the "other" parameters there is RsPatBinding, but in `self` there is none
+ */
+private class VarMap {
+    private val delegate = hashMapOf<Any, Scope>()
+
+    operator fun get(pat: RsPatBinding): Scope? = delegate[pat]
+    operator fun get(self: RsSelfParameter): Scope? = delegate[self]
+
+    operator fun set(pat: RsPatBinding, scope: Scope) = delegate.set(pat, scope)
+    operator fun set(self: RsSelfParameter, scope: Scope) = delegate.set(self, scope)
+
+    override fun hashCode(): Int = delegate.hashCode()
+    override fun equals(other: Any?) = delegate == other
 }

@@ -473,7 +473,15 @@ internal class MirPrettyPrinter(
             val scopeAt = "scope $scope at"
             val location = getLocationRange(filenamePrefix, source.span.reference)
             return when (source.span) {
-                is MirSpan.Full -> "$scopeAt $location"
+                is MirSpan.Full -> {
+                    val ref = source.span.reference
+                    val adjustedLocation = if (ref is RsSelfParameter && ref.colon != null) {
+                        LocationRange(location.fileName, location.start, getEndLocation(ref.self))
+                    } else {
+                        location
+                    }
+                    "$scopeAt $adjustedLocation"
+                }
                 is MirSpan.EndPoint -> "$scopeAt ${LocationRange(location.fileName, location.end.previous, location.end)}"
                 is MirSpan.End -> "$scopeAt ${LocationRange(location.fileName, location.end, location.end)}"
                 is MirSpan.Start -> "$scopeAt ${LocationRange(location.fileName, location.start, location.start)}"

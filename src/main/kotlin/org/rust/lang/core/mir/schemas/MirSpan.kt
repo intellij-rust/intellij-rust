@@ -30,9 +30,5 @@ sealed class MirSpan {
         override val endPoint get() = this
         override val reference: RsElement get() = error("Fake span have no reference")
     }
-
-    companion object {
-        operator fun invoke(reference: RsElement) = Full(reference)
-    }
 }
 

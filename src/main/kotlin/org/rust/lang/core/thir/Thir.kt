@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.normReturnType
+import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.type
 
 data class Thir(
@@ -34,8 +35,19 @@ data class Thir(
             val params = function.valueParameterList ?: error("Could not get function's parameters")
             val self = params.selfParameter
             if (self != null) {
-                val selfKind = ImplicitSelfKind.from(self)
-                TODO()
+                val selfKind = ImplicitSelfKind.from(self).takeIf { it.hasImplicitSelf }
+                val tySpan = if (self.colon != null) {
+                    self.typeReference?.asSpan ?: error("Could not get self parameter's type")
+                } else {
+                    null
+                }
+                val thirParam = ThirParam(
+                    pat = ThirPat.from(self),
+                    ty = self.typeOfValue,
+                    tySpan = tySpan,
+                    selfKind = selfKind,
+                )
+                add(thirParam)
             }
             params.valueParameterList.forEach { param ->
                 val tySpan = param.typeReference?.asSpan ?: error("Could not get parameter's type")

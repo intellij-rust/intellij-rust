@@ -43,9 +43,23 @@ enum class ImplicitSelfKind {
      */
     None;
 
+    val hasImplicitSelf: Boolean get() = this != None
+
     companion object {
         fun from(self: RsSelfParameter): ImplicitSelfKind {
-            TODO()
+            if (self.colon != null) return None
+            val isRef = self.and != null
+            val isMut = self.mut != null
+            return when (isRef) {
+                true -> when (isMut) {
+                    true -> MutableReference
+                    false -> ImmutableReference
+                }
+                false -> when (isMut) {
+                    true -> Mutable
+                    false -> Immutable
+                }
+            }
         }
     }
 }

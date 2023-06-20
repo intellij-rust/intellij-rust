@@ -115,6 +115,11 @@ class MirBuildTest : RsTestBase() {
     fun `test fun with args`() = doTest()
     fun `test match pat binding 1`() = doTest()
     fun `test match pat binding 2`() = doTest()
+    fun `test immutable self argument`() = doTest()
+    fun `test mutable self argument`() = doTest()
+    fun `test immutable ref self argument`() = doTest()
+    fun `test mutable ref self argument`() = doTest()
+    fun `test explicit self argument`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)

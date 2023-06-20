@@ -10,6 +10,8 @@ import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.mir.wrapper
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatIdent
+import org.rust.lang.core.psi.RsSelfParameter
+import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
@@ -72,6 +74,20 @@ sealed class ThirPat(
                 }
                 else -> TODO("Not implemented for type ${pattern::class}")
             }
+        }
+
+        fun from(self: RsSelfParameter): ThirPat {
+            return Binding(
+                mutability = Mutability.valueOf(self.mut != null && self.and == null),
+                mode = ThirBindingMode.ByValue,
+                name = "self",
+                variable = LocalVar(self),
+                varTy = self.typeOfValue,
+                subpattern = null,
+                ty = self.typeOfValue,
+                source = self.asSpan,
+                isPrimary = true,
+            )
         }
     }
 }

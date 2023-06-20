@@ -1072,7 +1072,7 @@ class MirBuilder private constructor(
         span: MirSpan,
     ) {
         val local = varLocal(variable)
-        regionScopeTree.getVariableScope(variable.value)?.let { scope ->
+        regionScopeTree.getVariableScope(variable)?.let { scope ->
             scheduleDrop(scope, local, Drop.Kind.VALUE)
         }
     }
@@ -1085,7 +1085,7 @@ class MirBuilder private constructor(
         val local = varLocal(variable)
         pushStorageLive(local, sourceInfo(source))
         if (scheduleDrop) {
-            regionScopeTree.getVariableScope(variable.value)?.let { scope ->
+            regionScopeTree.getVariableScope(variable)?.let { scope ->
                 scheduleDrop(scope, local, Drop.Kind.STORAGE)
             }
         }
@@ -1096,7 +1096,7 @@ class MirBuilder private constructor(
         return when (val localForNode = varIndices[variable]) {
             is MirLocalForNode.ForGuard -> TODO()
             is MirLocalForNode.One -> localForNode.local
-            null -> error("Could not find variable: ${variable.value.name}")
+            null -> error("Could not find variable: ${variable.name}")
         }
     }
 
