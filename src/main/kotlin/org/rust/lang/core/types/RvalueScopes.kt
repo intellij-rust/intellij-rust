@@ -5,10 +5,14 @@
 
 package org.rust.lang.core.types
 
+import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIndexExpr
+import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.psi.ext.containerExpr
+import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 
@@ -82,10 +86,18 @@ private fun recordRvalueScopeRec(rvalueScopes: RvalueScopes, expr: RsExpr, lifet
 
         rvalueScopes.recordRvalueScope(exprVar, lifetime)
 
-        when (exprVar) {
-            is RsIndexExpr -> exprVar = exprVar.containerExpr
+        exprVar = when {
+            exprVar is RsIndexExpr -> exprVar.containerExpr
+            exprVar is RsUnaryExpr && exprVar.operatorType in REF_AND_DEREF_OPS -> exprVar.expr ?: TODO()
+            exprVar is RsDotExpr && exprVar.fieldLookup != null -> exprVar.expr
             // TODO: other cases
             else -> return
         }
     }
 }
+
+private val REF_AND_DEREF_OPS: Set<UnaryOperator> = setOf(
+    UnaryOperator.REF,
+    UnaryOperator.REF_MUT,
+    UnaryOperator.DEREF,
+)

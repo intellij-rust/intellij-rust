@@ -451,7 +451,7 @@ class MirBuilder private constructor(
                     .map { PlaceBuilder(it) }
             }
             is ThirExpr.Deref -> {
-                exprToPlace(expr.arg, mutability).map { it.deref() }
+                exprToPlace(expr.arg, mutability, fakeBorrowTemps).map { it.deref() }
             }
             else -> TODO()
         }

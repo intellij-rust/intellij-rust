@@ -667,7 +667,7 @@ private class RegionResolutionVisitor {
     }
 
     private fun resolveLocal(pat: RsPat?, init: RsExpr?) {
-        val blockScope = ctx.parent?.scope
+        val blockScope = ctx.varParent?.scope
 
         // As an exception to the normal rules governing temporary lifetimes, initializers in a let have a temporary
         // lifetime of the enclosing block. This means that e.g., a program like the following is legal:
@@ -788,7 +788,8 @@ private class RegionResolutionVisitor {
         when (expr) {
             is RsUnaryExpr -> {
                 val subexpr = expr.expr
-                if (expr.operatorType == UnaryOperator.REF && subexpr != null) {
+                val op = expr.operatorType
+                if ((op == UnaryOperator.REF || op == UnaryOperator.REF_MUT) && subexpr != null) {
                     recordRvalueScopeIfBorrowExpr(subexpr, lifetime)
                     scopeTree.recordRvalueCandidate(subexpr, RvalueCandidateType.Borrow(subexpr, lifetime))
                 }

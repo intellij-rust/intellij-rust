@@ -107,6 +107,7 @@ class MirBuildTest : RsTestBase() {
     fun `test nested function call`() = doTest()
     fun `test associated function call without arguments`() = doTest()
     fun `test deref`() = doTest()
+    fun `test deref and borrow`() = doTest()
     fun `test index`() = doTest()
     fun `test constant index`() = doTest()
     fun `test function in impl`() = doTest()
