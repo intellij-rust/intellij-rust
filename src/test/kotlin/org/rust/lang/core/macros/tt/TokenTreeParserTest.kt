@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros.tt
 
 import org.rust.RsTestBase
+import org.rust.lang.core.macros.proc.ProMacroExpanderVersion
 import org.rust.lang.core.parser.createRustPsiBuilder
 
 class TokenTreeParserTest : RsTestBase() {
@@ -246,7 +247,8 @@ class TokenTreeParserTest : RsTestBase() {
 
     fun doTest(code: String, expected: String) {
         val subtree = project.createRustPsiBuilder(code).parseSubtree().subtree
-        assertEquals(subtree, FlatTree.fromSubtree(subtree).toTokenTree())
+        val version = ProMacroExpanderVersion.ENCODE_CLOSE_SPAN_VERSION
+        assertEquals(subtree, FlatTree.fromSubtree(subtree, version).toTokenTree(version))
         assertEquals(expected.trimIndent(), subtree.toDebugString())
     }
 }
