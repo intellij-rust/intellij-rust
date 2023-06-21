@@ -217,10 +217,10 @@ val Ty.isFloat: Boolean
     get() = this is TyFloat || this is TyInfer.FloatVar
 
 val Ty.isScalar: Boolean
-    get() = isIntegral ||
-        isFloat ||
-        this is TyBool ||
-        this is TyChar ||
-        this is TyUnit ||
-        this is TyFunctionBase || // really TyFnDef & TyFnPtr
-        this is TyPointer
+    get() = isIntegral
+        || isFloat
+        || this is TyBool
+        || this is TyChar
+        || this is TyFunctionDef
+        || this is TyFunctionPointer
+        || this is TyPointer

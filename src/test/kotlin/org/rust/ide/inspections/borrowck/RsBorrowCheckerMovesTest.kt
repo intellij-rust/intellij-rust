@@ -33,10 +33,10 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let x = S { data: 42 };
             let mut i = 0;
             while i < 10 {
-                if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
+                if /*error descr="Use of moved value [E0382]"*/x.data/*error**/ == 10 { f(/*error descr="Use of moved value [E0382]"*/x/*error**/); } else {}
                 i += 1;
             }
-            <error descr="Use of moved value">x</error>;
+            /*error descr="Use of moved value [E0382]"*/x/*error**/;
         }
     """, checkWarn = false)
 
@@ -234,7 +234,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S { data: 42 };
             for mut i in 0..5 {
-                if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
+                if <error descr="Use of moved value">x.data</error> == 10 { f(<error descr="Use of moved value">x</error>); } else {}
                 i += 1;
             }
             <error descr="Use of moved value">x<caret></error>;
