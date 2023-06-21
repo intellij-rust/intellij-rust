@@ -9,6 +9,7 @@ import org.rust.lang.core.mir.asSpan
 import org.rust.lang.core.mir.schemas.MirArm
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
+import org.rust.lang.core.mir.schemas.toBorrowKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.RvalueScopes
@@ -66,7 +67,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
 
         // Next, wrap this up in the expr's scope.
         var expr = ThirExpr.Scope(Scope.Node(span.reference), adjusted, adjusted.ty, span)
-            .withLifetime(mirrored.tempLifetime)
+            .withLifetime(adjusted.tempLifetime)
 
         // Finally, create a destruction scope, if any.
         val regionScope = regionScopeTree.getDestructionScope(span.reference)
@@ -434,20 +435,17 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
 
             is Adjustment.BorrowPointer -> TODO()
             is Adjustment.BorrowReference -> {
-                // TODO: See fix_scalar_builtin_expr - borrow adjustment for binary operators on scalars should be removed before MIR building
-                thirExpr
-
-                // val borrowKind = adjustment.mutability.toBorrowKind()
-                // ThirExpr.Borrow(borrowKind, thirExpr, adjustment.target, thirExpr.span)
+                 val borrowKind = adjustment.mutability.toBorrowKind()
+                 ThirExpr.Borrow(borrowKind, thirExpr, adjustment.target, thirExpr.span)
             }
 
-            is Adjustment.Deref -> TODO()
+            is Adjustment.Deref -> ThirExpr.Deref(thirExpr, adjustment.target, thirExpr.span)
             is Adjustment.MutToConstPointer -> TODO()
             is Adjustment.Unsize -> TODO()
             is Adjustment.ClosureFnPointer -> TODO()
             is Adjustment.ReifyFnPointer -> TODO()
             is Adjustment.UnsafeFnPointer -> TODO()
-        }
+        }.withLifetime(thirExpr.tempLifetime)
 }
 
 private fun RsFieldsOwner.getDefinitionAndVariantIndex(): Pair<RsStructOrEnumItemElement, MirVariantIndex> =
