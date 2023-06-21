@@ -4,7 +4,7 @@ fn main() -> () {
 
     bb0: {
         StorageLive(_1);                 // scope 0 at src/main.rs:2:5: 2:10
-        _1 = function() -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:2:5: 2:10
+        _1 = foo() -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:2:5: 2:10
     }
 
     bb1: {

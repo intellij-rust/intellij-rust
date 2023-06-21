@@ -98,7 +98,6 @@ class MirBuildTest : RsTestBase() {
     fun `test zero repeat`() = doTest()
     fun `test expr stmt`() = doTest()
     // TODO more terminator comments
-    // TODO `foo` instead of `function` (needs type inference support)
     fun `test function call without arguments`() = doTest()
     fun `test function call with 1 copy argument`() = doTest()
     fun `test function call with 2 copy arguments`() = doTest()

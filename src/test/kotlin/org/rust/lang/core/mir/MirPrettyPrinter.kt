@@ -6,6 +6,7 @@
 package org.rust.lang.core.mir
 
 import com.intellij.psi.PsiElement
+import org.rust.ide.presentation.render
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -285,9 +286,9 @@ internal class MirPrettyPrinter(
                 }
             }
             constant is MirConstant.Value && constant.constValue is MirConstValue.ZeroSized -> {
-                when (constant.ty) {
+                when (val ty = constant.ty) {
                     is TyUnit -> "()"
-                    is TyFunctionBase -> "function"
+                    is TyFunctionDef -> ty.def.name ?: ""
                     else -> TODO()
                 }
             }
@@ -351,26 +352,7 @@ internal class MirPrettyPrinter(
     }
 
     private fun format(ty: Ty): String {
-        return when (ty) {
-            is TyUnit -> "()"
-            TyNever -> "!"
-            is TyPrimitive -> ty.name
-            is TyArray -> if (ty.size == null) {
-                "[${format(ty.base)}]"
-            } else {
-                "[${format(ty.base)}; ${ty.size}]"
-            }
-            is TyTuple -> if (ty.types.size == 1) {
-                "(${format(ty.types.single())},)"
-            } else {
-                ty.types.joinToString(", ", "(", ")") { format(it) }
-            }
-            is TyAdt -> ty.item.name ?: TODO()
-            is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"
-            is TyFunctionBase -> "function"
-            TyUnknown -> "<unknown>"
-            else -> TODO("Unknown type: $ty")
-        }
+        return ty.render()
     }
 
     // just local declarations for now

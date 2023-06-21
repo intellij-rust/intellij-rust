@@ -314,7 +314,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             bb0: {                               // {_0, _1, _2}
                 StorageLive(_1);
                 StorageLive(_2);
-                _2 = function() -> [return: bb1, unwind: bb2];
+                _2 = foo() -> [return: bb1, unwind: bb2];
             }                                    // {_0, _1, _2}
 
             bb1: {                               // {_0, _1}
@@ -355,7 +355,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_2);
                 StorageLive(_3);
                 _3 = move _1;                    // +_1, -_3
-                _2 = function(move _3) -> [return: bb1, unwind: bb2]; // +_3
+                _2 = foo(move _3) -> [return: bb1, unwind: bb2]; // +_3
             }                                    // {_0, _1, _2, _3}
 
             bb1: {                               // {_0, _1, _3}
