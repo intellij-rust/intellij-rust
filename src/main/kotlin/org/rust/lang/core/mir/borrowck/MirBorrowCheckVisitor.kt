@@ -258,7 +258,9 @@ class MirBorrowCheckVisitor(
 
     private fun reportMoveOutWhileBorrowed(location: MirLocation) {
         val element = location.source.span.reference
-        moveOutWhileBorrowedValues += element
+        if (element is RsElement) {
+            moveOutWhileBorrowedValues += element
+        }
     }
 
     private fun checkActivations(location: MirLocation, state: BorrowCheckResults.State) {
@@ -321,10 +323,12 @@ class MirBorrowCheckVisitor(
     ) {
         val moveOutIndices = getMovedIndexes(location, movePath)
         val element = location.source.span.reference
-        if (moveOutIndices.isEmpty()) {
-            usesOfUninitializedVariable += element
-        } else {
-            usesOfMovedValue += element
+        if (element is RsElement) {
+            if (moveOutIndices.isEmpty()) {
+                usesOfUninitializedVariable += element
+            } else {
+                usesOfMovedValue += element
+            }
         }
     }
 

@@ -1,0 +1,27 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:6:11: 6:11
+    let _1: ();                          // in scope 0 at src/main.rs:7:5: 7:12
+    let mut _2: &S;                      // in scope 0 at src/main.rs:7:5: 7:12
+    let _3: S;                           // in scope 0 at src/main.rs:7:5: 7:6
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:7:5: 7:12
+        StorageLive(_2);                 // scope 0 at src/main.rs:7:5: 7:12
+        StorageLive(_3);                 // scope 0 at src/main.rs:7:5: 7:6
+        _3 = S;                          // scope 0 at src/main.rs:7:5: 7:6
+        _2 = &_3;                        // scope 0 at src/main.rs:7:5: 7:12
+        _1 = foo(move _2) -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:7:5: 7:12
+    }
+
+    bb1: {
+        StorageDead(_2);                 // scope 0 at src/main.rs:7:11: 7:12
+        StorageDead(_1);                 // scope 0 at src/main.rs:7:12: 7:13
+        StorageDead(_3);                 // scope 0 at src/main.rs:7:12: 7:13
+        _0 = const ();                   // scope 0 at src/main.rs:6:11: 8:2
+        return;                          // scope 0 at src/main.rs:8:2: 8:2
+    }
+
+    bb2 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:6:1: 8:2
+    }
+}

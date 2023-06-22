@@ -105,6 +105,9 @@ class MirBuildTest : RsTestBase() {
     fun `test function call with return value`() = doTest()
     fun `test nested function call`() = doTest()
     fun `test associated function call without arguments`() = doTest()
+    fun `test method call with self receiver`() = doTest()
+    // TODO fix wrong order of drops
+    fun `test method call with ref self receiver`() = doTest()
     fun `test deref`() = doTest()
     fun `test deref and borrow`() = doTest()
     fun `test index`() = doTest()

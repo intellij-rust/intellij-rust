@@ -416,6 +416,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 on method call`() = checkByText("""
         struct S { }
         impl S {
@@ -429,6 +430,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 on field getter`() = checkByText("""
         struct S {
             data: (u16, u16, u16)

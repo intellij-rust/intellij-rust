@@ -13,21 +13,22 @@ import org.rust.lang.core.mir.schemas.toBorrowKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.types.RvalueScopes
-import org.rust.lang.core.types.adjustments
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.Adjustment
+import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.infer.type
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.regions.getRegionScopeTree
-import org.rust.lang.core.types.resolveRvalueScopes
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 
 class MirrorContext(contextOwner: RsInferenceContextOwner) {
     val regionScopeTree: ScopeTree = getRegionScopeTree(contextOwner)
+    private val inferenceResult: RsInferenceResult = contextOwner.selfInferenceResult
     private val rvalueScopes: RvalueScopes = resolveRvalueScopes(regionScopeTree)
+
+    private var adjustmentSpan: Pair<RsExpr, MirSpan>? = null
 
     fun mirrorBlock(block: RsBlock, ty: Ty, span: MirSpan = block.asSpan): ThirExpr {
         val mirrored = mirror(block, ty, span)
@@ -58,21 +59,24 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
         span: MirSpan
     ): ThirExpr {
         // Now apply adjustments, if any.
+
+        val adjustmentSpan = adjustmentSpan?.takeIf { it.first == element }?.second
+
         // TODO: this is just hardcoded for now
         val adjusted = if (element is RsBreakExpr) {
-            applyAdjustment(element, mirrored, Adjustment.NeverToAny(TyUnit.INSTANCE))
+            applyAdjustment(element, mirrored, Adjustment.NeverToAny(TyUnit.INSTANCE), adjustmentSpan ?: mirrored.span)
         } else {
             adjustments.fold(mirrored) { thir, adjustment ->
-                applyAdjustment(element, thir, adjustment)
+                applyAdjustment(element, thir, adjustment, adjustmentSpan ?: mirrored.span)
             }
         }
 
         // Next, wrap this up in the expr's scope.
-        var expr = ThirExpr.Scope(Scope.Node(span.reference), adjusted, adjusted.ty, span)
+        var expr = ThirExpr.Scope(Scope.Node(span.reference as RsElement), adjusted, adjusted.ty, span)
             .withLifetime(adjusted.tempLifetime)
 
         // Finally, create a destruction scope, if any.
-        val regionScope = regionScopeTree.getDestructionScope(span.reference)
+        val regionScope = regionScopeTree.getDestructionScope(span.reference as RsElement)
         if (regionScope != null) {
             expr = ThirExpr.Scope(regionScope, expr, expr.ty, span)
                 .withLifetime(expr.tempLifetime)
@@ -200,7 +204,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             is RsBlockExpr -> ThirExpr.Block(mirrorBlock(expr.block, span), ty, span)
             is RsIfExpr -> {
                 ThirExpr.If(
-                    ifThenScope = Scope.IfThen(span.reference),
+                    ifThenScope = Scope.IfThen(span.reference as RsElement),
                     cond = expr.condition?.expr?.let { mirrorExpr(it) } ?: error("Can't get condition of if expr"),
                     then = expr.block?.let { mirror(it, ty) } ?: error("Can't get then block of if expr"),
                     `else` = expr.elseBranch?.block?.let { mirror(it, ty) },
@@ -229,7 +233,17 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                         ThirExpr.Field(mirrorExpr(expr.expr), fieldIndex, ty, span)
                     }
 
-                    methodCall != null -> TODO("Method calls not implemented")
+                    methodCall != null -> {
+                        val oldAdjustmentSpan = adjustmentSpan
+                        val receiver = expr.expr
+                        adjustmentSpan = receiver to span
+                        val callee = methodCallee(methodCall, MirSpan.Full(methodCall.identifier), tempLifetime)
+                        val args = (sequenceOf(receiver) + methodCall.valueArgumentList.exprList)
+                            .map { mirrorExpr(it) }
+                            .toList()
+                        adjustmentSpan = oldAdjustmentSpan
+                        ThirExpr.Call(callee.ty, callee, args, fromCall = true, ty, span)
+                    }
                     else -> error("Invalid dot expr")
                 }
             }
@@ -263,13 +277,13 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 val thenBlock = expr.block?.let { mirrorBlock(it, span) } ?: error("Could not find body of loop")
                 val lifetime = rvalueScopes.temporaryScope(regionScopeTree, expr)
                 val thenExpr = ThirExpr.Block(thenBlock, ty, thenBlock.source).withLifetime(lifetime)
-                var breakExpr: ThirExpr = ThirExpr.Break(Scope.Node(span.reference), null, TyNever, span)
+                var breakExpr: ThirExpr = ThirExpr.Break(Scope.Node(span.reference as RsElement), null, TyNever, span)
                 breakExpr = ThirExpr.NeverToAny(breakExpr, ty, breakExpr.span).withLifetime(breakExpr.tempLifetime)
-                val breakStatement = ThirStatement.Expr(Scope.Node(span.reference), null, breakExpr)
-                val elseBlock = ThirBlock(Scope.Node(span.reference), null, listOf(breakStatement), null, span)
+                val breakStatement = ThirStatement.Expr(Scope.Node(span.reference as RsElement), null, breakExpr)
+                val elseBlock = ThirBlock(Scope.Node(span.reference as RsElement), null, listOf(breakStatement), null, span)
                 var elseExpr: ThirExpr = ThirExpr.Block(elseBlock, TyNever, span)
                 elseExpr = ThirExpr.NeverToAny(elseExpr, elseExpr.ty, elseExpr.span).withLifetime(elseExpr.tempLifetime)
-                val ifExpr = ThirExpr.If(Scope.IfThen(span.reference), condExpr, thenExpr, elseExpr, ty, span)
+                val ifExpr = ThirExpr.If(Scope.IfThen(span.reference as RsElement), condExpr, thenExpr, elseExpr, ty, span)
                 ThirExpr.Loop(ifExpr, ty, span)
             }
 
@@ -359,6 +373,11 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
         }.withLifetime(tempLifetime)
     }
 
+    private fun methodCallee(call: RsMethodCall, span: MirSpan, tempLifetime: Scope?): ThirExpr {
+        val ty = inferenceResult.getResolvedMethodType(call) ?: error("Could not resolve method")
+        return ThirExpr.ZstLiteral(ty, span).withLifetime(tempLifetime)
+    }
+
     private fun convertArm(arm: RsMatchArm): MirArm {
         val pattern = ThirPat.from(arm.pat)
         val guard = arm.matchArmGuard?.let { TODO() }
@@ -404,7 +423,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
     private fun mirrorBlock(block: RsBlock, source: MirSpan): ThirBlock {
         val (stmts, expr) = block.expandedStmtsAndTailExpr
         return ThirBlock(
-            regionScope = Scope.Node(source.reference),
+            regionScope = Scope.Node(source.reference as RsElement),
             destructionScope = regionScopeTree.getDestructionScope(block),
             statements = mirror(stmts, block),
             expr = expr?.let { mirrorExpr(it) },
@@ -443,20 +462,25 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             }
         }
 
-    private fun applyAdjustment(psiExpr: RsElement, thirExpr: ThirExpr, adjustment: Adjustment): ThirExpr =
+    private fun applyAdjustment(
+        psiExpr: RsElement,
+        thirExpr: ThirExpr,
+        adjustment: Adjustment,
+        span: MirSpan,
+    ): ThirExpr =
         when (adjustment) {
             is Adjustment.NeverToAny -> {
-                ThirExpr.NeverToAny(thirExpr, adjustment.target, thirExpr.span)
+                ThirExpr.NeverToAny(thirExpr, adjustment.target, span)
                     .withLifetime(thirExpr.tempLifetime)
             }
 
             is Adjustment.BorrowPointer -> TODO()
             is Adjustment.BorrowReference -> {
                  val borrowKind = adjustment.mutability.toBorrowKind()
-                 ThirExpr.Borrow(borrowKind, thirExpr, adjustment.target, thirExpr.span)
+                 ThirExpr.Borrow(borrowKind, thirExpr, adjustment.target, span)
             }
 
-            is Adjustment.Deref -> ThirExpr.Deref(thirExpr, adjustment.target, thirExpr.span)
+            is Adjustment.Deref -> ThirExpr.Deref(thirExpr, adjustment.target, span)
             is Adjustment.MutToConstPointer -> TODO()
             is Adjustment.Unsize -> TODO()
             is Adjustment.ClosureFnPointer -> TODO()

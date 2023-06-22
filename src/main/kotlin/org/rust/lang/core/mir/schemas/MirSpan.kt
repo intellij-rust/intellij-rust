@@ -5,22 +5,22 @@
 
 package org.rust.lang.core.mir.schemas
 
-import org.rust.lang.core.psi.ext.RsElement
+import com.intellij.psi.PsiElement
 
 sealed class MirSpan {
     open val end: MirSpan get() = End(reference)
     open val endPoint: MirSpan get() = EndPoint(reference)
-    abstract val reference: RsElement
+    abstract val reference: PsiElement
 
-    data class Full(override val reference: RsElement) : MirSpan()
+    data class Full(override val reference: PsiElement) : MirSpan()
 
-    data class Start(override val reference: RsElement) : MirSpan()
+    data class Start(override val reference: PsiElement) : MirSpan()
 
-    data class EndPoint(override val reference: RsElement) : MirSpan() {
+    data class EndPoint(override val reference: PsiElement) : MirSpan() {
         override val endPoint get() = this
     }
 
-    data class End(override val reference: RsElement) : MirSpan() {
+    data class End(override val reference: PsiElement) : MirSpan() {
         override val end: MirSpan get() = this
     }
 
@@ -28,7 +28,7 @@ sealed class MirSpan {
         // end of fake source is still a fake source sound ok
         override val end: MirSpan get() = this
         override val endPoint get() = this
-        override val reference: RsElement get() = error("Fake span have no reference")
+        override val reference: PsiElement get() = error("Fake span have no reference")
     }
 }
 
