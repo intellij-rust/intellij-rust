@@ -22,7 +22,8 @@ sealed class MirRvalue {
         class Adt(
             val definition: RsStructOrEnumItemElement,
             val variantIndex: MirVariantIndex,
-            operands: List<MirOperand>,
+            val ty: Ty,
+            operands: List<MirOperand>
         ) : Aggregate(operands)
     }
     data class Repeat(val operand: MirOperand, val count: Const) : MirRvalue()

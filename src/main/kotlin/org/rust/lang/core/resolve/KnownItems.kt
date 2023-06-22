@@ -145,6 +145,10 @@ class KnownItems(
     val Pin: RsStructOrEnumItemElement? get() = findLangItem("pin", "core")
 
     val drop: RsFunction? get() = findItem("core::mem::drop")
+
+    val Range: RsStructOrEnumItemElement? get() = findLangItem("Range")
+    val RangeInclusive: RsStructOrEnumItemElement? get() = findLangItem("RangeInclusive")
+    val RangeInclusiveNew: RsFunction? get() = findLangItem("range_inclusive_new")
 }
 
 interface KnownItemsLookup {

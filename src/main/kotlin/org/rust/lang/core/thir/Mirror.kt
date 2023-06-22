@@ -12,10 +12,12 @@ import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.mir.schemas.toBorrowKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.RvalueScopes
 import org.rust.lang.core.types.adjustments
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.Adjustment
+import org.rust.lang.core.types.infer.type
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.regions.getRegionScopeTree
@@ -330,6 +332,21 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                     ty,
                     span
                 )
+            }
+
+            is RsRangeExpr -> {
+                val knownItems = expr.knownItems
+                if (expr.isInclusive) {
+                    val fn = knownItems.RangeInclusiveNew ?: error("Can't find lang item")
+                    val fnTy = fn.type
+                    val callee = ThirExpr.ZstLiteral(fnTy, span)
+                    val arguments = expr.exprList.map { mirrorExpr(it) }
+                    ThirExpr.Call(fnTy, callee, arguments, fromCall = true, ty, span)
+                } else {
+                    val item = knownItems.Range ?: error("Can't find lang item")
+                    val fields = expr.exprList.mapIndexed { i, e -> FieldExpr(i, mirrorExpr(e)) }
+                    ThirExpr.Adt(item, variantIndex = 0, fields, base = null, ty, span)
+                }
             }
 
             is RsMatchExpr -> {

@@ -344,9 +344,10 @@ class MirBuilder private constructor(
                     }
                 }
 
+                val rvalue = MirRvalue.Aggregate.Adt(expr.definition, expr.variantIndex, expr.ty, fields)
                 this
                     .block
-                    .pushAssign(place, MirRvalue.Aggregate.Adt(expr.definition, expr.variantIndex, fields), source)
+                    .pushAssign(place, rvalue, source)
                     .andUnit()
             }
             is ThirExpr.Use -> exprIntoPlace(expr.source, place)

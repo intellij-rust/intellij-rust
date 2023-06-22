@@ -10,6 +10,8 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.thir.variant
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.document
@@ -20,6 +22,8 @@ internal class MirPrettyPrinter(
     private val mir: MirBody,
     private val commentSupplier: CommentSupplier = ScopeCommentSupplier(filenamePrefix)
 ) {
+    private val knownItems: KnownItems get() = mir.sourceElement.knownItems
+
     fun print(): String {
         return buildString { printMir(mir) }
     }
@@ -197,7 +201,19 @@ internal class MirPrettyPrinter(
             is MirRvalue.Aggregate.Adt -> {
                 val definition = rvalue.definition.variant(rvalue.variantIndex)
                 val name = when (definition) {
-                    is RsStructItem -> definition.name!!
+                    is RsStructItem -> {
+                        val name = definition.name!!
+                        val langAttributes = definition.getTraversedRawAttributes().langAttributes.toList()
+                        if ("Range" in langAttributes || "RangeInclusive" in langAttributes) {
+                            val typeArguments = (rvalue.ty as? TyAdt)
+                                ?.typeArguments
+                                ?.joinToString(prefix = "::<", postfix = ">")
+                                .orEmpty()
+                            "std::ops::$name$typeArguments"
+                        } else {
+                            name
+                        }
+                    }
                     is RsEnumVariant -> "${definition.parentEnum.name!!}::${definition.name!!}"
                     else -> error("unreachable")
                 }
@@ -352,7 +368,8 @@ internal class MirPrettyPrinter(
     }
 
     private fun format(ty: Ty): String {
-        return ty.render()
+        val useQualifiedName = setOfNotNull(knownItems.Range, knownItems.RangeInclusive)
+        return ty.render(context = mir.sourceElement, useQualifiedName = useQualifiedName)
     }
 
     // just local declarations for now

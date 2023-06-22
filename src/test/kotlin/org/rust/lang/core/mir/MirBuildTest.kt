@@ -121,6 +121,10 @@ class MirBuildTest : RsTestBase() {
     fun `test mutable ref self argument`() = doTest()
     fun `test explicit self argument`() = doTest()
     fun `test mut borrow adjustment`() = doTest()
+    fun `test range`() = doTest()
+    // TODO: more terminator comments
+    // TODO: `RangeInclusive::<i32>::new` instead of `new`
+    fun `test range inclusive`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
