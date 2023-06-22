@@ -205,7 +205,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             is RsIfExpr -> {
                 ThirExpr.If(
                     ifThenScope = expr.block?.let { Scope.IfThen(it) } ?: error("Can't get then block of if expr"),
-                    cond = expr.condition?.expr?.let { mirrorExpr(it) } ?: error("Can't get condition of if expr"),
+                    cond = expr.condition?.expr?.let(::convertCond) ?: error("Can't get condition of if expr"),
                     then = expr.block?.let { mirror(it, ty) } ?: error("Can't get then block of if expr"),
                     `else` = expr.elseBranch?.block?.let { mirror(it, ty) },
                     ty = ty,
@@ -272,8 +272,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             // Wrap in a construct equivalent to `{ let _t = $cond; _t }` to preserve drop semantics since
             // `while $cond { ... }` does not let temporaries live outside of `cond`.
             is RsWhileExpr -> {
-                var condExpr = expr.condition?.expr?.let { mirrorExpr(it) } ?: error("Can't get condition of while loop")
-                condExpr = ThirExpr.Use(condExpr, condExpr.ty, condExpr.span).withLifetime(condExpr.tempLifetime)
+                val condExpr = expr.condition?.expr?.let(::convertCond) ?: error("Can't get condition of while loop")
                 val thenBlock = expr.block?.let { mirrorBlock(it, span) } ?: error("Could not find body of loop")
                 val lifetime = rvalueScopes.temporaryScope(regionScopeTree, expr)
                 val thenExpr = ThirExpr.Block(thenBlock, ty, thenBlock.source).withLifetime(lifetime)
@@ -377,6 +376,35 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
 
             else -> TODO("Not implemented for ${expr::class}")
         }.withLifetime(tempLifetime)
+    }
+
+    // Lowers a condition (i.e. `cond` in `if cond` or `while cond`), wrapping it in a terminating scope so that
+    // temporaries created in the condition don't live beyond it.
+    private fun convertCond(cond: RsExpr): ThirExpr {
+        fun hasLetExpr(expr: RsExpr): Boolean = when (expr) {
+            is RsBinaryExpr -> hasLetExpr(expr.left) || (expr.right?.let { hasLetExpr(it) } ?: false)
+            is RsLetExpr -> true
+            else -> false
+        }
+
+        // We have to take special care for `let` exprs in the condition, e.g. in `if let pat = val` or
+        // `if foo && let pat = val`, as we _do_ want `val` to live beyond the condition in this case.
+        //
+        // In order to maintain the drop behavior for the non `let` parts of the condition, we still wrap them in
+        // terminating scopes, e.g. `if foo && let pat = val` essentially gets transformed into
+        // `if { let _t = foo; _t } && let pat = val`
+        return when {
+            cond is RsBinaryExpr && hasLetExpr(cond) -> {
+                val left = convertCond(cond.left)
+                val right = cond.right?.let(::convertCond) ?: error("Binary expression without right operand")
+                ThirExpr.Binary(cond.operatorType, left, right, cond.type, cond.asSpan)
+            }
+            cond is RsLetExpr -> mirrorExpr(cond)
+            else -> {
+                val expr = mirrorExpr(cond)
+                ThirExpr.Use(expr, expr.ty, expr.span).withLifetime(expr.tempLifetime)
+            }
+        }
     }
 
     private fun methodCallee(call: RsMethodCall, span: MirSpan, tempLifetime: Scope?): ThirExpr {

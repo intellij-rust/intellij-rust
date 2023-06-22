@@ -81,6 +81,7 @@ class MirBuildTest : RsTestBase() {
     fun `test if with else`() = doTest()
     fun `test if without else`() = doTest()
     fun `test if without else used as expr`() = doTest()
+    fun `test if let`() = doTest()
     fun `test let mut and assign`() = doTest()
     fun `test let mut and add assign`() = doTest()
     fun `test let mut and add assign other variable`() = doTest()
@@ -115,6 +116,7 @@ class MirBuildTest : RsTestBase() {
     fun `test function in impl`() = doTest()
     fun `test while`() = expect<Throwable> { doTest() }
     fun `test while count`() = expect<Throwable> { doTest() }
+    fun `test while let`() = expect<Throwable> { doTest() }
     fun `test fun with args`() = doTest()
     fun `test match pat binding 1`() = doTest()
     fun `test match pat binding 2`() = doTest()
@@ -128,7 +130,6 @@ class MirBuildTest : RsTestBase() {
     // TODO: more terminator comments
     // TODO: `RangeInclusive::<i32>::new` instead of `new`
     fun `test range inclusive`() = doTest()
-    fun `test if let`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
