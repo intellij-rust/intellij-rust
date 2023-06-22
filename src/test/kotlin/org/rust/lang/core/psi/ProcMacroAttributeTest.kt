@@ -397,15 +397,13 @@ class ProcMacroAttributeTest : RsTestBase() {
     """, Attr("attr_hardcoded_not_a_macro", 0))
 
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
-    fun `test not a macro if proc macro expansion is disabled`() {
-        setExperimentalFeatureEnabled(PROC_MACROS, false, testRootDisposable)
-        doTest("""
-            use test_proc_macros::attr_as_is;
+    @WithoutExperimentalFeatures(PROC_MACROS, ATTR_PROC_MACROS)
+    fun `test not a macro if proc macro expansion is disabled`() = doTest("""
+        use test_proc_macros::attr_as_is;
 
-            #[attr_as_is]
-            mod foo {}
-        """, None)
-    }
+        #[attr_as_is]
+        mod foo {}
+    """, None)
 
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
     fun `test not a macro if attr macro expansion is disabled 1`() {

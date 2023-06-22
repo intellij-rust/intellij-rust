@@ -16,7 +16,7 @@ import org.rust.lang.core.macros.MacroExpansionManager
 class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
 
     fun `test attributes inside macro call`() = checkHighlightingInsideMacro("""
-        <ATTRIBUTE>#[foo(foo)]</ATTRIBUTE>
+        <ATTRIBUTE>#[doc = ""]</ATTRIBUTE>
         fn <FUNCTION>main</FUNCTION>() {
             <ATTRIBUTE>#![crate_type = <STRING>"lib"</STRING>]</ATTRIBUTE>
         }
