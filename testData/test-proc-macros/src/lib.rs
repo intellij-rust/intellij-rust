@@ -1,6 +1,6 @@
 extern crate proc_macro;
 
-use proc_macro::{Delimiter, Group, Ident, Punct, Span, TokenStream, TokenTree};
+use proc_macro::{Delimiter, Group, Ident, Punct, Spacing, Span, TokenStream, TokenTree};
 
 #[proc_macro]
 pub fn function_like_as_is(input: TokenStream) -> TokenStream {
@@ -204,4 +204,32 @@ fn  discard_punct_spans_tree(tt: TokenTree) -> TokenTree {
         }
         TokenTree::Ident(..) | TokenTree::Literal(..) => tt,
     }
+}
+
+/// Expands to `compile_error!("the error message")` attached to the first 3 tokens of the item
+#[proc_macro_attribute]
+pub fn attr_err_at_3_first_tokens(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut iter = item.into_iter();
+    let t1 = iter.next().unwrap();
+    iter.next();
+    let t2 = iter.next().unwrap();
+    let span1 = t1.span();
+    let span2 = t2.span();
+
+    let mut msg = proc_macro::Literal::string("the error message");
+    msg.set_span(span2.clone());
+
+    let ident = Ident::new("compile_error", span1.clone());
+    let mut punct = Punct::new('!', Spacing::Alone);
+    punct.set_span(span1.clone());
+    let mut group = Group::new(
+        Delimiter::Brace,
+        vec![TokenTree::Literal(msg)].into_iter().collect()
+    );
+    group.set_span(span2.clone());
+    return vec![
+        TokenTree::Ident(ident),
+        TokenTree::Punct(punct),
+        TokenTree::Group(group),
+    ].into_iter().collect();
 }
