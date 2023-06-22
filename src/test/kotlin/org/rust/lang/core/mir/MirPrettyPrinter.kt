@@ -92,7 +92,7 @@ internal class MirPrettyPrinter(
                     append("imaginary: bb${terminator.imaginaryTarget!!.index}")
                     append("]")
                 }
-                appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(comment))
+                appendLine("$INDENT${INDENT}falseEdge -> $cases;".withComment(comment))
             }
             is MirTerminator.FalseUnwind -> {
                 val cases = buildString {

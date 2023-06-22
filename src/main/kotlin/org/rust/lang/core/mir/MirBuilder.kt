@@ -220,17 +220,24 @@ class MirBuilder private constructor(
                     }
             }
             is ThirExpr.If -> {
-                val conditionScope = scopes.topmost()
+                val conditionScope = localScope()
 
-                val thenSource = sourceInfo(expr.then.span)
                 val (thenBlock, elseBlock) = inScope(expr.ifThenScope) {
+                    val sourceInfo = if (isLet(expr.cond)) {
+                        val variableScope = sourceScopes.newSourceScope(expr.then.span)
+                        sourceScopes.sourceScope = variableScope
+                        MirSourceInfo(expr.then.span, variableScope)
+                    } else {
+                        sourceInfo(expr.then.span)
+                    }
+
                     inIfThenScope(conditionScope, expr.then.span) {
                         this
                             .thenElseBreak(
                                 expr.cond,
                                 conditionScope,
                                 conditionScope,
-                                thenSource,
+                                sourceInfo,
                             )
                             .exprIntoPlace(expr.then, place)
                     }
@@ -361,6 +368,25 @@ class MirBuilder private constructor(
                 blockAnd.block.andUnit()
             }
             is ThirExpr.Match -> matchExpr(place, expr.span, expr.expr, expr.arms)
+            is ThirExpr.Let -> {
+                val scope = localScope()
+                val (trueBlock, falseBlock) = inIfThenScope(scope, expr.span) {
+                    lowerLetExpr(expr.expr, expr.pat, scope, null, expr.span, true)
+                }
+
+                val trueConstValue = MirConstValue.Scalar(MirScalar.from(true))
+                val trueConstant = MirConstant.Value(trueConstValue, TyBool.INSTANCE, expr.span)
+                trueBlock.pushAssignConstant(place, trueConstant, source)
+
+                val falseConstValue = MirConstValue.Scalar(MirScalar.from(false))
+                val falseConstant = MirConstant.Value(falseConstValue, TyBool.INSTANCE, expr.span)
+                falseBlock.pushAssignConstant(place, falseConstant, source)
+
+                val joinBlock = basicBlocks.new()
+                trueBlock.terminateWithGoto(joinBlock, source)
+                falseBlock.terminateWithGoto(joinBlock, source)
+                joinBlock.andUnit()
+            }
             else -> TODO()
         }
     }
@@ -490,6 +516,38 @@ class MirBuilder private constructor(
         return block and basePlace.index(idx)
     }
 
+    private fun BlockAnd<*>.lowerLetExpr(
+        expr: ThirExpr,
+        pat: ThirPat,
+        elseTarget: RegionScope,
+        sourceScope: MirSourceScope?,
+        span: MirSpan,
+        declareBindings: Boolean
+    ): BlockAnd<Unit> {
+        var blockAnd = this
+        blockAnd = blockAnd.lowerScrutinee(expr)
+        val exprPlaceBuilder = blockAnd.elem
+        val wildcard = ThirPat.Wild(pat.ty, MirSpan.Fake)
+        val guardCandidate = MirCandidate(exprPlaceBuilder.clone(), pat, false)
+        val otherwiseCandidate = MirCandidate(exprPlaceBuilder.clone(), wildcard, false)
+        val fakeBorrowTemps = lowerMatchTree(
+            blockAnd.block,
+            pat.source,
+            false,
+            listOf(guardCandidate, otherwiseCandidate)
+        )
+        val exprPlace = exprPlaceBuilder.tryToPlace()
+        val otherwisePostGuardBlock = otherwiseCandidate.preBindingBlock!!
+        otherwisePostGuardBlock.breakForElse(elseTarget, sourceInfo(expr.span))
+
+        if (declareBindings) {
+            declareBindings(sourceScope, pat.source, pat, null, exprPlace to expr.span)
+        }
+
+        val postGuardBlock = bindPattern(sourceInfo(pat.source), guardCandidate, expr.span, null, false)
+        return postGuardBlock.andUnit()
+    }
+
     private fun boundsCheck(
         block: MirBasicBlockImpl,
         slice: PlaceBuilder,
@@ -582,6 +640,14 @@ class MirBuilder private constructor(
             is ThirExpr.Scope -> inScope(cond.regionScope) {
                 thenElseBreak(cond.expr, tempScopeOverride, breakScope, variableSource)
             }
+            is ThirExpr.Let -> lowerLetExpr(
+                cond.expr,
+                cond.pat,
+                breakScope,
+                variableSource.scope,
+                variableSource.span,
+                declareBindings = true
+            )
             else -> {
                 val tempScope = tempScopeOverride ?: scopes.topmost()
                 this
@@ -731,7 +797,7 @@ class MirBuilder private constructor(
         outerSourceInfo: MirSourceInfo,
         candidate: MirCandidate,
         scrutineeSpan: MirSpan,
-        armMatchScope: Pair<MirArm, Scope>,
+        armMatchScope: Pair<MirArm, Scope>?,
         storagesAlive: Boolean
     ): MirBasicBlockImpl {
         return if (candidate.subcandidates.isEmpty()) {
@@ -985,7 +1051,7 @@ class MirBuilder private constructor(
         block.statements.forEach { statement ->
             when {
                 statement is ThirStatement.Let && statement.elseBlock == null -> {
-                    scopes.push(MirScope(statement.remainderScope))
+                    pushScope(statement.remainderScope)
                     letScopeStack.add(statement.remainderScope)
                     val remainderSourceInfo = statement.remainderScope.span
                     val visibilityScope = sourceScopes.newSourceScope(remainderSourceInfo)
@@ -1575,13 +1641,15 @@ class MirBuilder private constructor(
         scope: Scope?,
         crossinline body: () -> BlockAnd<R>,
     ): BlockAnd<R> {
+        val sourceScope = sourceScopes.sourceScope
         if (scope != null) {
-            scopes.push(MirScope(scope))
+            pushScope(scope)
         }
         var res = body()
         if (scope != null) {
             res = res.popScope()
         }
+        sourceScopes.sourceScope = sourceScope
         return res
     }
 
@@ -1642,6 +1710,10 @@ class MirBuilder private constructor(
         // TODO: there is more in case we have DropKind::Value
         val root = drops.root
         return blocks[root]?.andUnit()
+    }
+
+    private fun pushScope(regionScope: RegionScope) {
+        scopes.push(MirScope(sourceScopes.sourceScope, regionScope))
     }
 
     private fun <T> BlockAnd<T>.popScope(): BlockAnd<T> {
@@ -1769,14 +1841,17 @@ class MirBuilder private constructor(
             Drop.Kind.VALUE -> if (!local.ty.needsDrop) return else true
             Drop.Kind.STORAGE -> false
         }
-        scopes.scopes(reversed = true).forEach { scope ->
+
+        for (scope in scopes.scopes(reversed = true)) {
             if (needsDrop) scope.invalidateCaches()
             if (scope.regionScope == regionScope) {
                 val regionScopeSource = regionScope.span
-                scope.addDrop(Drop(local, dropKind, sourceInfo(regionScopeSource.endPoint)))
+                val sourceInfo = MirSourceInfo(regionScopeSource.endPoint, scope.sourceScope)
+                scope.addDrop(Drop(local, dropKind, sourceInfo))
                 return
             }
         }
+
         error("Corresponding scope is not found")
     }
 
@@ -1822,6 +1897,12 @@ class MirBuilder private constructor(
 
     private fun sourceInfo(span: MirSpan): MirSourceInfo {
         return MirSourceInfo(span, sourceScopes.sourceScope)
+    }
+
+    private fun isLet(expr: ThirExpr): Boolean = when (expr) {
+        is ThirExpr.Let -> true
+        is ThirExpr.Scope -> isLet(expr.expr)
+        else -> false
     }
 
     companion object {

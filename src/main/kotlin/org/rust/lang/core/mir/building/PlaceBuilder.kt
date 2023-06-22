@@ -36,4 +36,6 @@ class PlaceBuilder(private val base: PlaceBase, private val projections: Mutable
     fun deref(): PlaceBuilder = apply {
         projections.add(MirProjectionElem.Deref)
     }
+
+    fun clone(): PlaceBuilder = PlaceBuilder(base, projections.toMutableList())
 }

@@ -32,6 +32,10 @@ class MirBasicBlockImpl(
         return push(MirStatement.Assign(place, rvalue, source))
     }
 
+    fun pushAssignConstant(place: MirPlace, constant: MirConstant, source: MirSourceInfo): MirBasicBlockImpl {
+        return pushAssign(place, MirRvalue.Use(MirOperand.Constant(constant)), source)
+    }
+
     fun pushStorageLive(local: MirLocal, source: MirSourceInfo): MirBasicBlockImpl {
         return push(MirStatement.StorageLive(local, source))
     }

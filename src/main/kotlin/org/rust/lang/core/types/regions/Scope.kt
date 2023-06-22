@@ -80,7 +80,7 @@ sealed class Scope {
      * Scope of the condition and then block of an if expression.
      * Used for variables introduced in an if-let expression.
      */
-    data class IfThen(override val element: RsElement) : Scope()
+    data class IfThen(override val element: RsBlock) : Scope()
 
     /** Scope following a `let id = expr;` binding in a block. */
     data class Remainder(override val element: RsBlock, val letDecl: RsLetDecl) : Scope()

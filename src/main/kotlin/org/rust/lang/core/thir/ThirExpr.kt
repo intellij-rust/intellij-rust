@@ -267,6 +267,8 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Let(
+        val pat: ThirPat,
+        val expr: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

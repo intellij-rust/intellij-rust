@@ -204,7 +204,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             is RsBlockExpr -> ThirExpr.Block(mirrorBlock(expr.block, span), ty, span)
             is RsIfExpr -> {
                 ThirExpr.If(
-                    ifThenScope = Scope.IfThen(span.reference as RsElement),
+                    ifThenScope = expr.block?.let { Scope.IfThen(it) } ?: error("Can't get then block of if expr"),
                     cond = expr.condition?.expr?.let { mirrorExpr(it) } ?: error("Can't get condition of if expr"),
                     then = expr.block?.let { mirror(it, ty) } ?: error("Can't get then block of if expr"),
                     `else` = expr.elseBranch?.block?.let { mirror(it, ty) },
@@ -283,7 +283,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 val elseBlock = ThirBlock(Scope.Node(span.reference as RsElement), null, listOf(breakStatement), null, span)
                 var elseExpr: ThirExpr = ThirExpr.Block(elseBlock, TyNever, span)
                 elseExpr = ThirExpr.NeverToAny(elseExpr, elseExpr.ty, elseExpr.span).withLifetime(elseExpr.tempLifetime)
-                val ifExpr = ThirExpr.If(Scope.IfThen(span.reference as RsElement), condExpr, thenExpr, elseExpr, ty, span)
+                val ifExpr = ThirExpr.If(Scope.IfThen(expr.block!!), condExpr, thenExpr, elseExpr, ty, span)
                 ThirExpr.Loop(ifExpr, ty, span)
             }
 
@@ -367,6 +367,12 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 val scrutinee = mirrorExpr(expr.expr ?: error("match without expr"))
                 val arms = expr.arms.map { convertArm(it) }
                 ThirExpr.Match(scrutinee, arms, ty, span)
+            }
+
+            is RsLetExpr -> {
+                val pat = ThirPat.from(expr.pat ?: error("let expr without pattern"))
+                val initializer = mirrorExpr(expr.expr ?: error("let expr without initializer"))
+                ThirExpr.Let(pat, initializer, ty, span)
             }
 
             else -> TODO("Not implemented for ${expr::class}")

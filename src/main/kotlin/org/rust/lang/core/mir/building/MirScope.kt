@@ -5,9 +5,10 @@
 
 package org.rust.lang.core.mir.building
 
+import org.rust.lang.core.mir.schemas.MirSourceScope
 import org.rust.lang.core.types.regions.Scope
 
-data class MirScope(val regionScope: Scope) {
+data class MirScope(val sourceScope: MirSourceScope, val regionScope: Scope) {
     private val drops = mutableListOf<Drop>()
 
     var cachedUnwindDrop: DropTree.DropNode? = null

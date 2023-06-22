@@ -128,6 +128,7 @@ class MirBuildTest : RsTestBase() {
     // TODO: more terminator comments
     // TODO: `RangeInclusive::<i32>::new` instead of `new`
     fun `test range inclusive`() = doTest()
+    fun `test if let`() = doTest()
 
     private fun doTest(fileName: String = "main.rs") {
         val name = getTestName(true)
