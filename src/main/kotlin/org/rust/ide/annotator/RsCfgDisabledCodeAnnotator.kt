@@ -16,16 +16,7 @@ class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (holder.isBatchMode) return
 
-        val crate = holder.currentCrate() ?: return
-
-        if (element is RsDocAndAttributeOwner && !element.isEnabledByCfgSelfOrInAttrProcMacroBody(crate)) {
-            holder.createCondDisabledAnnotation()
-        }
-
-        val isAttrDisabled = element is RsAttr
-            && element.isDisabledCfgAttrAttribute(crate)
-            && element.owner?.isEnabledByCfgSelfOrInAttrProcMacroBody(crate) == true
-        if (isAttrDisabled) {
+        if (shouldHighlightAsCfsDisabled(element, holder)) {
             holder.createCondDisabledAnnotation()
         }
     }
@@ -40,7 +31,19 @@ class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     }
 
     companion object {
-        private val CONDITIONALLY_DISABLED_CODE_SEVERITY = HighlightSeverity(
+        fun shouldHighlightAsCfsDisabled(element: PsiElement, holder: AnnotationHolder) : Boolean {
+            val crate = holder.currentCrate() ?: return false
+
+            if (element is RsDocAndAttributeOwner && !element.isEnabledByCfgSelfOrInAttrProcMacroBody(crate)) {
+                return true
+            }
+
+            return element is RsAttr
+                && element.isDisabledCfgAttrAttribute(crate)
+                && element.owner?.isEnabledByCfgSelfOrInAttrProcMacroBody(crate) == true
+        }
+
+        val CONDITIONALLY_DISABLED_CODE_SEVERITY = HighlightSeverity(
             "CONDITIONALLY_DISABLED_CODE",
             HighlightSeverity.INFORMATION.myVal + 1
         )

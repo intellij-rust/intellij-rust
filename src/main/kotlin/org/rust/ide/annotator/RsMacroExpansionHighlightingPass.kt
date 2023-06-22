@@ -8,10 +8,7 @@ package org.rust.ide.annotator
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
-import com.intellij.codeInsight.daemon.impl.FileStatusMap
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
+import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.lang.annotation.Annotator
@@ -22,15 +19,21 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.annotator.format.RsFormatMacroAnnotator
+import org.rust.ide.colors.RsColor
 import org.rust.ide.fixes.RsQuickFixBase
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.psi.AttrCache
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
+import org.rust.lang.core.psi.ext.isEnabledByCfg
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.removeLast
 
 class RsMacroExpansionHighlightingPassFactory(
@@ -73,7 +76,6 @@ class RsMacroExpansionHighlightingPass(
             RsEdition2018KeywordsAnnotator(),
             RsAttrHighlightingAnnotator(),
             RsHighlightingMutableAnnotator(),
-            RsCfgDisabledCodeAnnotator(),
             RsFormatMacroAnnotator(),
         )
         val annotatorsForAttrMacros = annotatorsForDeclMacros + listOf(
@@ -114,8 +116,12 @@ class RsMacroExpansionHighlightingPass(
             @Suppress("DEPRECATION")
             val holder = AnnotationHolderImpl(annotationSession, false)
             val annotators = if (macro.isDeeplyAttrMacro) annotatorsForAttrMacros else annotatorsForDeclMacros
+            val cfgDisabledElements = mutableListOf<PsiElement>()
 
             for (element in macro.elementsForHighlighting) {
+                if (RsCfgDisabledCodeAnnotator.shouldHighlightAsCfsDisabled(element, holder)) {
+                    cfgDisabledElements += element
+                }
                 for (ann in annotators) {
                     ProgressManager.checkCanceled()
                     holder.runAnnotatorWithContext(element, ann)
@@ -130,6 +136,10 @@ class RsMacroExpansionHighlightingPass(
 
             for (ann in holder) {
                 mapAndCollectAnnotation(macro, ann)
+            }
+
+            if (crate != null && AnnotatorBase.isEnabled(RsCfgDisabledCodeAnnotator::class.java)) {
+                highlightCfgDisabledRanges(crate, macro, cfgDisabledElements)
             }
         }
     }
@@ -149,6 +159,32 @@ class RsMacroExpansionHighlightingPass(
                 null
             }
             results += newInfo.createUnconditionally()
+        }
+    }
+
+    private fun highlightCfgDisabledRanges(
+        crate: Crate,
+        macro: MacroCallPreparedForHighlighting,
+        cfgDisabledElements: List<PsiElement>
+    ) {
+        val cache = AttrCache.HashMapCache(crate)
+        val cfgDisabledMappedRanges = cfgDisabledElements.flatMapTo(HashSet()) {
+            mapRangeFromExpansionToCallBody(macro.expansion, macro.macroCall, it.textRange)
+        }.filter { range ->
+            val element = file.findElementAt(range.startOffset) ?: return@filter false
+            val expansionElements = element.findExpansionElements(cache) ?: return@filter false
+            !expansionElements.any { it.isEnabledByCfg(crate) }
+        }
+
+        for (mappedRange in cfgDisabledMappedRanges) {
+            val color = RsColor.CFG_DISABLED_CODE
+            val severity = if (isUnitTestMode) color.testSeverity else RsCfgDisabledCodeAnnotator.CONDITIONALLY_DISABLED_CODE_SEVERITY
+            results += HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+                .severity(severity)
+                .textAttributes(color.textAttributesKey)
+                .range(mappedRange)
+                .descriptionAndTooltip("Conditionally disabled code")
+                .createUnconditionally()
         }
     }
 
