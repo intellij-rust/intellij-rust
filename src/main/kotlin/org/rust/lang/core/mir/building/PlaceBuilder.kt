@@ -9,7 +9,10 @@ import org.rust.lang.core.mir.schemas.MirLocal
 import org.rust.lang.core.mir.schemas.MirPlace
 import org.rust.lang.core.mir.schemas.MirProjectionElem
 import org.rust.lang.core.mir.schemas.PlaceElem
+import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.thir.MirFieldIndex
+import org.rust.lang.core.thir.MirVariantIndex
+import org.rust.lang.core.thir.variant
 import org.rust.lang.core.types.ty.Ty
 
 class PlaceBuilder(private val base: PlaceBase, private val projections: MutableList<PlaceElem>) {
@@ -38,4 +41,7 @@ class PlaceBuilder(private val base: PlaceBase, private val projections: Mutable
     }
 
     fun clone(): PlaceBuilder = PlaceBuilder(base, projections.toMutableList())
+
+    fun downcast(item: RsEnumItem, variantIndex: MirVariantIndex): PlaceBuilder =
+        project(MirProjectionElem.Downcast(item.variant(variantIndex).name, variantIndex))
 }

@@ -5,13 +5,16 @@
 
 package org.rust.lang.core.mir.schemas
 
+import org.rust.lang.core.mir.schemas.MirProjectionElem.*
+
 object MirAbstractType
 typealias MirAbstractElem = MirProjectionElem<MirAbstractType>
 
 fun PlaceElem.lift(): MirProjectionElem<MirAbstractType> =
     when (this) {
-        is MirProjectionElem.Field -> MirProjectionElem.Field(fieldIndex, MirAbstractType)
-        is MirProjectionElem.Deref -> MirProjectionElem.Deref
-        is MirProjectionElem.Index -> MirProjectionElem.Index(index)
-        is MirProjectionElem.ConstantIndex -> MirProjectionElem.ConstantIndex(offset, minLength, fromEnd)
+        is Deref -> Deref
+        is Field -> Field(fieldIndex, MirAbstractType)
+        is Index -> Index(index)
+        is ConstantIndex -> ConstantIndex(offset, minLength, fromEnd)
+        is Downcast -> Downcast(name, variantIndex)
     }

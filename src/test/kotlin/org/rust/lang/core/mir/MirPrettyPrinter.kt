@@ -259,6 +259,7 @@ internal class MirPrettyPrinter(
         return buildString {
             for (projection in place.projections.asReversed()) {
                 when (projection) {
+                    is MirProjectionElem.Downcast,
                     is MirProjectionElem.Field -> append("(")
                     is MirProjectionElem.Deref -> append("(*")
                     is MirProjectionElem.Index,
@@ -270,6 +271,10 @@ internal class MirPrettyPrinter(
 
             for (projection in place.projections) {
                 when (projection) {
+                    is MirProjectionElem.Downcast -> {
+                        val name = projection.name ?: "variant#${projection.variantIndex}"
+                        append(" as $name)")
+                    }
                     is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
                     is MirProjectionElem.Deref -> append(")")
                     is MirProjectionElem.Index -> append("[_${projection.index.index}]")

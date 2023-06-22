@@ -534,7 +534,7 @@ private fun RsFieldsOwner.getDefinitionAndVariantIndex(): Pair<RsStructOrEnumIte
         else -> error("unreachable")
     }
 
-private fun RsEnumItem.indexOfVariant(variant: RsEnumVariant): Int? =
+fun RsEnumItem.indexOfVariant(variant: RsEnumVariant): Int? =
     variants.indexOf(variant).takeIf { it != -1 }
 
 fun RsStructOrEnumItemElement.variant(index: MirVariantIndex): RsFieldsOwner =

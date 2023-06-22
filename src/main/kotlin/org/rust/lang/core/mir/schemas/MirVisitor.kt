@@ -115,7 +115,9 @@ interface MirVisitor {
                 visitLocal(elem.index, MirPlaceContext.NonMutatingUse.Copy, location)
             }
 
-            is MirProjectionElem.Deref, is MirProjectionElem.ConstantIndex -> {}
+            is MirProjectionElem.Deref,
+            is MirProjectionElem.ConstantIndex,
+            is MirProjectionElem.Downcast -> {}
         }
     }
 

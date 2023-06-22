@@ -48,6 +48,7 @@ class MirPlaceTy(
             }
             is MirProjectionElem.Index,
             is MirProjectionElem.ConstantIndex -> fromTy(ty.builtinIndex()!!)
+            is MirProjectionElem.Downcast -> MirPlaceTy(ty, element.variantIndex)
         }
     }
 

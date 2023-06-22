@@ -608,8 +608,9 @@ class MirBuilder private constructor(
                         }
                     }
 
-                    is MirProjectionElem.ConstantIndex,
-                    is MirProjectionElem.Field -> Unit
+                    is MirProjectionElem.Field,
+                    is MirProjectionElem.Downcast,
+                    is MirProjectionElem.ConstantIndex -> Unit
                 }
             }
         }
