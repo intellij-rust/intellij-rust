@@ -26,8 +26,14 @@ open class RangeMap(val ranges: List<MappedTextRange>) {
 
     fun isEmpty(): Boolean = ranges.isEmpty()
 
-    fun mapOffsetFromExpansionToCallBody(offset: Int): Int? {
-        return mapOffsetFromExpansionToCallBody(offset, false) ?: mapOffsetFromExpansionToCallBody(offset, true)
+    fun mapOffsetFromExpansionToCallBody(offset: Int, stickTo: StickTo = StickTo.ANY): Int? {
+        return when (stickTo) {
+            StickTo.LEFT -> mapOffsetFromExpansionToCallBody(offset, true)
+            StickTo.RIGHT -> mapOffsetFromExpansionToCallBody(offset, false)
+            StickTo.ANY -> {
+                mapOffsetFromExpansionToCallBody(offset, false) ?: mapOffsetFromExpansionToCallBody(offset, true)
+            }
+        }
     }
 
     fun mapOffsetFromExpansionToCallBody(offset: Int, stickToLeft: Boolean): Int? {
@@ -84,6 +90,10 @@ open class RangeMap(val ranges: List<MappedTextRange>) {
 
     override fun hashCode(): Int {
         return ranges.hashCode()
+    }
+
+    enum class StickTo {
+        LEFT, RIGHT, ANY
     }
 
     companion object {
