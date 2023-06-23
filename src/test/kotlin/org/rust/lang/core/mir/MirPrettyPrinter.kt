@@ -53,83 +53,76 @@ internal class MirPrettyPrinter(
             appendLine(statement.withComment(commentSupplier.statementComment(stmt)))
         }
 
-        val comment = commentSupplier.terminatorComment(block.terminator)
-        when (val terminator = block.terminator) {
-            is MirTerminator.Return -> {
-                appendLine("$INDENT${INDENT}return;".withComment(comment))
+        appendLine(format(block.terminator).withComment(commentSupplier.terminatorComment(block.terminator)))
+        appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
+    }
+
+    private fun format(terminator: MirTerminator<MirBasicBlock>): String = buildString {
+        append("$INDENT${INDENT}")
+        append(formatHead(terminator))
+
+        val successors = terminator.successors
+        val labels = formatSuccessorLabels(terminator)
+        check(successors.size == labels.size)
+        when (successors.size) {
+            0 -> Unit
+            1 -> append(" -> bb${successors.single().index}")
+            else -> {
+                val targets = (labels zip successors).joinToString(", ") { (label, successor) ->
+                    "$label: bb${successor.index}"
+                }
+                append(" -> [$targets]")
+            }
+        }
+        append(';')
+    }
+
+    private fun formatHead(terminator: MirTerminator<MirBasicBlock>): String {
+        return when (terminator) {
+            is MirTerminator.Goto -> "goto"
+            is MirTerminator.SwitchInt -> "switchInt(${format(terminator.discriminant)})"
+            is MirTerminator.Return -> "return"
+            is MirTerminator.Resume -> "resume"
+            is MirTerminator.Unreachable -> "unreachable"
+            is MirTerminator.Drop -> "drop(${format(terminator.place)})"
+            is MirTerminator.Call -> {
+                val args = terminator.args.joinToString(separator = ", ") { format(it) }
+                "${format(terminator.destination)} = ${format(terminator.callee)}($args)"
             }
             is MirTerminator.Assert -> {
                 val neg = if (terminator.expected) "" else "!"
-                val successIndex = terminator.target.index
-                val unwindIndex = terminator.unwind?.index
-                val targets = if (unwindIndex == null) "bb$successIndex" else "[success: bb$successIndex, unwind: bb$unwindIndex]"
-                val assert = "$INDENT${INDENT}assert(${neg}${format(terminator.cond)}${format(terminator.msg)}) -> $targets;"
-                appendLine(assert.withComment(comment))
+                "assert($neg${format(terminator.cond)}${format(terminator.msg)})"
             }
-            is MirTerminator.Goto -> {
-                appendLine("$INDENT${INDENT}goto -> bb${terminator.target.index};".withComment(comment))
-            }
-            is MirTerminator.SwitchInt -> {
-                val cases = buildString {
-                    append("[")
-                    // TODO: hardcoded as hell
-                    append("${terminator.targets.values.single()}: bb${terminator.targets.targets[0].index}")
-                    append(", ")
-                    append("otherwise: bb${terminator.targets.targets[1].index}")
-                    append("]")
-                }
-                val switch = "$INDENT${INDENT}switchInt(${format(terminator.discriminant)}) -> $cases;"
-                appendLine(switch.withComment(comment))
-            }
-            is MirTerminator.Resume -> {
-                appendLine("$INDENT${INDENT}resume;".withComment(comment))
-            }
-            is MirTerminator.FalseEdge -> {
-                val cases = buildString {
-                    append("[")
-                    append("real: bb${terminator.realTarget.index}")
-                    append(", ")
-                    append("imaginary: bb${terminator.imaginaryTarget!!.index}")
-                    append("]")
-                }
-                appendLine("$INDENT${INDENT}falseEdge -> $cases;".withComment(comment))
-            }
-            is MirTerminator.FalseUnwind -> {
-                val cases = buildString {
-                    append("[")
-                    append("real: bb${terminator.realTarget.index}")
-                    append(", ")
-                    append("unwind: bb${terminator.unwind!!.index}")
-                    append("]")
-                }
-                appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(comment))
-            }
-            is MirTerminator.Unreachable -> {
-                appendLine("$INDENT${INDENT}unreachable;".withComment(comment))
-            }
-
-            is MirTerminator.Call -> {
-                val args = terminator.args.joinToString(separator = ", ") { format(it) }
-                appendLine(
-                    buildString {
-                        append("$INDENT${INDENT}_${terminator.destination.local.index} = ")
-                        append("${format(terminator.callee)}($args) -> ")
-                        append("[return: bb${terminator.target?.index}, unwind: bb${terminator.unwind?.index}];")
-                    }.withComment(comment)
-                )
-            }
-
-            is MirTerminator.Drop -> {
-                appendLine(
-                    buildString {
-                        append("$INDENT${INDENT}drop")
-                        append("(_${terminator.place.local.index}) -> ")
-                        append("[return: bb${terminator.target.index}, unwind: bb${terminator.unwind?.index}];")
-                    }.withComment(comment)
-                )
-            }
+            is MirTerminator.FalseEdge -> "falseEdge"
+            is MirTerminator.FalseUnwind -> "falseUnwind"
         }
-        appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
+    }
+
+    private fun formatSuccessorLabels(terminator: MirTerminator<MirBasicBlock>): List<String> {
+        return when (terminator) {
+            is MirTerminator.Return,
+            is MirTerminator.Resume,
+            is MirTerminator.Unreachable -> listOf()
+            is MirTerminator.Goto -> listOf("")
+            is MirTerminator.SwitchInt -> terminator.targets.values.map { it.toString() } + "otherwise"
+            is MirTerminator.Call -> listOfNotNull(
+                "return".takeIf { terminator.target != null },
+                "unwind".takeIf { terminator.unwind != null },
+            )
+            is MirTerminator.Drop -> listOfNotNull(
+                "return",
+                "unwind".takeIf { terminator.unwind != null },
+            )
+            is MirTerminator.Assert -> listOfNotNull(
+                "success",
+                "unwind".takeIf { terminator.unwind != null },
+            )
+            is MirTerminator.FalseEdge -> listOf("real", "imaginary")
+            is MirTerminator.FalseUnwind -> listOfNotNull(
+                "real",
+                "unwind".takeIf { terminator.unwind != null },
+            )
+        }
     }
 
     private fun format(local: MirLocal): String {
