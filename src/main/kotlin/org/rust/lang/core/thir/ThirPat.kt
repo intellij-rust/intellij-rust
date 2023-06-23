@@ -8,12 +8,11 @@ package org.rust.lang.core.thir
 import org.rust.lang.core.mir.asSpan
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.mir.wrapper
-import org.rust.lang.core.psi.RsPat
-import org.rust.lang.core.psi.RsPatIdent
-import org.rust.lang.core.psi.RsSelfParameter
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
 /** See also [org.rust.ide.utils.checkMatch.PatternKind] */
@@ -22,6 +21,7 @@ sealed class ThirPat(
     val source: MirSpan,
 ) {
     class Wild(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class AscribeUserType(ty: Ty, source: MirSpan) : ThirPat(ty, source)
 
     class Binding(
         val mutability: Mutability,
@@ -35,7 +35,14 @@ sealed class ThirPat(
         source: MirSpan,
     ) : ThirPat(ty, source)
 
-    class Variant(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Variant(
+        val item: RsEnumItem,
+        val variantIndex: MirVariantIndex,
+        val subpatterns: List<ThirFieldPat>,
+        ty: Ty,
+        source: MirSpan
+    ) : ThirPat(ty, source)
+
     class Leaf(ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Deref(ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Const(ty: Ty, source: MirSpan) : ThirPat(ty, source)
@@ -46,6 +53,7 @@ sealed class ThirPat(
 
     companion object {
         // TODO: adjustments
+        /** See also [org.rust.ide.utils.checkMatch.CheckMatchUtilsKt.getKind] */
         fun from(pattern: RsPat): ThirPat {
             return when (pattern) {
                 is RsPatIdent -> {
@@ -72,6 +80,23 @@ sealed class ThirPat(
                         isPrimary = true, // TODO: can this even be false? didn't find example, chat gpt says it can't
                     )
                 }
+
+                is RsPatConst -> {
+                    val ty = pattern.expr.type
+                    if (ty is TyAdt) {
+                        val item = ty.item as? RsEnumItem
+                            ?: error("Unresolved constant")
+                        val path = (pattern.expr as RsPathExpr).path
+                        val variant = path.reference?.resolve() as? RsEnumVariant
+                            ?: error("Can't resolve ${path.text}")
+                        val variantIndex = item.indexOfVariant(variant)
+                            ?: error("Can't find enum variant")
+                        Variant(item, variantIndex, subpatterns = emptyList(), ty, pattern.asSpan)
+                    } else {
+                        TODO()
+                    }
+                }
+
                 else -> TODO("Not implemented for type ${pattern::class}")
             }
         }
@@ -91,6 +116,8 @@ sealed class ThirPat(
         }
     }
 }
+
+class ThirFieldPat(val field: MirFieldIndex, val pattern: ThirPat)
 
 val ThirPat.simpleIdent: String? get() = when {
     this is ThirPat.Binding && this.mode is ThirBindingMode.ByValue && this.subpattern == null -> this.name

@@ -120,6 +120,8 @@ class MirBuildTest : RsTestBase() {
     fun `test fun with args`() = doTest()
     fun `test match pat binding 1`() = doTest()
     fun `test match pat binding 2`() = doTest()
+    fun `test match single enum variant`() = doTest()
+    fun `test match enum variant without fields`() = doTest()
     fun `test immutable self argument`() = doTest()
     fun `test mutable self argument`() = doTest()
     fun `test immutable ref self argument`() = doTest()

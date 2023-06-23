@@ -7,7 +7,6 @@ package org.rust.lang.core.mir.schemas.impls
 
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.schemas.MirTerminator.Companion.dummy
-import org.rust.lang.core.types.ty.TyBool
 
 class MirBasicBlockImpl(
     override val index: Int,
@@ -77,18 +76,26 @@ class MirBasicBlockImpl(
         terminator = MirTerminator.Goto(target, getTerminatorSource(source))
     }
 
+    fun terminateWithSwitchInt(
+        discriminant: MirOperand,
+        targets: MirSwitchTargets<MirBasicBlockImpl>,
+        source: MirSourceInfo?,
+    ) {
+        terminator = MirTerminator.SwitchInt(
+            discriminant = discriminant,
+            targets = targets,
+            source = getTerminatorSource(source),
+        )
+    }
+
     fun terminateWithIf(
         cond: MirOperand,
         thenBlock: MirBasicBlockImpl,
         elseBlock: MirBasicBlockImpl,
         source: MirSourceInfo?,
     ) {
-        terminator = MirTerminator.SwitchInt(
-            discriminant = cond,
-            switchTy = TyBool.INSTANCE,
-            targets = MirSwitchTargetsImpl.`if`(0, elseBlock, thenBlock),
-            source = getTerminatorSource(source),
-        )
+        val targets = MirSwitchTargetsImpl.`if`(0, elseBlock, thenBlock)
+        terminateWithSwitchInt(cond, targets, getTerminatorSource(source))
     }
 
     fun terminateWithFalseUnwind(realTarget: MirBasicBlockImpl, unwind: MirBasicBlockImpl?, source: MirSourceInfo?) {

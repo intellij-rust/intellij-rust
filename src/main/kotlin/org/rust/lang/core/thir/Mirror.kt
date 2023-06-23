@@ -546,3 +546,8 @@ fun RsStructOrEnumItemElement.variant(index: MirVariantIndex): RsFieldsOwner =
 
 private fun RsFieldsOwner.indexOfField(field: RsFieldDecl): Int? =
     fields.indexOf(field).takeIf { it != -1 }
+
+// TODO
+typealias MirDiscriminant = Long
+fun RsEnumItem.discriminants(): List<Pair<MirVariantIndex, MirDiscriminant>> =
+    List(variants.size) { index -> index to index.toLong() }

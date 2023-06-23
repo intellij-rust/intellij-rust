@@ -391,6 +391,15 @@ class MirBuilder private constructor(
         }
     }
 
+    /**
+     * Adds a new temporary value of type `ty` storing the result of evaluating `expr`.
+     * N.B., **No cleanup is scheduled for this temporary.** You should call `scheduleDrop` once the temporary is initialized.
+     */
+    fun temp(ty: Ty, span: MirSpan): MirPlace {
+        val temp = localDecls.newLocal(internal = true, ty = ty, source = MirSourceInfo.outermost(span))
+        return MirPlace(temp)
+    }
+
     private fun consumeByCopyOrMove(place: MirPlace): MirOperand {
         return if (place.ty().ty.isMovesByDefault(implLookup)) {
             MirOperand.Move(place)
@@ -532,6 +541,7 @@ class MirBuilder private constructor(
         val otherwiseCandidate = MirCandidate(exprPlaceBuilder.clone(), wildcard, false)
         val fakeBorrowTemps = lowerMatchTree(
             blockAnd.block,
+            pat.source,
             pat.source,
             false,
             listOf(guardCandidate, otherwiseCandidate)
@@ -686,18 +696,19 @@ class MirBuilder private constructor(
         scrutinee: ThirExpr,
         arms: List<MirArm>
     ): BlockAnd<Unit> {
-        val blockAndScrutinee = lowerScrutinee(scrutinee)
+        val (block, scrutineePlace) = lowerScrutinee(scrutinee)
 
         val candidates = arms.map {
-            MirCandidate(blockAndScrutinee.elem, it.pattern, it.guard != null)
+            MirCandidate(scrutineePlace.clone(), it.pattern, it.guard != null)
         }
         val matchHasGuard = candidates.any { it.hasGuard }
 
-        lowerMatchTree(blockAndScrutinee.block, scrutinee.span, matchHasGuard, candidates)
+        val matchStartSpan = (span.reference as RsMatchExpr).match.asSpan  // TODO
+        lowerMatchTree(block, scrutinee.span, matchStartSpan, matchHasGuard, candidates)
 
         return lowerMatchArms(
             destination,
-            blockAndScrutinee.elem,
+            scrutineePlace,
             scrutinee.span,
             arms zip candidates,
             sourceInfo(span)
@@ -717,11 +728,12 @@ class MirBuilder private constructor(
     private fun lowerMatchTree(
         block: MirBasicBlockImpl,
         scrutineeSpan: MirSpan,
+        matchStartSpan: MirSpan,
         matchHasGuard: Boolean,
         candidates: List<MirCandidate>
     ) {
         val otherwise = Ref<MirBasicBlockImpl>(null)
-        matchCandidates(scrutineeSpan, block, otherwise, candidates)
+        matchCandidates(matchStartSpan, scrutineeSpan, block, otherwise, candidates)
 
         if (!otherwise.isNull) {
             val sourceInfo = sourceInfo(scrutineeSpan)
@@ -870,6 +882,7 @@ class MirBuilder private constructor(
     }
 
     private fun matchCandidates(
+        span: MirSpan,
         scrutineeSpan: MirSpan,
         startBlock: MirBasicBlockImpl,
         otherwiseBlock: Ref<MirBasicBlockImpl>,
@@ -889,9 +902,9 @@ class MirBuilder private constructor(
                     newCandidates += it
                 }
             }
-            matchSimplifiedCandidates(scrutineeSpan, startBlock, otherwiseBlock, newCandidates)
+            matchSimplifiedCandidates(span, scrutineeSpan, startBlock, otherwiseBlock, newCandidates)
         } else {
-            matchSimplifiedCandidates(scrutineeSpan, startBlock, otherwiseBlock, candidates)
+            matchSimplifiedCandidates(span, scrutineeSpan, startBlock, otherwiseBlock, candidates)
         }
     }
 
@@ -933,6 +946,7 @@ class MirBuilder private constructor(
 
     private fun simplifyMatchPair(matchPair: MirMatchPair, candidate: MirCandidate): Boolean {
         return when (val pattern = matchPair.pattern) {
+            is ThirPat.AscribeUserType -> true
             is ThirPat.Wild -> true
             is ThirPat.Binding -> {
                 matchPair.place.tryToPlace()?.let { source ->
@@ -951,7 +965,16 @@ class MirBuilder private constructor(
             is ThirPat.Const -> TODO()
             is ThirPat.Range -> TODO()
             is ThirPat.Slice -> TODO()
-            is ThirPat.Variant -> TODO()
+            is ThirPat.Variant -> {
+                val irrefutable = pattern.item.variants.size == 1  // TODO exhaustive_patterns
+                if (irrefutable) {
+                    val placeBuilder = matchPair.place.downcast(pattern.item, pattern.variantIndex)
+                    candidate.matchPairs += fieldMatchPairs(placeBuilder, pattern.subpatterns)
+                    return true
+                } else {
+                    return false
+                }
+            }
             is ThirPat.Array -> TODO()
             is ThirPat.Leaf -> TODO()
             is ThirPat.Deref -> TODO()
@@ -959,7 +982,15 @@ class MirBuilder private constructor(
         }
     }
 
+    private fun fieldMatchPairs(place: PlaceBuilder, subpatterns: List<ThirFieldPat>): List<MirMatchPair> {
+        return subpatterns.map {
+            val place2 = place.cloneProject(MirProjectionElem.Field(it.field, it.pattern.ty))
+            MirMatchPair.new(place2, it.pattern)
+        }
+    }
+
     private fun matchSimplifiedCandidates(
+        span: MirSpan,
         scrutineeSpan: MirSpan,
         startBlock: MirBasicBlockImpl,
         otherwiseBlock: Ref<MirBasicBlockImpl>,
@@ -991,7 +1022,7 @@ class MirBuilder private constructor(
             return
         }
 
-        TODO("test_candidates_with_or")
+        testCandidatesWithOr(span, scrutineeSpan, unmatchedCandidates, block, otherwiseBlock)
     }
 
     private fun selectMatchedCandidates(
@@ -1025,6 +1056,100 @@ class MirBuilder private constructor(
         }
 
         return reachableCandidates.last().otherwiseBlock
+    }
+
+    private fun testCandidatesWithOr(
+        span: MirSpan,
+        scrutineeSpan: MirSpan,
+        candidates: List<MirCandidate>,
+        block: MirBasicBlockImpl,
+        otherwiseBlock: Ref<MirBasicBlockImpl>
+    ) {
+        val firstCandidate = candidates.first()
+        if (firstCandidate.matchPairs.first().pattern !is ThirPat.Or) {
+            testCandidates(span, scrutineeSpan, candidates, block, otherwiseBlock)
+            return
+        }
+
+        TODO()
+    }
+
+    private fun testCandidates(
+        span: MirSpan,
+        scrutineeSpan: MirSpan,
+        candidates1: List<MirCandidate>,
+        block: MirBasicBlockImpl,
+        otherwiseBlock: Ref<MirBasicBlockImpl>
+    ) {
+        // Extract the match-pair from the highest priority candidate
+        val matchPair = candidates1.first().matchPairs.first()
+        val test = MirTest.test(matchPair)
+        val matchPlace = matchPair.place.clone()
+
+        // Most of the time, the test to perform is simply a function of the main candidate;
+        // But for a test like SwitchInt, we may want to add cases based on the candidates that are available
+        when (test) {
+            is MirTest.SwitchInt -> TODO()
+            is MirTest.Switch -> {
+                for (candidate in candidates1) {
+                    if (!addVariantsToSwitch(matchPlace, candidate, test.variants)) {
+                        break
+                    }
+                }
+            }
+            else -> Unit
+        }
+
+        // TODO Insert a Shallow borrow of any places that is switched on.
+
+        // Perform the test, branching to one of N blocks.
+        // For each of those N possible outcomes, create a (initially empty) vector of candidates.
+        // Those are the candidates that still apply if the test has that particular outcome.
+        val targetCandidates = Array(test.targets()) { mutableListOf<MirCandidate>() }
+
+        // Sort the candidates into the appropriate vector in [targetCandidates].
+        // Note that at some point we may encounter a candidate where the test is not relevant;
+        // at that point, we stop sorting.
+        val candidates2 = candidates1.dropWhile {
+            val index = sortCandidate(matchPlace, test, it) ?: return@dropWhile false
+            targetCandidates[index] += it
+            true
+        }
+        // at least the first candidate ought to be tested
+        testAssert { candidates1.size > candidates2.size }
+
+        val makeTargetBlocks = {
+            val remainderStart = if (candidates2.isEmpty()) {
+                otherwiseBlock
+            } else {
+                Ref<MirBasicBlockImpl>()
+            }
+            val targetBlocks = targetCandidates.map { candidates ->
+                if (candidates.isNotEmpty()) {
+                    val candidateStart = basicBlocks.new()
+                    matchCandidates(span, scrutineeSpan, candidateStart, remainderStart, candidates)
+                    candidateStart
+                } else {
+                    remainderStart.get() ?: run {
+                        basicBlocks.new().also { remainderStart.set(it) }
+                    }
+                }
+            }
+
+            if (candidates2.isNotEmpty()) {
+                matchCandidates(
+                    span,
+                    scrutineeSpan,
+                    remainderStart.get() ?: basicBlocks.new(),
+                    otherwiseBlock,
+                    candidates2
+                )
+            }
+
+            targetBlocks
+        }
+
+        performTest(span, scrutineeSpan, block, matchPlace, test, makeTargetBlocks)
     }
 
     private fun BlockAnd<*>.astBlockIntoPlace(
@@ -1242,6 +1367,7 @@ class MirBuilder private constructor(
         action: (Mutability, name: String, ThirBindingMode, LocalVar, MirSpan, Ty) -> Unit,
     ) {
         when (pattern) {
+            is ThirPat.AscribeUserType -> TODO()
             is ThirPat.Wild -> TODO()
             is ThirPat.Binding -> {
                 if (pattern.isPrimary) {
@@ -1254,7 +1380,11 @@ class MirBuilder private constructor(
             is ThirPat.Const -> TODO()
             is ThirPat.Range -> TODO()
             is ThirPat.Slice -> TODO()
-            is ThirPat.Variant -> TODO()
+            is ThirPat.Variant -> {
+                for (subpattern in pattern.subpatterns) {
+                    TODO()
+                }
+            }
             is ThirPat.Array -> TODO()
             is ThirPat.Leaf -> TODO()
             is ThirPat.Deref -> TODO()
@@ -1896,7 +2026,7 @@ class MirBuilder private constructor(
         return MirSourceInfo(span, sourceScopes.outermost)
     }
 
-    private fun sourceInfo(span: MirSpan): MirSourceInfo {
+    fun sourceInfo(span: MirSpan): MirSourceInfo {
         return MirSourceInfo(span, sourceScopes.sourceScope)
     }
 

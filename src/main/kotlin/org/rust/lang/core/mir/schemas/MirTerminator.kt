@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.mir.schemas
 
-import org.rust.lang.core.types.ty.Ty
-
 sealed interface MirTerminator<out BB : MirBasicBlock> {
     val source: MirSourceInfo
 
@@ -36,7 +34,6 @@ sealed interface MirTerminator<out BB : MirBasicBlock> {
 
     data class SwitchInt<BB : MirBasicBlock>(
         val discriminant: MirOperand,
-        val switchTy: Ty,
         val targets: MirSwitchTargets<BB>,
         override val source: MirSourceInfo,
     ) : MirTerminator<BB>

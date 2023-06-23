@@ -200,7 +200,9 @@ interface MirVisitor {
                 visitOperand(rvalue.operand, location)
             }
 
-            is MirRvalue.Discriminant -> TODO()
+            is MirRvalue.Discriminant -> {
+                visitPlace(rvalue.place, MirPlaceContext.NonMutatingUse.Inspect, location)
+            }
 
             is MirRvalue.NullaryOpUse -> TODO()
 

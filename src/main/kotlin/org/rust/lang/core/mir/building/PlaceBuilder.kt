@@ -15,7 +15,7 @@ import org.rust.lang.core.thir.MirVariantIndex
 import org.rust.lang.core.thir.variant
 import org.rust.lang.core.types.ty.Ty
 
-class PlaceBuilder(private val base: PlaceBase, private val projections: MutableList<PlaceElem>) {
+data class PlaceBuilder(private val base: PlaceBase, private val projections: MutableList<PlaceElem>) {
     constructor(local: MirLocal) : this(PlaceBase.Local(local), mutableListOf())
 
     fun toPlace(): MirPlace = tryToPlace()!!
@@ -35,6 +35,8 @@ class PlaceBuilder(private val base: PlaceBase, private val projections: Mutable
         projections.add(element)
         return this
     }
+
+    fun cloneProject(element: PlaceElem): PlaceBuilder = clone().project(element)
 
     fun deref(): PlaceBuilder = apply {
         projections.add(MirProjectionElem.Deref)

@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsBindingMode
 import org.rust.lang.core.psi.ext.ArithmeticOp
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.thir.LocalVar
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
@@ -30,8 +29,8 @@ val TyInteger.minValue: Long
         return Int.MIN_VALUE.toLong()
     }
 
-val RsElement.asSpan: MirSpan get() = MirSpan.Full(this)
-val RsElement.asStartSpan: MirSpan get() = MirSpan.Start(this)
+val PsiElement.asSpan: MirSpan get() = MirSpan.Full(this)
+val PsiElement.asStartSpan: MirSpan get() = MirSpan.Start(this)
 
 val Ty.needsDrop: Boolean
     get() {
