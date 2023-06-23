@@ -313,6 +313,7 @@ private class MoveDataBuilder(
 
     private fun gatherRvalue(rvalue: MirRvalue) {
         when (rvalue) {
+            is MirRvalue.ThreadLocalRef -> Unit  // not-a-move
             is MirRvalue.Use -> gatherOperand(rvalue.operand)
             is MirRvalue.Repeat -> gatherOperand(rvalue.operand)
             is MirRvalue.Aggregate -> {
@@ -332,7 +333,14 @@ private class MoveDataBuilder(
             }
 
             is MirRvalue.UnaryOpUse -> gatherOperand(rvalue.operand)
-            is MirRvalue.Ref, is MirRvalue.Len -> Unit
+
+            is MirRvalue.CopyForDeref -> error("unreachable")
+
+            is MirRvalue.Ref,
+            is MirRvalue.AddressOf,
+            is MirRvalue.Discriminant,
+            is MirRvalue.Len,
+            is MirRvalue.NullaryOpUse -> Unit
         }
     }
 

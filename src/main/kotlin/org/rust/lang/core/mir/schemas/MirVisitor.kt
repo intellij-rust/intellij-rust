@@ -169,6 +169,8 @@ interface MirVisitor {
                 visitTyConst(rvalue.count, location)
             }
 
+            is MirRvalue.ThreadLocalRef -> Unit
+
             is MirRvalue.Ref -> {
                 // TODO: visitRegion(rvalue.region, location)
                 val context = when (rvalue.borrowKind) {
@@ -179,6 +181,10 @@ interface MirVisitor {
                 }
                 visitPlace(rvalue.place, context, location)
             }
+
+            is MirRvalue.CopyForDeref -> TODO()
+
+            is MirRvalue.AddressOf -> TODO()
 
             is MirRvalue.BinaryOpUse -> {
                 visitOperand(rvalue.left, location)
@@ -193,6 +199,10 @@ interface MirVisitor {
             is MirRvalue.UnaryOpUse -> {
                 visitOperand(rvalue.operand, location)
             }
+
+            is MirRvalue.Discriminant -> TODO()
+
+            is MirRvalue.NullaryOpUse -> TODO()
 
             is MirRvalue.Aggregate -> {
                 when (rvalue) {

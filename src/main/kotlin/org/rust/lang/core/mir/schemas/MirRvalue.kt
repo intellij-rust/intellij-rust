@@ -16,6 +16,7 @@ sealed class MirRvalue {
     data class UnaryOpUse(val op: UnaryOperator, val operand: MirOperand) : MirRvalue()
     data class BinaryOpUse(val op: MirBinaryOperator, val left: MirOperand, val right: MirOperand) : MirRvalue()
     data class CheckedBinaryOpUse(val op: MirBinaryOperator, val left: MirOperand, val right: MirOperand) : MirRvalue()
+    object NullaryOpUse : MirRvalue()
     sealed class Aggregate(val operands: List<MirOperand>) : MirRvalue() {
         class Array(val ty: Ty, operands: List<MirOperand>) : Aggregate(operands)
         class Tuple(operands: List<MirOperand>) : Aggregate(operands)
@@ -29,4 +30,8 @@ sealed class MirRvalue {
     data class Repeat(val operand: MirOperand, val count: Const) : MirRvalue()
     data class Ref(val borrowKind: MirBorrowKind, val place: MirPlace) : MirRvalue()
     data class Len(val place: MirPlace) : MirRvalue()
+    object ThreadLocalRef : MirRvalue()
+    object AddressOf : MirRvalue()
+    data class Discriminant(val place: MirPlace) : MirRvalue()
+    object CopyForDeref : MirRvalue()
 }

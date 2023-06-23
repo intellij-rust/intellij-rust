@@ -101,6 +101,10 @@ class MirBorrowCheckVisitor(
     }
 
     private fun consumeRvalue(location: MirLocation, rvalue: MirRvalue, state: BorrowCheckResults.State) {
+        val implLenAndDiscriminant = { place: MirPlace ->
+            accessPlace(location, place, Read(Copy), state)
+            checkIfPathOrSubpathIsMoved(location, place, state)
+        }
         when (rvalue) {
             is MirRvalue.Ref -> {
                 val readOrWrite = when (val borrowKind = rvalue.borrowKind) {
@@ -120,6 +124,10 @@ class MirBorrowCheckVisitor(
                 checkIfPathOrSubpathIsMoved(location, rvalue.place, state)
             }
 
+            is MirRvalue.AddressOf -> TODO()
+
+            is MirRvalue.ThreadLocalRef -> Unit
+
             is MirRvalue.Use -> consumeOperand(location, rvalue.operand, state)
             is MirRvalue.UnaryOpUse -> consumeOperand(location, rvalue.operand, state)
 
@@ -131,6 +139,10 @@ class MirBorrowCheckVisitor(
             is MirRvalue.CheckedBinaryOpUse -> {
                 consumeOperand(location, rvalue.left, state)
                 consumeOperand(location, rvalue.right, state)
+            }
+
+            is MirRvalue.NullaryOpUse -> {
+                // nullary ops take no dynamic input; no borrowck effect.
             }
 
             is MirRvalue.Repeat -> consumeOperand(location, rvalue.operand, state)
@@ -145,10 +157,10 @@ class MirBorrowCheckVisitor(
                 }
             }
 
-            is MirRvalue.Len -> {
-                accessPlace(location, rvalue.place, Read(Copy), state)
-                checkIfPathOrSubpathIsMoved(location, rvalue.place, state)
-            }
+            is MirRvalue.CopyForDeref -> TODO()
+
+            is MirRvalue.Len -> implLenAndDiscriminant(rvalue.place)
+            is MirRvalue.Discriminant -> implLenAndDiscriminant(rvalue.place)
         }
     }
 

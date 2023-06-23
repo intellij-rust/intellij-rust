@@ -175,6 +175,9 @@ internal class MirPrettyPrinter(
                 "$opName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
             is MirRvalue.UnaryOpUse -> "${rvalue.op.formatted}(${format(rvalue.operand)})"
+            is MirRvalue.Discriminant -> "discriminant(${format(rvalue.place)})"
+            is MirRvalue.NullaryOpUse -> TODO()
+            is MirRvalue.ThreadLocalRef -> TODO()
             is MirRvalue.Use -> format(rvalue.operand)
             is MirRvalue.CheckedBinaryOpUse -> {
                 val funName = when (val op = rvalue.op) {
@@ -183,6 +186,8 @@ internal class MirPrettyPrinter(
                 }
                 "$funName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
+            is MirRvalue.CopyForDeref -> TODO()
+            is MirRvalue.AddressOf -> TODO()
             is MirRvalue.Repeat -> {
                 val value = format(rvalue.operand)
                 val count = rvalue.count
