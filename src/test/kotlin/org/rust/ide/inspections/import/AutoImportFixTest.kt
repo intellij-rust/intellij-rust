@@ -2329,7 +2329,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test group imports only if the other import doesn't have an attribute`() = checkAutoImportFixByText("""
-        #[attribute = "value"]
+        #[doc = "value"]
         use crate::foo::Foo;
 
         mod foo {
@@ -2342,7 +2342,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """, """
         use crate::foo::Bar;
-        #[attribute = "value"]
+        #[doc = "value"]
         use crate::foo::Foo;
 
         mod foo {

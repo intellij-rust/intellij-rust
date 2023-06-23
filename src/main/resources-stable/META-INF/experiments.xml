@@ -15,7 +15,7 @@
         <experimentalFeature id="org.rust.macros.proc.derive" percentOfUsers="100">
             <description>Enables derive procedural macro expansion</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.macros.proc.attr" percentOfUsers="0">
+        <experimentalFeature id="org.rust.macros.proc.attr" percentOfUsers="100">
             <description>Enables attribute procedural macro expansion</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="100">

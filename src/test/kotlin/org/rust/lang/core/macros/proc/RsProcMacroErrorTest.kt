@@ -23,7 +23,7 @@ import org.rust.lang.core.macros.errors.GetMacroExpansionError
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
 class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
-    @WithExperimentalFeatures()
+    @WithoutExperimentalFeatures(PROC_MACROS, ATTR_PROC_MACROS)
     fun `test macro expansion is disabled`() = checkError<GetMacroExpansionError.ExpansionError>("""
         use test_proc_macros::attr_as_is;
 
@@ -62,7 +62,7 @@ class RsProcMacroErrorTest : RsMacroExpansionErrorTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    @WithExperimentalFeatures()
+    @WithoutExperimentalFeatures(PROC_MACROS, ATTR_PROC_MACROS)
     fun `test macro expansion is disabled with unsuccessfully compiled proc macro crate`() = checkErrorByTree<GetMacroExpansionError.ExpansionError>("""
     //- dep-proc-macro-unsuccessfully-compiled/lib.rs
         extern crate proc_macro;

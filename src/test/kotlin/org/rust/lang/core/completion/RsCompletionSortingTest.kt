@@ -7,6 +7,8 @@ package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.WithoutExperimentalFeatures
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldDecl
 import kotlin.reflect.KClass
@@ -499,6 +501,7 @@ class RsCompletionSortingTest : RsTestBase() {
         Int::class to "1"
     ))
 
+    @WithoutExperimentalFeatures(RsExperiments.PROC_MACROS, RsExperiments.ATTR_PROC_MACROS)
     fun `test expected types priority (vec macro)`() = doTest("""
         #[lang = "alloc::vec::Vec"]
         struct Vec<T>(T);
