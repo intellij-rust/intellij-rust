@@ -10,8 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.testFramework.LightProjectDescriptor
-import org.rust.EmptyDescriptor
-import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.checkMacroExpansionFileSystemAfterTest
 

@@ -7,7 +7,6 @@ package org.rust.lang.core.mir.building
 
 import org.rust.lang.core.mir.schemas.MirLocal
 import org.rust.lang.core.mir.schemas.MirSourceInfo
-import org.rust.lang.core.mir.schemas.MirSpan
 
 class Drop(
     val local: MirLocal,

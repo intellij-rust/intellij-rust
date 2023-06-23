@@ -30,9 +30,6 @@ import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.normType
-import org.rust.lang.core.types.rawType
-import org.rust.lang.core.types.ty.TyTraitObject
 
 /**
  * Completes Rust keywords

@@ -5,8 +5,6 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.mergeFlags
 
 abstract class TyFunctionBase(

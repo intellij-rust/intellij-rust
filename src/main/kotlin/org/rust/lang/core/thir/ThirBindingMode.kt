@@ -6,7 +6,6 @@
 package org.rust.lang.core.thir
 
 import org.rust.lang.core.mir.RsBindingModeWrapper
-import org.rust.lang.core.psi.RsBindingMode
 
 sealed class ThirBindingMode {
     abstract val rs: RsBindingModeWrapper

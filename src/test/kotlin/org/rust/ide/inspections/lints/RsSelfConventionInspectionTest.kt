@@ -8,7 +8,6 @@ package org.rust.ide.inspections.lints
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.lints.RsSelfConventionInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
