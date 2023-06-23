@@ -9,7 +9,6 @@ import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.mergeFlags
 
 class TyFunctionPointer(
     fnSig: FnSig,

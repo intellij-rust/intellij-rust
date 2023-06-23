@@ -7,7 +7,6 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.*
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi

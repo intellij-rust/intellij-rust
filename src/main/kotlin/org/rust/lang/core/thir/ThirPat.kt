@@ -10,7 +10,6 @@ import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.mir.wrapper
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatIdent
-import org.rust.lang.core.psi.impl.RsPatIdentImpl
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type

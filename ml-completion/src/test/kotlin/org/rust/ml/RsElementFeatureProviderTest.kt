@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.util.RelevanceUtil.asRelevanceMaps
 import com.intellij.testFramework.UsefulTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.IgnoreInPlatform
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor

@@ -30,7 +30,6 @@ import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.RsResult.Ok
-import org.rust.stdext.orElse
 import org.rust.stdext.unwrapOrElse
 import java.nio.file.Path
 

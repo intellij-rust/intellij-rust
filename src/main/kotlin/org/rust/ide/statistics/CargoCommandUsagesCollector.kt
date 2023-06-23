@@ -6,7 +6,6 @@
 package org.rust.ide.statistics
 
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
-import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
