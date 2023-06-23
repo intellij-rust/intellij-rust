@@ -115,89 +115,86 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 )
             }
 
-            is RsUnaryExpr -> {
-                when {
-                    expr.minus != null -> {
-                        val clearExpr = expr.expr?.let { unwrapParenExprs(it) }
-                            ?: error("Could not get expr of unary operator")
-                        if (clearExpr is RsLitExpr) {
-                            ThirExpr.Literal(
-                                literal = clearExpr,
-                                neg = true,
-                                ty = ty,
-                                span = span,
-                            )
-                        } else {
-                            ThirExpr.Unary(
-                                op = UnaryOperator.MINUS,
-                                arg = expr.expr?.let { mirrorExpr(it) }
-                                    ?: error("Could not get expr of unary operator"),
-                                ty = ty,
-                                span = span,
-                            )
-                        }
+            is RsUnaryExpr -> when (val op = expr.operatorType) {
+                UnaryOperator.MINUS -> {
+                    val clearExpr = expr.expr?.let { unwrapParenExprs(it) }
+                        ?: error("Could not get expr of unary operator")
+                    if (clearExpr is RsLitExpr) {
+                        ThirExpr.Literal(
+                            literal = clearExpr,
+                            neg = true,
+                            ty = ty,
+                            span = span,
+                        )
+                    } else {
+                        ThirExpr.Unary(
+                            op = UnaryOperator.MINUS,
+                            arg = expr.expr?.let { mirrorExpr(it) }
+                                ?: error("Could not get expr of unary operator"),
+                            ty = ty,
+                            span = span,
+                        )
                     }
-
-                    expr.excl != null -> ThirExpr.Unary(
-                        op = UnaryOperator.NOT,
-                        arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of unary operator"),
-                        ty = ty,
-                        span = span,
-                    )
-
-                    expr.and != null -> ThirExpr.Borrow(
-                        kind = if (expr.mut == null) MirBorrowKind.Shared else MirBorrowKind.Mut(false),
-                        arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of borrow"),
-                        ty = ty,
-                        span = span,
-                    )
-
-                    expr.mul != null -> ThirExpr.Deref(
-                        arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of dereg"),
-                        ty = ty,
-                        span = span,
-                    )
-
-                    else -> throw IllegalStateException("Unexpected unary operator")
                 }
+                UnaryOperator.NOT -> ThirExpr.Unary(
+                    op = UnaryOperator.NOT,
+                    arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of unary operator"),
+                    ty = ty,
+                    span = span,
+                )
+                UnaryOperator.REF, UnaryOperator.REF_MUT -> ThirExpr.Borrow(
+                    kind = if (op == UnaryOperator.REF) MirBorrowKind.Shared else MirBorrowKind.Mut(false),
+                    arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of borrow"),
+                    ty = ty,
+                    span = span,
+                )
+                UnaryOperator.DEREF -> {
+                    val arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of deref")
+                    ThirExpr.Deref(
+                        arg = arg,
+                        ty = ty,
+                        span = span,
+                    )
+                }
+                UnaryOperator.BOX,
+                UnaryOperator.RAW_REF_CONST,
+                UnaryOperator.RAW_REF_MUT -> throw IllegalStateException("Unsupported unary operator: ${op}")
             }
 
             is RsLitExpr -> ThirExpr.Literal(expr, false, ty, span)
-            is RsBinaryExpr -> {
-                when (val operator = expr.binaryOp.operatorType) {
-                    is ArithmeticOp, is ComparisonOp, is EqualityOp -> ThirExpr.Binary(
-                        op = operator,
-                        left = mirrorExpr(expr.left),
-                        right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of arithmetic operator"),
-                        ty = ty,
-                        span = span
-                    )
+            is RsBinaryExpr -> when (val operator = expr.binaryOp.operatorType) {
+                is ArithmeticOp, is ComparisonOp, is EqualityOp -> ThirExpr.Binary(
+                    op = operator,
+                    left = mirrorExpr(expr.left),
+                    right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of arithmetic operator"),
+                    ty = ty,
+                    span = span
+                )
 
-                    is LogicOp -> ThirExpr.Logical(
-                        op = operator,
-                        left = mirrorExpr(expr.left),
-                        right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of logical operator"),
-                        ty = ty,
-                        span = span
-                    )
+                is LogicOp -> ThirExpr.Logical(
+                    op = operator,
+                    left = mirrorExpr(expr.left),
+                    right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of logical operator"),
+                    ty = ty,
+                    span = span
+                )
 
-                    is AssignmentOp.EQ -> ThirExpr.Assign(
+                is AssignmentOp.EQ -> ThirExpr.Assign(
+                    left = mirrorExpr(expr.left),
+                    right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of assignment"),
+                    ty = ty,
+                    span = span
+                )
+
+                is ArithmeticAssignmentOp -> {
+                    // TODO custom method call (not builtin)
+                    ThirExpr.AssignOp(
+                        op = operator.nonAssignEquivalent,
                         left = mirrorExpr(expr.left),
                         right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of assignment"),
                         ty = ty,
                         span = span
                     )
-
-                    is ArithmeticAssignmentOp -> {
-                        // TODO custom method call (not builtin)
-                        ThirExpr.AssignOp(
-                            op = operator.nonAssignEquivalent,
-                            left = mirrorExpr(expr.left),
-                            right = expr.right?.let { mirrorExpr(it) } ?: error("Could not get rhs of assignment"),
-                            ty = ty,
-                            span = span
-                        )
-                    }
                 }
             }
 
