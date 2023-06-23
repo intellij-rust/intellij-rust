@@ -150,6 +150,9 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 )
                 UnaryOperator.DEREF -> {
                     val arg = expr.expr?.let { mirrorExpr(it) } ?: error("Could not get expr of deref")
+                    if (inferenceResult.isOverloadedOperator(expr)) {
+                        TODO()
+                    }
                     ThirExpr.Deref(
                         arg = arg,
                         ty = ty,

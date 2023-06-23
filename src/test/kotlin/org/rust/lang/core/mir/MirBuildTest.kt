@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
+import org.junit.Test
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
@@ -111,6 +112,8 @@ class MirBuildTest : RsTestBase() {
     fun `test method call with ref self receiver`() = doTest()
     fun `test deref`() = doTest()
     fun `test deref and borrow`() = doTest()
+    @Test(expected = Throwable::class) // TODO support overloaded deref
+    fun `test overloaded deref`() = doTest()
     fun `test index`() = doTest()
     fun `test constant index`() = doTest()
     fun `test function in impl`() = doTest()
