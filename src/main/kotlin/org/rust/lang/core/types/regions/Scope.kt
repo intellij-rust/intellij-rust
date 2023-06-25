@@ -121,7 +121,7 @@ class ScopeTree {
     private val parentMap: MutableMap<Scope, ScopeInfo> = hashMapOf()
 
     /** Maps from a variable or binding to the block in which that variable is declared. */
-    private val varMap = VarMap()
+    private val varMap: MutableMap<RsElement, Scope> = hashMapOf()
 
     /** Maps from a `element` to the associated destruction scope (if any). */
     private val destructionScopes: MutableMap<RsElement, Scope> = hashMapOf()
@@ -842,21 +842,4 @@ fun getRegionScopeTree(contextOwner: RsInferenceContextOwner): ScopeTree {
     visitor.scopeTree.rootBody = body
     visitor.visitBody(contextOwner)
     return visitor.scopeTree
-}
-
-/**
- * This class is made in order to support different function parameter definition of self parameter and all other,
- * where in the "other" parameters there is RsPatBinding, but in `self` there is none
- */
-private class VarMap {
-    private val delegate = hashMapOf<Any, Scope>()
-
-    operator fun get(pat: RsPatBinding): Scope? = delegate[pat]
-    operator fun get(self: RsSelfParameter): Scope? = delegate[self]
-
-    operator fun set(pat: RsPatBinding, scope: Scope) = delegate.set(pat, scope)
-    operator fun set(self: RsSelfParameter, scope: Scope) = delegate.set(self, scope)
-
-    override fun hashCode(): Int = delegate.hashCode()
-    override fun equals(other: Any?) = delegate == other
 }
