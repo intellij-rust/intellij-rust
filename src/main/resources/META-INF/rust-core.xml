@@ -494,11 +494,6 @@
                          implementationClass="org.rust.ide.inspections.RsUnnecessaryCastInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Cast can be replaced with literal suffix"
-                         enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsReplaceCastWithSuffixInspection"/>
-
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="While true loop"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsWhileTrueLoopInspection"/>
