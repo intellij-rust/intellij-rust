@@ -7,6 +7,7 @@ package org.rust.ide.utils
 
 import com.intellij.psi.PsiElement
 import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
+import org.rust.lang.core.macros.RangeMap
 import org.rust.lang.core.macros.findMacroCallAndOffsetExpandedFromUnchecked
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.isExpandedFromMacro
@@ -200,7 +201,11 @@ sealed interface PsiInsertionPlace {
             if (!element.isExpandedFromMacro) return PsiModificationUtil.isWriteableRegardlessMacros(element)
             if (!IntentionInMacroUtil.isMutableExpansionFile(element.containingFile)) return false
 
-            val (call, _) = findMacroCallAndOffsetExpandedFromUnchecked(element, absoluteOffsetInFile) ?: return false
+            val (call, _) = findMacroCallAndOffsetExpandedFromUnchecked(
+                element,
+                absoluteOffsetInFile,
+                RangeMap.StickTo.ANY
+            ) ?: return false
 
             if (call.isExpandedFromMacro) return false
 
