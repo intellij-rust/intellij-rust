@@ -437,6 +437,7 @@ class MirBuilder private constructor(
                     exprToPlace(expr.expr, mutability, fakeBorrowTemps)
                 }
             }
+
             is ThirExpr.Field -> {
                 exprToPlace(expr.expr, mutability, fakeBorrowTemps)
                     .map { placeBuilder ->
@@ -453,6 +454,11 @@ class MirBuilder private constructor(
                     }
 
             }
+
+            is ThirExpr.Deref -> {
+                exprToPlace(expr.arg, mutability, fakeBorrowTemps).map { it.deref() }
+            }
+
             is ThirExpr.Index -> {
                 lowerIndexExpression(
                     expr.lhs,
@@ -464,32 +470,58 @@ class MirBuilder private constructor(
                     sourceInfo
                 )
             }
+
+            is ThirExpr.UpvarRef -> TODO()
+
             is ThirExpr.VarRef -> {
                 // TODO: different handling in case of guards
                 block and PlaceBuilder(varLocal(expr.local))
             }
+
+            is ThirExpr.PlaceTypeAscription -> TODO()
+
+            is ThirExpr.ValueTypeAscription -> TODO()
+
             is ThirExpr.Array,
-            is ThirExpr.Repeat,
             is ThirExpr.Tuple,
             is ThirExpr.Adt,
+            is ThirExpr.Closure,
             is ThirExpr.Unary,
             is ThirExpr.Binary,
+            is ThirExpr.Logical,
+            is ThirExpr.Box,
+            is ThirExpr.Cast,
+            is ThirExpr.Use,
             is ThirExpr.NeverToAny,
+            is ThirExpr.Pointer,
+            is ThirExpr.Repeat,
             is ThirExpr.Borrow,
+            is ThirExpr.AddressOf,
+            is ThirExpr.Match,
             is ThirExpr.If,
             is ThirExpr.Loop,
             is ThirExpr.Block,
+            is ThirExpr.Let,
             is ThirExpr.Assign,
+            is ThirExpr.AssignOp,
             is ThirExpr.Break,
-            is ThirExpr.Use,
-            is ThirExpr.Literal -> {
+            is ThirExpr.Continue,
+            is ThirExpr.Return,
+            is ThirExpr.Literal,
+            is ThirExpr.NamedConst,
+            is ThirExpr.NonHirLiteral,
+            is ThirExpr.ZstLiteral,
+            is ThirExpr.ConstParam,
+            is ThirExpr.ConstBlock,
+            is ThirExpr.StaticRef,
+            is ThirExpr.InlineAsm,
+            is ThirExpr.OffsetOf,
+            is ThirExpr.Yield,
+            is ThirExpr.ThreadLocalRef,
+            is ThirExpr.Call -> {
                 toTemp(expr, expr.tempLifetime, mutability)
                     .map { PlaceBuilder(it) }
             }
-            is ThirExpr.Deref -> {
-                exprToPlace(expr.arg, mutability, fakeBorrowTemps).map { it.deref() }
-            }
-            else -> TODO()
         }
     }
 
