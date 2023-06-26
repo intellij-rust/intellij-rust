@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections.import
 
-import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.navigation.hidePopupIfDumbModeStarts
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
@@ -91,7 +91,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
                 }
             }
         }
-        NavigationUtil.hidePopupIfDumbModeStarts(popup, project)
+        hidePopupIfDumbModeStarts(popup, project)
         popup.showInBestPositionFor(dataContext)
     }
 }
