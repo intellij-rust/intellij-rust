@@ -30,7 +30,6 @@ import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.util.parseSemVer
 import org.rust.ide.notifications.showBalloon
-import org.rust.ide.statistics.CargoTestToolWindowUsagesCollector
 
 class CargoTestRunState(
     environment: ExecutionEnvironment,
@@ -125,7 +124,6 @@ class CargoTestRunState(
                     "disable" -> {
                         notification.expire()
                         AdvancedSettings.setBoolean(TEST_TOOL_WINDOW_SETTING_KEY, false)
-                        CargoTestToolWindowUsagesCollector.logTestToolWindowDisabled()
                         showConfirmationInfo(project)
                     }
                 }
