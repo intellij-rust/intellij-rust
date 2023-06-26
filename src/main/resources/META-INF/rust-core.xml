@@ -1320,6 +1320,8 @@
         <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsProjectUsagesCollector"/>
         <!--suppress PluginXmlValidity -->
         <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsSettingsUsagesCollector"/>
+        <!--suppress PluginXmlValidity -->
+        <statistics.applicationUsagesCollector implementation="org.rust.ide.statistics.RsAdvancedSettingsUsagesCollector"/>
         <statistics.collectorExtension implementation="org.rust.ide.statistics.CargoCommandUsagesCollector"/>
         <statistics.collectorExtension implementation="org.rust.ide.statistics.CargoCommandTypeCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCounterUsagesCollector"/>

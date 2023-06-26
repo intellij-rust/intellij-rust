@@ -280,7 +280,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 }
 
-private const val EXTERNAL_DOCUMENTATION_URL_SETTING_KEY: String = "org.rust.external.doc.url"
+const val EXTERNAL_DOCUMENTATION_URL_SETTING_KEY: String = "org.rust.external.doc.url"
 
 /**
  * Returns the base URL used for creating external code and crate documentation links.

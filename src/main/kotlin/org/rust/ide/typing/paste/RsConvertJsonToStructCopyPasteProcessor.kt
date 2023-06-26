@@ -117,6 +117,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
     }
 }
 
+const val CONVERT_JSON_TO_STRUCT_SETTING_KEY: String = "org.rust.convert.json.to.struct"
 private var CONVERT_JSON_SERDE_PRESENT: Boolean = false
 
 @TestOnly
@@ -153,7 +154,7 @@ private fun shouldConvertJson(project: Project): Boolean {
     return if (isUnitTestMode) {
         true
     } else {
-        when (AdvancedSettings.getEnum("org.rust.convert.json.to.struct", StoredPreference::class.java)) {
+        when (AdvancedSettings.getEnum(CONVERT_JSON_TO_STRUCT_SETTING_KEY, StoredPreference::class.java)) {
             StoredPreference.YES -> true
             StoredPreference.NO -> false
             StoredPreference.ASK_EVERY_TIME -> {
@@ -171,7 +172,7 @@ private fun shouldConvertJson(project: Project): Boolean {
                                     Messages.YES -> StoredPreference.YES
                                     else -> StoredPreference.NO
                                 }
-                                AdvancedSettings.setEnum("org.rust.convert.json.to.struct", value)
+                                AdvancedSettings.setEnum(CONVERT_JSON_TO_STRUCT_SETTING_KEY, value)
 
                                 // `exitCode != Messages.CANCEL` is always true since we don't override `shouldSaveOptionsOnCancel`
                                 RsConvertJsonToStructUsagesCollector.logRememberChoiceResult(value == StoredPreference.YES)
