@@ -126,11 +126,36 @@ class CargoTestRunState(
                         notification.expire()
                         AdvancedSettings.setBoolean(TEST_TOOL_WINDOW_SETTING_KEY, false)
                         CargoTestToolWindowUsagesCollector.logTestToolWindowDisabled()
+                        showConfirmationInfo(project)
                     }
                 }
             }
 
             PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_KEY, true)
+        }
+
+        private fun showConfirmationInfo(project: Project) {
+            val content = buildString {
+                append("The ")
+                append(HtmlChunk.text("Test").bold())
+                append(" tool window was disabled.")
+                append(HtmlChunk.br())
+                append(HtmlChunk.link("revert", "Revert"))
+            }
+
+            project.showBalloon(
+                "",
+                content,
+                NotificationType.INFORMATION,
+                null
+            ) { notification, event ->
+                when (event.description) {
+                    "revert" -> {
+                        notification.expire()
+                        AdvancedSettings.setBoolean(TEST_TOOL_WINDOW_SETTING_KEY, true)
+                    }
+                }
+            }
         }
 
         @VisibleForTesting
