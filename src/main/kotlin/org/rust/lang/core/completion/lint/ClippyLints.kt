@@ -512,6 +512,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("significant_drop_in_scrutinee", false),
     Lint("significant_drop_tightening", false),
     Lint("similar_names", false),
+    Lint("single_call_fn", false),
     Lint("single_char_add_str", false),
     Lint("single_char_lifetime_names", false),
     Lint("single_char_pattern", false),
