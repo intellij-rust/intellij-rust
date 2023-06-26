@@ -36,7 +36,7 @@ class MirPlaceTy(
 ) {
 
     fun projectionTy(element: MirProjectionElem<Ty>): MirPlaceTy {
-        check(variantIndex == null || element !is MirProjectionElem.Field) {
+        check(variantIndex == null || element is MirProjectionElem.Field) {
             "cannot use non field projection on downcasted place"
         }
         return when (element) {

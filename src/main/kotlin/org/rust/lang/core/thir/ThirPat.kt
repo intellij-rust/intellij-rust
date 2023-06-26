@@ -5,10 +5,14 @@
 
 package org.rust.lang.core.thir
 
+import org.rust.ide.utils.checkMatch.CheckMatchException
 import org.rust.lang.core.mir.asSpan
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.mir.wrapper
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.parentEnum
+import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
@@ -43,7 +47,8 @@ sealed class ThirPat(
         source: MirSpan
     ) : ThirPat(ty, source)
 
-    class Leaf(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    /** `(...)`, `Foo(...)`, `Foo{...}`, or `Foo`, where `Foo` is a variant name from an ADT with a single variant. */
+    class Leaf(val subpatterns: List<ThirFieldPat>, ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Deref(ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Const(ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Range(ty: Ty, source: MirSpan) : ThirPat(ty, source)
@@ -97,7 +102,51 @@ sealed class ThirPat(
                     }
                 }
 
+                is RsPatTupleStruct -> {
+                    val ty = pattern.type as? TyAdt
+                        ?: error("Tuple struct pattern not applied to an ADT")
+                    val variant = pattern.path.reference?.resolve() as? RsEnumVariant
+                        ?: error("Unresolved variant")
+                    val item = ty.item as? RsEnumItem
+                        ?: error("Unexpected TyAdt")
+                    val subpatterns = lowerTupleSubpats(pattern.patList, variant.positionalFields.size, )
+                    lowerVariantOrLeaf(variant, pattern.asSpan, ty, subpatterns)
+                }
+
                 else -> TODO("Not implemented for type ${pattern::class}")
+            }
+        }
+
+        private fun lowerTupleSubpats(pats: List<RsPat>, expectedLen: Int): List<ThirFieldPat> {
+            if (pats.count { it is RsPatRest } > 1) {
+                error("More then one .. in tuple pattern")
+            }
+            var hasPatRest = false
+            return pats.mapIndexedNotNull { i, pat ->
+                if (pat is RsPatRest) {
+                    hasPatRest = true
+                    return@mapIndexedNotNull null
+                }
+                val index = i + (if (hasPatRest) expectedLen - pats.size else 0)
+                val thirPat = from(pat)
+                ThirFieldPat(index, thirPat)
+            }
+        }
+
+        private fun lowerVariantOrLeaf(
+            item: RsElement,
+            span: MirSpan,
+            ty: TyAdt,
+            subpatterns: List<ThirFieldPat>
+        ): ThirPat {
+            return when (item) {
+                is RsEnumVariant -> {
+                    val enum = item.parentEnum
+                    val variantIndex = enum.indexOfVariant(item) ?: error("Can't find enum variant")
+                    Variant(enum, variantIndex, subpatterns, ty, span)
+                }
+                is RsStructItem -> Leaf(subpatterns, ty, span)
+                else -> throw CheckMatchException("Impossible case $item")
             }
         }
 

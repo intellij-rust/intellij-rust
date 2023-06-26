@@ -168,7 +168,12 @@ private fun candidateAfterVariantSwitch(
     val matchPair = candidate.matchPairs.removeAt(matchPairIndex)
 
     val downcastPlace = matchPair.place.downcast(item, variantIndex)
-    val consequentMatchPairs = subpatterns.map { TODO() }
+    val consequentMatchPairs = subpatterns.map { subpattern ->
+        // e.g., `(x as Variant).0`
+        val place = downcastPlace.cloneProject(MirProjectionElem.Field(subpattern.field, subpattern.pattern.ty))
+        // e.g., `(x as Variant).0 @ P1`
+        MirMatchPair.new(place, subpattern.pattern)
+    }
     candidate.matchPairs += consequentMatchPairs
 }
 

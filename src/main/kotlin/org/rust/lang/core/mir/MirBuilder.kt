@@ -1394,6 +1394,11 @@ class MirBuilder private constructor(
         varIndices[variable] = MirLocalForNode.One(localForArmBody)
     }
 
+    /**
+     * Visit all the primary bindings in a patterns, that is,
+     * visit the leftmost occurrence of each variable bound in a pattern.
+     * A variable will occur more than once in an or-pattern.
+     */
     private fun visitPrimaryBindings(
         pattern: ThirPat,
         action: (Mutability, name: String, ThirBindingMode, LocalVar, MirSpan, Ty) -> Unit,
@@ -1414,7 +1419,7 @@ class MirBuilder private constructor(
             is ThirPat.Slice -> TODO()
             is ThirPat.Variant -> {
                 for (subpattern in pattern.subpatterns) {
-                    TODO()
+                    visitPrimaryBindings(subpattern.pattern, action)
                 }
             }
             is ThirPat.Array -> TODO()

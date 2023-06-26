@@ -472,4 +472,17 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             e;
         }
     """)
+
+    fun `test no E0381 in match enum with fields`() = checkErrors("""
+        enum E { A(i32), B(i32, i32, i32, i32, i32) }
+        fn main() {
+            let e = E::A(0);
+            let x = match e {
+                E::A(a) => { a }
+                E::B(b1, b2, .., b3) => { b1 + b2 + b3 }
+            };
+            x;
+            e;
+        }
+    """)
 }
