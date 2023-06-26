@@ -25,13 +25,13 @@ class RsDebuggerUsageCollector : CounterUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("rust.debug.evaluate.expression", 3)
+        private val GROUP = EventLogGroup("rust.debug.evaluate.expression", 4)
 
         private val SUCCESS = EventFields.Boolean("success")
         private val DEBUGGER_KIND = EventFields.Enum<DebuggerKind>("debugger_kind")
 
         private val EXPRESSION_EVALUATED = GROUP.registerEvent("evaluated", SUCCESS, DEBUGGER_KIND)
-        private val ELEMENT_USED_IN_EVALUATION = GROUP.registerEvent("element_used", SUCCESS, DEBUGGER_KIND, EventFields.Enum("element", ExpressionKind::class.java))
+        private val ELEMENT_USED_IN_EVALUATION = GROUP.registerEvent("element.used", SUCCESS, DEBUGGER_KIND, EventFields.Enum("element", ExpressionKind::class.java))
 
         fun logEvaluated(success: Boolean, debuggerKind: DebuggerKind, features: EnumSet<ExpressionKind>) {
             EXPRESSION_EVALUATED.log(success, debuggerKind)
