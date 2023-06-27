@@ -216,6 +216,7 @@ private class MoveDataBuilder(
         movePathFor(place)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_dataflow/src/move_paths/builder.rs#L100
     private fun movePathFor(place: MirPlace): RsResult<MovePath, MoveError> {
         var base = data.revLookup.locals[place.local]!!
         place.projections.forEachIndexed { i, elem ->

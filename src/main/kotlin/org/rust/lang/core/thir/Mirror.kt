@@ -52,6 +52,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
         return completeMirroring(field, mirrored, field.adjustments, span)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/thir/cx/expr.rs#L36
     private fun completeMirroring(
         element: RsElement,
         mirrored: ThirExpr,
@@ -85,6 +86,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
         return expr
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/thir/cx/expr.rs#L265
     private fun mirrorUnadjusted(expr: RsExpr, span: MirSpan): ThirExpr {
         val ty = expr.type
         val tempLifetime = rvalueScopes.temporaryScope(regionScopeTree, expr)
@@ -453,6 +455,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
         FieldExpr(fieldIndex, mirror(it))
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/thir/cx/expr.rs#L881
     private fun convert(path: RsPathExpr, ty: Ty, source: MirSpan): ThirExpr {
         val resolved = path.path.reference?.resolve() ?: error("Could not resolve RsPathExpr")
         return convert(resolved, ty, source)
@@ -478,6 +481,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
     private fun mirror(block: RsBlock, ty: Ty, source: MirSpan = block.asSpan): ThirExpr =
         ThirExpr.Block(mirrorBlock(block, source), ty, block.asSpan)
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/thir/cx/block.rs#L12
     private fun mirrorBlock(block: RsBlock, source: MirSpan): ThirBlock {
         val (stmts, expr) = block.expandedStmtsAndTailExpr
         return ThirBlock(
@@ -520,6 +524,7 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
             }
         }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/thir/cx/expr.rs#L99
     private fun applyAdjustment(
         psiExpr: RsElement,
         thirExpr: ThirExpr,

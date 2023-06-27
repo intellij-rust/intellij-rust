@@ -161,6 +161,7 @@ class MirBuilder private constructor(
         blocks[scopes.unwindDrops.root]?.terminateWithResume(MirSourceInfo.outermost(span))
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/into.rs#L18
     private fun BlockAnd<*>.exprIntoPlace(expr: ThirExpr, place: MirPlace): BlockAnd<Unit> {
         val source = sourceInfo(expr.span)
         return when (expr) {
@@ -412,6 +413,7 @@ class MirBuilder private constructor(
         return toReadOnlyPlaceBuilder(expr).map { it.toPlace() }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_place.rs#L357
     private fun BlockAnd<*>.toPlace(expr: ThirExpr): BlockAnd<MirPlace> {
         return toPlaceBuilder(expr).map { it.toPlace() }
     }
@@ -420,10 +422,12 @@ class MirBuilder private constructor(
         return exprToPlace(expr, Mutability.IMMUTABLE)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_place.rs#L368
     private fun BlockAnd<*>.toPlaceBuilder(expr: ThirExpr): BlockAnd<PlaceBuilder> {
         return exprToPlace(expr, Mutability.MUTABLE)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_place.rs#L404
     private fun BlockAnd<*>.exprToPlace(
         expr: ThirExpr,
         mutability: Mutability,
@@ -1192,6 +1196,7 @@ class MirBuilder private constructor(
         performTest(span, scrutineeSpan, block, matchPlace, test, makeTargetBlocks)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/block.rs#L9
     private fun BlockAnd<*>.astBlockIntoPlace(
         block: ThirBlock,
         place: MirPlace,
@@ -1205,6 +1210,7 @@ class MirBuilder private constructor(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/block.rs#L55
     private fun BlockAnd<*>.astBlockStmtsIntoPlace(
         block: ThirBlock,
         place: MirPlace,
@@ -1441,6 +1447,7 @@ class MirBuilder private constructor(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_rvalue.rs#L28
     private fun BlockAnd<*>.toLocalRvalue(expr: ThirExpr): BlockAnd<MirRvalue> {
         return toRvalue(expr, scopes.topmost())
     }
@@ -1461,6 +1468,7 @@ class MirBuilder private constructor(
         return toOperand(expr, scope, NeedsTemporary.Maybe)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_rvalue.rs#L38
     private fun BlockAnd<*>.toRvalue(expr: ThirExpr, scope: Scope): BlockAnd<MirRvalue> {
         return when (expr) {
             is ThirExpr.Scope -> inScope(expr.regionScope) { toRvalue(expr.expr, scope) }
@@ -1603,6 +1611,7 @@ class MirBuilder private constructor(
         return block and MirRvalue.Aggregate.Array(value.ty, emptyList())
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/stmt.rs#L11
     private fun BlockAnd<*>.statementExpr(expr: ThirExpr, statementScope: Scope?): BlockAnd<Unit> {
         val source = sourceInfo(expr.span)
         return when (expr) {
@@ -1966,6 +1975,7 @@ class MirBuilder private constructor(
         return drop
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_operand.rs#L100
     private fun BlockAnd<*>.toOperand(
         expr: ThirExpr,
         scope: Scope?,
@@ -1993,6 +2003,7 @@ class MirBuilder private constructor(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_temp.rs#L13
     private fun BlockAnd<*>.toTemp(expr: ThirExpr, tempLifetime: Scope?, mutability: Mutability): BlockAnd<MirLocal> {
         if (expr is ThirExpr.Scope) {
             return inScope(expr.regionScope) { toTemp(expr.expr, tempLifetime, mutability) }
@@ -2044,6 +2055,7 @@ class MirBuilder private constructor(
         error("Corresponding scope is not found")
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/as_constant.rs#L20
     private fun toConstant(expr: ThirExpr): MirConstant {
         return when (expr) {
             is ThirExpr.Literal -> when {

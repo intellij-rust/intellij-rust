@@ -57,6 +57,7 @@ internal class MirPrettyPrinter(
         appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/terminator.rs#L267
     private fun format(terminator: MirTerminator<MirBasicBlock>): String = buildString {
         append("$INDENT${INDENT}")
         append(formatHead(terminator))
@@ -148,6 +149,7 @@ internal class MirPrettyPrinter(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L2024
     private fun format(rvalue: MirRvalue): String {
         return when (rvalue) {
             is MirRvalue.BinaryOpUse -> {
@@ -236,6 +238,7 @@ internal class MirPrettyPrinter(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L1860
     private fun format(operand: MirOperand): String {
         return when (operand) {
             is MirOperand.Constant -> {
@@ -252,6 +255,7 @@ internal class MirPrettyPrinter(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L1714
     private fun format(place: MirPlace): String {
         val index = place.local.index
 

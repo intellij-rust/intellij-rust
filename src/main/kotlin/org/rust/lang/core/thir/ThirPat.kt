@@ -18,6 +18,7 @@ import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
 
+// https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/thir.rs#L585
 /** See also [org.rust.ide.utils.checkMatch.PatternKind] */
 sealed class ThirPat(
     val ty: Ty,
@@ -57,6 +58,7 @@ sealed class ThirPat(
 
     companion object {
         // TODO: adjustments
+        // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/thir/pattern/mod.rs#L211
         /** See also [org.rust.ide.utils.checkMatch.CheckMatchUtilsKt.getKind] */
         fun from(pattern: RsPat): ThirPat {
             val ty = pattern.type

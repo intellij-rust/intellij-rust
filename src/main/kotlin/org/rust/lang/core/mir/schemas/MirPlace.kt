@@ -18,9 +18,11 @@ data class MirPlace(val local: MirLocal, val projections: List<PlaceElem> = empt
         return MirPlace(local, newProjections)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/tcx.rs#L135
     fun ty(): MirPlaceTy = tyFrom(local, projections)
 
     companion object {
+        // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/tcx.rs#L119
         fun tyFrom(local: MirLocal, projections: List<MirProjectionElem<Ty>>): MirPlaceTy {
             return projections.fold(MirPlaceTy.fromTy(local.ty)) { placeTy, element ->
                 placeTy.projectionTy(element)
@@ -35,6 +37,7 @@ class MirPlaceTy(
     val variantIndex: Int?,
 ) {
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/tcx.rs#L57
     fun projectionTy(element: MirProjectionElem<Ty>): MirPlaceTy {
         check(variantIndex == null || element is MirProjectionElem.Field) {
             "cannot use non field projection on downcasted place"

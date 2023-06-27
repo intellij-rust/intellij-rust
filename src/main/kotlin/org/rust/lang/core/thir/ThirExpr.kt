@@ -17,6 +17,7 @@ import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
+// https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/thir.rs#L257
 sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /**

@@ -43,6 +43,7 @@ class MirBasicBlockImpl(
         return push(MirStatement.StorageDead(local, source))
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/cfg.rs#L81
     fun pushFakeRead(
         cause: MirStatement.FakeRead.Cause,
         place: MirPlace,
@@ -72,6 +73,7 @@ class MirBasicBlockImpl(
         )
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/cfg.rs#L121
     fun terminateWithGoto(target: MirBasicBlockImpl, source: MirSourceInfo?) {
         terminator = MirTerminator.Goto(target, getTerminatorSource(source))
     }
