@@ -66,28 +66,38 @@ sealed class ThirPat(
                 is RsPatWild -> Wild(ty, span)
 
                 is RsPatIdent -> {
-                    val bindingMode = pattern.patBinding.bindingMode.wrapper
-                    val mode: ThirBindingMode
-                    val mutability: Mutability
-                    when (bindingMode.ref) {
-                        null -> {
-                            mode = ThirBindingMode.ByValue
-                            mutability = if (bindingMode.mut == null) Mutability.IMMUTABLE else Mutability.MUTABLE
+                    if (pattern.pat != null) TODO("Support `x @ pat`")
+                    when (val resolved = pattern.patBinding.reference.resolve()) {
+                        is RsEnumVariant -> {
+                            if (ty !is TyAdt) error("Expected TyAdt for RsPatIdent resolved to RsEnumVariant")
+                            lowerVariantOrLeaf(resolved, span, ty, subpatterns = emptyList())
                         }
-                        else -> TODO()
-                    }
+                        is RsConstant -> TODO()
+                        else -> {
+                            val bindingMode = pattern.patBinding.bindingMode.wrapper
+                            val mode: ThirBindingMode
+                            val mutability: Mutability
+                            when (bindingMode.ref) {
+                                null -> {
+                                    mode = ThirBindingMode.ByValue
+                                    mutability = if (bindingMode.mut == null) Mutability.IMMUTABLE else Mutability.MUTABLE
+                                }
+                                else -> TODO()
+                            }
 
-                    Binding(
-                        mutability = mutability,
-                        mode = mode,
-                        name = pattern.patBinding.name ?: error("Could not get name of pattern binding"),
-                        variable = LocalVar(pattern.patBinding), // TODO: this is wrong in case isPrimary = false
-                        varTy = ty,
-                        subpattern = null, // TODO
-                        ty = ty,
-                        source = span,
-                        isPrimary = true, // TODO: can this even be false? didn't find example, chat gpt says it can't
-                    )
+                            Binding(
+                                mutability = mutability,
+                                mode = mode,
+                                name = pattern.patBinding.name ?: error("Could not get name of pattern binding"),
+                                variable = LocalVar(pattern.patBinding), // TODO: this is wrong in case isPrimary = false
+                                varTy = ty,
+                                subpattern = null, // TODO
+                                ty = ty,
+                                source = span,
+                                isPrimary = true, // TODO: can this even be false? didn't find example, chat gpt says it can't
+                            )
+                        }
+                    }
                 }
 
                 is RsPatConst -> {
@@ -117,7 +127,7 @@ sealed class ThirPat(
                     if (ty !is TyAdt) error("Tuple struct pattern not applied to an ADT")
                     val variant = pattern.path.reference?.resolve() as? RsEnumVariant
                         ?: error("Unresolved variant")
-                    val subpatterns = lowerTupleSubpats(pattern.patList, variant.positionalFields.size, )
+                    val subpatterns = lowerTupleSubpats(pattern.patList, variant.positionalFields.size)
                     lowerVariantOrLeaf(variant, span, ty, subpatterns)
                 }
 

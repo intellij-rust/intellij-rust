@@ -1,0 +1,44 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:3:11: 3:11
+    let _1: E;                           // in scope 0 at src/main.rs:4:9: 4:10
+    let _2: i32;                         // in scope 0 at src/main.rs:5:5: 8:6
+    let mut _3: isize;                   // in scope 0 at src/main.rs:6:9: 6:10
+    scope 1 {
+        debug a => _1;                   // in scope 1 at src/main.rs:4:9: 4:10
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:4:9: 4:10
+        _1 = E::A;                       // scope 0 at src/main.rs:4:13: 4:14
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:4:9: 4:10
+        StorageLive(_2);                 // scope 1 at src/main.rs:5:5: 8:6
+        FakeRead(ForMatchedPlace(None), _1); // scope 1 at src/main.rs:5:11: 5:12
+        _3 = discriminant(_1);           // scope 1 at src/main.rs:5:11: 5:12
+        switchInt(move _3) -> [0: bb1, 1: bb2, otherwise: bb3]; // scope 1 at src/main.rs:5:5: 5:10
+    }
+
+    bb1: {
+        falseEdge -> [real: bb4, imaginary: bb2]; // scope 1 at src/main.rs:6:9: 6:10
+    }
+
+    bb2: {
+        _2 = const 2_i32;                // scope 1 at src/main.rs:7:16: 7:17
+        goto -> bb5;                     // scope 1 at src/main.rs:7:16: 7:17
+    }
+
+    bb3: {
+        unreachable;                     // scope 1 at src/main.rs:5:11: 5:12
+    }
+
+    bb4: {
+        _2 = const 1_i32;                // scope 1 at src/main.rs:6:16: 6:17
+        goto -> bb5;                     // scope 1 at src/main.rs:6:16: 6:17
+    }
+
+    bb5: {
+        StorageDead(_2);                 // scope 1 at src/main.rs:8:6: 8:7
+        _0 = const ();                   // scope 0 at src/main.rs:3:11: 9:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:9:1: 9:2
+        return;                          // scope 0 at src/main.rs:9:2: 9:2
+    }
+}

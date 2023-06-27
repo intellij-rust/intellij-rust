@@ -129,6 +129,7 @@ class MirBuildTest : RsTestBase() {
     fun `test match enum variant fields pat rest`() = doTest()
     fun `test match enum variant nested`() = doTest()
     fun `test match pat wild`() = doTest()
+    fun `test match pat ident enum variant`() = doTest()
     fun `test immutable self argument`() = doTest()
     fun `test mutable self argument`() = doTest()
     fun `test immutable ref self argument`() = doTest()
