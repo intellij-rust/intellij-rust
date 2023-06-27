@@ -34,4 +34,10 @@ sealed class MirRvalue {
     object AddressOf : MirRvalue()
     data class Discriminant(val place: MirPlace) : MirRvalue()
     object CopyForDeref : MirRvalue()
+    sealed class Cast(val operand: MirOperand, val ty: Ty) : MirRvalue() {
+        class IntToInt(operand: MirOperand, ty: Ty) : Cast(operand, ty)
+        // TODO: there are a lot more of possible casts
+
+        companion object
+    }
 }

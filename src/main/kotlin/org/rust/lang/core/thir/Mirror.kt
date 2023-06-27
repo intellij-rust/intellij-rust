@@ -374,6 +374,17 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 ThirExpr.Let(pat, initializer, ty, span)
             }
 
+            is RsCastExpr -> {
+                // TODO: ExprKind::ValueTypeAscription & user_ty
+                mirrorExprCast(
+                    sourceExpr = expr.expr,
+                    tempLifetime = tempLifetime,
+                    span = expr.asSpan,
+                    exprTy = ty,
+                    exprSpan = span,
+                )
+            }
+
             else -> TODO("Not implemented for ${expr::class}")
         }.withLifetime(tempLifetime)
     }
@@ -410,6 +421,19 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
     private fun methodCallee(call: RsMethodCall, span: MirSpan, tempLifetime: Scope?): ThirExpr {
         val ty = inferenceResult.getResolvedMethodType(call) ?: error("Could not resolve method")
         return ThirExpr.ZstLiteral(ty, span).withLifetime(tempLifetime)
+    }
+
+    private fun mirrorExprCast(
+        sourceExpr: RsExpr,
+        tempLifetime: Scope?,
+        span: MirSpan,
+        exprTy: Ty,
+        exprSpan: MirSpan,
+    ): ThirExpr {
+        // TODO: coercion casts
+        // TODO: pointers
+        // TODO: enum to isize (there is some code about it)
+        return ThirExpr.Cast(mirrorExpr(sourceExpr), exprTy, exprSpan)
     }
 
     private fun convertArm(arm: RsMatchArm): MirArm {

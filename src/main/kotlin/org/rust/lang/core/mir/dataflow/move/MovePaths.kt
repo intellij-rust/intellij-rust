@@ -336,6 +336,8 @@ private class MoveDataBuilder(
 
             is MirRvalue.CopyForDeref -> error("unreachable")
 
+            is MirRvalue.Cast -> gatherOperand(rvalue.operand)
+
             is MirRvalue.Ref,
             is MirRvalue.AddressOf,
             is MirRvalue.Discriminant,

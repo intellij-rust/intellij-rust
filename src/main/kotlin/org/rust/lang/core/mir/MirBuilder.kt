@@ -484,6 +484,7 @@ class MirBuilder private constructor(
 
             is ThirExpr.Array,
             is ThirExpr.Tuple,
+            is ThirExpr.Cast,
             is ThirExpr.Adt,
             is ThirExpr.Closure,
             is ThirExpr.Unary,
@@ -1514,6 +1515,15 @@ class MirBuilder private constructor(
                                 MirConstant.zeroSized(TyUnit.INSTANCE, expr.span)
                             )
                         )
+                    }
+            }
+            is ThirExpr.Cast -> {
+                this
+                    .toOperand(expr.source, scope, NeedsTemporary.No)
+                    .map { source ->
+                        val fromTy = MirCastTy.from(expr.source.ty)
+                        val castTy = MirCastTy.from(expr.ty)
+                        MirRvalue.Cast.create(fromTy, castTy, source, expr.ty)
                     }
             }
             is ThirExpr.Yield,

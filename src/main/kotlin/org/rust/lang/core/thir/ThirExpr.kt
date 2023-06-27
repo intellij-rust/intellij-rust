@@ -251,6 +251,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /** A cast: `<source> as <type>`. The type we cast to is the type of the parent expression. */
     class Cast(
+        val source: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

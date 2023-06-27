@@ -231,6 +231,7 @@ interface MirVisitor {
                     location,
                 )
             }
+            else -> TODO()
         }
     }
 

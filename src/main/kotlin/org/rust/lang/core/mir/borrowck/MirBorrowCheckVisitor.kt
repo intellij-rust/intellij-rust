@@ -161,6 +161,8 @@ class MirBorrowCheckVisitor(
 
             is MirRvalue.Len -> implLenAndDiscriminant(rvalue.place)
             is MirRvalue.Discriminant -> implLenAndDiscriminant(rvalue.place)
+
+            is MirRvalue.Cast -> consumeOperand(location, rvalue.operand, state)
         }
     }
 

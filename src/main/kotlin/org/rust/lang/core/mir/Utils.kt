@@ -6,6 +6,9 @@
 package org.rust.lang.core.mir
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.mir.schemas.MirCastTy
+import org.rust.lang.core.mir.schemas.MirOperand
+import org.rust.lang.core.mir.schemas.MirRvalue
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsBindingMode
 import org.rust.lang.core.psi.ext.ArithmeticOp
@@ -75,4 +78,15 @@ fun ScopeTree.getVariableScope(variable: LocalVar): Scope? {
         is LocalVar.FromPatBinding -> getVariableScope(variable.pat)
         is LocalVar.FromSelfParameter -> getVariableScope(variable.self)
     }
+}
+
+// compiler uses ty and calls MirCastTy.from two times, but let's not
+fun MirRvalue.Cast.Companion.create(
+    fromTy: MirCastTy?,
+    castTy: MirCastTy?,
+    operand: MirOperand,
+    ty: Ty,
+): MirRvalue.Cast = when {
+    fromTy is MirCastTy.Int && castTy is MirCastTy.Int -> MirRvalue.Cast.IntToInt(operand, ty)
+    else -> TODO()
 }

@@ -232,6 +232,7 @@ internal class MirPrettyPrinter(
             }
             is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
             is MirRvalue.Len -> "Len(${format(rvalue.place)})"
+            is MirRvalue.Cast.IntToInt -> "${format(rvalue.operand)} as ${format(rvalue.ty)} (IntToInt)"
         }
     }
 
