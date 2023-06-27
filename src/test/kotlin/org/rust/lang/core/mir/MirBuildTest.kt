@@ -134,6 +134,8 @@ class MirBuildTest : RsTestBase() {
     fun `test match pat struct for struct simple`() = doTest()
     fun `test match pat struct for enum simple`() = doTest()
     fun `test match pat struct complex`() = doTest()
+    fun `test match pat ref`() = doTest()
+    fun `test match pat ref mutable`() = doTest()
     fun `test immutable self argument`() = doTest()
     fun `test mutable self argument`() = doTest()
     fun `test immutable ref self argument`() = doTest()

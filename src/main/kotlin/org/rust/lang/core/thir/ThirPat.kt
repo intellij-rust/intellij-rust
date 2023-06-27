@@ -48,7 +48,7 @@ sealed class ThirPat(
 
     /** `(...)`, `Foo(...)`, `Foo{...}`, or `Foo`, where `Foo` is a variant name from an ADT with a single variant. */
     class Leaf(val subpatterns: List<ThirFieldPat>, ty: Ty, source: MirSpan) : ThirPat(ty, source)
-    class Deref(ty: Ty, source: MirSpan) : ThirPat(ty, source)
+    class Deref(val subpattern: ThirPat, ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Const(ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Range(ty: Ty, source: MirSpan) : ThirPat(ty, source)
     class Slice(ty: Ty, source: MirSpan) : ThirPat(ty, source)
@@ -93,7 +93,9 @@ sealed class ThirPat(
 
                 is RsPatRange -> TODO()
 
-                is RsPatRef -> TODO()
+                is RsPatRef -> {
+                    Deref(from(pattern.pat), ty, span)
+                }
 
                 is RsPatSlice -> TODO()
 

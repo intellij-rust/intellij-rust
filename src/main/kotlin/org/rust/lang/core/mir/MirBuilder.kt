@@ -1013,7 +1013,11 @@ class MirBuilder private constructor(
                 candidate.matchPairs += fieldMatchPairs(matchPair.place, pattern.subpatterns)
                 return true
             }
-            is ThirPat.Deref -> TODO()
+            is ThirPat.Deref -> {
+                val placeBuilder = matchPair.place.deref()
+                candidate.matchPairs += MirMatchPair.new(placeBuilder, pattern.subpattern)
+                true
+            }
             is ThirPat.Or -> TODO()
         }
     }
@@ -1418,6 +1422,9 @@ class MirBuilder private constructor(
                 }
             }
             is ThirPat.Const, is ThirPat.Range, is ThirPat.Wild -> Unit
+            is ThirPat.Deref -> {
+                visitPrimaryBindings(pattern.subpattern, action)
+            }
             is ThirPat.Slice -> TODO()
             is ThirPat.Leaf -> {
                 for (subpattern in pattern.subpatterns) {
@@ -1430,7 +1437,6 @@ class MirBuilder private constructor(
                 }
             }
             is ThirPat.Array -> TODO()
-            is ThirPat.Deref -> TODO()
             is ThirPat.Or -> TODO()
         }
     }
