@@ -17,6 +17,7 @@ import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
 
 /** See also [org.rust.ide.utils.checkMatch.PatternKind] */
@@ -121,7 +122,11 @@ sealed class ThirPat(
 
                 is RsPatSlice -> TODO()
 
-                is RsPatTup -> TODO()
+                is RsPatTup -> {
+                    if (ty !is TyTuple) error("Unexpected type for tuple pattern")
+                    val subpatterns = lowerTupleSubpats(pattern.patList, ty.types.size)
+                    Leaf(subpatterns, ty, span)
+                }
 
                 is RsPatTupleStruct -> {
                     if (ty !is TyAdt) error("Tuple struct pattern not applied to an ADT")

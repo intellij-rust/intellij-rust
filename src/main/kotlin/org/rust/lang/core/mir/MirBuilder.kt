@@ -1009,7 +1009,10 @@ class MirBuilder private constructor(
                 }
             }
             is ThirPat.Array -> TODO()
-            is ThirPat.Leaf -> TODO()
+            is ThirPat.Leaf -> {
+                candidate.matchPairs += fieldMatchPairs(matchPair.place, pattern.subpatterns)
+                return true
+            }
             is ThirPat.Deref -> TODO()
             is ThirPat.Or -> TODO()
         }
@@ -1416,13 +1419,17 @@ class MirBuilder private constructor(
             }
             is ThirPat.Const, is ThirPat.Range, is ThirPat.Wild -> Unit
             is ThirPat.Slice -> TODO()
+            is ThirPat.Leaf -> {
+                for (subpattern in pattern.subpatterns) {
+                    visitPrimaryBindings(subpattern.pattern, action)
+                }
+            }
             is ThirPat.Variant -> {
                 for (subpattern in pattern.subpatterns) {
                     visitPrimaryBindings(subpattern.pattern, action)
                 }
             }
             is ThirPat.Array -> TODO()
-            is ThirPat.Leaf -> TODO()
             is ThirPat.Deref -> TODO()
             is ThirPat.Or -> TODO()
         }
