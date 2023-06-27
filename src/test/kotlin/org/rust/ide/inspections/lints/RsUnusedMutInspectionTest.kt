@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::class) {
@@ -182,6 +183,30 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
             print!("{}", a);
             format!("{}", a);
             panic!("{}", a)
+        }
+    """)
+
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test writeln macro argument`() = checkWarnings("""
+        use std::fmt::Write as _;
+
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = "test";
+            let mut w = String::new();
+            writeln!(w, "result: {}", a).unwrap();
+        }
+    """)
+
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test write macro argument`() = checkWarnings("""
+        use std::fmt::Write as _;
+
+        fn main() {
+            let /*weak_warning descr="Unused `mut`"*/mut/*weak_warning**/ a = "test";
+            let mut w = String::new();
+            write!(w, "result: {}", a).unwrap();
         }
     """)
 
