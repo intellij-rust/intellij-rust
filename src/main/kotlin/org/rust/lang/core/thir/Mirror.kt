@@ -568,7 +568,7 @@ fun RsStructOrEnumItemElement.variant(index: MirVariantIndex): RsFieldsOwner =
         else -> error("unreachable")
     }
 
-private fun RsFieldsOwner.indexOfField(field: RsFieldDecl): Int? =
+fun RsFieldsOwner.indexOfField(field: RsFieldDecl): Int? =
     fields.indexOf(field).takeIf { it != -1 }
 
 // TODO

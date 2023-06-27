@@ -10,9 +10,7 @@ import org.rust.lang.core.mir.asSpan
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.mir.wrapper
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.parentEnum
-import org.rust.lang.core.psi.ext.positionalFields
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.typeOfValue
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
@@ -74,30 +72,7 @@ sealed class ThirPat(
                             lowerVariantOrLeaf(resolved, span, ty, subpatterns = emptyList())
                         }
                         is RsConstant -> TODO()
-                        else -> {
-                            val bindingMode = pattern.patBinding.bindingMode.wrapper
-                            val mode: ThirBindingMode
-                            val mutability: Mutability
-                            when (bindingMode.ref) {
-                                null -> {
-                                    mode = ThirBindingMode.ByValue
-                                    mutability = if (bindingMode.mut == null) Mutability.IMMUTABLE else Mutability.MUTABLE
-                                }
-                                else -> TODO()
-                            }
-
-                            Binding(
-                                mutability = mutability,
-                                mode = mode,
-                                name = pattern.patBinding.name ?: error("Could not get name of pattern binding"),
-                                variable = LocalVar(pattern.patBinding), // TODO: this is wrong in case isPrimary = false
-                                varTy = ty,
-                                subpattern = null, // TODO
-                                ty = ty,
-                                source = span,
-                                isPrimary = true, // TODO: can this even be false? didn't find example, chat gpt says it can't
-                            )
-                        }
+                        else -> lowerPatIdent(pattern.patBinding, ty, span)
                     }
                 }
 
@@ -136,7 +111,28 @@ sealed class ThirPat(
                     lowerVariantOrLeaf(variant, span, ty, subpatterns)
                 }
 
-                is RsPatStruct -> TODO()
+                is RsPatStruct -> {
+                    if (ty !is TyAdt) error("Struct pattern not applied to an ADT")
+                    val item = pattern.path.reference?.resolve() as? RsFieldsOwner
+                        ?: error("Unresolved path for pat struct")
+                    val subpatterns = pattern.patFieldList.map { patField ->
+                        val patFieldFull = patField.patFieldFull
+                        val patBinding = patField.patBinding
+                        val (pat, thirPat) = when {
+                            patFieldFull != null -> {
+                                patFieldFull to from(patFieldFull.pat)
+                            }
+                            patBinding != null -> {
+                                patBinding to lowerPatIdent(patBinding, patField.type, patField.asSpan)
+                            }
+                            else -> error("Invalid RsPatField")
+                        }
+                        val field = pat.reference.resolve() as? RsFieldDecl ?: error("Unexpected resolve result")
+                        val fieldIndex = field.owner!!.indexOfField(field) ?: error("Can't find field")
+                        ThirFieldPat(fieldIndex, thirPat)
+                    }
+                    lowerVariantOrLeaf(item, span, ty, subpatterns)
+                }
 
                 is RsOrPat -> TODO()
 
@@ -144,6 +140,32 @@ sealed class ThirPat(
 
                 else -> TODO("Not implemented for type ${pattern::class}")
             }
+        }
+
+        private fun lowerPatIdent(binding: RsPatBinding, ty: Ty, span: MirSpan): Binding {
+            val bindingMode = binding.bindingMode.wrapper
+            val mode: ThirBindingMode
+            val mutability: Mutability
+            when (bindingMode.ref) {
+                null -> {
+                    mode = ThirBindingMode.ByValue
+                    mutability = if (bindingMode.mut == null) Mutability.IMMUTABLE else Mutability.MUTABLE
+                }
+
+                else -> TODO()
+            }
+
+            return Binding(
+                mutability = mutability,
+                mode = mode,
+                name = binding.name ?: error("Could not get name of pattern binding"),
+                variable = LocalVar(binding), // TODO: this is wrong in case isPrimary = false
+                varTy = ty,
+                subpattern = null, // TODO
+                ty = ty,
+                source = span,
+                isPrimary = true, // TODO: can this even be false? didn't find example, chat gpt says it can't
+            )
         }
 
         private fun lowerTupleSubpats(pats: List<RsPat>, expectedLen: Int): List<ThirFieldPat> {
