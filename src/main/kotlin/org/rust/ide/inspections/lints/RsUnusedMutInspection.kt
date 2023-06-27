@@ -6,14 +6,13 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.contextOfType
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.mutability
-import org.rust.lang.core.psi.ext.searchReferencesAfterExpansion
-import org.rust.lang.core.psi.ext.selfParameter
+import org.rust.lang.core.psi.ext.*
 
 class RsUnusedMutInspection : RsLintInspection() {
     override fun getDisplayName(): String = "No mutable required"
@@ -55,7 +54,15 @@ class RsUnusedMutInspection : RsLintInspection() {
                 return expr.isMutable
             }
             is RsValueArgumentList -> return false
-            is RsFormatMacroArg, is RsExprMacroArgument, is RsVecMacroArgument, is RsAssertMacroArgument, is RsConcatMacroArgument, is RsEnvMacroArgument -> return false
+            is RsExprMacroArgument, is RsVecMacroArgument, is RsAssertMacroArgument, is RsConcatMacroArgument, is RsEnvMacroArgument -> return false
+            is RsFormatMacroArg-> {
+                val argList = parent.contextOfType<RsFormatMacroArgument>() ?: return true
+                val macroCall = argList.contextOfType<RsMacroCall>() ?: return true
+                val macroName = macroCall.macroName
+                val isWriteMacro = macroName == "write" || macroName == "writeln"
+                if (!isWriteMacro) return false
+                return argList.formatMacroArgList.firstOrNull() == parent
+            }
         }
         return true
     }
