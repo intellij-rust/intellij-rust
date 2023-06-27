@@ -1,0 +1,17 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:11: 1:11
+    let mut _1: i32;                     // in scope 0 at src/main.rs:2:11: 2:12
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:11: 2:12
+        _1 = const 0_i32;                // scope 0 at src/main.rs:2:11: 2:12
+        FakeRead(ForMatchedPlace(None), _1); // scope 0 at src/main.rs:2:11: 2:12
+        _0 = const ();                   // scope 0 at src/main.rs:3:14: 3:16
+        goto -> bb1;                     // scope 0 at src/main.rs:3:14: 3:16
+    }
+
+    bb1: {
+        StorageDead(_1);                 // scope 0 at src/main.rs:5:1: 5:2
+        return;                          // scope 0 at src/main.rs:5:2: 5:2
+    }
+}

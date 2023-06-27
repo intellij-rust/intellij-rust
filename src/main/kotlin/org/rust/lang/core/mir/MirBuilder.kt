@@ -1406,7 +1406,6 @@ class MirBuilder private constructor(
     ) {
         when (pattern) {
             is ThirPat.AscribeUserType -> TODO()
-            is ThirPat.Wild -> TODO()
             is ThirPat.Binding -> {
                 if (pattern.isPrimary) {
                     action(pattern.mutability, pattern.name, pattern.mode, pattern.variable, pattern.source, pattern.ty)
@@ -1415,8 +1414,7 @@ class MirBuilder private constructor(
                     visitPrimaryBindings(pattern.subpattern, action)
                 }
             }
-            is ThirPat.Const -> TODO()
-            is ThirPat.Range -> TODO()
+            is ThirPat.Const, is ThirPat.Range, is ThirPat.Wild -> Unit
             is ThirPat.Slice -> TODO()
             is ThirPat.Variant -> {
                 for (subpattern in pattern.subpatterns) {

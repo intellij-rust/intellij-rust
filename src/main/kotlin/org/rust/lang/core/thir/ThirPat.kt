@@ -60,7 +60,11 @@ sealed class ThirPat(
         // TODO: adjustments
         /** See also [org.rust.ide.utils.checkMatch.CheckMatchUtilsKt.getKind] */
         fun from(pattern: RsPat): ThirPat {
+            val ty = pattern.type
+            val span = pattern.asSpan
             return when (pattern) {
+                is RsPatWild -> Wild(ty, span)
+
                 is RsPatIdent -> {
                     val bindingMode = pattern.patBinding.bindingMode.wrapper
                     val mode: ThirBindingMode
@@ -78,16 +82,15 @@ sealed class ThirPat(
                         mode = mode,
                         name = pattern.patBinding.name ?: error("Could not get name of pattern binding"),
                         variable = LocalVar(pattern.patBinding), // TODO: this is wrong in case isPrimary = false
-                        varTy = pattern.type,
+                        varTy = ty,
                         subpattern = null, // TODO
-                        ty = pattern.type,
-                        source = pattern.asSpan,
+                        ty = ty,
+                        source = span,
                         isPrimary = true, // TODO: can this even be false? didn't find example, chat gpt says it can't
                     )
                 }
 
                 is RsPatConst -> {
-                    val ty = pattern.expr.type
                     if (ty is TyAdt) {
                         val item = ty.item as? RsEnumItem
                             ?: error("Unresolved constant")
@@ -96,22 +99,33 @@ sealed class ThirPat(
                             ?: error("Can't resolve ${path.text}")
                         val variantIndex = item.indexOfVariant(variant)
                             ?: error("Can't find enum variant")
-                        Variant(item, variantIndex, subpatterns = emptyList(), ty, pattern.asSpan)
+                        Variant(item, variantIndex, subpatterns = emptyList(), ty, span)
                     } else {
                         TODO()
                     }
                 }
 
+                is RsPatRange -> TODO()
+
+                is RsPatRef -> TODO()
+
+                is RsPatSlice -> TODO()
+
+                is RsPatTup -> TODO()
+
                 is RsPatTupleStruct -> {
-                    val ty = pattern.type as? TyAdt
-                        ?: error("Tuple struct pattern not applied to an ADT")
+                    if (ty !is TyAdt) error("Tuple struct pattern not applied to an ADT")
                     val variant = pattern.path.reference?.resolve() as? RsEnumVariant
                         ?: error("Unresolved variant")
-                    val item = ty.item as? RsEnumItem
-                        ?: error("Unexpected TyAdt")
                     val subpatterns = lowerTupleSubpats(pattern.patList, variant.positionalFields.size, )
-                    lowerVariantOrLeaf(variant, pattern.asSpan, ty, subpatterns)
+                    lowerVariantOrLeaf(variant, span, ty, subpatterns)
                 }
+
+                is RsPatStruct -> TODO()
+
+                is RsOrPat -> TODO()
+
+                is RsPatMacro -> TODO()
 
                 else -> TODO("Not implemented for type ${pattern::class}")
             }
