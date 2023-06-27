@@ -171,7 +171,14 @@ class CargoSyncTask(
 
             val workingDirectory = childContext.oldCargoProject.workingDirectory
 
-            val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
+            val listener = RustcVersionProcessAdapter(childContext)
+            val rustcVersion = childContext.toolchain.rustc()
+                .queryVersion(workingDirectory, context.project, listener)
+                .unwrapOrElse {
+                    LOG.warn("Failed to fetch rustc version", it)
+                    context.error("Failed to fetch rustc version", it.message.orEmpty())
+                    null
+                }
             val sysroot = UnitTestRustcCacheService.cached(rustcVersion) {
                 childContext.toolchain.rustc().getSysroot(workingDirectory)
             } ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
@@ -502,6 +509,17 @@ private class SyncProcessAdapter(
 
     override fun error(title: String, message: String) = context.error(title, message)
     override fun warning(title: String, message: String) = context.warning(title, message)
+}
+
+private class RustcVersionProcessAdapter(
+    private val context: CargoSyncTask.SyncContext
+) : ProcessAdapter() {
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+        val text = event.text.trim { it <= ' ' }
+        if (text.startsWith("info:")) {
+            context.withProgressText(text.removePrefix("info:").trim())
+        }
+    }
 }
 
 private class SyncCargoBuildContext(
