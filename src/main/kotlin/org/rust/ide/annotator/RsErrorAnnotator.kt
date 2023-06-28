@@ -1762,8 +1762,6 @@ fun RsCallExpr.getFunctionCallContext(): FunctionCallContext? {
     return when (val calleeType = expr.adjustedType) {
         is TyFunctionDef -> {
             val callable = calleeType.def
-            val owner = callable.owner
-            if (owner.isTraitImpl) return null
             val count = callable.parameterTypes.size
             val s = if (callable.selfParameter != null) 1 else 0
             val functionType = if (callable.isVariadic) {
@@ -1790,7 +1788,7 @@ fun RsMethodCall.getFunctionCallContext(): FunctionCallContext? {
     val fn = reference.resolve() as? RsFunction ?: return null
     return fn.valueParameterList?.valueParameterList?.size?.let {
         FunctionCallContext(it, if (fn.isVariadic) FunctionType.VARIADIC_FUNCTION else FunctionType.FUNCTION, fn)
-    }.takeIf { fn.owner.isInherentImpl }
+    }
 }
 
 private fun isValidSelfSuperPrefix(path: RsPath): Boolean {

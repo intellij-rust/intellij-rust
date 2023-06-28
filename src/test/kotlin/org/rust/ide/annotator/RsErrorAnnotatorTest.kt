@@ -406,9 +406,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    // We would like to cover such cases, but the resolve engine has some flaws at the moment,
-    // so just ignore trait implementations to remove false positives
-    fun `test ignores trait implementations E0061`() = checkErrors("""
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test trait implementations E0061`() = checkErrors("""
         trait Foo1 { fn foo(&self); }
         trait Foo2 { fn foo(&self, a: u8); }
         struct Bar;
@@ -418,11 +417,32 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl<T> Foo2 for Box<T> {
             fn foo(&self, a: u8) {}
         }
-        type BFoo1<'a> = Box<Foo1 + 'a>;
+        type BFoo1<'a> = Box<dyn Foo1 + 'a>;
 
         fn main() {
             let bar: BFoo1 = Box::new(Bar);
-            bar.foo();   // Resolves to Foo2.foo() for Box<T>, though Foo1.foo() for Bar is the correct one
+            bar.foo();
+            bar.foo(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+        }
+    """)
+
+    fun `test trait implementation E0061`() = checkErrors("""
+        trait Foo { fn foo(&self); }
+        struct Bar;
+        impl Foo for Bar {
+            fn foo(&self) {}
+        }
+
+        fn main() {
+            let bar = Bar {};
+            bar.foo();
+            bar.foo(/*error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]"*/1/*error**/);
+
+            Foo::foo(&bar);
+            Foo::foo(&bar, /*error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]"*/1/*error**/);
+
+            Bar::foo(&bar);
+            Bar::foo(&bar, /*error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]"*/1/*error**/);
         }
     """)
 
