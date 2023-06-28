@@ -150,7 +150,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             val configuration = settings.configuration as? CargoCommandConfiguration ?: return@mapNotNull null
             configuration.emulateTerminal = false
             val buildableElement = CargoBuildConfiguration(configuration, environment)
-            ProjectModelBuildTaskImpl(buildableElement, false)
+            ProjectModelBuildTaskImpl(buildableElement, task.isIncrementalBuild)
         }
     }
 
