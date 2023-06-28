@@ -8,6 +8,7 @@ package org.rust.lang.core.thir
 import org.rust.lang.core.mir.schemas.MirArm
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
+import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.ext.BinaryOperator
 import org.rust.lang.core.psi.ext.LogicOp
@@ -62,6 +63,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /** Associated constants and named constants */
     class NamedConst(
+        val def: RsConstant,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)

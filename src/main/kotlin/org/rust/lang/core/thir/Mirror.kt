@@ -475,6 +475,10 @@ class MirrorContext(contextOwner: RsInferenceContextOwner) {
                 ThirExpr.Adt(definition, variantIndex, fields = emptyList(), base = null, ty, source)
             }
             is RsFunction -> ThirExpr.ZstLiteral(ty, source)
+            is RsConstant -> {
+                if (resolved.static != null) TODO()
+                ThirExpr.NamedConst(resolved, ty, source)
+            }
             else -> TODO()
         }
 

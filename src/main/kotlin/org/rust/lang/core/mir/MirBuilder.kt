@@ -2070,7 +2070,9 @@ class MirBuilder private constructor(
             }
             is ThirExpr.NonHirLiteral -> TODO()
             is ThirExpr.ZstLiteral -> MirConstant.zeroSized(expr.ty, expr.span)
-            is ThirExpr.NamedConst -> TODO()
+            is ThirExpr.NamedConst -> {
+                MirConstant.Unevaluated(expr.def, expr.ty, expr.span)
+            }
             is ThirExpr.ConstParam -> TODO()
             is ThirExpr.ConstBlock -> TODO()
             is ThirExpr.StaticRef -> TODO()
