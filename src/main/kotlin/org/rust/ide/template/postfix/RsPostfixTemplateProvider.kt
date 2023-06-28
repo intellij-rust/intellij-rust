@@ -49,7 +49,9 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
         OkPostfixTemplate(this),
         SomePostfixTemplate(this),
         ErrPostfixTemplate(this),
-        WrapTypePathPostfixTemplate(this)
+        WrapTypePathPostfixTemplate(this),
+        SlicePostfixTemplate("slice", this),
+        SlicePostfixTemplate("sublist", this)
     )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates
