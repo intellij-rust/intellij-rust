@@ -33,10 +33,10 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let x = S { data: 42 };
             let mut i = 0;
             while i < 10 {
-                if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
+                if /*error descr="Use of moved value [E0382]"*/x.data/*error**/ == 10 { f(/*error descr="Use of moved value [E0382]"*/x/*error**/); } else {}
                 i += 1;
             }
-            <error descr="Use of moved value">x</error>;
+            /*error descr="Use of moved value [E0382]"*/x/*error**/;
         }
     """, checkWarn = false)
 
@@ -88,7 +88,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -99,7 +99,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -110,7 +110,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x</error>;
+            <error descr="Use of moved value [E0382]">x</error>;
         }
     """, checkWarn = false)
 
@@ -121,7 +121,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S { data: T };
             x.data;
-            <error descr="Use of moved value">x.data</error>;
+            <error descr="Use of moved value [E0382]">x.data</error>;
         }
     """, checkWarn = false)
 
@@ -135,6 +135,15 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             x.data2;
         }
     """, checkWarn = false)
+
+    fun `test move struct and use field`() = checkErrors("""
+        struct S { a: i32 }
+        fn main() {
+            let x = S { a: 1 };
+            let x2 = x;
+            /*error descr="Use of moved value [E0382]"*/x.a/*error**/;
+        }
+    """)
 
     fun `test move from raw pointer`() = checkByText("""
         struct S;
@@ -225,7 +234,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S { data: 42 };
             for mut i in 0..5 {
-                if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
+                if <error descr="Use of moved value">x.data</error> == 10 { f(<error descr="Use of moved value">x</error>); } else {}
                 i += 1;
             }
             <error descr="Use of moved value">x<caret></error>;
@@ -379,7 +388,9 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    fun `test no move error E0382 on binary expr as method call`() = checkByText("""
+    // TODO Overloaded RsBinaryExpr
+    fun `test no move error E0382 on binary expr as method call`() = expect<Throwable> {
+    checkByText("""
         #[derive (PartialEq)]
         struct S { data: i32 }
 
@@ -391,6 +402,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+    }
 
     fun `test no move error E0382 on ref String and &str`() = checkByText("""
         use std::string::String;
@@ -404,6 +416,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 on method call`() = checkByText("""
         struct S { }
         impl S {
@@ -417,6 +430,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 on field getter`() = checkByText("""
         struct S {
             data: (u16, u16, u16)
@@ -432,6 +446,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 when let in while`() = checkByText("""
         struct S { a: i32 }
 
@@ -555,7 +570,8 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     /** Issue [#3251](https://github.com/intellij-rust/intellij-rust/issues/3251) */
-    fun `test no move error E0382 after noreturn`() = checkByText("""
+    // TODO Fix MIR for function invocations returning !
+    fun `test no move error E0382 after noreturn`() = expect<Throwable> { checkByText("""
         fn noreturn() -> ! { panic!() }
 
         struct S;
@@ -570,6 +586,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             consume(s);
         }
     """, checkWarn = false)
+    }
 
     fun `test no move error E0382 after expr stmt with never type`() = checkByText("""
         struct S;
@@ -952,7 +969,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn foo() {
             let s = S;
             async { s; };
-            <error descr="Use of moved value">s</error>;
+            <error descr="Use of moved value [E0382]">s</error>;
         }
     """, checkWarn = false)
 

@@ -5,25 +5,34 @@
 
 package org.rust.lang.core.thir
 
+import org.rust.lang.core.mir.schemas.MirArm
 import org.rust.lang.core.mir.schemas.MirBorrowKind
 import org.rust.lang.core.mir.schemas.MirSpan
 import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.psi.ext.BinaryOperator
 import org.rust.lang.core.psi.ext.LogicOp
+import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.regions.Scope as RegionScope
 
+// https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/thir.rs#L257
 sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /**
      * The lifetime of this expression if it should be spilled into a temporary;
      * Should be `null` only if in a constant context
      */
-    val tempLifetime: RegionScope? = null  // TODO
+    private var _tempLifetime: RegionScope? = null
+    var tempLifetime: RegionScope?
+        get() = _tempLifetime
+        set(value) { _tempLifetime = value }
+
+    fun withLifetime(tempLifetime: RegionScope?): ThirExpr {
+        this.tempLifetime = tempLifetime
+        return this
+    }
 
     class Scope(
         val regionScope: RegionScope,
@@ -79,7 +88,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Binary(
-        val op: ArithmeticOp,
+        val op: BinaryOperator,
         val left: ThirExpr,
         val right: ThirExpr,
         ty: Ty,
@@ -195,7 +204,9 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Adt(
-        val definition: RsStructItem,
+        val definition: RsStructOrEnumItemElement,
+        /** zero for structs/unions */
+        val variantIndex: MirVariantIndex,
         val fields: List<FieldExpr>,
         val base: FruInfo?,
         // TODO: more properties here
@@ -241,11 +252,13 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 
     /** A cast: `<source> as <type>`. The type we cast to is the type of the parent expression. */
     class Cast(
+        val source: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
     class Use(
+        val source: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
@@ -256,11 +269,15 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
     ) : ThirExpr(ty, span)
 
     class Let(
+        val pat: ThirPat,
+        val expr: ThirExpr,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
 
     class Match(
+        val expr: ThirExpr,
+        val arms: List<MirArm>,
         ty: Ty,
         span: MirSpan,
     ) : ThirExpr(ty, span)
@@ -321,6 +338,7 @@ sealed class ThirExpr(val ty: Ty, val span: MirSpan) {
 }
 
 typealias MirFieldIndex = Int
+typealias MirVariantIndex = Int
 
 /** Represents the association of a field identifier and an expression. This is used in struct constructors. */
 class FieldExpr(val name: MirFieldIndex, val expr: ThirExpr)

@@ -172,7 +172,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_1);
                 StorageLive(_2);
                 _2 = const true;                 // -_2
-                switchInt(move _2) -> [false: bb2, otherwise: bb1]; // +_2
+                switchInt(move _2) -> [0: bb2, otherwise: bb1]; // +_2
             }                                    // {_0, _1, _2}
 
             bb1: {                               // {_0, _1, _2}
@@ -220,7 +220,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_1);
                 StorageLive(_2);
                 _2 = const true;                 // -_2
-                switchInt(move _2) -> [false: bb2, otherwise: bb1]; // +_2
+                switchInt(move _2) -> [0: bb2, otherwise: bb1]; // +_2
             }                                    // {_0, _1, _2}
 
             bb1: {                               // {_0, _1, _2}
@@ -271,7 +271,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             }                                    // {_0, _1, _2, _3}
 
             bb1: {                               // {_0, _1, _2, _3}
-                falseUnwind -> [real: bb2, cleanup: bb5];
+                falseUnwind -> [real: bb2, unwind: bb5];
             }                                    // {_0, _1, _2, _3}
 
             bb2: {                               // {_0, _1, _2, _3}
@@ -314,7 +314,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             bb0: {                               // {_0, _1, _2}
                 StorageLive(_1);
                 StorageLive(_2);
-                _2 = function() -> [return: bb1, unwind: bb2];
+                _2 = foo() -> [return: bb1, unwind: bb2];
             }                                    // {_0, _1, _2}
 
             bb1: {                               // {_0, _1}
@@ -355,7 +355,7 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
                 StorageLive(_2);
                 StorageLive(_3);
                 _3 = move _1;                    // +_1, -_3
-                _2 = function(move _3) -> [return: bb1, unwind: bb2]; // +_3
+                _2 = foo(move _3) -> [return: bb1, unwind: bb2]; // +_3
             }                                    // {_0, _1, _2, _3}
 
             bb1: {                               // {_0, _1, _3}
@@ -369,6 +369,29 @@ class MaybeUninitializedPlacesTest : MirDataflowTestBase<BitSet>() {
             bb2 (cleanup): {                     // {_0, _1, _2, _3}
                 resume;
             }                                    // {_0, _1, _2, _3}
+        }
+    """)
+
+    fun `test function with arguments`() = doTest("""
+        fn foo(n: i32, m: i32, mut k: i32) {
+            k = n;
+        }
+    """, """
+        fn foo(_1: i32, _2: i32, _3: i32) -> () {
+            debug n => _1;                       // in scope 0 at src/main.rs:2:16: 2:17
+            debug m => _2;                       // in scope 0 at src/main.rs:2:24: 2:25
+            debug k => _3;                       // in scope 0 at src/main.rs:2:32: 2:37
+            let mut _0: ();                      // return place in scope 0 at src/main.rs:2:44: 2:44
+            let mut _4: i32;                     // in scope 0 at src/main.rs:3:17: 3:18
+
+            bb0: {                               // {_0, _4}
+                StorageLive(_4);
+                _4 = _1;                         // -_4
+                _3 = move _4;                    // +_4
+                StorageDead(_4);
+                _0 = const ();                   // -_0
+                return;
+            }                                    // {_4}
         }
     """)
 }

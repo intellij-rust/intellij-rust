@@ -18,21 +18,20 @@ class LocalsBuilder(returnTy: Ty, returnSource: MirSourceInfo) {
 
     fun returnPlace() = MirPlace(locals.first())
 
-    fun newTempPlace(
-        ty: Ty,
-        source: MirSourceInfo,
-        internal: Boolean = false,
-        mutability: Mutability = Mutability.MUTABLE,
-    ): MirPlace {
-        val local = newLocal(mutability, internal, null, null, ty, source)
-        return MirPlace(local)
+    operator fun get(index: Int): MirLocal = locals[index]
+
+    /**
+     * This function will change the object that is stored at the [index].
+     */
+    fun update(index: Int, mutability: Mutability, source: MirSourceInfo, localInfo: MirLocalInfo) {
+        locals[index] = locals[index].copy(mutability, source, localInfo)
     }
 
     fun newLocal(
-        mutability: Mutability,
-        internal: Boolean,
-        localInfo: MirLocalInfo?,
-        blockTail: MirBlockTailInfo?,
+        mutability: Mutability = Mutability.MUTABLE,
+        internal: Boolean = false,
+        localInfo: MirLocalInfo? = null,
+        blockTail: MirBlockTailInfo? = null,
         ty: Ty,
         source: MirSourceInfo,
     ): MirLocal {

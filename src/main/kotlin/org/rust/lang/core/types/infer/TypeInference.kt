@@ -328,6 +328,7 @@ class RsInferenceContext(
         patFieldTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
         diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it }
+        fixScalarBuiltinExprs()
         adjustments.replaceAll { _, it -> it.mapToMutableList { fullyResolve(it) } }
 
         performPathsRefinement(lookup)
@@ -348,6 +349,37 @@ class RsInferenceContext(
             overloadedOperators,
             diagnostics
         )
+    }
+
+    /**
+     * From rustc's `fix_index_builtin_expr`:
+     * Hacky hack: During type-checking, we treat *all* operators
+     * as potentially overloaded. But then, during writeback, if
+     * we observe that something like `a+b` is (known to be)
+     * operating on scalars, we clear the overload.
+     */
+    private fun fixScalarBuiltinExprs() {
+        for (expr in exprTypes.keys) {
+            if (expr is RsBinaryExpr) {
+                val lhs = expr.left
+                val rhs = expr.right ?: continue
+                if (exprTypes[lhs]?.isScalar == true && exprTypes[rhs]?.isScalar == true) {
+                    when (val op = expr.operatorType) {
+                        is AssignmentOp.EQ -> Unit
+                        is ArithmeticOp, is BoolOp -> {
+                            if (!op.isByValue) {
+                                adjustments[lhs]?.removeLastOrNull()
+                                adjustments[rhs]?.removeLastOrNull()
+                            }
+                        }
+
+                        is ArithmeticAssignmentOp -> {
+                            adjustments[lhs]?.removeLastOrNull()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun fallbackUnresolvedTypeVarsIfPossible() {

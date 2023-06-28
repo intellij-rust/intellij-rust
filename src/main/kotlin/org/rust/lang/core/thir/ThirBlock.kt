@@ -10,7 +10,8 @@ import org.rust.lang.core.types.regions.Scope
 
 data class ThirBlock(
     // TODO: statements and much more
-    val scope: Scope,
+    val regionScope: Scope,
+    val destructionScope: Scope?,
     val statements: List<ThirStatement>,
     val expr: ThirExpr?,
     val source: MirSpan,

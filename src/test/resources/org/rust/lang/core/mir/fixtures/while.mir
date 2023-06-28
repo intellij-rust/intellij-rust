@@ -1,0 +1,69 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:11: 1:11
+    let _1: ();                          // in scope 0 at src/main.rs:2:5: 2:18
+    let mut _2: ();                      // in scope 0 at src/main.rs:1:1: 3:2
+    let mut _3: bool;                    // in scope 0 at src/main.rs:2:11: 2:15
+    let mut _4: !;                       // in scope 0 at src/main.rs:2:5: 2:18
+    let _5: ();                          // in scope 0 at src/main.rs:2:5: 2:18
+    let mut _6: !;                       // in scope 0 at src/main.rs:2:5: 2:18
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:5: 2:18
+        goto -> bb1;                     // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb1: {
+        falseUnwind -> [real: bb2, unwind: bb11]; // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb2: {
+        StorageLive(_3);                 // scope 0 at src/main.rs:2:11: 2:15
+        _3 = const true;                 // scope 0 at src/main.rs:2:11: 2:15
+        switchInt(move _3) -> [0: bb4, otherwise: bb3]; // scope 0 at src/main.rs:2:11: 2:15
+    }
+
+    bb3: {
+        _2 = const ();                   // scope 0 at src/main.rs:2:16: 2:18
+        goto -> bb9;                     // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb4: {
+        goto -> bb5;                     // scope 0 at src/main.rs:2:11: 2:15
+    }
+
+    bb5: {
+        StorageLive(_5);                 // scope 0 at src/main.rs:2:5: 2:18
+        _1 = const ();                   // scope 0 at src/main.rs:2:5: 2:18
+        goto -> bb10;                    // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb6: {
+        unreachable;                     // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb7: {
+        StorageDead(_5);                 // scope 0 at src/main.rs:2:17: 2:18
+        unreachable;                     // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb8: {
+        goto -> bb9;                     // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb9: {
+        StorageDead(_3);                 // scope 0 at src/main.rs:2:17: 2:18
+        goto -> bb1;                     // scope 0 at src/main.rs:2:5: 2:18
+    }
+
+    bb10: {
+        StorageDead(_5);                 // scope 0 at src/main.rs:2:17: 2:18
+        StorageDead(_3);                 // scope 0 at src/main.rs:2:17: 2:18
+        StorageDead(_1);                 // scope 0 at src/main.rs:2:18: 2:19
+        _0 = const ();                   // scope 0 at src/main.rs:1:11: 3:2
+        return;                          // scope 0 at src/main.rs:3:2: 3:2
+    }
+
+    bb11 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 3:2
+    }
+}

@@ -9,12 +9,17 @@ import org.rust.lang.core.mir.schemas.MirBasicBlock
 import org.rust.lang.core.mir.schemas.MirSwitchTargets
 
 class MirSwitchTargetsImpl<BB : MirBasicBlock>(
-    override val values: MutableList<Long>,
-    override val targets: MutableList<BB>
+    override val values: List<Long>,
+    override val targets: List<BB>
 ) : MirSwitchTargets<BB> {
     companion object {
+        fun <BB : MirBasicBlock> new(valuesAndTargets: List<Pair<Long, BB>>, otherwise: BB): MirSwitchTargetsImpl<BB> {
+            val (values, targets) = valuesAndTargets.unzip()
+            return MirSwitchTargetsImpl(values, targets + otherwise)
+        }
+
         fun <BB : MirBasicBlock> `if`(value: Long, thenBlock: BB, elseBlock: BB): MirSwitchTargetsImpl<BB> {
-            return MirSwitchTargetsImpl(mutableListOf(value), mutableListOf(thenBlock, elseBlock))
+            return MirSwitchTargetsImpl(listOf(value), listOf(thenBlock, elseBlock))
         }
     }
 }

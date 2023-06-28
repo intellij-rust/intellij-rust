@@ -9,6 +9,12 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsRangeExpr
 
+val RsRangeExpr.isInclusive: Boolean
+    get() = dotdotdot != null || dotdoteq != null
+
+val RsRangeExpr.isExclusive: Boolean
+    get() = dotdot != null
+
 val RsRangeExpr.op: PsiElement?
     get() = dotdot ?: dotdotdot ?: dotdoteq
 

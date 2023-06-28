@@ -11,7 +11,7 @@ const FOO: bool = {
         StorageLive(_1);                 // scope 0 at src/main.rs:2:5: 2:47
         StorageLive(_2);                 // scope 0 at src/main.rs:2:5: 2:39
         StorageLive(_3);                 // scope 0 at src/main.rs:2:6: 2:30
-        switchInt(const false) -> [false: bb11, otherwise: bb10]; // scope 0 at src/main.rs:2:6: 2:30
+        switchInt(const false) -> [0: bb11, otherwise: bb10]; // scope 0 at src/main.rs:2:6: 2:30
     }
 
     bb1: {
@@ -22,7 +22,7 @@ const FOO: bool = {
     bb2: {
         StorageLive(_5);                 // scope 0 at src/main.rs:2:51: 2:74
         StorageLive(_6);                 // scope 0 at src/main.rs:2:52: 2:65
-        switchInt(const false) -> [false: bb19, otherwise: bb20]; // scope 0 at src/main.rs:2:52: 2:65
+        switchInt(const false) -> [0: bb19, otherwise: bb20]; // scope 0 at src/main.rs:2:52: 2:65
     }
 
     bb3: {
@@ -43,7 +43,7 @@ const FOO: bool = {
 
     bb6: {
         StorageDead(_2);                 // scope 0 at src/main.rs:2:46: 2:47
-        switchInt(move _1) -> [false: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:5: 2:74
+        switchInt(move _1) -> [0: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:5: 2:74
     }
 
     bb7: {
@@ -58,7 +58,7 @@ const FOO: bool = {
 
     bb9: {
         StorageDead(_3);                 // scope 0 at src/main.rs:2:38: 2:39
-        switchInt(move _2) -> [false: bb4, otherwise: bb5]; // scope 0 at src/main.rs:2:5: 2:47
+        switchInt(move _2) -> [0: bb4, otherwise: bb5]; // scope 0 at src/main.rs:2:5: 2:47
     }
 
     bb10: {
@@ -68,12 +68,12 @@ const FOO: bool = {
 
     bb11: {
         StorageLive(_4);                 // scope 0 at src/main.rs:2:15: 2:30
-        switchInt(const true) -> [false: bb13, otherwise: bb14]; // scope 0 at src/main.rs:2:15: 2:30
+        switchInt(const true) -> [0: bb13, otherwise: bb14]; // scope 0 at src/main.rs:2:15: 2:30
     }
 
     bb12: {
         StorageDead(_4);                 // scope 0 at src/main.rs:2:29: 2:30
-        switchInt(move _3) -> [false: bb8, otherwise: bb7]; // scope 0 at src/main.rs:2:5: 2:39
+        switchInt(move _3) -> [0: bb8, otherwise: bb7]; // scope 0 at src/main.rs:2:5: 2:39
     }
 
     bb13: {
@@ -118,6 +118,6 @@ const FOO: bool = {
     }
 
     bb21: {
-        switchInt(move _6) -> [false: bb16, otherwise: bb17]; // scope 0 at src/main.rs:2:51: 2:74
+        switchInt(move _6) -> [0: bb16, otherwise: bb17]; // scope 0 at src/main.rs:2:51: 2:74
     }
 }

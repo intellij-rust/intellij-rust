@@ -19,6 +19,7 @@ sealed class MirCategory {
     data class Rvalue(val value: MirRvalueFunc) : MirCategory()
 
     companion object {
+        // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_build/src/build/expr/category.rs#L34
         fun of(element: ThirExpr): MirCategory? {
             return when (element) {
                 is ThirExpr.Deref,

@@ -7,7 +7,7 @@ fn main() -> () {
 
     bb0: {
         StorageLive(_1);                 // scope 0 at src/main.rs:2:9: 2:10
-        _1 = function(const 1_i32, const 2_i32) -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:2:13: 2:22
+        _1 = foo(const 1_i32, const 2_i32) -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:2:13: 2:22
     }
 
     bb1: {

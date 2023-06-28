@@ -235,6 +235,11 @@ val BinaryOperator.category: BinOpCategory
         AssignmentOp.EQ -> error("Cannot take a category for assignment op")
     }
 
+val BinaryOperator.isComparisonOrEq: Boolean get() = this is ComparisonOp || this is EqualityOp
+
+/** Returns `true` if the binary operator takes its arguments by value */
+val BinaryOperator.isByValue: Boolean get() = !isComparisonOrEq
+
 val RsBinaryOp.operatorType: BinaryOperator
     get() = when (op) {
         "+" -> ArithmeticOp.ADD

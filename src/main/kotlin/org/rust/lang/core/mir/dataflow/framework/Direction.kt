@@ -37,6 +37,7 @@ object Forward : Direction {
         analysis.applyTerminatorEffect(state, block.terminator, terminatorLocation)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_dataflow/src/framework/direction.rs#L465
     override fun <Domain> joinStateIntoSuccessorsOf(
         analysis: Analysis<Domain>,
         exitState: Domain,
@@ -50,9 +51,17 @@ object Forward : Direction {
                 terminator.unwind?.let { propagate(it, exitState) }
                 propagate(terminator.target, exitState)
             }
+            is MirTerminator.Drop -> {
+                terminator.unwind?.let { propagate(it, exitState) }
+                propagate(terminator.target, exitState)
+            }
             is MirTerminator.FalseUnwind -> {
                 terminator.unwind?.let { propagate(it, exitState) }
                 propagate(terminator.realTarget, exitState)
+            }
+            is MirTerminator.FalseEdge -> {
+                propagate(terminator.realTarget, exitState)
+                terminator.imaginaryTarget?.let { propagate(it, exitState) }
             }
             is MirTerminator.SwitchInt -> {
                 for (target in terminator.targets.targets) {

@@ -10,6 +10,7 @@ import org.rust.lang.core.mir.dataflow.framework.Forward
 import org.rust.lang.core.mir.dataflow.framework.GenKillAnalysis
 import org.rust.lang.core.mir.dataflow.move.*
 import org.rust.lang.core.mir.schemas.*
+import org.rust.openapiext.testAssert
 import java.util.*
 
 class MaybeUninitializedPlaces(private val moveData: MoveData) : GenKillAnalysis {
@@ -22,6 +23,10 @@ class MaybeUninitializedPlaces(private val moveData: MoveData) : GenKillAnalysis
     // set all bits to 1 (uninit) before gathering counter-evidence
     override fun initializeStartBlock(body: MirBody, state: BitSet) {
         state.set(0, moveData.movePathsCount)
+        dropFlagEffectsForFunctionEntry(body, moveData) { path, dropFlagState ->
+            testAssert { dropFlagState == DropFlagState.Present }
+            state.clear(path.index)
+        }
     }
 
     override fun applyStatementEffect(state: BitSet, statement: MirStatement, location: MirLocation) {

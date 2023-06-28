@@ -148,9 +148,10 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
     }
 }
 
-fun Ty.builtinDeref(items: KnownItems, explicit: Boolean = true): Pair<Ty, Mutability>? =
+fun Ty.builtinDeref(items: KnownItems?, explicit: Boolean = true): Pair<Ty, Mutability>? =
     when {
-        this is TyAdt && item == items.Box -> Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
+        this is TyAdt && item == (items ?: item.knownItems).Box ->
+            Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
         this is TyReference -> Pair(referenced, mutability)
         this is TyPointer && explicit -> Pair(referenced, mutability)
         else -> null
@@ -216,10 +217,10 @@ val Ty.isFloat: Boolean
     get() = this is TyFloat || this is TyInfer.FloatVar
 
 val Ty.isScalar: Boolean
-    get() = isIntegral ||
-        isFloat ||
-        this is TyBool ||
-        this is TyChar ||
-        this is TyUnit ||
-        this is TyFunctionBase || // really TyFnDef & TyFnPtr
-        this is TyPointer
+    get() = isIntegral
+        || isFloat
+        || this is TyBool
+        || this is TyChar
+        || this is TyFunctionDef
+        || this is TyFunctionPointer
+        || this is TyPointer

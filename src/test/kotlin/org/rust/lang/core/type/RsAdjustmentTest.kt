@@ -572,7 +572,6 @@ class RsAdjustmentTest : RsTestBase() {
         }
     """)
 
-
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test closure to function pointer with return value`() = testExpr("""
         fn main() {
@@ -597,7 +596,6 @@ class RsAdjustmentTest : RsTestBase() {
                                //^ closureFnPointer(unsafe fn())
         }
     """)
-
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test dont coerce closure to another closure`() = testExpr("""
@@ -718,6 +716,113 @@ class RsAdjustmentTest : RsTestBase() {
             b = a;
               //^
         }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic binop 1`() = testExpr("""
+        fn main() {
+            let a = 2 + 2;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic binop 2`() = testExpr("""
+        fn main() {
+            let a = 2 + 2;
+        }             //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in comparison binop 1`() = testExpr("""
+        fn main() {
+            let a = 2 < 2;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in comparison binop 2`() = testExpr("""
+        fn main() {
+            let a = 2 < 2;
+        }             //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in logical binop 1`() = testExpr("""
+        fn main() {
+            let a = true || false;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in logical binop 2`() = testExpr("""
+        fn main() {
+            let a = true || false;
+        }                 //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic assignment binop 1`() = testExpr("""
+        fn main() {
+            let mut a = 1;
+            a += 2;
+        } //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic assignment binop 2`() = testExpr("""
+        fn main() {
+            let mut a = 1;
+            a += 2;
+        }      //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic binop 1`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a + a;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic binop 2`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a + a;
+        }             //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded comparison binop 1`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a < a;
+        }         //^ borrow(&Wrapping<i32>)
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded comparison binop 2`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a < a;
+        }             //^ borrow(&Wrapping<i32>)
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic assignment binop 1`() = testExpr("""
+        fn main() {
+            let mut a = std::num::Wrapping(1);
+            a += std::num::Wrapping(2);
+        } //^ borrow(&mut Wrapping<i32>)
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic assignment binop 2`() = testExpr("""
+        fn main() {
+            let mut a = std::num::Wrapping(1);
+            let b = std::num::Wrapping(2);
+            a += b;
+        }      //^
     """)
 
     private fun testExpr(@Language("Rust") code: String) {

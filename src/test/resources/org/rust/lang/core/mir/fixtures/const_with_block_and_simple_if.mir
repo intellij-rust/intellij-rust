@@ -5,7 +5,7 @@ const FOO: i32 = {
     bb0: {
         StorageLive(_1);                 // scope 0 at src/main.rs:2:8: 2:15
         _1 = const false;                // scope 0 at src/main.rs:2:8: 2:15
-        switchInt(move _1) -> [false: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:8: 2:15
+        switchInt(move _1) -> [0: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:8: 2:15
     }
 
     bb1: {

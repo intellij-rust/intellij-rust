@@ -2,7 +2,7 @@ const FOO: bool = {
     let mut _0: bool;                    // return place in scope 0 at src/main.rs:1:12: 1:16
 
     bb0: {
-        switchInt(const true) -> [false: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:5: 2:18
+        switchInt(const true) -> [0: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:5: 2:18
     }
 
     bb1: {

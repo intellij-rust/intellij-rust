@@ -335,6 +335,25 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
         }
     """)
 
+    fun `test no E0381 for struct field`() = checkErrors("""
+        struct Foo { a: i32, b: i32 }
+        fn main() {
+            let foo = Foo { a: 1, b: 2 };
+            foo.a;
+            foo.b;
+        }
+    """)
+
+    fun `test no E0381 for nested struct field`() = checkErrors("""
+        struct Foo { a: i32 }
+        struct Bar { b: i32, c: Foo }
+        fn main() {
+            let foo = Foo { a: 1 };
+            let bar = Bar { b: 2, c: foo };
+            bar.foo.a;
+        }
+    """)
+
     fun `test E0381 for add assign`() = checkErrors("""
         fn main() {
             let mut x: i32;
@@ -382,6 +401,88 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             let x = 1;
             let foo1 = Foo { a: x };
             let foo2 = foo1;
+        }
+    """)
+
+    fun `test E0381 in tuple struct literal`() = checkErrors("""
+        struct Foo(i32);
+        fn main() {
+            let x: i32;
+            let foo = Foo(/*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/);
+        }
+    """)
+
+    fun `test no E0381 in tuple struct literal`() = checkErrors("""
+        struct Foo(i32);
+        fn main() {
+            let x = 1;
+            let foo1 = Foo(x);
+            let foo2 = foo1;
+        }
+    """)
+
+    fun `test E0381 in enum variant literal`() = checkErrors("""
+        enum E { Foo { a: i32 } }
+        fn main() {
+            let x: i32;
+            let foo = E::Foo { a: /*error descr="Use of possibly uninitialized variable [E0381]"*/x/*error**/ };
+        }
+    """)
+
+    fun `test no E0381 in enum variant literal`() = checkErrors("""
+        enum E { Foo { a: i32 } }
+        fn main() {
+            let x = 1;
+            let foo1 = E::Foo { a: x };
+            let foo2 = foo1;
+        }
+    """)
+
+    fun `test no E0381 in builtin operators`() = checkErrors("""
+        fn main() {
+            let x = 1;
+            let y = 2;
+            x + y; x - y; x * y; x / y; x % y;
+            x & y; x | y; x ^ y; x << y; x >> y;
+            x > y; x >= y; x < y; x <= y;
+            x == y; x != y;
+            x; y;
+        }
+    """)
+
+    fun `test no E0381 in match pat binding`() = checkErrors("""
+        fn main() {
+            let e = 1;
+            let e3 = match e {
+                e2 => e2,
+            };
+            e3;
+        }
+    """)
+
+    fun `test no E0381 in match enum without fields`() = checkErrors("""
+        enum E { A, B }
+        fn main() {
+            let e = E::A;
+            let x = match e {
+                E::A => { 1 }
+                E::B => { 2 }
+            };
+            x;
+            e;
+        }
+    """)
+
+    fun `test no E0381 in match enum with fields`() = checkErrors("""
+        enum E { A(i32), B(i32, i32, i32, i32, i32) }
+        fn main() {
+            let e = E::A(0);
+            let x = match e {
+                E::A(a) => { a }
+                E::B(b1, b2, .., b3) => { b1 + b2 + b3 }
+            };
+            x;
+            e;
         }
     """)
 }

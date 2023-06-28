@@ -13,7 +13,7 @@ fn main() -> () {
         _2 = S;                          // scope 0 at src/main.rs:3:17: 3:18
         StorageLive(_3);                 // scope 0 at src/main.rs:3:20: 3:21
         _3 = S;                          // scope 0 at src/main.rs:3:20: 3:21
-        _1 = function(move _2, move _3) -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:3:13: 3:22
+        _1 = foo(move _2, move _3) -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:3:13: 3:22
     }
 
     bb1: {

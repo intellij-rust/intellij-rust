@@ -8,6 +8,7 @@ package org.rust.lang.core.mir.schemas
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.ty.Ty
 
+// https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/visit.rs#L1206
 interface MirVisitor {
     fun returnPlace(): MirLocal
 
@@ -115,7 +116,9 @@ interface MirVisitor {
                 visitLocal(elem.index, MirPlaceContext.NonMutatingUse.Copy, location)
             }
 
-            is MirProjectionElem.Deref, is MirProjectionElem.ConstantIndex -> {}
+            is MirProjectionElem.Deref,
+            is MirProjectionElem.ConstantIndex,
+            is MirProjectionElem.Downcast -> {}
         }
     }
 
@@ -167,6 +170,8 @@ interface MirVisitor {
                 visitTyConst(rvalue.count, location)
             }
 
+            is MirRvalue.ThreadLocalRef -> Unit
+
             is MirRvalue.Ref -> {
                 // TODO: visitRegion(rvalue.region, location)
                 val context = when (rvalue.borrowKind) {
@@ -177,6 +182,10 @@ interface MirVisitor {
                 }
                 visitPlace(rvalue.place, context, location)
             }
+
+            is MirRvalue.CopyForDeref -> TODO()
+
+            is MirRvalue.AddressOf -> TODO()
 
             is MirRvalue.BinaryOpUse -> {
                 visitOperand(rvalue.left, location)
@@ -191,6 +200,12 @@ interface MirVisitor {
             is MirRvalue.UnaryOpUse -> {
                 visitOperand(rvalue.operand, location)
             }
+
+            is MirRvalue.Discriminant -> {
+                visitPlace(rvalue.place, MirPlaceContext.NonMutatingUse.Inspect, location)
+            }
+
+            is MirRvalue.NullaryOpUse -> TODO()
 
             is MirRvalue.Aggregate -> {
                 when (rvalue) {
@@ -217,6 +232,7 @@ interface MirVisitor {
                     location,
                 )
             }
+            else -> TODO()
         }
     }
 
@@ -236,9 +252,14 @@ interface MirVisitor {
                 visitOperand(terminator.discriminant, location)
             }
 
+            is MirTerminator.Drop -> {
+                visitPlace(terminator.place, MirPlaceContext.MutatingUse.Drop, location)
+            }
+
             is MirTerminator.Goto,
             is MirTerminator.Resume,
             is MirTerminator.Unreachable,
+            is MirTerminator.FalseEdge,
             is MirTerminator.FalseUnwind -> {
             }
 
@@ -326,6 +347,7 @@ sealed class MirPlaceContext {
         object Store : MutatingUse()
         object Borrow : MutatingUse()
         object Call : MutatingUse()
+        object Drop : MutatingUse()
     }
 
     sealed class NonUse : MirPlaceContext() {

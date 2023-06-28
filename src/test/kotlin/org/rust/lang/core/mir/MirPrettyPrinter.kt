@@ -5,10 +5,14 @@
 
 package org.rust.lang.core.mir
 
+import com.intellij.psi.PsiElement
+import org.rust.ide.presentation.render
 import org.rust.lang.core.mir.schemas.*
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.thir.variant
 import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.document
 import kotlin.math.max
@@ -18,6 +22,8 @@ internal class MirPrettyPrinter(
     private val mir: MirBody,
     private val commentSupplier: CommentSupplier = ScopeCommentSupplier(filenamePrefix)
 ) {
+    private val knownItems: KnownItems get() = mir.sourceElement.knownItems
+
     fun print(): String {
         return buildString { printMir(mir) }
     }
@@ -47,63 +53,77 @@ internal class MirPrettyPrinter(
             appendLine(statement.withComment(commentSupplier.statementComment(stmt)))
         }
 
-        val comment = commentSupplier.terminatorComment(block.terminator)
-        when (val terminator = block.terminator) {
-            is MirTerminator.Return -> {
-                appendLine("$INDENT${INDENT}return;".withComment(comment))
+        appendLine(format(block.terminator).withComment(commentSupplier.terminatorComment(block.terminator)))
+        appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
+    }
+
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/terminator.rs#L267
+    private fun format(terminator: MirTerminator<MirBasicBlock>): String = buildString {
+        append("$INDENT${INDENT}")
+        append(formatHead(terminator))
+
+        val successors = terminator.successors
+        val labels = formatSuccessorLabels(terminator)
+        check(successors.size == labels.size)
+        when (successors.size) {
+            0 -> Unit
+            1 -> append(" -> bb${successors.single().index}")
+            else -> {
+                val targets = (labels zip successors).joinToString(", ") { (label, successor) ->
+                    "$label: bb${successor.index}"
+                }
+                append(" -> [$targets]")
+            }
+        }
+        append(';')
+    }
+
+    private fun formatHead(terminator: MirTerminator<MirBasicBlock>): String {
+        return when (terminator) {
+            is MirTerminator.Goto -> "goto"
+            is MirTerminator.SwitchInt -> "switchInt(${format(terminator.discriminant)})"
+            is MirTerminator.Return -> "return"
+            is MirTerminator.Resume -> "resume"
+            is MirTerminator.Unreachable -> "unreachable"
+            is MirTerminator.Drop -> "drop(${format(terminator.place)})"
+            is MirTerminator.Call -> {
+                val args = terminator.args.joinToString(separator = ", ") { format(it) }
+                "${format(terminator.destination)} = ${format(terminator.callee)}($args)"
             }
             is MirTerminator.Assert -> {
                 val neg = if (terminator.expected) "" else "!"
-                val successIndex = terminator.target.index
-                val unwindIndex = terminator.unwind?.index
-                val targets = if (unwindIndex == null) "bb$successIndex" else "[success: bb$successIndex, unwind: bb$unwindIndex]"
-                val assert = "$INDENT${INDENT}assert(${neg}${format(terminator.cond)}${format(terminator.msg)}) -> $targets;"
-                appendLine(assert.withComment(comment))
+                "assert($neg${format(terminator.cond)}${format(terminator.msg)})"
             }
-            is MirTerminator.Goto -> {
-                appendLine("$INDENT${INDENT}goto -> bb${terminator.target.index};".withComment(comment))
-            }
-            is MirTerminator.SwitchInt -> {
-                val cases = buildString {
-                    append("[")
-                    // TODO: hardcoded as hell
-                    append("false: bb${terminator.targets.targets[0].index}")
-                    append(", ")
-                    append("otherwise: bb${terminator.targets.targets[1].index}")
-                    append("]")
-                }
-                val switch = "$INDENT${INDENT}switchInt(${format(terminator.discriminant)}) -> $cases;"
-                appendLine(switch.withComment(comment))
-            }
-            is MirTerminator.Resume -> {
-                appendLine("$INDENT${INDENT}resume;".withComment(comment))
-            }
-            is MirTerminator.FalseUnwind -> {
-                val cases = buildString {
-                    append("[")
-                    append("real: bb${terminator.realTarget.index}")
-                    append(", ")
-                    append("cleanup: bb${terminator.unwind!!.index}")
-                    append("]")
-                }
-                appendLine("$INDENT${INDENT}falseUnwind -> $cases;".withComment(comment))
-            }
-            is MirTerminator.Unreachable -> {
-                appendLine("$INDENT${INDENT}unreachable;".withComment(comment))
-            }
-
-            is MirTerminator.Call -> {
-                val args = terminator.args.joinToString(separator = ", ") { format(it) }
-                appendLine(
-                    buildString {
-                        append("$INDENT${INDENT}_${terminator.destination.local.index} = ")
-                        append("${format(terminator.callee)}($args) -> ")
-                        append("[return: bb${terminator.target?.index}, unwind: bb${terminator.unwind?.index}];")
-                    }.withComment(comment)
-                )
-            }
+            is MirTerminator.FalseEdge -> "falseEdge"
+            is MirTerminator.FalseUnwind -> "falseUnwind"
         }
-        appendLine("$INDENT}".withComment(commentSupplier.blockEndComment(block)))
+    }
+
+    private fun formatSuccessorLabels(terminator: MirTerminator<MirBasicBlock>): List<String> {
+        return when (terminator) {
+            is MirTerminator.Return,
+            is MirTerminator.Resume,
+            is MirTerminator.Unreachable -> listOf()
+            is MirTerminator.Goto -> listOf("")
+            is MirTerminator.SwitchInt -> terminator.targets.values.map { it.toString() } + "otherwise"
+            is MirTerminator.Call -> listOfNotNull(
+                "return".takeIf { terminator.target != null },
+                "unwind".takeIf { terminator.unwind != null },
+            )
+            is MirTerminator.Drop -> listOfNotNull(
+                "return",
+                "unwind".takeIf { terminator.unwind != null },
+            )
+            is MirTerminator.Assert -> listOfNotNull(
+                "success",
+                "unwind".takeIf { terminator.unwind != null },
+            )
+            is MirTerminator.FalseEdge -> listOf("real", "imaginary")
+            is MirTerminator.FalseUnwind -> listOfNotNull(
+                "real",
+                "unwind".takeIf { terminator.unwind != null },
+            )
+        }
     }
 
     private fun format(local: MirLocal): String {
@@ -129,6 +149,7 @@ internal class MirPrettyPrinter(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L2024
     private fun format(rvalue: MirRvalue): String {
         return when (rvalue) {
             is MirRvalue.BinaryOpUse -> {
@@ -136,19 +157,22 @@ internal class MirPrettyPrinter(
                     is MirBinaryOperator.Arithmetic -> op.op.traitName
                     is MirBinaryOperator.Equality -> when (op.op) {
                         EqualityOp.EQ -> "Eq"
-                        EqualityOp.EXCLEQ -> TODO()
+                        EqualityOp.EXCLEQ -> "Ne"
                     }
                     is MirBinaryOperator.Comparison -> when (op.op) {
                         ComparisonOp.LT -> "Lt"
-                        ComparisonOp.GT -> TODO()
-                        ComparisonOp.GTEQ -> TODO()
-                        ComparisonOp.LTEQ -> TODO()
+                        ComparisonOp.GT -> "Gt"
+                        ComparisonOp.GTEQ -> "Ge"
+                        ComparisonOp.LTEQ -> "Le"
                     }
                     MirBinaryOperator.Offset -> TODO()
                 }
                 "$opName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
             is MirRvalue.UnaryOpUse -> "${rvalue.op.formatted}(${format(rvalue.operand)})"
+            is MirRvalue.Discriminant -> "discriminant(${format(rvalue.place)})"
+            is MirRvalue.NullaryOpUse -> TODO()
+            is MirRvalue.ThreadLocalRef -> TODO()
             is MirRvalue.Use -> format(rvalue.operand)
             is MirRvalue.CheckedBinaryOpUse -> {
                 val funName = when (val op = rvalue.op) {
@@ -157,6 +181,8 @@ internal class MirPrettyPrinter(
                 }
                 "$funName(${format(rvalue.left)}, ${format(rvalue.right)})"
             }
+            is MirRvalue.CopyForDeref -> TODO()
+            is MirRvalue.AddressOf -> TODO()
             is MirRvalue.Repeat -> {
                 val value = format(rvalue.operand)
                 val count = rvalue.count
@@ -173,25 +199,46 @@ internal class MirPrettyPrinter(
                 else -> rvalue.operands.joinToString(", ", "(", ")") { format(it) }
             }
             is MirRvalue.Aggregate.Adt -> {
-                val struct = rvalue.definition
+                val definition = rvalue.definition.variant(rvalue.variantIndex)
+                val name = when (definition) {
+                    is RsStructItem -> {
+                        val name = definition.name!!
+                        val langAttributes = definition.getTraversedRawAttributes().langAttributes.toList()
+                        if ("Range" in langAttributes || "RangeInclusive" in langAttributes) {
+                            val typeArguments = (rvalue.ty as? TyAdt)
+                                ?.typeArguments
+                                ?.joinToString(prefix = "::<", postfix = ">")
+                                .orEmpty()
+                            "std::ops::$name$typeArguments"
+                        } else {
+                            name
+                        }
+                    }
+                    is RsEnumVariant -> "${definition.parentEnum.name!!}::${definition.name!!}"
+                    else -> error("unreachable")
+                }
                 when {
-                    struct.isFieldless -> struct.name ?: TODO()
-                    struct.isTupleStruct -> TODO()
+                    definition.isFieldless -> name
+                    definition.tupleFields != null -> {
+                        rvalue.operands.joinToString(", ", "$name(", ")") { format(it) }
+                    }
                     else -> {
-                        check(struct.fields.size == rvalue.operands.size)
-                        val fields = (struct.fields zip rvalue.operands)
+                        check(definition.fields.size == rvalue.operands.size)
+                        val fields = (definition.fields zip rvalue.operands)
                             .joinToString { (fieldDeclaration, fieldValue) ->
                                 "${fieldDeclaration.name}: ${format(fieldValue)}"
                             }
-                        "${struct.name!!} { $fields }"
+                        "$name { $fields }"
                     }
                 }
             }
             is MirRvalue.Ref -> "&${if (rvalue.borrowKind == MirBorrowKind.Shared) "" else "mut "}${format(rvalue.place)}"
             is MirRvalue.Len -> "Len(${format(rvalue.place)})"
+            is MirRvalue.Cast.IntToInt -> "${format(rvalue.operand)} as ${format(rvalue.ty)} (IntToInt)"
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L1860
     private fun format(operand: MirOperand): String {
         return when (operand) {
             is MirOperand.Constant -> {
@@ -208,12 +255,14 @@ internal class MirPrettyPrinter(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L1714
     private fun format(place: MirPlace): String {
         val index = place.local.index
 
         return buildString {
             for (projection in place.projections.asReversed()) {
                 when (projection) {
+                    is MirProjectionElem.Downcast,
                     is MirProjectionElem.Field -> append("(")
                     is MirProjectionElem.Deref -> append("(*")
                     is MirProjectionElem.Index,
@@ -225,6 +274,10 @@ internal class MirPrettyPrinter(
 
             for (projection in place.projections) {
                 when (projection) {
+                    is MirProjectionElem.Downcast -> {
+                        val name = projection.name ?: "variant#${projection.variantIndex}"
+                        append(" as $name)")
+                    }
                     is MirProjectionElem.Field -> append(".${projection.fieldIndex}: ${projection.elem})")
                     is MirProjectionElem.Deref -> append(")")
                     is MirProjectionElem.Index -> append("[_${projection.index.index}]")
@@ -257,9 +310,9 @@ internal class MirPrettyPrinter(
                 }
             }
             constant is MirConstant.Value && constant.constValue is MirConstValue.ZeroSized -> {
-                when (constant.ty) {
+                when (val ty = constant.ty) {
                     is TyUnit -> "()"
-                    is TyFunctionBase -> "function"
+                    is TyFunctionDef -> ty.def.name ?: ""
                     else -> TODO()
                 }
             }
@@ -287,9 +340,27 @@ internal class MirPrettyPrinter(
             }
             is RsFunction -> {
                 append("fn ")
-                append(reference.name)
+                val prefix = reference
+                    .parent
+                    ?.parent
+                    ?.let { it as? RsImplItem }
+                    ?.let {
+                        val impl = it.impl
+                        val name = it.typeReference ?: error("Could not find type reference of impl")
+                        val fileName = it.contextualFile.originalFile.name
+                        val location = LocationRange(
+                            fileName = "$filenamePrefix$fileName",
+                            start = getStartLocation(impl),
+                            end = getEndLocation(name)
+                        )
+                        "<impl at $location>::"
+                    }
+                append("${prefix.orEmpty()}${reference.name}")
                 append("(")
-                // TODO: arguments
+                mir.args.forEachIndexed { index, arg ->
+                    if (index != 0) append(", ")
+                    append("${format(arg)}: ${format(arg.ty)}")
+                }
                 append(") -> ${format(mir.returnLocal.ty)} ")
             }
             else -> TODO("Unsupported type ${reference::class}")
@@ -298,31 +369,15 @@ internal class MirPrettyPrinter(
 
     private fun format(cause: MirStatement.FakeRead.Cause): String {
         return when (cause) {
+            is MirStatement.FakeRead.Cause.ForMatchedPlace -> "ForMatchedPlace(None)".also { assert(cause.element == null) }
             is MirStatement.FakeRead.Cause.ForLet -> "ForLet(None)".also { assert(cause.element == null) }
             MirStatement.FakeRead.Cause.ForIndex -> "ForIndex"
         }
     }
 
     private fun format(ty: Ty): String {
-        return when (ty) {
-            is TyUnit -> "()"
-            TyNever -> "!"
-            is TyPrimitive -> ty.name
-            is TyArray -> if (ty.size == null) {
-                "[${format(ty.base)}]"
-            } else {
-                "[${format(ty.base)}; ${ty.size}]"
-            }
-            is TyTuple -> if (ty.types.size == 1) {
-                "(${format(ty.types.single())},)"
-            } else {
-                ty.types.joinToString(", ", "(", ")") { format(it) }
-            }
-            is TyAdt -> ty.item.name ?: TODO()
-            is TyReference -> "&${if (ty.mutability == Mutability.MUTABLE) "mut " else ""}${format(ty.referenced)}"
-            is TyFunctionBase -> "function"
-            else -> TODO("Unknown type: $ty")
-        }
+        val useQualifiedName = setOfNotNull(knownItems.Range, knownItems.RangeInclusive)
+        return ty.render(context = mir.sourceElement, useQualifiedName = useQualifiedName)
     }
 
     // just local declarations for now
@@ -338,12 +393,13 @@ internal class MirPrettyPrinter(
             appendLine(debugInfo.withComment("in ${createComment(varDebugInfo.source)}"))
         }
         for (local in mir.localDecls) {
+            if (local.index in (1..mir.argCount)) continue
             if (local.source.scope != parent) continue
             val mut = when (local.mutability) {
                 Mutability.MUTABLE -> "mut "
                 Mutability.IMMUTABLE -> ""
             }
-            val definition = "${indent}let ${mut}_${local.index}: ${format(local.ty)};"
+            val definition = "${indent}let ${mut}${format(local)}: ${format(local.ty)};"
             val localName = if (local.index == 0) " return place" else ""
             val comment = createComment(local.source)
             appendLine(definition.withCommentAsIs(" //$localName in $comment"))
@@ -403,42 +459,64 @@ internal class MirPrettyPrinter(
         }
     }
 
+    private data class Location(val line: Int, val lineOffset: Int) {
+        init {
+            assert(lineOffset >= 0)
+        }
+        val previous get() = Location(line, lineOffset - 1)
+        override fun toString() = "${line + 1}:${lineOffset + 1}"
+    }
+
+    private data class LocationRange(val fileName: String, val start: Location, val end: Location) {
+        override fun toString() = "$fileName:$start: $end"
+    }
+
     companion object {
         private const val INDENT = "    "
         private const val ALIGN = 40
 
         private fun createComment(filenamePrefix: String, source: MirSourceInfo): String {
             val scope = source.scope.index
-            val fileName = source.span.reference.contextualFile.originalFile.name
-            val startOffset = source.span.reference.startOffset
-            val endOffset = source.span.reference.endOffset
-            val startLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
-            val endLine = source.span.reference.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
-            val startLineOffset = startOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
-            val endLineOffset = endOffset - source.span.reference.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
+            val scopeAt = "scope $scope at"
+            val location = getLocationRange(filenamePrefix, source.span.reference)
             return when (source.span) {
                 is MirSpan.Full -> {
-                    "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
-                        "${endLine + 1}:${endLineOffset + 1}"
+                    val ref = source.span.reference
+                    val adjustedLocation = if (ref is RsSelfParameter && ref.colon != null) {
+                        LocationRange(location.fileName, location.start, getEndLocation(ref.self))
+                    } else {
+                        location
+                    }
+                    "$scopeAt $adjustedLocation"
                 }
-
-                is MirSpan.EndPoint -> {
-                    "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset}: " +
-                        "${endLine + 1}:${endLineOffset + 1}"
-                }
-
-                is MirSpan.End -> {
-                    "scope $scope at $filenamePrefix$fileName:${endLine + 1}:${endLineOffset + 1}: " +
-                        "${endLine + 1}:${endLineOffset + 1}"
-                }
-
-                is MirSpan.Start -> {
-                    "scope $scope at $filenamePrefix$fileName:${startLine + 1}:${startLineOffset + 1}: " +
-                        "${startLine + 1}:${startLineOffset + 1}"
-                }
-
+                is MirSpan.EndPoint -> "$scopeAt ${LocationRange(location.fileName, location.end.previous, location.end)}"
+                is MirSpan.End -> "$scopeAt ${LocationRange(location.fileName, location.end, location.end)}"
+                is MirSpan.Start -> "$scopeAt ${LocationRange(location.fileName, location.start, location.start)}"
                 MirSpan.Fake -> error("can't print fake source info")
             }
+        }
+
+        private fun getLocationRange(filePrefix: String, element: PsiElement): LocationRange {
+            val fileName = element.contextualFile.originalFile.name
+            return LocationRange(
+                fileName = "$filePrefix$fileName",
+                start = getStartLocation(element),
+                end = getEndLocation(element),
+            )
+        }
+
+        private fun getStartLocation(element: PsiElement): Location {
+            val startOffset = element.startOffset
+            val startLine = element.contextualFile.originalFile.document?.getLineNumber(startOffset)!!
+            val startLineOffset = startOffset - element.contextualFile.originalFile.document?.getLineStartOffset(startLine)!!
+            return Location(startLine, startLineOffset)
+        }
+
+        private fun getEndLocation(element: PsiElement): Location {
+            val endOffset = element.endOffset
+            val endLine = element.contextualFile.originalFile.document?.getLineNumber(endOffset)!!
+            val endLineOffset = endOffset - element.contextualFile.originalFile.document?.getLineStartOffset(endLine)!!
+            return Location(endLine, endLineOffset)
         }
     }
 }

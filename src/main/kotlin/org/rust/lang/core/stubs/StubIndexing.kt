@@ -60,6 +60,7 @@ fun IndexSink.indexTraitAlias(stub: RsTraitAliasStub) {
 
 fun IndexSink.indexFunction(stub: RsFunctionStub) {
     indexNamedStub(stub)
+    RsLangItemIndex.index(stub.psi, this)
 }
 
 fun IndexSink.indexConstant(stub: RsConstantStub) {

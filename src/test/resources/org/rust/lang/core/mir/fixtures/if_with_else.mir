@@ -1,0 +1,29 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:11: 1:11
+    let mut _1: bool;                    // in scope 0 at src/main.rs:2:8: 2:12
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:8: 2:12
+        _1 = const true;                 // scope 0 at src/main.rs:2:8: 2:12
+        switchInt(move _1) -> [0: bb2, otherwise: bb1]; // scope 0 at src/main.rs:2:8: 2:12
+    }
+
+    bb1: {
+        _0 = const ();                   // scope 0 at src/main.rs:2:13: 2:15
+        goto -> bb4;                     // scope 0 at src/main.rs:2:5: 2:23
+    }
+
+    bb2: {
+        goto -> bb3;                     // scope 0 at src/main.rs:2:8: 2:12
+    }
+
+    bb3: {
+        _0 = const ();                   // scope 0 at src/main.rs:2:21: 2:23
+        goto -> bb4;                     // scope 0 at src/main.rs:2:5: 2:23
+    }
+
+    bb4: {
+        StorageDead(_1);                 // scope 0 at src/main.rs:2:22: 2:23
+        return;                          // scope 0 at src/main.rs:3:2: 3:2
+    }
+}

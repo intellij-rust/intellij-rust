@@ -5,11 +5,15 @@
 
 package org.rust.lang.core.mir.dataflow.move
 
+import org.rust.lang.core.dfa.borrowck.gatherLoans.hasDestructor
 import org.rust.lang.core.mir.WithIndex
 import org.rust.lang.core.mir.schemas.*
 import org.rust.lang.core.mir.util.IndexAlloc
 import org.rust.lang.core.mir.util.IndexKeyMap
 import org.rust.lang.core.mir.util.LocationMap
+import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsStructKind.UNION
+import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.types.ty.*
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
@@ -147,7 +151,7 @@ interface MoveData {
         fun gatherMoves(body: MirBody): MoveData {
             val builder = MoveDataBuilder.new(body)
 
-            // TODO gather args
+            builder.gatherArgs()
 
             for (bb in body.basicBlocks) {
                 for ((i, stmt) in bb.statements.withIndex()) {
@@ -190,6 +194,8 @@ class MovePathLookup(
         }
         return LookupResult.Exact(result)
     }
+
+    fun find(local: MirLocal): MovePath = locals[local]!!
 }
 
 
@@ -210,13 +216,20 @@ private class MoveDataBuilder(
         movePathFor(place)
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_mir_dataflow/src/move_paths/builder.rs#L100
     private fun movePathFor(place: MirPlace): RsResult<MovePath, MoveError> {
         var base = data.revLookup.locals[place.local]!!
         place.projections.forEachIndexed { i, elem ->
             val projectionBase = place.projections.subList(0, i)
             when (val placeTy = MirPlace.tyFrom(place.local, projectionBase).ty) {
                 is TyReference, is TyPointer -> TODO()
-                is TyAdt -> TODO()
+                is TyAdt -> {
+                    when {
+                        (placeTy.item as? RsStructItem)?.kind == UNION -> TODO()
+                        placeTy.item.hasDestructor && !placeTy.isBox -> TODO()
+                        else -> Unit
+                    }
+                }
                 is TySlice -> TODO()
                 is TyArray -> TODO()
                 else -> Unit
@@ -256,13 +269,22 @@ private class MoveDataBuilder(
     fun gatherTerminator(loc: MirLocation, term: MirTerminator<*>) {
         this.loc = loc
         when (term) {
-            is MirTerminator.Assert -> gatherOperand(term.cond)
-            is MirTerminator.SwitchInt -> gatherOperand(term.discriminant)
-            is MirTerminator.FalseUnwind -> Unit
-            is MirTerminator.Goto -> Unit
-            is MirTerminator.Resume -> Unit
-            is MirTerminator.Return -> Unit
-            is MirTerminator.Unreachable -> Unit
+            is MirTerminator.Goto,
+            is MirTerminator.FalseEdge,
+            is MirTerminator.FalseUnwind,
+            is MirTerminator.Return,
+            is MirTerminator.Resume,
+            is MirTerminator.Unreachable,
+            is MirTerminator.Drop -> Unit
+
+            is MirTerminator.Assert -> {
+                gatherOperand(term.cond)
+            }
+
+            is MirTerminator.SwitchInt -> {
+                gatherOperand(term.discriminant)
+            }
+
             is MirTerminator.Call -> {
                 gatherOperand(term.callee)
                 for (arg in term.args) {
@@ -292,6 +314,7 @@ private class MoveDataBuilder(
 
     private fun gatherRvalue(rvalue: MirRvalue) {
         when (rvalue) {
+            is MirRvalue.ThreadLocalRef -> Unit  // not-a-move
             is MirRvalue.Use -> gatherOperand(rvalue.operand)
             is MirRvalue.Repeat -> gatherOperand(rvalue.operand)
             is MirRvalue.Aggregate -> {
@@ -311,7 +334,16 @@ private class MoveDataBuilder(
             }
 
             is MirRvalue.UnaryOpUse -> gatherOperand(rvalue.operand)
-            is MirRvalue.Ref, is MirRvalue.Len -> Unit
+
+            is MirRvalue.CopyForDeref -> error("unreachable")
+
+            is MirRvalue.Cast -> gatherOperand(rvalue.operand)
+
+            is MirRvalue.Ref,
+            is MirRvalue.AddressOf,
+            is MirRvalue.Discriminant,
+            is MirRvalue.Len,
+            is MirRvalue.NullaryOpUse -> Unit
         }
     }
 
@@ -333,6 +365,16 @@ private class MoveDataBuilder(
         val moveOut = data.moves.allocate { MoveOut(it, path, loc) }
         data.pathMap[path]!!.add(moveOut)
         data.locMap.getOrPut(loc) { mutableListOf() }.add(moveOut)
+    }
+
+    fun gatherArgs() {
+        for (arg in body.args) {
+            val path = data.revLookup.find(arg)
+            val init = data.inits.allocate { index ->
+                Init(index, path, InitLocation.Argument(arg), InitKind.Deep)
+            }
+            data.initPathMap[path]!!.add(init)
+        }
     }
 
     fun finalize(): MoveDataImpl {
