@@ -10,6 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import com.intellij.util.ThreeState
 import org.rust.ide.fixes.*
+import org.rust.lang.core.CompilerFeature
+import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
@@ -245,6 +247,17 @@ private fun checkFeatureAttribute(item: RsMetaItem, holder: RsAnnotationHolder, 
     val metaItemList = item.metaItemArgs?.metaItemList.orEmpty()
     // #![feature()] can be written even in stable channel
     if (metaItemList.isEmpty()) return
+
+    for (metaItem in metaItemList) {
+        val featureName = metaItem.name ?: continue
+        val feature = CompilerFeature.find(featureName) ?: continue
+        if (feature.availability(item) == FeatureAvailability.REMOVED) {
+            val isAvailable = metaItemList.size > 1 || metaItemList.size == 1 && item.parent == attr
+            val fix = if (isAvailable) RemoveMetaItemFix(metaItem) else null
+            RsDiagnostic.FeatureAttributeHasBeenRemoved(metaItem, featureName, fix).addToHolder(holder)
+        }
+    }
+
     val version = item.cargoProject?.rustcInfo?.version ?: return
     // we should annotate `feature` attribute if only we are sure that unstable features are not available
     if (item.areUnstableFeaturesAvailable(version) != ThreeState.NO) return
