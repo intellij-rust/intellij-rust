@@ -162,6 +162,37 @@ class CargoSyncTask(
         }
     }
 
+    private fun fetchRustcInfo(context: SyncContext): TaskResult<RustcInfo> {
+        return context.runWithChildProgress("Getting toolchain version") { childContext ->
+            if (!childContext.toolchain.looksLikeValidToolchain()) {
+                val location = childContext.toolchain.presentableLocation
+                return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain $location")
+            }
+
+            val workingDirectory = childContext.oldCargoProject.workingDirectory
+
+            val listener = RustcVersionProcessAdapter(childContext)
+            val rustcVersion = childContext.toolchain.rustc()
+                .queryVersion(workingDirectory, context.project, listener)
+                .unwrapOrElse {
+                    LOG.warn("Failed to fetch rustc version", it)
+                    context.error("Failed to fetch rustc version", it.message.orEmpty())
+                    null
+                }
+            val sysroot = UnitTestRustcCacheService.cached(rustcVersion) {
+                childContext.toolchain.rustc().getSysroot(workingDirectory)
+            } ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+            val rustupActiveToolchain = UnitTestRustcCacheService.cached(rustcVersion) {
+                childContext.toolchain.rustup(workingDirectory)?.activeToolchainName()
+            }
+            val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) {
+                childContext.toolchain.rustc().getTargets(workingDirectory)
+            }
+
+            TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustupActiveToolchain, rustcTargets))
+        }
+    }
+
     companion object {
         private val LOG = logger<CargoSyncTask>()
     }
@@ -304,26 +335,6 @@ private fun List<CargoProjectImpl>.deduplicateProjects(): List<CargoProjectImpl>
     }
 
     return projects.filter { it !in projectsToRemove }
-}
-
-private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<RustcInfo> {
-    return context.runWithChildProgress("Getting toolchain version") { childContext ->
-        if (!childContext.toolchain.looksLikeValidToolchain()) {
-            return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${childContext.toolchain.presentableLocation}")
-        }
-
-        val workingDirectory = childContext.oldCargoProject.workingDirectory
-
-        val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
-        val sysroot = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getSysroot(workingDirectory) }
-            ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
-        val rustupActiveToolchain = UnitTestRustcCacheService.cached(rustcVersion) {
-            childContext.toolchain.rustup(workingDirectory)?.activeToolchainName()
-        }
-        val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getTargets(workingDirectory) }
-
-        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustupActiveToolchain, rustcTargets))
-    }
 }
 
 private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<CargoWorkspace> {
@@ -498,6 +509,17 @@ private class SyncProcessAdapter(
 
     override fun error(title: String, message: String) = context.error(title, message)
     override fun warning(title: String, message: String) = context.warning(title, message)
+}
+
+private class RustcVersionProcessAdapter(
+    private val context: CargoSyncTask.SyncContext
+) : ProcessAdapter() {
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+        val text = event.text.trim { it <= ' ' }
+        if (text.startsWith("info:")) {
+            context.withProgressText(text.removePrefix("info:").trim())
+        }
+    }
 }
 
 private class SyncCargoBuildContext(

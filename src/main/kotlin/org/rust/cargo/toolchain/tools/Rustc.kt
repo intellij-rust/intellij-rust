@@ -5,6 +5,8 @@
 
 package org.rust.cargo.toolchain.tools
 
+import com.intellij.execution.process.ProcessListener
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,10 +15,7 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.impl.parseRustcVersion
-import org.rust.openapiext.checkIsBackgroundThread
-import org.rust.openapiext.execute
-import org.rust.openapiext.isSuccess
-import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.*
 import java.nio.file.Path
 
 fun RsToolchainBase.rustc(): Rustc = Rustc(this)
@@ -31,6 +30,19 @@ class Rustc(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             .execute(toolchain.executionTimeoutInMilliseconds)
             ?.stdoutLines
         return lines?.let { parseRustcVersion(it) }
+    }
+
+    fun queryVersion(
+        workingDirectory: Path,
+        owner: Disposable,
+        listener: ProcessListener
+    ): RsProcessResult<RustcVersion?> {
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
+        return createBaseCommandLine("--version", "--verbose", workingDirectory = workingDirectory)
+            .execute(owner, listener = listener)
+            .map { parseRustcVersion(it.stdoutLines) }
     }
 
     fun getSysroot(projectDirectory: Path): String? {
