@@ -287,9 +287,17 @@ internal class MirPrettyPrinter(
         }
     }
 
+    // https://github.com/rust-lang/rust/blob/f7b831ac8a897273f78b9f47165cf8e54066ce4b/compiler/rustc_middle/src/mir/mod.rs#L2790
     private fun format(constant: MirConstant): String {
-        return when {
-            constant is MirConstant.Value && constant.constValue is MirConstValue.Scalar -> {
+        return when (constant) {
+            is MirConstant.Value -> format(constant)
+            is MirConstant.Unevaluated -> "_"
+        }
+    }
+
+    private fun format(constant: MirConstant.Value): String {
+        return when (constant.constValue) {
+            is MirConstValue.Scalar -> {
                 val value = when (val value = (constant.constValue as MirConstValue.Scalar).value) {
                     is MirScalar.Int -> value.scalarInt.data.toString()
                 }
@@ -309,7 +317,7 @@ internal class MirPrettyPrinter(
                     else -> TODO()
                 }
             }
-            constant is MirConstant.Value && constant.constValue is MirConstValue.ZeroSized -> {
+            is MirConstValue.ZeroSized -> {
                 when (val ty = constant.ty) {
                     is TyUnit -> "()"
                     is TyFunctionDef -> ty.def.name ?: ""

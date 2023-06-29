@@ -485,4 +485,12 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             e;
         }
     """)
+
+    fun `test no E0381 for path expr reference to named const`() = checkErrors("""
+        const C: i32 = 1;
+        fn main() {
+            let x = C;
+            x;
+        }
+    """)
 }
