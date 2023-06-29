@@ -1,0 +1,4 @@
+pub fn main() {
+    let list = vec![1, 2, 3];
+    let sublist = &list[<spot>i</spot>..<spot>j</spot>]
+}

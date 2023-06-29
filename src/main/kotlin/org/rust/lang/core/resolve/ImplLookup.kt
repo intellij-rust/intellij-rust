@@ -1359,6 +1359,8 @@ class ImplLookup(
     fun isEq(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Eq)
     fun isPartialEq(ty: Ty, rhsType: Ty = ty): ThreeValuedLogic = ty.isTraitImplemented(items.PartialEq, rhsType)
     fun isIntoIterator(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.IntoIterator)
+    fun isDrop(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Drop)
+    fun isIndex(ty: Ty, indexType: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Index, indexType)
 
     private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): ThreeValuedLogic {
         if (trait == null) return ThreeValuedLogic.Unknown
