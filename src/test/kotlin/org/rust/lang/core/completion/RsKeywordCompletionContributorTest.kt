@@ -949,7 +949,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-
     fun `test if let completion within struct`() = checkNotContainsCompletion("let", """
         struct S { if l/*caret*/ }
     """)
@@ -977,9 +976,222 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-
     fun `test while let completion within struct`() = checkNotContainsCompletion("let", """
         struct S { while l/*caret*/ }
+    """)
+
+    fun `test as completion after primitive`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = 1 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after path`() = checkCompletion("as", """
+        fn main() {
+            let b = 12;
+            let a = b /*caret*/
+        }
+    """, """
+        fn main() {
+            let b = 12;
+            let a = b as /*caret*/
+        }
+    """)
+
+    fun `test as completion after path before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let b = 12;
+            let a = b /*caret*/;
+        }
+    """, """
+        fn main() {
+            let b = 12;
+            let a = b as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after another cast`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 as i32 /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = 1 as i32 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after expression`() = checkCompletion("as", """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } as /*caret*/
+        }
+    """)
+
+    fun `test as completion after expression before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } /*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after primitive before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 /*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = 1 as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after another cast before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 as i32 /*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = 1 as i32 as /*caret*/;
+        }
+    """)
+
+    fun `test as completion function call argument`() = checkCompletion("as", """
+        fn foo(a: i64) {}
+        fn main() {
+            foo(1 /*caret*/);
+        }
+    """, """
+        fn foo(a: i64) {}
+        fn main() {
+            foo(1 as /*caret*/);
+        }
+    """)
+
+    fun `test no as completion function call argument variable name`() = checkNotContainsCompletion("as", """
+        fn foo(a: i64) {}
+        fn main() {
+            let a = 1;
+            foo(a/*caret*/);
+        }
+    """)
+
+    fun `test as completion function call in let decl`() = checkCompletion("as", """
+        fn foo() -> i64 { 1 }
+        fn main() {
+            let a = foo() /*caret*/;
+        }
+    """, """
+        fn foo() -> i64 { 1 }
+        fn main() {
+            let a = foo() as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after struct field`() = checkCompletion("as", """
+        struct S { a: i64 }
+        fn main() {
+            S { a: 1 /*caret*/ };
+        }
+    """, """
+        struct S { a: i64 }
+        fn main() {
+            S { a: 1 as /*caret*/ };
+        }
+    """)
+
+    fun `test no as completion in struct field name`() = checkNotContainsCompletion("as", """
+        struct S { a: i64 }
+        fn main() {
+            S { a/*caret*/ };
+        }
+    """)
+
+    fun `test no as completion in second struct field name`() = checkNotContainsCompletion("as", """
+        struct S { x: i32, a: i64 }
+        fn main() {
+            S { x: 1, a/*caret*/ };
+        }
+    """)
+
+    fun `test as completion after return`() = checkCompletion("as", """
+        fn foo() -> i32 {
+            return 1 /*caret*/
+        }
+    """, """
+        fn foo() -> i32 {
+            return 1 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after return before semicolon`() = checkCompletion("as", """
+        fn foo() -> i32 {
+            return 1 /*caret*/;
+        }
+    """, """
+        fn foo() -> i32 {
+            return 1 as /*caret*/;
+        }
+    """)
+
+
+    fun `test as completion after returning value`() = checkCompletion("as", """
+        fn foo() -> i64 {
+            1 /*caret*/
+        }
+    """, """
+        fn foo() -> i64 {
+            1 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after macro call`() = checkCompletion("as", """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() /*caret*/
+        }
+    """, """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() as /*caret*/
+        }
+    """)
+
+    fun `test as completion after macro call before semicolon`() = checkCompletion("as", """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() /*caret*/;
+        }
+    """, """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() as /*caret*/;
+        }
+    """)
+
+    fun `test no as completion macro call argument if nothing to cast`() = checkNotContainsCompletion("as", """
+        macro_rules! foo {
+            ($ i: ident) => { _ };
+        }
+        fn main() {
+            foo!("123" /*caret*/)
+        }
     """)
 
     // Smart mode is used for not completion tests to disable additional results
