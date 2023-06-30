@@ -349,6 +349,8 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "VIS" -> RsVisStub.Type
     "VIS_RESTRICTION" -> RsPlaceholderStub.Type("VIS_RESTRICTION", ::RsVisRestrictionImpl)
 
+    "DEFAULT_PARAMETER_VALUE" -> RsPlaceholderStub.Type("DEFAULT_PARAMETER_VALUE", ::RsDefaultParameterValueImpl)
+
     else -> error("Unknown element $name")
 }
 

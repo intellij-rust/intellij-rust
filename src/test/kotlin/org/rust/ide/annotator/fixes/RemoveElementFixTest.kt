@@ -7,6 +7,7 @@ package org.rust.ide.annotator.fixes
 
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
+import org.rust.ide.annotator.RsSyntaxErrorsAnnotator
 
 class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -85,5 +86,25 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         enum E {
             V
         }
+    """)
+}
+
+class RemoveElementFixSyntaxTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
+    fun `test default parameter values (fn)`() = checkFixByText("Remove default parameter value", """
+        fn foo(x: i32 = <error descr="Default parameter values are not supported in Rust">0/*caret*/</error>) {}
+    """, """
+        fn foo(x: i32) {}
+    """)
+
+    fun `test default parameter values (struct)`() = checkFixByText("Remove default parameter value", """
+        struct S { x: i32 = <error descr="Default parameter values are not supported in Rust">0/*caret*/</error> }
+    """, """
+        struct S { x: i32 }
+    """)
+
+    fun `test default parameter values (tuple)`() = checkFixByText("Remove default parameter value", """
+        struct T(i32 = <error descr="Default parameter values are not supported in Rust">0/*caret*/</error>);
+    """, """
+        struct T(i32);
     """)
 }

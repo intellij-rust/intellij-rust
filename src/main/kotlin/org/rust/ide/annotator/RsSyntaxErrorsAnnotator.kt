@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -67,6 +68,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsUnderscoreExpr -> checkUnderscoreExpr(holder, element)
             is RsWherePred -> checkWherePred(holder, element)
             is RsLambdaExpr -> checkLambdaExpr(holder, element)
+            is RsDefaultParameterValue -> checkDefaultParameterValue(holder, element)
             else -> {
                 checkReservedKeyword(holder, element)
             }
@@ -415,6 +417,11 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
     }
 }
 
+private fun checkDefaultParameterValue(holder: AnnotationHolder, default: RsDefaultParameterValue) {
+    val fix = RemoveElementFix(default, "default parameter value")
+    deny(default.expr, holder, "Default parameter values are not supported in Rust", fix = fix)
+}
+
 private fun checkValueParameterInFunction(fn: RsFunction, param: RsValueParameter, holder: AnnotationHolder) {
     val pat = param.pat
     when (fn.owner) {
@@ -679,11 +686,14 @@ private fun deny(
     holder: AnnotationHolder,
     @InspectionMessage message: String,
     vararg highlightElements: PsiElement?,
-    severity: HighlightSeverity = HighlightSeverity.ERROR
+    severity: HighlightSeverity = HighlightSeverity.ERROR,
+    fix: IntentionAction? = null
 ) {
     if (el == null) return
     holder.newAnnotation(severity, message)
-        .range(highlightElements.combinedRange ?: el.textRange).create()
+        .range(highlightElements.combinedRange ?: el.textRange)
+        .apply { if (fix != null) withFix(fix) }
+        .create()
 }
 
 private val Array<out PsiElement?>.combinedRange: TextRange?

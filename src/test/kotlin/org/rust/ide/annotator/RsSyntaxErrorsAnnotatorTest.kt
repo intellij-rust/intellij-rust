@@ -492,4 +492,10 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             (<error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error> + <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>, <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error> - <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>) = (x, x);
         }
     """)
+
+    fun `test default parameter values`() = checkErrors("""
+        fn foo(x: i32 = <error descr="Default parameter values are not supported in Rust">0</error>) {}
+        struct S { x: i32 = <error descr="Default parameter values are not supported in Rust">0</error> }
+        struct T(i32 = <error descr="Default parameter values are not supported in Rust">0</error>);
+    """)
 }
