@@ -37,6 +37,7 @@ class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurati
                 val gdbAvailability = RsDebuggerToolchainService.getInstance().gdbAvailability()
                 return when (gdbAvailability) {
                     DebuggerAvailability.Bundled -> RsGDBDriverConfiguration(isElevated, emulateTerminal)
+                    is DebuggerAvailability.Binaries -> RsCustomBinariesGDBDriverConfiguration(gdbAvailability.binaries, isElevated, emulateTerminal)
                     else -> null
                 }
             }
@@ -44,7 +45,7 @@ class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurati
     }
 }
 
-class RsGDBDriverConfiguration(
+open class RsGDBDriverConfiguration(
     private val isElevated: Boolean,
     private val emulateTerminal: Boolean
 ) : GDBDriverConfiguration() {
@@ -54,6 +55,14 @@ class RsGDBDriverConfiguration(
     override fun isAttachSupported(): Boolean = false
     override fun isElevated(): Boolean = isElevated
     override fun emulateTerminal(): Boolean = emulateTerminal
+}
+
+private class RsCustomBinariesGDBDriverConfiguration(
+    private val binaries: GDBBinaries,
+    isElevated: Boolean,
+    emulateTerminal: Boolean
+) : RsGDBDriverConfiguration(isElevated, emulateTerminal) {
+    override fun getGDBExecutablePath(): String = binaries.gdbFile.toString()
 }
 
 open class RsLLDBDriverConfiguration(
@@ -73,6 +82,6 @@ private class RsCustomBinariesLLDBDriverConfiguration(
 ) : RsLLDBDriverConfiguration(isElevated, emulateTerminal) {
     override fun getDriverName(): String = "Rust LLDB"
     override fun useSTLRenderers(): Boolean = false
-    override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile
-    override fun getLLDBFrontendFile(architectureType: ArchitectureType): File = binaries.frontendFile
+    override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile.toFile()
+    override fun getLLDBFrontendFile(architectureType: ArchitectureType): File = binaries.frontendFile.toFile()
 }

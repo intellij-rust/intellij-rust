@@ -23,7 +23,6 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     var debuggerKind: DebuggerKind = DebuggerKind.LLDB
 
-    var lldbPath: String? = null
     var downloadAutomatically: Boolean = false
 
     var breakOnPanic: Boolean = true
