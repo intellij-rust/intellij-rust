@@ -36,7 +36,7 @@
     <template name="fmt" description="format!" toReformat="true" toShortenFQNames="true"
               value="format!(&quot;$END$&quot;);">
         <context>
-            <option name="RUST_STATEMENT" value="true"/>
+            <option name="RUST_EXPRESSION" value="true"/>
         </context>
     </template>
 

@@ -733,6 +733,8 @@
         <liveTemplateContext contextId="RUST_FILE" implementation="org.rust.ide.template.RsContextType$Generic"/>
         <liveTemplateContext contextId="RUST_STATEMENT" baseContextId="RUST_FILE"
                              implementation="org.rust.ide.template.RsContextType$Statement"/>
+        <liveTemplateContext contextId="RUST_EXPRESSION" baseContextId="RUST_FILE"
+                             implementation="org.rust.ide.template.RsContextType$Expression"/>
         <liveTemplateContext contextId="RUST_ITEM" baseContextId="RUST_FILE"
                              implementation="org.rust.ide.template.RsContextType$Item"/>
         <liveTemplateContext contextId="RUST_STRUCT" baseContextId="RUST_ITEM"

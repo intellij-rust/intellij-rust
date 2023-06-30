@@ -16,10 +16,7 @@ import com.intellij.psi.util.PsiUtilCore
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsAttr
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocComment
 
 sealed class RsContextType(presentableName: String) : TemplateContextType(presentableName) {
@@ -47,6 +44,18 @@ sealed class RsContextType(presentableName: String) : TemplateContextType(presen
 
     class Statement : RsContextType("Statement") {
         override fun isInContext(element: PsiElement): Boolean {
+            // Used to support cases when identifier is parsed together with next statement, e.g.:
+            // fn main() {
+            //     p/*caret*/
+            //     ::foo();
+            // }
+            val stmt = element.ancestorStrict<RsExprStmt>() ?: return false
+            return element.startOffset == stmt.startOffset
+        }
+    }
+
+    class Expression : RsContextType("Expression") {
+        override fun isInContext(element: PsiElement): Boolean {
             // We are inside block but there is no item nor attr between
             if (owner(element) !is RsBlock) return false
             val parent = element.parent
@@ -59,6 +68,9 @@ sealed class RsContextType(presentableName: String) : TemplateContextType(presen
 
             // foo.element()
             if (parent is RsMethodCall) return false
+
+            // 'label
+            if (parent is RsLabel) return false
 
             return true
         }
