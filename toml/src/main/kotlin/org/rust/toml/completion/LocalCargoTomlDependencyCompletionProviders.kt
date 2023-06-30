@@ -17,11 +17,14 @@ import com.intellij.util.ProcessingContext
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.completion.nextCharIs
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.psi.ext.getPrevNonWhitespaceSibling
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.stdext.unwrapOrElse
 import org.rust.toml.StringValueInsertionHandler
 import org.rust.toml.crates.local.CargoRegistryCrateVersion
 import org.rust.toml.crates.local.CratesLocalIndexService
+import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
@@ -85,14 +88,14 @@ class LocalCargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvi
 
 class LocalCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        result.addElement(
+       result.addElement(
             LookupElementBuilder.create("version")
                 .withInsertHandler(KeyInsertHandlerWithCompletion())
         )
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        val dependencyNameKey = keyValue.getDependencyKeyFromTableHeader()
+       val dependencyNameKey = keyValue.getDependencyKey()
         val sortedVersions = CratesLocalIndexService.getInstance().getCrate(dependencyNameKey.text)
             .unwrapOrElse { return }
             ?.sortedVersions
@@ -100,6 +103,35 @@ class LocalCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCo
         val elements = makeVersionCompletions(sortedVersions, keyValue)
         result.withRelevanceSorter(versionsSorter).addAllElements(elements)
     }
+}
+
+// FIXME: Use json schema for completing the whole Cargo.toml instead of hard-coding the parameter names and types
+// https://json.schemastore.org/cargo.json
+class CargoTomlDependencyKeysCompletionProvider : CompletionProvider<CompletionParameters>() {
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+        for ((key, insertHandler) in dependencyKeys) {
+            result.addElement(
+                LookupElementBuilder.create(key)
+                    .withInsertHandler(insertHandler)
+            )
+        }
+    }
+
+    private val defaultKeyInsertHandler = KeyInsertHandlerWithCompletion()
+
+    private val dependencyKeys = mapOf(
+        "branch" to defaultKeyInsertHandler,
+        "default-features" to KeyInsertHandlerWithCompletion(" = ", 3),
+        "features" to KeyInsertHandlerWithCompletion(" = []"),
+        "git" to defaultKeyInsertHandler,
+        "optional" to KeyInsertHandlerWithCompletion(" = ", 3),
+        "package" to defaultKeyInsertHandler,
+        "path" to defaultKeyInsertHandler,
+        "registry" to defaultKeyInsertHandler,
+        "registry" to defaultKeyInsertHandler,
+        "rev" to defaultKeyInsertHandler,
+        "tag" to defaultKeyInsertHandler,
+    )
 }
 
 class LocalCargoTomlInlineTableVersionCompletionProvider : CompletionProvider<CompletionParameters>() {
@@ -119,15 +151,15 @@ class LocalCargoTomlInlineTableVersionCompletionProvider : CompletionProvider<Co
     }
 }
 
-private class KeyInsertHandlerWithCompletion : InsertHandler<LookupElement> {
+private class KeyInsertHandlerWithCompletion(private val insertedValue: String = " = \"\"", private val caretShift: Int = 4) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val alreadyHasValue = context.nextCharIs('=')
 
         if (!alreadyHasValue) {
-            context.document.insertString(context.selectionEndOffset, " = \"\"")
+            context.document.insertString(context.selectionEndOffset, insertedValue)
         }
 
-        EditorModificationUtil.moveCaretRelatively(context.editor, 4)
+        EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
 
         if (!alreadyHasValue) {
             // Triggers dependency version completion
@@ -151,9 +183,9 @@ private val versionsSorter: CompletionSorter = CompletionSorter.emptySorter()
         override fun weigh(element: LookupElement): Double = (element as PrioritizedLookupElement<*>).priority
     })
 
-private fun TomlKeyValue.getDependencyKeyFromTableHeader(): TomlKeySegment {
-    val table = this.parent as? TomlTable
-        ?: error("PsiElementPattern must not allow keys outside of TomlTable")
-    return table.header.key?.segments?.lastOrNull()
-        ?: error("PsiElementPattern must not allow KeyValues in tables without header")
+fun TomlKeyValue.getDependencyKey(): TomlKeySegment {
+    val tableDependency = (this.parent as? TomlTable)?.header?.key?.segments?.lastOrNull()
+    return tableDependency
+        ?: (parent as? TomlInlineTable)?.getPrevNonWhitespaceSibling()?.getPrevNonWhitespaceSibling()?.childOfType<TomlKeySegment>()
+        ?: error("PsiElementPattern must not allow keys outside of TomlTable or TomlInlineTable")
 }

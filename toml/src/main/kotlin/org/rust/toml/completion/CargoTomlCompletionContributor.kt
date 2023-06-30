@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.CompletionType.BASIC
 import org.rust.toml.CargoTomlPsiPattern.inDependencyInlineTableVersion
 import org.rust.toml.CargoTomlPsiPattern.inDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inDependencyPackageFeatureArray
+import org.rust.toml.CargoTomlPsiPattern.inDependencyTableKey
 import org.rust.toml.CargoTomlPsiPattern.inFeatureDependencyArray
 import org.rust.toml.CargoTomlPsiPattern.inKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
@@ -24,6 +25,7 @@ class CargoTomlCompletionContributor : CompletionContributor() {
             extend(BASIC, inValueWithKey("edition"), CargoTomlKnownValuesCompletionProvider(listOf("2015", "2018", "2021")))
             extend(BASIC, inFeatureDependencyArray, CargoTomlFeatureDependencyCompletionProvider())
             extend(BASIC, inDependencyPackageFeatureArray, CargoTomlDependencyFeaturesCompletionProvider())
+            extend(BASIC, inDependencyTableKey, CargoTomlDependencyKeysCompletionProvider())
 
             // Available using both Crates.io API & Crates Local Index
             extend(BASIC, inDependencyKeyValue, CargoTomlDependencyCompletionProvider())

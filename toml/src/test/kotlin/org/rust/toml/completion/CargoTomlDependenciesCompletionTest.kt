@@ -102,10 +102,21 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = { version = "1.0.0" } <caret>
     """, "dep" to "1.0")
 
-    fun `test no completion when caret inside inline table`() = checkNoCompletion("""
+    fun `test key completion when caret after inline table`() = doTest("""
         [dependencies]
-        dep = { <caret> }
-    """, "dep" to "1.0")
+        dep = { ver<caret> }
+    """, """
+        [dependencies]
+        dep = { version = "1.0"<caret> }
+    """ ,"dep" to "1.0")
+
+    fun `test key completion with existing value when caret after inline table`() = doTest("""
+        [dependencies]
+        dep = { ver<caret> = "1.0" }
+    """, """
+        [dependencies]
+        dep = { version<caret> = "1.0" }
+    """ ,"dep" to "1.0")
 
     fun `test no completion when caret inside inline table value`() = checkNoCompletion("""
         [dependencies]
@@ -126,7 +137,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0"
     """, "dep" to "1.0", "bar" to "2.0")
 
-    fun `test complete specific dependency version empty key`() = doTest("""
+    fun `test complete specific dependency version empty key`() = checkCompletion("version = \"1.0\"", """
         [dependencies.dep]
         <caret>
     """, """
@@ -150,6 +161,15 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.0<caret>"
     """, "dep" to "1.0")
 
+    fun `test complete specific dependency empty version value with =`() = doTest("""
+        [dependencies.dep]
+        version = <caret>
+    """, """
+        [dependencies.dep]
+        version = "1.0<caret>"
+    """, "dep" to "1.0")
+
+
     fun `test complete specific dependency partial version value`() = doTest("""
         [dependencies.dep]
         version = "1.<caret>"
@@ -171,6 +191,18 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
     private fun checkNoCompletion(@Language("TOML") code: String, vararg crates: Pair<String, String>) {
         withMockedCrateSearch(crates.map { (name, version) -> CrateDescription(name, version) }) {
             checkNoCompletion(code.trimIndent())
+        }
+    }
+
+    private fun checkCompletion(
+        lookupString: String,
+        @Language("TOML") before: String,
+        @Language("TOML") after: String,
+        vararg crates: Pair<String, String>,
+        completionChar: Char = '\n'
+    ) {
+        withMockedCrateSearch(crates.map { (name, version) -> CrateDescription(name, version) }) {
+            completionFixture.checkCompletion(lookupString, before, after, completionChar)
         }
     }
 }

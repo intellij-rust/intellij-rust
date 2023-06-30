@@ -359,7 +359,7 @@ val PsiElement.prevVisibleOrNewLine: PsiElement?
  * instead of [PsiElement.getChildren].
  */
 fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPrevSiblingSkipping(
-    skip: ElementPattern<PsiElement>,
+    skip: ElementPattern<out PsiElement>,
     pattern: ElementPattern<out T>
 ): Self = with("withPrevSiblingSkipping") { e ->
     val sibling = e.leftSiblings.dropWhile { skip.accepts(it) }
@@ -368,7 +368,7 @@ fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Sel
 }
 
 fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPrevLeafSkipping(
-    skip: ElementPattern<PsiElement>,
+    skip: ElementPattern<out PsiElement>,
     pattern: ElementPattern<out T>
 ): Self = with("withPrevSiblingSkipping") { e ->
     val sibling = e.leftLeaves.dropWhile { skip.accepts(it) }
