@@ -9,10 +9,12 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.rust.cargo.CargoConstants
 import org.rust.lang.core.or
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.with
+import org.rust.lang.core.withPrevSiblingSkipping
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
@@ -148,10 +150,25 @@ object CargoTomlPsiPattern {
      * version = "1"
      *         ^
      * ```
+     *
+     * or
+     *
+     * ```
+     * [dependencies]
+     * regex = { version = "1" }
+     *                   ^
      */
     private val onSpecificDependencyKeyValue: PsiElementPattern.Capture<TomlKeyValue> =
         cargoTomlPsiElement<TomlKeyValue>()
-            .withParent(onSpecificDependencyTable)
+            .withParent(
+                onSpecificDependencyTable or
+                psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+            ).andNot(
+                cargoTomlPsiElement<PsiElement>().withPrevSiblingSkipping(
+                    cargoTomlPsiElement<PsiWhiteSpace>(),
+                    cargoTomlPsiElement<TomlKeyValue>()
+                )
+            )
 
     /**
      * ```
@@ -235,13 +252,32 @@ object CargoTomlPsiPattern {
     /**
      * ```
      * [dependencies]
-     * foo = { bar = [] }
+     * foo = { }
+     *       #^
+     * ```
+     *
+     * ```
+     * [dependencies.foo]
+     *
+     * #^
+     * ```
+     */
+    val onDependency: PsiElementPattern.Capture<TomlKeyValue> = psiElement<TomlKeyValue>()
+        .withParent(
+            psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+                or onSpecificDependencyTable
+        )
+
+    /**
+     * ```
+     * [dependencies]
+     * foo = { $name = [] }
      *         #^
      * ```
      *
      * ```
      * [dependencies.foo]
-     * bar = []
+     * $name = []
      * #^
      * ```
      */
@@ -280,6 +316,18 @@ object CargoTomlPsiPattern {
      */
     val inDependencyInlineTableVersion: PsiElementPattern.Capture<PsiElement> = cargoTomlPsiElement<PsiElement>()
         .inside(cargoTomlStringLiteral().withParent(dependencyProperty("version")))
+
+    val inDependencyTableKey: PsiElementPattern.Capture<PsiElement> = cargoTomlPsiElement<PsiElement>()
+        .inside(onDependency)
+        .withParent(cargoTomlPsiElement<TomlKeySegment>())
+        .withSuperParent(3,
+            cargoTomlPsiElement<TomlKeyValue>().andNot(
+                cargoTomlPsiElement<PsiElement>().withPrevSiblingSkipping(
+                    cargoTomlPsiElement<PsiWhiteSpace>(),
+                    cargoTomlPsiElement<TomlKeyValue>()
+                )
+            )
+        )
 
     /**
      * ```

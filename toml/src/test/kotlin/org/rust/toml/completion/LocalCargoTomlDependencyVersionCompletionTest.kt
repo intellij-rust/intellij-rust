@@ -100,6 +100,23 @@ class LocalCargoTomlDependencyVersionCompletionTest : LocalCargoTomlCompletionTe
         foo = "1.0<caret>"
     """, "foo" to CargoRegistryCrate.of("1.0"))
 
+
+    fun `test key completion inside inline table`() = doSingleCompletion("""
+        [dependencies]
+        foo = { vers<caret> }
+    """, """
+        [dependencies]
+        foo = { version = "<caret>" }
+    """, "foo" to CargoRegistryCrate.of("1.0"))
+
+    fun `test key completion with existing value inside inline table`() = doSingleCompletion("""
+        [dependencies]
+        foo = { vers<caret> = "1.0" }
+    """, """
+        [dependencies]
+        foo = { version = "<caret>1.0" }
+    """, "foo" to CargoRegistryCrate.of("1.0"))
+
     fun `test empty value complete after unclosed quote`() = doSingleCompletion("""
         [dependencies]
         foo = "<caret>
@@ -118,12 +135,7 @@ class LocalCargoTomlDependencyVersionCompletionTest : LocalCargoTomlCompletionTe
         foo = { version = "1.0.0" } <caret>
     """, "foo" to CargoRegistryCrate.of("1.0"))
 
-    fun `test no completion when caret inside inline table`() = checkNoCompletion("""
-        [dependencies]
-        foo = { <caret> }
-    """, "foo" to CargoRegistryCrate.of("1.0"))
-
-    fun `test no completion when caret inside inline table value`() = checkNoCompletion("""
+    fun `test completion for value when caret inside inline table value`() = checkNoCompletion("""
         [dependencies]
         foo = { version = <caret> }
     """, "foo" to CargoRegistryCrate.of("1.0"))
@@ -144,7 +156,7 @@ class LocalCargoTomlDependencyVersionCompletionTest : LocalCargoTomlCompletionTe
         version = "1.0<caret>"
     """, "foo" to CargoRegistryCrate.of("1.0"))
 
-    fun `test complete specific dependency version empty key`() = doSingleCompletion("""
+    fun `test complete specific dependency version empty key`() = checkCompletion("version", """
         [dependencies.foo]
         <caret>
     """, """

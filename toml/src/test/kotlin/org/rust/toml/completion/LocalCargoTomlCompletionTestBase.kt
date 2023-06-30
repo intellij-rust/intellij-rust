@@ -49,6 +49,20 @@ abstract class LocalCargoTomlCompletionTestBase : CargoTomlCompletionTestBase() 
         }
     }
 
+    protected fun checkCompletion(
+        lookupString: String,
+        @Language("TOML") before: String,
+        @Language("TOML") after: String,
+        vararg crates: Pair<String, CargoRegistryCrate>,
+        completionChar: Char = '\n'
+    ) {
+        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
+            withMockedCrates(crates.toMap()) {
+                completionFixture.checkCompletion(lookupString, before, after, completionChar)
+            }
+        }
+    }
+
     @Suppress("SameParameterValue")
     protected fun completeBasic(
         @Language("TOML") code: String,

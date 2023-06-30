@@ -10,16 +10,17 @@ import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.toml.CargoTomlPsiPattern.buildPath
+import org.rust.toml.CargoTomlPsiPattern.dependencyGitUrl
 import org.rust.toml.CargoTomlPsiPattern.inDependencyKeyValue
+import org.rust.toml.CargoTomlPsiPattern.inDependencyTableKey
 import org.rust.toml.CargoTomlPsiPattern.inKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
 import org.rust.toml.CargoTomlPsiPattern.onDependencyPackageFeature
-import org.rust.toml.CargoTomlPsiPattern.dependencyGitUrl
 import org.rust.toml.CargoTomlPsiPattern.onFeatureDependencyLiteral
-import org.rust.toml.CargoTomlPsiPattern.packageUrl
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
+import org.rust.toml.CargoTomlPsiPattern.packageUrl
 import org.rust.toml.CargoTomlPsiPattern.packageWorkspacePath
 import org.rust.toml.CargoTomlPsiPattern.path
 import org.rust.toml.CargoTomlPsiPattern.workspacePath
@@ -221,6 +222,54 @@ class CargoTomlPsiPatternTest : RsTestBase() {
         [package]
         documentation = "foo"
                          #^
+    """)
+
+    fun `test inDependencyTableKey inline table`() = testPattern(inDependencyTableKey, """
+        [dependencies]
+        serde = { version = "1.0" }
+                 #^
+    """)
+
+    fun `test inDependencyTableKey specific dependency table`() = testPattern(inDependencyTableKey, """
+        [dependencies.serde]
+        version = "1.0"
+       #^
+    """)
+
+    fun `test inDependencyTableKey not inline table value`() = testPatternNegative(inDependencyTableKey, """
+        [dependencies]
+        serde = { version = "1.0" }
+                           #^
+    """)
+
+    fun `test inDependencyTableKey not inline table empty value`() = testPatternNegative(inDependencyTableKey, """
+        [dependencies]
+        serde = { version =  }
+                          #^
+    """)
+
+    fun `test inDependencyTableKey not inline table no value`() = testPatternNegative(inDependencyTableKey, """
+        [dependencies]
+        serde = { version   }
+                         #^
+    """)
+
+    fun `test inDependencyTableKey not specific dependency table value`() = testPatternNegative(inDependencyTableKey, """
+        [dependencies.serde]
+        version = "1.0"
+                 #^
+    """)
+
+    fun `test inDependencyTableKey not specific dependency table empty value`() = testPatternNegative(inDependencyTableKey, """
+        [dependencies.serde]
+        version =
+                 #^
+    """)
+
+    fun `test inDependencyTableKey not specific dependency table no value`() = testPatternNegative(inDependencyTableKey, """
+        [dependencies.serde]
+        version
+               #^
     """)
 
     private inline fun <reified T : PsiElement> testPattern(

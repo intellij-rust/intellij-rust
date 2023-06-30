@@ -63,26 +63,24 @@ class CratesIoCargoTomlSpecificDependencyHeaderCompletionProvider : CompletionPr
 /** @see CargoTomlPsiPattern.inSpecificDependencyKeyValue */
 class CratesIoCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        val dependencyNameKey = getDependencyKeyFromTableHeader(keyValue)
+        val key = if (keyValue.value != null) {
+            "version"
+        } else {
+            val dependencyNameKey = keyValue.getDependencyKey()
 
-        val version = getCrateLastVersion(dependencyNameKey) ?: return
-        result.addElement(LookupElementBuilder.create("version = \"$version\""))
+            val version = getCrateLastVersion(dependencyNameKey) ?: return
+            "version = \"$version\""
+        }
+        result.addElement(LookupElementBuilder.create(key))
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        val dependencyNameKey = getDependencyKeyFromTableHeader(keyValue)
+        val dependencyNameKey = keyValue.getDependencyKey()
         val version = getCrateLastVersion(dependencyNameKey) ?: return
 
         result.addElement(
             LookupElementBuilder.create(version)
                 .withInsertHandler(StringValueInsertionHandler(keyValue))
         )
-    }
-
-    private fun getDependencyKeyFromTableHeader(keyValue: TomlKeyValue): TomlKeySegment {
-        val table = keyValue.parent as? TomlTable
-            ?: error("PsiElementPattern must not allow keys outside of TomlTable")
-        return table.header.key?.segments?.lastOrNull()
-            ?: error("PsiElementPattern must not allow KeyValues in tables without header")
     }
 }
