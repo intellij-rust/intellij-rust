@@ -489,7 +489,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete enum variants 1`() = doSingleCompletion("""
+    fun `test complete enum variants 1`() = doFirstCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
@@ -507,7 +507,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete enum variants 2`() = doSingleCompletion("""
+    fun `test complete enum variants 2`() = doFirstCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
@@ -1390,6 +1390,58 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
         use crate::anothermod::{foo, MyOtherEnum};
         fn main() { foo(MyOtherEnum::Variant(/*caret*/)) }
+    """)
+
+    fun `test enum with variants in match arm pattern`() = checkContainsCompletion(listOf("E", "E::A", "E::B"), """
+        enum E { A, B }
+        fn test(e: E) {
+            match e {
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test enum with variants in if let pattern`() = checkContainsCompletion(listOf("E", "E::A", "E::B"), """
+        enum E { A, B }
+        fn test(e: E) {
+            if let /*caret*/
+        }
+    """)
+
+    fun `test enum with variants in pat tuple struct 1`() = checkContainsCompletion(listOf("E", "E::B"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/() => {},
+            }
+        }
+    """)
+
+    fun `test enum with variants in pat tuple struct 2`() = checkNotContainsCompletion(listOf("E::A", "E::C"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/() => {},
+            }
+        }
+    """)
+
+    fun `test enum with variants in pat struct 1`() = checkContainsCompletion(listOf("E", "E::C"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/ {} => {},
+            }
+        }
+    """)
+
+    fun `test enum with variants in pat struct 2`() = checkNotContainsCompletion(listOf("E::A", "E::B"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/ {} => {},
+            }
+        }
     """)
 
     fun `test do not complete non-mod items in vis restriction path`() = checkNoCompletion("""

@@ -438,19 +438,34 @@ private class CompletionVariantsCollector(
     override val names: Set<String>? get() = null
 
     override fun process(entry: ScopeEntry): Boolean {
-        val element = entry.element
-
-        if (element is RsEnumItem
-            && (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item == (element.declaredType as? TyAdt)?.item) {
-            val variants = collectVariantsForEnumCompletion(element, context, entry.subst)
-            result.addAllElements(variants)
-        }
+        addEnumVariantsIfNeeded(entry)
 
         result.addElement(createLookupElement(
             scopeEntry = entry,
             context = context
         ))
         return false
+    }
+
+    private fun addEnumVariantsIfNeeded(entry: ScopeEntry) {
+        val element = entry.element as? RsEnumItem ?: return
+
+        val expectedType = (context.expectedTy?.ty?.stripReferences() as? TyAdt)?.item
+        val actualType = (element.declaredType as? TyAdt)?.item
+
+        val parent = context.context
+        val contextPat = if (parent is RsPath) parent.context else parent
+        val contextIsPat = contextPat is RsPatBinding || contextPat is RsPatStruct || contextPat is RsPatTupleStruct
+
+        if (expectedType == actualType || contextIsPat) {
+            val variants = collectVariantsForEnumCompletion(element, context, entry.subst)
+            val filtered = when (contextPat) {
+                is RsPatStruct -> variants.filter { (it.psiElement as? RsEnumVariant)?.blockFields != null }
+                is RsPatTupleStruct -> variants.filter { (it.psiElement as? RsEnumVariant)?.tupleFields != null }
+                else -> variants
+            }
+            result.addAllElements(filtered)
+        }
     }
 }
 
