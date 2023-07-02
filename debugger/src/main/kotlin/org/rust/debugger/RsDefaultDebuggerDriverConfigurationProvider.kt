@@ -17,21 +17,26 @@ import java.io.File
 
 class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     @Suppress("MoveVariableDeclarationIntoWhen")
-    override fun getDebuggerDriverConfiguration(project: Project, isElevated: Boolean): DebuggerDriverConfiguration? {
-        val debuggerKind  = RsDebuggerSettings.getInstance().debuggerKind
+    override fun getDebuggerDriverConfiguration(
+        project: Project,
+        isElevated: Boolean,
+        emulateTerminal: Boolean
+    ): DebuggerDriverConfiguration? {
+        val debuggerKind = RsDebuggerSettings.getInstance().debuggerKind
         when (debuggerKind) {
             DebuggerKind.LLDB -> {
                 val lldbAvailability = RsDebuggerToolchainService.getInstance().lldbAvailability()
                 return when (lldbAvailability) {
-                    DebuggerAvailability.Bundled -> RsLLDBDriverConfiguration(isElevated)
-                    is DebuggerAvailability.Binaries -> RsCustomBinariesLLDBDriverConfiguration(lldbAvailability.binaries, isElevated)
+                    DebuggerAvailability.Bundled -> RsLLDBDriverConfiguration(isElevated, emulateTerminal)
+                    is DebuggerAvailability.Binaries -> RsCustomBinariesLLDBDriverConfiguration(lldbAvailability.binaries, isElevated, emulateTerminal)
                     else -> null
                 }
             }
+
             DebuggerKind.GDB -> {
                 val gdbAvailability = RsDebuggerToolchainService.getInstance().gdbAvailability()
                 return when (gdbAvailability) {
-                    DebuggerAvailability.Bundled -> RsGDBDriverConfiguration(isElevated)
+                    DebuggerAvailability.Bundled -> RsGDBDriverConfiguration(isElevated, emulateTerminal)
                     else -> null
                 }
             }
@@ -40,31 +45,32 @@ class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurati
 }
 
 class RsGDBDriverConfiguration(
-    private val isElevated: Boolean
+    private val isElevated: Boolean,
+    private val emulateTerminal: Boolean
 ) : GDBDriverConfiguration() {
-
-    override fun getDriverName(): String {
-        return "Rust GDB"
-    }
+    override fun getDriverName(): String = "Rust GDB"
 
     // TODO: investigate attach to process feature separately
     override fun isAttachSupported(): Boolean = false
     override fun isElevated(): Boolean = isElevated
+    override fun emulateTerminal(): Boolean = emulateTerminal
 }
 
 open class RsLLDBDriverConfiguration(
-    private val isElevated: Boolean
+    private val isElevated: Boolean,
+    private val emulateTerminal: Boolean
 ) : LLDBDriverConfiguration() {
     override fun isElevated(): Boolean = isElevated
-
+    override fun emulateTerminal(): Boolean = emulateTerminal
     override fun useRustTypeSystem(): Boolean =
         SystemInfo.isWindows && Registry.`is`("org.rust.debugger.lldb.rust.msvc", false)
 }
 
 private class RsCustomBinariesLLDBDriverConfiguration(
     private val binaries: LLDBBinaries,
-    isElevated: Boolean
-) : RsLLDBDriverConfiguration(isElevated) {
+    isElevated: Boolean,
+    emulateTerminal: Boolean
+) : RsLLDBDriverConfiguration(isElevated, emulateTerminal) {
     override fun getDriverName(): String = "Rust LLDB"
     override fun useSTLRenderers(): Boolean = false
     override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile
