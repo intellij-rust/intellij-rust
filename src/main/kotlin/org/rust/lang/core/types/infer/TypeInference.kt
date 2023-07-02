@@ -305,6 +305,15 @@ class RsInferenceContext(
                         }
                         null to element.expr
                     }
+                    is RsDefaultParameterValue -> {
+                        val type = when (val parent = element.parent) {
+                            is RsValueParameter -> parent.typeReference?.rawType
+                            is RsNamedFieldDecl -> parent.typeReference?.rawType
+                            is RsTupleFieldDecl -> parent.typeReference.rawType
+                            else -> null
+                        }
+                        type to element.expr
+                    }
                     else -> error(
                         "Type inference is not implemented for PSI element of type " +
                             "`${element.javaClass}` that implement `RsInferenceContextOwner`"

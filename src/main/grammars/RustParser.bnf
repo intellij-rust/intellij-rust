@@ -373,14 +373,21 @@ Lifetime ::= QUOTE_IDENTIFIER {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Parameters
-fake ValueParameter ::= OuterAttr* Pat? TypeReference? {
+fake ValueParameter ::= OuterAttr* Pat? TypeReference? DefaultParameterValue? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsValueParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+DefaultParameterValue ::= '=' Expr {
+  pin = 1
+  implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
-FnParameter ::= OuterAttr* [ Pat ':' ] (VariadicUpper | TypeReference)
+FnParameter ::= OuterAttr* [ Pat ':' ] (VariadicUpper | TypeReference) DefaultParameterValue?
 upper VariadicUpper ::= '...' { elementType = Variadic }
 private FnParameter_with_recover ::= !(')' | '{' | ';') FnParameter (',' | &')') {
   pin = 1
@@ -836,7 +843,7 @@ VariantDiscriminant ::= '=' AnyExpr {
   implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
 }
 
-NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
+NamedFieldDecl ::= AttrsAndVis identifier TypeAscription DefaultParameterValue? {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl"
@@ -849,7 +856,7 @@ NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
 }
 private NamedFieldDecl_first ::= AttrsAndVis_first | identifier
 
-TupleFieldDecl ::= AttrsAndVis TypeReference {
+TupleFieldDecl ::= AttrsAndVis TypeReference DefaultParameterValue? {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   mixin = "org.rust.lang.core.psi.ext.RsTupleFieldDeclImplMixin"
