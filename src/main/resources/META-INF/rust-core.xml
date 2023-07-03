@@ -730,12 +730,19 @@
         <defaultLiveTemplates file="org/rust/ide/liveTemplates/test"/>
         <defaultLiveTemplates file="org/rust/ide/liveTemplates/other"/>
 
-        <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Generic"/>
-        <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Statement"/>
-        <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Item"/>
-        <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Struct"/>
-        <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Mod"/>
-        <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Attribute"/>
+        <liveTemplateContext contextId="RUST_FILE" implementation="org.rust.ide.template.RsContextType$Generic"/>
+        <liveTemplateContext contextId="RUST_STATEMENT" baseContextId="RUST_FILE"
+                             implementation="org.rust.ide.template.RsContextType$Statement"/>
+        <liveTemplateContext contextId="RUST_EXPRESSION" baseContextId="RUST_FILE"
+                             implementation="org.rust.ide.template.RsContextType$Expression"/>
+        <liveTemplateContext contextId="RUST_ITEM" baseContextId="RUST_FILE"
+                             implementation="org.rust.ide.template.RsContextType$Item"/>
+        <liveTemplateContext contextId="RUST_STRUCT" baseContextId="RUST_ITEM"
+                             implementation="org.rust.ide.template.RsContextType$Struct"/>
+        <liveTemplateContext contextId="RUST_MOD" baseContextId="RUST_ITEM"
+                             implementation="org.rust.ide.template.RsContextType$Mod"/>
+        <liveTemplateContext contextId="RUST_ATTRIBUTE" baseContextId="RUST_ITEM"
+                             implementation="org.rust.ide.template.RsContextType$Attribute"/>
 
         <liveTemplateMacro implementation="org.rust.ide.template.macros.RsSuggestIndexNameMacro"/>
         <liveTemplateMacro implementation="org.rust.ide.template.macros.RsCollectionElementNameMacro"/>

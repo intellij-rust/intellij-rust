@@ -21,13 +21,37 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
-    fun `test print`() = expandSnippet("""
+    fun `test println`() = expandSnippet("""
         fn main() {
             p/*caret*/
         }
     """, """
         fn main() {
             println!("");
+        }
+    """)
+
+    fun `test println before absolute path`() = expandSnippet("""
+        fn main() {
+            p/*caret*/
+            ::foo();
+        }
+    """, """
+        fn main() {
+            println!("");
+            ::foo();
+        }
+    """)
+
+    fun `test println before block expr`() = expandSnippet("""
+        fn main() {
+            p/*caret*/
+            { 0 }
+        }
+    """, """
+        fn main() {
+            println!("");
+            { 0 }
         }
     """)
 
@@ -88,6 +112,14 @@ class RsLiveTemplatesTest : RsTestBase() {
     fun `test pattern binding`() = noSnippet("""
         fn main() {
             let p/*caret*/
+        }
+    """)
+
+    fun `test loop label`() = noSnippet("""
+        fn main() {
+            loop {
+                break '/*caret*/
+            }
         }
     """)
 
