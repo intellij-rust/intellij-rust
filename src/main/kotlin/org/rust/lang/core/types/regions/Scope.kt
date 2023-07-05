@@ -266,14 +266,8 @@ private data class Context(
     var varParent: ScopeInfo? = null,
 
     /** Region parent of expressions, etc., plus its depth in the scope tree. */
-    var _parent: ScopeInfo? = null
-) {
-    var parent: ScopeInfo?
-        get() = _parent
-        set(value) {
-            _parent = value
-        }
-}
+    var parent: ScopeInfo? = null
+)
 
 private class RegionResolutionVisitor {
     /** The generated scope tree. */
