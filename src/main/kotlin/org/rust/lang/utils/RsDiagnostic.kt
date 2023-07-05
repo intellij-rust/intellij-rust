@@ -2104,6 +2104,20 @@ sealed class RsDiagnostic(
             "A value was moved out while it was still borrowed",
         )
     }
+
+    class TraitObjectWithNoDyn(
+        element: PsiElement,
+        private val fix: LocalQuickFix
+    ) : RsDiagnostic(element) {
+        private val severity = if (element.isAtLeastEdition2021) ERROR else WARN
+        override fun prepare() = PreparedAnnotation(
+            severity,
+            E0782,
+            "Trait objects must include the `dyn` keyword",
+            description = if (!element.isAtLeastEdition2021) "This is accepted in the current edition (Rust 2018) but is a hard error in Rust 2021!" else "",
+            fixes = listOfFixes(fix)
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -2114,7 +2128,7 @@ enum class RsErrorCode {
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0434, E0435, E0437, E0438, E0449, E0451, E0463,
     E0505, E0517, E0518, E0536, E0537, E0538, E0541, E0551, E0552, E0554, E0557, E0561, E0562, E0569, E0571, E0583, E0586, E0589, E0590, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0642, E0658, E0666, E0667, E0693, E0695, E0696,
-    E0703, E0704, E0708, E0728, E0732, E0733, E0741, E0742, E0747, E0767, E0774, E0777, E0784, E0785;
+    E0703, E0704, E0708, E0728, E0732, E0733, E0741, E0742, E0747, E0767, E0774, E0777, E0782, E0784, E0785;
 
     val code: String
         get() = toString()
@@ -2215,8 +2229,8 @@ private val PreparedAnnotation.fullDescription: String
 
 private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this) {
     INFO -> ProblemHighlightType.INFORMATION
-    WARN -> ProblemHighlightType.WEAK_WARNING
-    ERROR -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    WARN -> ProblemHighlightType.WARNING
+    ERROR -> ProblemHighlightType.GENERIC_ERROR
     UNKNOWN_SYMBOL -> ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
 }
 

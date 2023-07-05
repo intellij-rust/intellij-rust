@@ -77,10 +77,12 @@ val PsiElement.edition: Edition?
     get() = contextOrSelf<RsElement>()?.containingCrate?.edition
 
 val PsiElement.isAtLeastEdition2018: Boolean
-    get() {
-        val edition = edition ?: Edition.DEFAULT
-        return edition >= Edition.EDITION_2018
-    }
+    get() = isAtLeastEdition(Edition.EDITION_2018)
+
+val PsiElement.isAtLeastEdition2021: Boolean
+    get() = isAtLeastEdition(Edition.EDITION_2021)
+
+fun PsiElement.isAtLeastEdition(ed: Edition) = (edition ?: Edition.DEFAULT) >= ed
 
 /**
  * It is possible to match value with constant-like element, e.g.
