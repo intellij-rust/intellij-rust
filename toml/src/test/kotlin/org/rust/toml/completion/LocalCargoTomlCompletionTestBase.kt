@@ -37,6 +37,19 @@ abstract class LocalCargoTomlCompletionTestBase : CargoTomlCompletionTestBase() 
     }
 
     @Suppress("SameParameterValue")
+    protected fun checkNotContainsCompletion(
+        variant: String,
+        @Language("TOML") code: String,
+        vararg crates: Pair<String, CargoRegistryCrate>
+    ) {
+        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
+            withMockedCrates(crates.toMap()) {
+                completionFixture.checkNotContainsCompletion(code, setOf(variant))
+            }
+        }
+    }
+
+    @Suppress("SameParameterValue")
     protected fun doFirstCompletion(
         @Language("TOML") before: String,
         @Language("TOML") after: String,
