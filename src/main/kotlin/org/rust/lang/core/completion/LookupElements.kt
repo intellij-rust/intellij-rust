@@ -206,8 +206,17 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
             base
         }
 
-        is RsConstant -> base
-            .withTypeText(typeReference?.getStubOnlyText(subst))
+        is RsConstant -> {
+            val tailText = run {
+                val expr = expr ?: return@run null
+                val expectedTy = typeReference?.normType ?: expr.type
+                val text = expr.getStubOnlyText(subst, expectedTy)
+                if (text == "{}") null else " = $text"
+            }
+            base
+                .withTypeText(typeReference?.getStubOnlyText(subst))
+                .withTailText(tailText)
+        }
         is RsConstParameter -> base
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsFieldDecl -> base
