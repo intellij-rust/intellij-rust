@@ -34,6 +34,15 @@
         </context>
     </template>
 
+    <template name="iter" description="iterate (for ... in ...)" toReformat="true" toShortenFQNames="true"
+              value="for $VAR$ in $ITERABLE$ {&#10;    $END$&#10;}">
+        <variable name="ITERABLE" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="VAR" expression="rustCollectionElementName(ITERABLE)" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="RUST_STATEMENT" value="true"/>
+        </context>
+    </template>
+
     <template name="for" description="iterate (for ... in ...)" toReformat="true" toShortenFQNames="true"
               value="for $VAR$ in $ITERABLE$ {&#10;    $END$&#10;}">
         <variable name="ITERABLE" expression="" defaultValue="" alwaysStopAt="true"/>

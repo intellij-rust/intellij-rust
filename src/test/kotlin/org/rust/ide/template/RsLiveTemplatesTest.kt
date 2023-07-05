@@ -187,6 +187,30 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test iter`() = expandSnippet("""
+        fn main() {
+            iter/*caret*/
+        }
+    """, """
+        fn main() {
+            for  in /*caret*/ {
+            $indent
+            }
+        }
+    """)
+
+    fun `test for`() = expandSnippet("""
+        fn main() {
+            for/*caret*/
+        }
+    """, """
+        fn main() {
+            for  in /*caret*/ {
+            $indent
+            }
+        }
+    """)
+
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
 
