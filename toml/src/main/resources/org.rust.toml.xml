@@ -59,6 +59,14 @@
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"/>
+        <localInspection language="TOML"
+                         displayName="Invalid keywords section"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="org.rust.toml.inspections.TomlInvalidKeywordSegmentInspection"/>
+
 
         <intentionAction>
             <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
