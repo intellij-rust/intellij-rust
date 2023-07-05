@@ -366,8 +366,8 @@ private class RegionResolutionVisitor {
         ctx = prevCtx
     }
 
-    fun visitBody(owner: RsInferenceContextOwner) {
-        val body = owner.body ?: return
+    fun visitBody(bodyAndOwner: Body) {
+        val (body, owner) = bodyAndOwner
 
         // Save all state that is specific to the outer function body.
         // These will be restored once down below, once we've visited the body.
@@ -383,20 +383,38 @@ private class RegionResolutionVisitor {
         // The arguments and `self` are parented to the fn.
         ctx.varParent = ctx.parent
         ctx.parent = null
-        if (owner is RsFunction) {
-            owner.selfParameter?.let(::visitSelfParam)
-            for (param in owner.valueParameters) {
+        if (owner is RsFunctionOrLambda) {
+            val parameters = owner.valueParameterList
+            parameters?.selfParameter?.let(::visitSelfParam)
+            for (param in parameters?.valueParameterList.orEmpty()) {
                 param.pat?.let(::visitPat)
             }
         }
 
         // The body of the every fn is a root scope.
         ctx.parent = ctx.varParent
-        if (owner is RsFunction) {
-            (body as? RsBlock)?.let { visitBlock(it) }
-        } else {
-            ctx.varParent = null
-            (body as? RsExpr)?.let { resolveLocal(null, it) }
+        when (owner) {
+            is RsFunction -> visitBlock(body as RsBlock)
+            is RsLambdaExpr -> visitExpr(body as RsExpr)
+            else -> {
+                // Only functions have an outer terminating (drop) scope, while temporaries in constant initializers may
+                // be 'static, but only according to rvalue lifetime semantics, using the same syntactical rules used
+                // for let initializers.
+                //
+                // e.g., in `let x = &f();`, the temporary holding the result from the `f()` call lives for the entirety
+                // of the surrounding block.
+                //
+                // Similarly, `const X: ... = &f();` would have the result of `f()` live for `'static`, implying (if
+                // Drop restrictions on constants ever get lifted) that the value *could* have a destructor, but it'd
+                // get leaked instead of the destructor running during the evaluation of `X` (if at all allowed by
+                // CTFE).
+                //
+                // However, `const Y: ... = g(&f());`, like `let y = g(&f());`, would *not* let the `f()` temporary
+                // escape into an outer scope (i.e., `'static`), which means that after `g` returns, it drops, and all
+                // the associated destruction scope rules apply.
+                ctx.varParent = null
+                (body as? RsExpr)?.let { resolveLocal(null, it) }
+            }
         }
 
         // Restore context we had at the start.
@@ -510,6 +528,13 @@ private class RegionResolutionVisitor {
         }
 
         when {
+            // Manually recurse over closures and inline consts, because they are the only case of nested bodies that
+            // share the parent environment.
+            expr is RsLambdaExpr -> {
+                val body = expr.expr?.let { Body(it, expr) }
+                body?.let(::visitBody)
+            }
+
             expr is RsBinaryExpr && expr.isAssignBinaryExpr -> {
                 expr.right?.let(::visitExpr)
                 expr.left.let(::visitExpr)
@@ -624,12 +649,17 @@ private class RegionResolutionVisitor {
                 expr.block?.let(::visitBlock)
             }
 
+            is RsForExpr -> {
+                expr.expr?.let(::visitExpr)
+                expr.pat?.let(::visitPat)
+                expr.block?.let(::visitBlock)
+            }
+
             is RsMatchExpr -> {
                 expr.expr?.let(::visitExpr)
                 expr.matchBody?.matchArmList?.forEach(::visitMatchArm)
             }
 
-            is RsLambdaExpr -> expr.expr?.let(::visitExpr)
             is RsBlockExpr -> visitBlock(expr.block)
             is RsIndexExpr -> expr.exprList.forEach(::visitExpr)
             is RsBreakExpr -> expr.expr?.let(::visitExpr)
@@ -835,11 +865,13 @@ private class RegionResolutionVisitor {
     }
 }
 
+private data class Body(val value: RsElement, val owner: RsElement)
+
 /** Per-body [ScopeTree]. The [contextOwner]. The [contextOwner] should be the owner of the body. */
 fun getRegionScopeTree(contextOwner: RsInferenceContextOwner): ScopeTree {
     val visitor = RegionResolutionVisitor()
     val body = contextOwner.body ?: return visitor.scopeTree
     visitor.scopeTree.rootBody = body
-    visitor.visitBody(contextOwner)
+    visitor.visitBody(Body(body, contextOwner))
     return visitor.scopeTree
 }
