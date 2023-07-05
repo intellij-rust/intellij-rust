@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
+
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
@@ -25,7 +26,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
 
     fun `test unresolved references without quick fix 1`() = checkByText("""
         fn main() {
-            let x = Foo;
+            let x = <error descr="Unresolved reference: `Foo`">Foo</error>;
         }
     """, true)
 
@@ -34,6 +35,14 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
             let x = <error descr="Unresolved reference: `Foo`">Foo</error>;
         }
     """, false)
+
+    fun `test unresolved references without quick fix 3`() = checkByText("""
+        struct Foo;
+        impl Foo {}
+        fn main() {
+            let x = Foo::bar;
+        }
+    """, true)
 
     fun `test reference with multiple resolve`() = checkByText("""
         #[cfg(unix)]
@@ -53,7 +62,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
 
         fn foo<T>() -> <error descr="Unresolved reference: `Foo`">Foo</error><<error descr="Unresolved reference: `Bar`">Bar</error><T>> {
-            unimplemented!()
+
         }
     """)
 
@@ -64,9 +73,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
             }
 
             impl<T> Foo for T {
-                fn foo(&self) {
-                    unimplemented!();
-                }
+                fn foo(&self) {}
             }
         }
 
@@ -94,9 +101,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
             }
 
             impl<T> Foo for T {
-                fn foo(&self) {
-                    unimplemented!();
-                }
+                fn foo(&self) {}
             }
         }
 
@@ -106,7 +111,8 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """)
 
-    fun `test do not highlight unresolved path references if name is in scope`() = checkByText("""
+    // TODO should actually be E0423
+    fun `test wrong namespace`() = checkByText("""
         use foo::Foo;
 
         mod foo {
@@ -114,7 +120,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
 
         fn main() {
-            Foo
+            /*error descr="Unresolved reference: `Foo`"*/Foo/*error**/
         }
     """)
 
@@ -126,7 +132,7 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
             }
         }
         fn bar<T: foo::Trait>(t: T) {
-            t.foo(a); // no error here
+            t.foo(&t); // no error here
         }
     """)
 
