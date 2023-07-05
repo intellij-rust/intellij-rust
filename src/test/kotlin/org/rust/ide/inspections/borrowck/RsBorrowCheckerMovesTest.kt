@@ -1015,4 +1015,14 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let c = a;
         }
     """, checkWarn = false)
+
+    fun `test no move for lambda inside for loop`() = checkByText("""
+        struct Move;
+
+        fn main() {
+            for i in 0..3 {
+                let a = |x: Move| drop(x);
+            }
+        }
+    """, checkWarn = false)
 }
