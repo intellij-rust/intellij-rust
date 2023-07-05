@@ -29,7 +29,7 @@ class CargoTomlCompletionContributorTest : CargoTomlCompletionTestBase() {
         "[build-d<caret>]",
         "[build-dependencies<caret>]"
     )
-    
+
     fun `test complete rust version field`() = doSingleCompletion("""
         [package]
         rust<caret>
@@ -47,4 +47,27 @@ class CargoTomlCompletionContributorTest : CargoTomlCompletionTestBase() {
         opt-level<caret>
     """
     )
+
+    fun `test complete licenses`() {
+        myFixture.configureByText("Cargo.toml", "license=\"<caret>\"")
+        val completions = myFixture.completeBasic().map { it.lookupString }
+        assertEquals(
+            completions,
+            listOf(
+                "AGPL-3",
+                "Apache-2",
+                "BSD-2",
+                "BSD-3",
+                "BSL-1",
+                "CC0-1",
+                "EPL-2",
+                "GPL-2",
+                "GPL-3",
+                "LGPL-2",
+                "MIT",
+                "MPL-2"
+            )
+        )
+    }
+
 }
