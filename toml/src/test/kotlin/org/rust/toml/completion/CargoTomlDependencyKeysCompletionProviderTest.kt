@@ -83,8 +83,12 @@ class CargoTomlDependencyKeysCompletionProviderTest : LocalCargoTomlCompletionTe
     """, "foo" to CargoRegistryCrate.of("0.1.0"))
 
     fun `test no completion in property value`() = checkNoCompletion("""
-
         [dependencies.foo]
         key = ${prefix}<caret>
+    """, "foo" to CargoRegistryCrate.of("0.1.0"))
+
+    fun `test no completion for version in values`() = checkNotContainsCompletion("0.1.0", """
+        [dependencies.foo]
+        $keyName = "<caret>"
     """, "foo" to CargoRegistryCrate.of("0.1.0"))
 }

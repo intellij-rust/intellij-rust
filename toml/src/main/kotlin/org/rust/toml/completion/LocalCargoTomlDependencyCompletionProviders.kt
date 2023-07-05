@@ -28,6 +28,7 @@ import org.toml.lang.psi.TomlInlineTable
 import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
+import org.toml.lang.psi.ext.name
 
 class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
@@ -95,6 +96,8 @@ class LocalCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCo
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
+        if (keyValue.key.name != "version") return
+
        val dependencyNameKey = keyValue.getDependencyKey()
         val sortedVersions = CratesLocalIndexService.getInstance().getCrate(dependencyNameKey.text)
             .unwrapOrElse { return }
