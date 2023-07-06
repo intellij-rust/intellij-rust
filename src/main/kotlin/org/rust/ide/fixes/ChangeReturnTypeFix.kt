@@ -30,7 +30,7 @@ class ChangeReturnTypeFix(
     private val actualTy: Ty
 ) : RsQuickFixBase<RsElement>(element) {
     private val _text: String = run {
-        val callable = findCallableOwner(startElement)
+        val callable = findCallableOwner(element)
 
         val (item, name) = when (callable) {
             is RsFunction -> {

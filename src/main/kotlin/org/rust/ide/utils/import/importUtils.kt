@@ -5,9 +5,11 @@
 
 package org.rust.ide.utils.import
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
 import org.rust.ide.refactoring.RsImportOptimizer.Companion.sortUseSpecks
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.setContext
@@ -48,7 +50,15 @@ fun ImportInfo.import(context: RsElement) {
         containingFile is RsFile && containingFile.isIncludedByIncludeMacro -> containingFile
         else -> null
     } ?: context.containingMod
-    insertionScope.insertUseItem(psiFactory, usePath)
+
+    val isMacroExpansion = insertionScope.containingFile == containingFile.originalFile
+        && IntentionInMacroUtil.isMutableExpansionFile(containingFile)
+    val insertionScopeCopy = if (isMacroExpansion) {
+        PsiTreeUtil.findSameElementInCopy(insertionScope, containingFile)
+    } else {
+        insertionScope
+    }
+    insertionScopeCopy.insertUseItem(psiFactory, usePath)
 }
 
 /**

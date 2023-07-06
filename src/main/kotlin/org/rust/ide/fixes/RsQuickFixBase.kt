@@ -77,7 +77,9 @@ abstract class RsQuickFixBase<E: PsiElement>(element: E) : LocalQuickFixAndInten
     }
 
     final override fun applyFix(): Unit = super.applyFix()
-    final override fun isAvailable(): Boolean = super.isAvailable()
+
+    // TODO investigate why `AutoImportFix` needs to override it and make it final again
+//    final override fun isAvailable(): Boolean = super.isAvailable()
 
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? {
         if (!startInWriteAction()) return null
@@ -108,7 +110,7 @@ abstract class RsQuickFixBase<E: PsiElement>(element: E) : LocalQuickFixAndInten
     }
 
     @Deprecated("In the case of a macro, this method returns a wrong PSI element", ReplaceWith("element"))
-    final override fun getStartElement(): PsiElement = super.getStartElement()
+    final override fun getStartElement(): PsiElement? = super.getStartElement()
 
     @Deprecated("It is always null", ReplaceWith("null"))
     final override fun getEndElement(): PsiElement? = null
