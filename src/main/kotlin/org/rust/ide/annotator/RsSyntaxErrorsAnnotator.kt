@@ -71,6 +71,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsLambdaExpr -> checkLambdaExpr(holder, element)
             is RsDefaultParameterValue -> checkDefaultParameterValue(holder, element)
             is RsTypeParamBounds -> checkTypeParamBounds(holder, element)
+            is RsSuperStructs -> checkSuperStructs(holder, element)
             else -> {
                 checkReservedKeyword(holder, element)
             }
@@ -214,6 +215,16 @@ private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
     if (struct.kind == RsStructKind.UNION && struct.tupleFields != null) {
         deny(struct.tupleFields, holder, RsBundle.message("inspection.message.union.cannot.be.tuple.like"))
     }
+}
+
+private fun checkSuperStructs(holder: AnnotationHolder, element: RsSuperStructs) {
+    deny(
+        element,
+        holder,
+        "Struct inheritance is not supported in Rust",
+        *element.typeReferenceList.toTypedArray(),
+        fix = RemoveElementFix(element, "super structs")
+    )
 }
 
 private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {

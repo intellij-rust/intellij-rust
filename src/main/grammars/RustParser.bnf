@@ -501,6 +501,10 @@ WhereClause ::= where <<comma_separated_list WherePred>>? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+SuperStructs ::= ':' <<comma_separated_list TypeReference>> {
+  pin = 1
+}
+
 WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypeParamBounds {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
@@ -776,9 +780,9 @@ upper StructItem ::= (struct | union) identifier TypeParameterList?
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private TupleStructTail ::= TupleFields WhereClause? ';' { pin = 1 }
-private UnitStructTail ::= WhereClause? ';'
-private BlockStructTail ::= WhereClause? BlockFields
+private TupleStructTail ::= TupleFields SuperStructs? WhereClause? ';' { pin = 1 }
+private UnitStructTail ::= SuperStructs? WhereClause? ';'
+private BlockStructTail ::= SuperStructs? WhereClause? BlockFields
 
 upper EnumItem ::= enum identifier TypeParameterList? WhereClause? EnumBody {
   pin = "enum"
