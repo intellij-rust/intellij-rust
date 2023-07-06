@@ -52,10 +52,20 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = "(&self, x: i32) of T", typeText = "()")
 
-    fun `test const item`() = check("""
+    fun `test const item with non-const expr`() = check("""
         const C: S = unimplemented!();
             //^
-    """, typeText = "S")
+    """, tailText = null, typeText = "S")
+
+    fun `test const item with evaluated const expr`() = check("""
+        const C: i32 = 0;
+            //^
+    """, tailText = " = 0", typeText = "i32")
+
+    fun `test const item with unevaluated const expr`() = check("""
+        const C: i32 = 2 + 2;
+            //^
+    """, tailText = " = 4", typeText = "i32")
 
     fun `test static item`() = check("""
         static C: S = unimplemented!();

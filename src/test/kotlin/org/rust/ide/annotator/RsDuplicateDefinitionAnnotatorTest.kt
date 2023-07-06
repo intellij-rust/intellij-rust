@@ -52,14 +52,14 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         }
     """)
 
-    fun `test lifetime name duplication in generic params E0263`() = checkErrors("""
+    fun `test lifetime name duplication in generic params E0403`() = checkErrors("""
         fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
         struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }
         impl<'a, 'b> Str<'a, 'b> {}
         enum Direction<'a, 'b> { LEFT(&'a str), RIGHT(&'b str) }
         trait Trait<'a, 'b> {}
 
-        fn bar<<error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>, 'b, <error>'a</error>>(x: &'a str, y: &'b str) { }
+        fn bar<<error descr="The name `'a` is already used for a generic parameter in this item's generic parameters [E0403]">'a</error>, 'b, <error>'a</error>>(x: &'a str, y: &'b str) { }
         struct St<<error>'a</error>, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
         impl<<error>'a</error>, 'b, <error>'a</error>> Str<'a, 'b> {}
         enum Dir<<error>'a</error>, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }

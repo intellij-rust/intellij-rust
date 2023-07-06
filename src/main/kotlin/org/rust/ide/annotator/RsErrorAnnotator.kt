@@ -1553,7 +1553,7 @@ private fun checkDuplicates(
     val message = when {
         element is RsNamedFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
         element is RsEnumVariant -> RsDiagnostic.DuplicateDefinitionError(identifier, Namespace.Types, name, owner, E0428)
-        element is RsLifetimeParameter -> RsDiagnostic.DuplicateLifetimeError(identifier, name)
+        element is RsLifetimeParameter -> RsDiagnostic.DuplicateGenericParameterError(identifier, name)
         element is RsTypeParameter -> RsDiagnostic.DuplicateGenericParameterError(identifier, name)
         element is RsConstParameter -> RsDiagnostic.DuplicateGenericParameterError(identifier, name)
         element is RsPatBinding && owner is RsValueParameterList -> {

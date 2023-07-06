@@ -44,6 +44,11 @@ fun RsValueParameterList.getStubOnlyText(
     renderLifetimes: Boolean = true
 ): String = TypeSubstitutingPsiRenderer(PsiRenderingOptions(renderLifetimes), subst).renderValueParameterList(this)
 
+fun RsExpr.getStubOnlyText(
+    subst: Substitution = emptySubstitution,
+    expectedTy: Ty = type
+): String = TypeSubstitutingPsiRenderer(PsiRenderingOptions(), subst).renderConstExpr(this, expectedTy)
+
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
 fun RsTraitRef.getStubOnlyText(subst: Substitution = emptySubstitution, renderLifetimes: Boolean = true): String =
     buildString { TypeSubstitutingPsiRenderer(PsiRenderingOptions(renderLifetimes), subst).appendPath(this, path) }
@@ -53,6 +58,9 @@ fun RsPsiRenderer.renderTypeReference(ref: RsTypeReference): String =
 
 fun RsPsiRenderer.renderTraitRef(ref: RsTraitRef): String =
     buildString { appendPath(this, ref.path) }
+
+fun RsPsiRenderer.renderConstExpr(expr: RsExpr, expectedTy: Ty = expr.type): String =
+    buildString { appendConstExpr(this, expr, expectedTy) }
 
 fun RsPsiRenderer.renderValueParameterList(list: RsValueParameterList): String =
     buildString { appendValueParameterList(this, list) }
@@ -493,7 +501,7 @@ open class RsPsiRenderer(
         }
     }
 
-    protected open fun appendConstExpr(
+    open fun appendConstExpr(
         sb: StringBuilder,
         expr: RsExpr,
         expectedTy: Ty = expr.type
