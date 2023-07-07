@@ -11,7 +11,6 @@ import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.utils.import.Testmarks
 
-@SkipTestWrapping // TODO remove after enabling quick-fixes in macros
 class AutoImportFixTest : AutoImportFixTestBase() {
 
     fun `test import struct`() = checkAutoImportFixByText("""
@@ -3134,20 +3133,20 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     fun `test import attr proc macro`() = checkAutoImportFixByFileTreeWithoutHighlighting("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_attribute]
-        pub fn attr_as_is(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
+        pub fn attr_foo(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
     //- lib.rs
-        #[attr_as_is/*caret*/]
+        #[attr_foo/*caret*/]
         fn func() {}
 
-        mod attr_as_is {}
+        mod attr_foo {}
     """, """
     //- lib.rs
-        use dep_proc_macro::attr_as_is;
+        use dep_proc_macro::attr_foo;
 
-        #[attr_as_is]
+        #[attr_foo]
         fn func() {}
 
-        mod attr_as_is {}
+        mod attr_foo {}
     """)
 
     fun `test don't import assoc type binding`() = checkAutoImportFixIsUnavailable("""

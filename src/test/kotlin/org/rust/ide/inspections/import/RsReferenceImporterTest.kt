@@ -13,7 +13,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.ide.settings.RsCodeInsightSettings
 
-@SkipTestWrapping // TODO remove after enabling quick-fixes in macros
+@SkipTestWrapping // TODO Support macros in RsReferenceImporter
 class RsReferenceImporterTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 
     fun `test single item`() = doTest("""
