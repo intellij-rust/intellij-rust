@@ -498,4 +498,16 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         struct S { x: i32 = <error descr="Default parameter values are not supported in Rust">0</error> }
         struct T(i32 = <error descr="Default parameter values are not supported in Rust">0</error>);
     """)
+
+    fun `test impl in type bounds`() = checkErrors("""
+        fn foo1<U: <error descr="Expected trait bound, found `impl Trait` type">impl</error> T>() {}
+        fn foo2<U: <error descr="Expected trait bound, found `impl Trait` type">impl</error> T + T>() {}
+        fn foo3<T: <error descr="Expected trait bound, found `impl Trait` type">impl</error> Fn() -> i32>() {}
+    """)
+
+    fun `test dyn in type bounds`() = checkErrors("""
+        fn foo1<U: <error descr="Invalid `dyn` keyword">dyn</error> T>() {}
+        fn foo2<U: <error descr="Invalid `dyn` keyword">dyn</error> T + T>() {}
+        fn foo3<T: <error descr="Invalid `dyn` keyword">dyn</error> Fn() -> i32>() {}
+    """)
 }

@@ -479,7 +479,7 @@ ConstParameter ::= OuterAttr* const identifier TypeAscription DefaultConstParame
 
 private DefaultConstParameterValue ::= '=' RestrictedConstExpr { pin = 1 }
 
-private TypeBounds ::= [ Polybound ('+' Polybound)* '+'? ]
+private TypeBounds ::= [ [impl | dyn] Polybound ('+' Polybound)* '+'? ]
 
 TypeParamBounds ::= ':' TypeBounds {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"

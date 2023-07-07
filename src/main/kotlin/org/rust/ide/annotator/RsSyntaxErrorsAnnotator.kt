@@ -69,6 +69,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsWherePred -> checkWherePred(holder, element)
             is RsLambdaExpr -> checkLambdaExpr(holder, element)
             is RsDefaultParameterValue -> checkDefaultParameterValue(holder, element)
+            is RsTypeParamBounds -> checkTypeParamBounds(holder, element)
             else -> {
                 checkReservedKeyword(holder, element)
             }
@@ -420,6 +421,20 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
 private fun checkDefaultParameterValue(holder: AnnotationHolder, default: RsDefaultParameterValue) {
     val fix = RemoveElementFix(default, "default parameter value")
     deny(default.expr, holder, "Default parameter values are not supported in Rust", fix = fix)
+}
+
+private fun checkTypeParamBounds(holder: AnnotationHolder, bounds: RsTypeParamBounds) {
+    val impl = bounds.impl
+    if (impl != null) {
+        val fix = RemoveElementFix(impl, "`impl` keyword")
+        deny(impl, holder, "Expected trait bound, found `impl Trait` type", fix = fix)
+    }
+
+    val dyn = bounds.dyn
+    if (dyn != null) {
+        val fix = RemoveElementFix(dyn, "`dyn` keyword")
+        deny(dyn, holder, "Invalid `dyn` keyword", fix = fix)
+    }
 }
 
 private fun checkValueParameterInFunction(fn: RsFunction, param: RsValueParameter, holder: AnnotationHolder) {

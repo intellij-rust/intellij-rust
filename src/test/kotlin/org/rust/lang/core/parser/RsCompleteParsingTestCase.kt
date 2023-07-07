@@ -86,6 +86,8 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     fun `test default parameter values`() = doTest(true)
 
+    fun `test impl dyn type bound`() = doTest(true)
+
     override fun checkResult(targetDataName: String, file: PsiFile) {
         super.checkResult(targetDataName, file)
         check(!hasError(file)) {
