@@ -14,6 +14,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -154,7 +155,9 @@ class RsConvertToNamedFieldsProcessor(
         (element as? RsStructItem)?.semicolon?.delete()
     }
 
-    override fun getCommandName(): String = "Converting ${element.name} to named fields"
+    override fun getCommandName(): String = RsBundle.message(
+        "command.name.converting.to.named.fields", element.name ?: ""
+    )
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
         BaseUsageViewDescriptor(element)

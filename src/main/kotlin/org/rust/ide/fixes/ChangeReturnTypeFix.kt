@@ -6,9 +6,11 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
@@ -29,6 +31,7 @@ class ChangeReturnTypeFix(
     @SafeFieldForPreview
     private val actualTy: Ty
 ) : RsQuickFixBase<RsElement>(element) {
+    @IntentionName
     private val _text: String = run {
         val callable = findCallableOwner(element)
 
@@ -52,11 +55,11 @@ class ChangeReturnTypeFix(
             context = element,
             useQualifiedName = useQualifiedName
         )
-        "Change return type$item$name to '$rendered'"
+        RsBundle.message("intention.name.change.return.type.to", item, name, rendered)
     }
 
     override fun getText(): String = _text
-    override fun getFamilyName(): String = "Change return type"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.change.return.type")
 
     override fun invoke(project: Project, editor: Editor?, element: RsElement) {
         val owner = findCallableOwner(element) ?: return

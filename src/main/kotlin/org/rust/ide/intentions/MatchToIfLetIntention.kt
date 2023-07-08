@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
-    override fun getText() = "Convert match statement to if let"
+    override fun getText() = RsBundle.message("intention.name.convert.match.statement.to.if.let")
     override fun getFamilyName(): String = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

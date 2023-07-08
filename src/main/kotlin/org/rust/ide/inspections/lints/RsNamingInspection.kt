@@ -9,6 +9,7 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.ide.fixes.RenameFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -24,7 +25,7 @@ abstract class RsNamingInspection(
     private val styleName: String,
     private val elementTitle: String = elementType
 ) : RsLintInspection() {
-    override fun getDisplayName(): String = "$elementTitle naming convention"
+    override fun getDisplayName(): String = RsBundle.message("0.naming.convention", elementTitle)
 
     override val isSyntaxOnly: Boolean = true
 
@@ -38,7 +39,7 @@ abstract class RsNamingInspection(
 
         holder.registerLintProblem(
             id,
-            "$elementType `$name` should have $styleName case name such as `$suggestedName`",
+            RsBundle.message("inspection.message.should.have.case.name.such.as", elementType, name, styleName, suggestedName),
             fixes = fixes
         )
     }

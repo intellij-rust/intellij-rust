@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
@@ -32,7 +33,7 @@ import kotlin.math.min
  */
 class RemoveDbgIntention : RsElementBaseIntentionAction<RsMacroCall>() {
 
-    override fun getText() = "Remove dbg!"
+    override fun getText() = RsBundle.message("intention.name.remove.dbg")
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? {

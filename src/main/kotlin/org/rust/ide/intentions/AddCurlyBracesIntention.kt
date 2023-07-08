@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
@@ -32,7 +33,7 @@ import org.rust.openapiext.moveCaretToOffset
  * ```
  */
 class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
-    override fun getText() = "Add curly braces"
+    override fun getText() = RsBundle.message("intention.name.add.curly.braces")
     override fun getFamilyName() = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

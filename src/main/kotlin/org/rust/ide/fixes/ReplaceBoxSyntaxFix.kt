@@ -7,11 +7,12 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsUnaryExpr
 
 class ReplaceBoxSyntaxFix(element: RsUnaryExpr): RsQuickFixBase<RsUnaryExpr>(element) {
-    override fun getFamilyName(): String = "Replace `box` with `Box::new`"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.replace.box.with.box.new")
 
     override fun getText(): String = familyName
 

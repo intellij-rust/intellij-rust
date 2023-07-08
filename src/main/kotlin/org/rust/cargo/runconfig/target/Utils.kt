@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.RsProcessHandler
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
@@ -70,7 +71,7 @@ fun GeneralCommandLine.startProcess(
     val setup = RsCommandLineSetup(request)
     val targetCommandLine = toTargeted(setup, uploadExecutable)
     val progressIndicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-    val environment = project.computeWithCancelableProgress("Preparing remote environment...") {
+    val environment = project.computeWithCancelableProgress(RsBundle.message("progress.title.preparing.remote.environment")) {
         request.prepareEnvironment(setup, progressIndicator)
     }
     val process = environment.createProcess(targetCommandLine, progressIndicator)
@@ -138,7 +139,7 @@ private fun TargetEnvironmentRequest.prepareEnvironment(
     } catch (e: ProcessCanceledException) {
         throw e
     } catch (e: Exception) {
-        throw ExecutionException("Failed to prepare remote environment: ${e.localizedMessage}", e)
+        throw ExecutionException(RsBundle.message("dialog.message.failed.to.prepare.remote.environment", e.localizedMessage), e)
     }
 }
 

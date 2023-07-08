@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.ide.annotator.getFunctionCallContext
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
@@ -26,7 +27,7 @@ import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.type
 
 class FillFunctionArgumentsFix(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
-    override fun getText(): String = "Fill missing arguments"
+    override fun getText(): String = RsBundle.message("intention.name.fill.missing.arguments")
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {

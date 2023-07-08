@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.RsBundle
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider.Companion.WASM_TARGET
 import org.rust.cargo.toolchain.RsToolchainBase
@@ -84,14 +85,14 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
             }
 
             if (downloadProcessOutput?.isSuccess != true) {
-                val message = "rustup failed: `${downloadProcessOutput?.stderr ?: ""}`"
+                val message = RsBundle.message("notification.content.rustup.failed2", downloadProcessOutput?.stderr ?: "")
                 LOG.warn(message)
                 return DownloadResult.Err(message)
             }
         }
 
         val sources = toolchain.rustc().getStdlibFromSysroot(projectDirectory)
-            ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
+            ?: return DownloadResult.Err(RsBundle.message("notification.content.failed.to.find.stdlib.in.sysroot"))
         LOG.info("stdlib path: ${sources.path}")
         fullyRefreshDirectory(sources)
         return DownloadResult.Ok(sources)
@@ -124,7 +125,7 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
         when (this) {
             is RsResult.Ok -> DownloadResult.Ok(Unit)
             is RsResult.Err -> {
-                val message = "rustup failed: `${err.message}`"
+                val message = RsBundle.message("notification.content.rustup.failed", err.message?:"")
                 LOG.warn(message)
                 DownloadResult.Err(message)
             }
@@ -178,7 +179,7 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
 
             if (needInstall) {
                 project.showBalloon(
-                    "$componentPresentableName is not installed",
+                    RsBundle.message("notification.content.not.installed", componentPresentableName),
                     NotificationType.ERROR,
                     InstallComponentAction(cargoProjectDirectory, componentName)
                 )
@@ -197,7 +198,7 @@ class Rustup(toolchain: RsToolchainBase, private val projectDirectory: Path) : R
 
             if (needInstall) {
                 project.showBalloon(
-                    "$targetName target is not installed",
+                    RsBundle.message("notification.content.target.not.installed", targetName),
                     NotificationType.ERROR,
                     InstallTargetAction(cargoProjectDirectory, targetName)
                 )

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.intentions.createFromUsage.CreateEnumVariantIntention.Context
 import org.rust.ide.utils.PsiInsertionPlace
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class CreateEnumVariantIntention : RsElementBaseIntentionAction<Context>() {
-    override fun getFamilyName(): String = "Create enum variant"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.create.enum.variant")
 
     class Context(
         val path: RsPath,
@@ -43,7 +44,7 @@ class CreateEnumVariantIntention : RsElementBaseIntentionAction<Context>() {
         val rbrace = enum.enumBody?.rbrace ?: return null
         val place = PsiInsertionPlace.before(rbrace) ?: return null
 
-        text = "Create enum variant `$name`"
+        text = RsBundle.message("intention.name.create.enum.variant", name)
         return Context(path, enum, name, place, commaPlace)
     }
 

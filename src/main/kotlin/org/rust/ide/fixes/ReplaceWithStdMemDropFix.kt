@@ -8,12 +8,13 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.unwrapReference
 
 class ReplaceWithStdMemDropFix(call: PsiElement) : RsQuickFixBase<PsiElement>(call) {
     override fun getFamilyName() = text
-    override fun getText() = "Replace with `std::mem::drop`"
+    override fun getText() = RsBundle.message("intention.name.replace.with.std.mem.drop")
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val (old, args) = when (element) {

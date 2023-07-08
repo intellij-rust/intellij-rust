@@ -9,6 +9,7 @@ import com.intellij.codeEditor.printing.HTMLTextPainter
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -25,6 +26,7 @@ import org.intellij.markdown.html.*
 import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
+import org.jetbrains.annotations.Nls
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -52,6 +54,7 @@ fun RsDocAndAttributeOwner.documentationAsHtml(
     return documentationAsHtml(documentation(), originalElement, renderMode)
 }
 
+@Nls
 fun RsDocComment.documentationAsHtml(renderMode: RsDocRenderMode = RsDocRenderMode.QUICK_DOC_POPUP): String? {
     val owner = owner ?: return null
     val documentationText = RsDocKind.of(tokenType)
@@ -61,6 +64,7 @@ fun RsDocComment.documentationAsHtml(renderMode: RsDocRenderMode = RsDocRenderMo
     return documentationAsHtml(documentationText, owner, renderMode)
 }
 
+@NlsSafe
 private fun documentationAsHtml(
     rawDocumentationText: String,
     context: PsiElement,

@@ -10,6 +10,7 @@ import com.intellij.refactoring.util.AbstractVariableData
 import com.intellij.ui.BooleanTableCellEditor
 import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
+import org.rust.RsBundle
 
 class ParameterDataHolder(val parameter: Parameter, val onChange: () -> Unit) : AbstractVariableData() {
     fun changeName(name: String) {
@@ -35,7 +36,7 @@ class ChooseColumn : ColumnInfo<ParameterDataHolder, Boolean>(null) {
     override fun isCellEditable(item: ParameterDataHolder): Boolean = true
 }
 
-class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<ParameterDataHolder, String>("Name") {
+class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<ParameterDataHolder, String>(RsBundle.message("name")) {
     override fun valueOf(item: ParameterDataHolder): String =
         item.parameter.name
 
@@ -48,12 +49,12 @@ class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<Pa
     override fun isCellEditable(item: ParameterDataHolder): Boolean = true
 }
 
-class TypeColumn : ColumnInfo<ParameterDataHolder, String>("Type") {
+class TypeColumn : ColumnInfo<ParameterDataHolder, String>(RsBundle.message("type")) {
     override fun valueOf(item: ParameterDataHolder): String =
         item.parameter.type?.toString() ?: "_"
 }
 
-class MutabilityColumn : ColumnInfo<ParameterDataHolder, Boolean>("Mutable") {
+class MutabilityColumn : ColumnInfo<ParameterDataHolder, Boolean>(RsBundle.message("column.name.mutable")) {
     override fun valueOf(item: ParameterDataHolder): Boolean =
         item.parameter.isMutable
 

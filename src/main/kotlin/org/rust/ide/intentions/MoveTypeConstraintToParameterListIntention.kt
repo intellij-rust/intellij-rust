@@ -8,13 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.moveCaretToOffset
 
 class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<RsWhereClause>() {
-    override fun getText() = "Move type constraint to parameter list"
+    override fun getText() = RsBundle.message("intention.name.move.type.constraint.to.parameter.list")
     override fun getFamilyName() = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

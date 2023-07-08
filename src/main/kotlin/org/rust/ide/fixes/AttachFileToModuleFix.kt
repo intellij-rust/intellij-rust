@@ -17,6 +17,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.notifications.showBalloon
@@ -48,7 +49,7 @@ class AttachFileToModuleFix(
     private val targetModuleName: String? = null
 ) : LocalQuickFixOnPsiElement(file) {
     override fun getFamilyName(): String = text
-    override fun getText(): String = "Attach file to ${targetModuleName ?: "a module"}"
+    override fun getText(): String = RsBundle.message("intention.name.attach.file.to", targetModuleName ?: "a module")
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val rsFile = startElement as? RsFile ?: return
@@ -78,7 +79,7 @@ class AttachFileToModuleFix(
 
         val modItem = factory.tryCreateModDeclItem(name)
         if (modItem == null) {
-            project.showBalloon("Could not create `mod ${name}`", NotificationType.ERROR)
+            project.showBalloon(RsBundle.message("notification.content.could.not.create.mod", name), NotificationType.ERROR)
             return
         }
 
@@ -162,7 +163,7 @@ private fun selectModule(file: RsFile, availableModules: List<RsFile>): RsFile? 
         }
     }
 
-    val dialog = dialog("Select a Module", panel {
+    val dialog = dialog(RsBundle.message("dialog.title.select.module"), panel {
         row { fullWidthCell(box) }
     }, focusedComponent = box)
 

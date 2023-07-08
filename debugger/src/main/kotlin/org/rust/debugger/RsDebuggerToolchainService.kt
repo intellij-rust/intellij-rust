@@ -26,6 +26,7 @@ import com.intellij.util.system.CpuArch
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBBinUrlProvider
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
+import org.rust.RsBundle
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.openapiext.RsPathManager
 import java.io.File
@@ -82,22 +83,22 @@ class RsDebuggerToolchainService {
     fun downloadDebugger(project: Project? = null): DownloadResult {
         val result = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<DownloadResult, Nothing> {
             downloadDebuggerSynchronously()
-        }, "Download debugger", true, project)
+        }, RsBundle.message("dialog.title.download.debugger"), true, project)
 
         when (result) {
             is DownloadResult.Ok -> {
                 Notifications.Bus.notify(Notification(
                     RUST_DEBUGGER_GROUP_ID,
-                    "Debugger",
-                    "Debugger successfully downloaded",
+                    RsBundle.message("notification.title.debugger"),
+                    RsBundle.message("notification.content.debugger.successfully.downloaded"),
                     NotificationType.INFORMATION
                 ))
             }
             is DownloadResult.Failed -> {
                 Notifications.Bus.notify(Notification(
                     RUST_DEBUGGER_GROUP_ID,
-                    "Debugger",
-                    "Debugger downloading failed",
+                    RsBundle.message("notification.title.debugger"),
+                    RsBundle.message("notification.content.debugger.downloading.failed"),
                     NotificationType.ERROR
                 ))
             }

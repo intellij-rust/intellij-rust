@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.utils.addMissingFieldsToStructLiteral
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteral
@@ -20,9 +21,9 @@ class AddStructFieldsFix(
 ) : RsQuickFixBase<RsStructLiteral>(structBody) {
     override fun getText(): String {
         return if (recursive) {
-            "Recursively add missing fields"
+            RsBundle.message("intention.name.recursively.add.missing.fields")
         } else {
-            "Add missing fields"
+            RsBundle.message("intention.name.add.missing.fields")
         }
     }
 

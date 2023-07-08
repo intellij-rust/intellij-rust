@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.stripWhitespace
+import org.rust.RsBundle
 import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
@@ -22,7 +23,7 @@ import org.rust.stdext.mapToMutableList
 import java.util.*
 
 class RsUnreachableCodeInspection : RsLintInspection() {
-    override fun getDisplayName(): String = "Unreachable code"
+    override fun getDisplayName(): String = RsBundle.message("inspection.message.unreachable.code")
 
     override fun getLint(element: PsiElement): RsLint = RsLint.UnreachableCode
 
@@ -75,10 +76,10 @@ class RsUnreachableCodeInspection : RsLintInspection() {
 
         holder.registerLintProblem(
             func,
-            "Unreachable code",
+            RsBundle.message("inspection.message.unreachable.code"),
             strippedRangeInFunction,
             RsLintHighlightingType.UNUSED_SYMBOL,
-            listOf(SubstituteTextFix.delete("Remove unreachable code", func.containingFile, range))
+            listOf(SubstituteTextFix.delete(RsBundle.message("intention.name.remove.unreachable.code"), func.containingFile, range))
         )
     }
 }

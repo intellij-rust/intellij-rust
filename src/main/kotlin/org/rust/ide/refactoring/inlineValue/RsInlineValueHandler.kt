@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
@@ -98,7 +99,7 @@ private fun getConstantContext(
     val const = element as? RsConstant ?: return null
     val expr = const.expr
     if (expr == null) {
-        showErrorHint(project, editor, "cannot inline constant without an expression")
+        showErrorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.constant.without.expression"))
         return null
     }
 
@@ -115,11 +116,11 @@ private fun getVariableDeclContext(
     val decl = binding.ancestorOrSelf<RsLetDecl>()
     val expr = decl?.expr
     if (expr == null) {
-        showErrorHint(project, editor, "cannot inline variable without an expression")
+        showErrorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.variable.without.expression"))
         return null
     }
     if (decl.pat !is RsPatIdent) {
-        showErrorHint(project, editor, "cannot inline variable without an identifier")
+        showErrorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.variable.without.identifier"))
         return null
     }
     return InlineValueContext.Variable(binding, decl, expr, reference)

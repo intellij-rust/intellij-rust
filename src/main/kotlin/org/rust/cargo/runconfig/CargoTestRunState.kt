@@ -18,8 +18,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.HtmlChunk
+import org.jetbrains.annotations.Nls
 import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -99,22 +101,10 @@ class CargoTestRunState(
         private const val CHANGES_URL: String = "https://blog.rust-lang.org/2023/06/01/Rust-1.70.0.html#enforced-stability-in-the-test-cli"
 
         private fun showRustcBootstrapWarning(project: Project) {
-            val content = buildString {
-                append("To support ")
-                append(HtmlChunk.link("changes", "Rust 1.70.0 stable"))
-                append(", the IDE runs ")
-                append(HtmlChunk.text("cargo test").bold())
-                append(" with the ")
-                append(HtmlChunk.text("${RUSTC_BOOTSTRAP}=1").bold())
-                append(" environment variable, which may rarely cause inconsistent build/test results.")
-                append(HtmlChunk.br())
-                append("You can avoid potential inconsistencies by ")
-                append(HtmlChunk.link("disable", "disabling the Test tool window"))
-                append(".")
-            }
-
+            @NlsSafe val RUSTC_BOOTSSTRAP = "${RUSTC_BOOTSTRAP}=1"
+            @Nls val content = RsBundle.message("to.support.0.the.ide.runs.1.with.the.2.environment.variable.which.may.rarely.cause.inconsistent.build.test.results.3.you.can.avoid.potential.inconsistencies.by.4", HtmlChunk.link("changes", RsBundle.message("rust.1.70.0.stable")), HtmlChunk.text(RsBundle.message("cargo.test")).bold(), HtmlChunk.text(RUSTC_BOOTSSTRAP).bold(), HtmlChunk.br(), HtmlChunk.link("disable", RsBundle.message("disabling.the.test.tool.window")))
             project.showBalloon(
-                "Potentially inconsistent build/test results",
+                RsBundle.message("notification.title.potentially.inconsistent.build.test.results"),
                 content,
                 NotificationType.WARNING,
                 null
@@ -133,14 +123,7 @@ class CargoTestRunState(
         }
 
         private fun showConfirmationInfo(project: Project) {
-            val content = buildString {
-                append("The ")
-                append(HtmlChunk.text("Test").bold())
-                append(" tool window was disabled.")
-                append(HtmlChunk.br())
-                append(HtmlChunk.link("revert", "Revert"))
-            }
-
+            @Nls val content = RsBundle.message("the.0.tool.window.was.disabled.1.2", HtmlChunk.text(RsBundle.message("test")).bold(), HtmlChunk.br(), HtmlChunk.link("revert", RsBundle.message("revert")))
             project.showBalloon(
                 "",
                 content,

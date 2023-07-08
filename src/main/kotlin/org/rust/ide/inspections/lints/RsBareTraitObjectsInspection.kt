@@ -8,6 +8,7 @@ package org.rust.ide.inspections.lints
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -40,7 +41,7 @@ class RsBareTraitObjectsInspection : RsLintInspection() {
         }
 
     private class AddDynKeywordFix(element: RsTypeReference) : RsQuickFixBase<RsTypeReference>(element) {
-        override fun getText(): String = "Add 'dyn' keyword to trait object"
+        override fun getText(): String = RsBundle.message("intention.name.add.dyn.keyword.to.trait.object")
         override fun getFamilyName(): String = text
 
         override fun invoke(project: Project, editor: Editor?, element: RsTypeReference) {

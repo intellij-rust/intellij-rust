@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.*
+import org.rust.RsBundle
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.qualifiedName
@@ -43,7 +44,7 @@ class RsDescriptionProvider : ElementDescriptionProvider {
         val parent = element.parent
         val name = when {
             includeParent && element is RsMod -> element.qualifiedName
-            includeParent && parent is RsMod -> parent.qualifiedName?.let { "$it::$elementName" }
+            includeParent && parent is RsMod -> parent.qualifiedName?.let { RsBundle.message("0.1", it, elementName) }
             else -> elementName
         } ?: elementName
         return "$type ${CommonRefactoringUtil.htmlEmphasize(name)}"

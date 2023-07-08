@@ -41,6 +41,7 @@ import org.eclipse.jgit.treewalk.filter.OrTreeFilter
 import org.eclipse.jgit.treewalk.filter.PathFilter
 import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.checkIsBackgroundThread
 import org.rust.openapiext.isUnitTestMode
@@ -486,7 +487,7 @@ private class CratesLocalIndexUpdateTask(
     private val writeCratesUpdate: (CratesUpdate) -> Unit,
     private val onError: (Error.InternalError) -> Unit,
     private val onFinish: () -> Unit
-) : Task.Backgroundable(null, "Loading cargo registry index", false) {
+) : Task.Backgroundable(null, RsBundle.message("progress.title.loading.cargo.registry.index"), false) {
     override fun run(indicator: ProgressIndicator) {
         val builder = FileRepositoryBuilder()
             .setGitDir(cargoRegistryIndexPath.toFile())

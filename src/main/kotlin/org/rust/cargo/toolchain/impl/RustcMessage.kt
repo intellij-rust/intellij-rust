@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.ide.annotator.isValid
@@ -46,9 +47,9 @@ data class CargoTopMessage(
 data class RustcMessage(
     val children: List<RustcMessage>,
     val code: ErrorCode?,
-    val level: String,
-    val message: String,
-    val rendered: String?,
+    @NlsSafe val level: String,
+    @NlsSafe val message: String,
+    @NlsSafe val rendered: String?,
     val spans: List<RustcSpan>
 ) {
     val mainSpan: RustcSpan?

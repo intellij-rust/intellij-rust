@@ -13,6 +13,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import org.rust.RsBundle
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.lints.RsLintLevel.*
@@ -77,9 +78,9 @@ class RsSuppressQuickFix(
     private val target: String
 ) : LocalQuickFixOnPsiElement(suppressAt), ContainerBasedSuppressQuickFix {
 
-    override fun getFamilyName(): String = "Suppress warnings"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.suppress.warnings")
 
-    override fun getText(): String = "Suppress `${lint.id}` for $target"
+    override fun getText(): String = RsBundle.message("intention.name.suppress.for", lint.id, target)
 
     override fun isAvailable(project: Project, context: PsiElement): Boolean = context.isValid
 

@@ -11,6 +11,7 @@ import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.workspace.PackageOrigin.*
@@ -37,7 +38,7 @@ import java.util.function.Consumer
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
-        val buffer = StringBuilder()
+        @NlsSafe val buffer = StringBuilder()
         when (element) {
             is RsTypeParameter -> definition(buffer) { generateDoc(element, it) }
             is RsConstParameter -> definition(buffer) { generateDoc(element, it) }
@@ -49,21 +50,25 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         return if (buffer.isEmpty()) null else buffer.toString()
     }
 
-    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? = buildString {
-        when (element) {
-            is RsPatBinding -> generateDoc(element, this)
-            is RsTypeParameter -> generateDoc(element, this)
-            is RsConstParameter -> generateDoc(element, this)
-            is RsConstant -> this += element.presentationInfo?.quickDocumentationText
-            is RsMod -> this += element.presentationInfo?.quickDocumentationText
-            is RsItemElement,
-            is RsMacro -> {
-                (element as RsDocAndAttributeOwner).header(this)
-                element.signature(this)
+    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? {
+        @NlsSafe val string = buildString {
+            when (element) {
+                is RsPatBinding -> generateDoc(element, this)
+                is RsTypeParameter -> generateDoc(element, this)
+                is RsConstParameter -> generateDoc(element, this)
+                is RsConstant -> this += element.presentationInfo?.quickDocumentationText
+                is RsMod -> this += element.presentationInfo?.quickDocumentationText
+                is RsItemElement,
+                is RsMacro -> {
+                    (element as RsDocAndAttributeOwner).header(this)
+                    element.signature(this)
+                }
+
+                is RsNamedElement -> this += element.presentationInfo?.quickDocumentationText
+                else -> return null
             }
-            is RsNamedElement -> this += element.presentationInfo?.quickDocumentationText
-            else -> return null
         }
+        return string
     }
 
     override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {

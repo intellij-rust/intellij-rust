@@ -11,12 +11,13 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
+import org.rust.RsBundle
 import org.rust.ide.icons.RsIcons
 
 class CargoCommandConfigurationType : ConfigurationTypeBase(
     "CargoCommandRunConfiguration",
-    "Cargo",
-    "Cargo command run configuration",
+    RsBundle.message("build.event.title.cargo"),
+    RsBundle.message("cargo.command.run.configuration"),
     RsIcons.RUST
 ) {
     init {

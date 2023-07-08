@@ -22,6 +22,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -106,7 +107,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         }
     }
 
-    override fun getDisplayName(): String = "External Linter"
+    override fun getDisplayName(): String = RsBundle.message("external.linter")
 
     override fun getShortName(): String = SHORT_NAME
 

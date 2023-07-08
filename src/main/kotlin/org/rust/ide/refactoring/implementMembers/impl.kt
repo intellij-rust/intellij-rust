@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.ide.presentation.*
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
@@ -29,7 +30,7 @@ import kotlin.math.max
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     checkWriteAccessNotAllowed()
     val (implInfo, trait) = findMembersToImplement(impl, impl.traitRef) ?: run {
-        editor?.showErrorHint("No members to implement have been found")
+        editor?.showErrorHint(RsBundle.message("hint.text.no.members.to.implement.have.been.found"))
         return
     }
 

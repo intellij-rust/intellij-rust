@@ -7,12 +7,11 @@ package org.rust.clion.valgrind
 
 import com.intellij.execution.configurations.RunProfile
 import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
-private const val ERROR_MESSAGE_TITLE: String = "Unable to run Valgrind"
-
-class RsValgrindRunner : RsExecutableRunner(ValgrindExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
+class RsValgrindRunner : RsExecutableRunner(ValgrindExecutor.EXECUTOR_ID, RsBundle.message("dialog.title.unable.to.run.valgrind")) {
     override fun getRunnerId(): String = RUNNER_ID
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {

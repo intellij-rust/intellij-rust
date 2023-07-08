@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
+import org.rust.RsBundle
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.toml.isCargoToml
 import org.rust.toml.isDependencyListHeader
@@ -18,7 +19,7 @@ import org.toml.lang.psi.TomlTable
 import org.toml.lang.psi.TomlValue
 
 class SimplifyDependencySpecificationIntention : RsTomlElementBaseIntentionAction<SimplifyDependencySpecificationIntention.Context>() {
-    override fun getText() = "Simplify dependency specification"
+    override fun getText() = RsBundle.message("intention.name.simplify.dependency.specification")
     override fun getFamilyName(): String = text
 
     override fun findApplicableContextInternal(project: Project, editor: Editor, element: PsiElement): Context? {

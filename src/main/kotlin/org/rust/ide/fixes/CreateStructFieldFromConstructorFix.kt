@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.parentStructLiteral
@@ -24,7 +25,7 @@ class CreateStructFieldFromConstructorFix private constructor(
     @SafeFieldForPreview
     private val fieldType: Ty,
 ) : RsQuickFixBase<RsStructItem>(struct) {
-    override fun getText() = "Create field"
+    override fun getText() = RsBundle.message("intention.name.create.field")
 
     override fun getFamilyName(): String = text
 

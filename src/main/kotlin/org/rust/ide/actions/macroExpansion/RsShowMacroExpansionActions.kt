@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
@@ -63,7 +64,7 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
 
     companion object {
         fun showMacroExpansionError(editor: Editor, error: GetMacroExpansionError) {
-            editor.showErrorHint("Failed to expand the macro: ${error.toUserViewableMessage()}")
+            editor.showErrorHint(RsBundle.message("hint.text.failed.to.expand.macro", error.toUserViewableMessage()))
         }
     }
 }

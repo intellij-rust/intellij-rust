@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.fixes.ElideLifetimesFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -40,7 +41,7 @@ class RsNeedlessLifetimesInspection : RsLintInspection() {
     private fun registerProblem(holder: RsProblemsHolder, fn: RsFunction) {
         holder.registerLintProblem(
             fn,
-            "Explicit lifetimes given in parameter types where they could be elided",
+            RsBundle.message("inspection.message.explicit.lifetimes.given.in.parameter.types.where.they.could.be.elided"),
             TextRange(
                 fn.fn.startOffsetInParent,
                 fn.block?.getPrevNonCommentSibling()?.endOffsetInParent ?: fn.identifier.endOffsetInParent

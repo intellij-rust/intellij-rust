@@ -7,8 +7,11 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.ide.injected.isDoctestInjectedMain
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
@@ -20,13 +23,14 @@ import org.rust.lang.core.psi.ext.isTest
 import org.rust.lang.core.psi.ext.superItem
 
 class AddUnsafeFix private constructor(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
+    @Nls
     private val _text = run {
-        val item = when (element) {
+        @NlsSafe val item = when (element) {
             is RsBlockExpr -> "block"
             is RsImplItem -> "impl"
             else -> "function"
         }
-        "Add unsafe to $item"
+        RsBundle.message("intention.name.add.unsafe.to", item)
     }
 
     override fun getFamilyName() = text

@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsExpr
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.ancestorStrict
 
 class UnwrapConstructorIntention : RsElementBaseIntentionAction<UnwrapConstructorIntention.Context>() {
-    override fun getFamilyName() = "Unwrap enum or tuple struct constructor from an expression"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.unwrap.enum.or.tuple.struct.constructor.from.expression")
 
     data class Context(val call: RsCallExpr, val argument: RsExpr)
 
@@ -29,7 +30,7 @@ class UnwrapConstructorIntention : RsElementBaseIntentionAction<UnwrapConstructo
 
         if (!PsiModificationUtil.canReplace(call)) return null
 
-        text = "Unwrap `${expr.text}` from the expression"
+        text = RsBundle.message("intention.name.unwrap.from.expression", expr.text)
 
         return Context(call, argument)
     }

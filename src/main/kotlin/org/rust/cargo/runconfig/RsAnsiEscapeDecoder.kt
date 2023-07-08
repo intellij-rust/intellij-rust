@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import org.rust.openapiext.isUnderDarkTheme
@@ -54,7 +55,7 @@ class RsAnsiEscapeDecoder : AnsiEscapeDecoder() {
          *
          * @param text a string with ANSI escape sequences
          */
-        fun quantizeAnsiColors(text: String): String = text
+        @NlsSafe fun quantizeAnsiColors(text: String): String = text
             .replace(ANSI_SGR_RE) {
                 val rawAttributes = it.destructured.component1().split(";").iterator()
                 val result = mutableListOf<Int>()

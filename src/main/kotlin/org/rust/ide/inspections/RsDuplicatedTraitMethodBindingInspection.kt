@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.RsBundle
 import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatBinding
@@ -13,7 +14,7 @@ import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
 
 class RsDuplicatedTraitMethodBindingInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Duplicated trait method parameter binding"
+    override fun getDisplayName() = RsBundle.message("duplicated.trait.method.parameter.binding")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
@@ -37,7 +38,7 @@ class RsDuplicatedTraitMethodBindingInspection : RsLocalInspectionTool() {
                         bindings.forEach { binding ->
                             holder.registerProblem(
                                 binding,
-                                "Duplicated parameter name `${binding.name}`. Consider renaming it"
+                                RsBundle.message("inspection.message.duplicated.parameter.name.consider.renaming.it", binding.name?:"")
                             )
                         }
                     }

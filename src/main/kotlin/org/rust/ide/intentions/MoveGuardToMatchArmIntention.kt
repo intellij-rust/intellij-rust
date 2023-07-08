@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.ext.parentMatchArm
 import org.rust.openapiext.moveCaretToOffset
 
 class MoveGuardToMatchArmIntention : RsElementBaseIntentionAction<MoveGuardToMatchArmIntention.Context>() {
-    override fun getText(): String = "Move guard inside the match arm"
+    override fun getText(): String = RsBundle.message("intention.name.move.guard.inside.match.arm")
     override fun getFamilyName(): String = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

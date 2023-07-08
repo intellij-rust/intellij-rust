@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
@@ -17,7 +18,7 @@ class EnableCargoFeaturesFix(
     private val cargoProject: CargoProject,
     private val features: Set<PackageFeature>
 ) : LocalQuickFix {
-    override fun getFamilyName(): String = "Enable features"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.enable.features")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         project.cargoProjects.modifyFeatures(cargoProject, features, FeatureState.Enabled)

@@ -16,6 +16,7 @@ import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.util.PathUtil
+import org.rust.RsBundle
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.ide.icons.RsIcons
@@ -30,7 +31,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
 
     private var peer: RsProjectGeneratorPeer? = null
 
-    override fun getName(): String = "Rust"
+    override fun getName(): String = RsBundle.message("rust")
     override fun getLogo(): Icon = RsIcons.RUST
     override fun createPeer(): ProjectGeneratorPeer<ConfigurationData> = RsProjectGeneratorPeer().also { peer = it }
 
@@ -45,7 +46,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
         val cargo = settings.toolchain?.cargo() ?: return
 
         val name = project.name.replace(' ', '_')
-        val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {
+        val generatedFiles = project.computeWithCancelableProgress(RsBundle.message("progress.title.generating.cargo.project")) {
             cargo.makeProject(project, module, baseDir, name, template).unwrapOrThrow() // TODO throw? really??
         }
 

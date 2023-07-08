@@ -10,6 +10,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.rust.RsBundle
 import org.rust.ide.fixes.deleteUseSpeck
 import org.rust.ide.intentions.SubstituteTypeAliasIntention
 import org.rust.ide.presentation.getStubOnlyText
@@ -98,10 +99,10 @@ class RsInlineTypeAliasProcessor(
         }
     }
 
-    override fun getCommandName(): String = "Inline Type Alias ${typeAlias.name}"
+    override fun getCommandName(): String = RsBundle.message("command.name.inline.type.alias", typeAlias.name?:"")
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
-        RsInlineUsageViewDescriptor(typeAlias, "Type Alias to inline")
+        RsInlineUsageViewDescriptor(typeAlias, RsBundle.message("list.item.type.alias.to.inline"))
 }
 
 /**

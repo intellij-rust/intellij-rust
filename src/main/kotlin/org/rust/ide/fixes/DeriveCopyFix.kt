@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsPathExpr
@@ -22,7 +23,7 @@ import org.rust.lang.core.types.type
 
 class DeriveCopyFix(element: RsPathExpr) : RsQuickFixBase<RsPathExpr>(element) {
     override fun getFamilyName(): String = name
-    override fun getText(): String = "Derive Copy trait"
+    override fun getText(): String = RsBundle.message("intention.name.derive.copy.trait")
 
     override fun invoke(project: Project, editor: Editor?, element: RsPathExpr) {
         val type = element.type as? TyAdt ?: return

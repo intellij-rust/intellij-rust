@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import com.intellij.util.ThreeState
+import org.rust.RsBundle
 import org.rust.ide.fixes.*
 import org.rust.lang.core.CompilerFeature
 import org.rust.lang.core.FeatureAvailability
@@ -136,7 +137,7 @@ private fun checkLiteralSuffix(metaItem: RsMetaItem, holder: AnnotationHolder) {
             val suffix = kind.suffix ?: continue
             val editedText = expr.text.removeSuffix(suffix)
             val fix = SubstituteTextFix.replace(
-                "Remove suffix", metaItem.containingFile, expr.textRange, editedText
+                RsBundle.message("intention.name.remove.suffix"), metaItem.containingFile, expr.textRange, editedText
             )
             RsDiagnostic.AttributeSuffixedLiteral(expr, fix).addToHolder(holder)
         }
@@ -194,7 +195,7 @@ private fun emitMalformedAttribute(
         if (!first) stringBuilder.append(" or ")
         stringBuilder.append("#${inner}[${name} = \"${template.nameValueStr}\"]")
     }
-    val msg = if (first) "Must be of the form" else "The following are the possible correct uses"
+    val msg = if (first) RsBundle.message("tooltip.must.be.form") else RsBundle.message("tooltip.following.are.possible.correct.uses")
     RsDiagnostic.MalformedAttributeInput(metaItem, name, "$msg $stringBuilder").addToHolder(holder)
 }
 
@@ -230,7 +231,7 @@ private fun checkMetaBadDelim(element: RsMetaItem, holder: AnnotationHolder) {
         Pair(RsElementTypes.LBRACE, RsElementTypes.RBRACE), Pair(RsElementTypes.LBRACK, RsElementTypes.RBRACK) -> {
             val fixedText = setParen(element.text)
             val fix = SubstituteTextFix.replace(
-                "Replace brackets", element.containingFile, element.textRange, fixedText
+                RsBundle.message("intention.name.replace.brackets"), element.containingFile, element.textRange, fixedText
             )
             RsDiagnostic.WrongMetaDelimiters(openDelim, closingDelim, fix).addToHolder(holder)
         }
@@ -301,7 +302,7 @@ private fun checkCfgPredicate(holder: RsAnnotationHolder, item: RsMetaItem) {
 private fun checkDeriveAttr(element: RsMetaItem, holder: RsAnnotationHolder) {
     val args = element.metaItemArgs?.litExprList ?: return
     for (arg in args) {
-        val fixes = listOfNotNull(arg.stringValue?.let { SubstituteTextFix.replace("Remove quotes", arg.containingFile, arg.textRange, it) })
+        val fixes = listOfNotNull(arg.stringValue?.let { SubstituteTextFix.replace(RsBundle.message("intention.name.remove.quotes"), arg.containingFile, arg.textRange, it) })
         RsDiagnostic.LiteralValueInsideDeriveError(arg, fixes = fixes).addToHolder(holder)
     }
 }
@@ -335,17 +336,17 @@ private fun checkReprArgIsCorrectlyApplied(reprName: String, owner: RsDocAndAttr
     val errorText = when (reprName) {
         "C", "transparent", "align" -> when (owner) {
             is RsStructItem, is RsEnumItem -> return
-            else -> "$reprName attribute should be applied to struct, enum, or union"
+            else -> RsBundle.message("inspection.message.attribute.should.be.applied.to.struct.enum.or.union", reprName)
         }
 
         in TyInteger.NAMES -> when (owner) {
             is RsEnumItem -> return
-            else -> "$reprName attribute should be applied to enum"
+            else -> RsBundle.message("inspection.message.attribute.should.be.applied.to.enum", reprName)
         }
 
         "packed", "simd" -> when (owner) {
             is RsStructItem -> return
-            else -> "$reprName attribute should be applied to struct or union"
+            else -> RsBundle.message("inspection.message.attribute.should.be.applied.to.struct.or.union", reprName)
         }
 
         else -> {
@@ -365,7 +366,7 @@ private fun checkReprAlign(align: RsMetaItem, holder: RsAnnotationHolder) {
         args == null && eq == null -> {
             RsDiagnostic.InvalidReprAlign(
                 align,
-                "`align` needs an argument",
+                RsBundle.message("inspection.message.align.needs.argument"),
                 fixes = listOf(AddAttrParenthesesFix(align , "align"))
             ).addToHolder(holder)
         }
@@ -373,7 +374,7 @@ private fun checkReprAlign(align: RsMetaItem, holder: RsAnnotationHolder) {
         args == null && eq != null -> {
             RsDiagnostic.IncorrectlyDeclaredAlignRepresentationHint(
                 align,
-                "Incorrect `repr(align)` attribute format"
+                RsBundle.message("inspection.message.incorrect.repr.align.attribute.format")
             ).addToHolder(holder)
         }
 
@@ -387,7 +388,7 @@ private fun checkReprAlignArgs(args: List<RsLitExpr>, align: RsMetaItem, holder:
     if (args.size != 1) {
         RsDiagnostic.IncorrectlyDeclaredAlignRepresentationHint(
             align,
-            "`align` takes exactly one argument in parentheses"
+            RsBundle.message("inspection.message.align.takes.exactly.one.argument.in.parentheses")
         ).addToHolder(holder)
         return
     }
@@ -397,8 +398,8 @@ private fun checkReprAlignArgs(args: List<RsLitExpr>, align: RsMetaItem, holder:
     if (kind == null || kind !is RsLiteralKind.Integer || kind.suffix != null) {
         RsDiagnostic.InvalidReprAlign(
             align,
-            "`align` argument must be an unsuffixed integer",
-            fixes = listOfNotNull(ConvertToUnsuffixedIntegerFix.createIfCompatible(arg, "Change to align(%s)"))
+            RsBundle.message("inspection.message.align.argument.must.be.unsuffixed.integer"),
+            fixes = listOfNotNull(ConvertToUnsuffixedIntegerFix.createIfCompatible(arg, RsBundle.message("intention.name.change.to1", "align(%s)")))
         ).addToHolder(holder)
         return
     }
@@ -407,7 +408,7 @@ private fun checkReprAlignArgs(args: List<RsLitExpr>, align: RsMetaItem, holder:
     if (!value.isPowerOfTwo()) {
         RsDiagnostic.InvalidReprAlign(
             align,
-            "`align` argument must be a power of two"
+            RsBundle.message("inspection.message.align.argument.must.be.power.two")
         ).addToHolder(holder)
         return
     }
@@ -415,7 +416,7 @@ private fun checkReprAlignArgs(args: List<RsLitExpr>, align: RsMetaItem, holder:
     if (value > (1.shl(29))) {
         RsDiagnostic.InvalidReprAlign(
             align,
-            "`align` argument must not be larger than 2^29"
+            RsBundle.message("inspection.message.align.argument.must.not.be.larger.than")
         ).addToHolder(holder)
     }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsElseBranch
 import org.rust.lang.core.psi.RsIfExpr
@@ -24,7 +25,7 @@ import org.rust.lang.core.psi.ext.startOffset
  * Quick fix 2: Join `else if`
  */
 class RsDanglingElseInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Dangling else"
+    override fun getDisplayName() = RsBundle.message("dangling.else")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
@@ -39,14 +40,14 @@ class RsDanglingElseInspection : RsLocalInspectionTool() {
                 holder.registerProblem(
                     expr,
                     TextRange(0, ifEl.startOffsetInParent + 2),
-                    "Suspicious `else if` formatting",
+                    RsBundle.message("inspection.message.suspicious.else.if.formatting"),
                     SubstituteTextFix.delete(
-                        "Remove `else`",
+                        RsBundle.message("intention.name.remove.else"),
                         expr.containingFile,
                         elseEl.rangeWithPrevSpace(expr.prevSibling)
                     ),
                     SubstituteTextFix.replace(
-                        "Join `else if`",
+                        RsBundle.message("intention.name.join.else.if"),
                         expr.containingFile,
                         TextRange(elseEl.endOffset, ifEl.startOffset),
                         " "

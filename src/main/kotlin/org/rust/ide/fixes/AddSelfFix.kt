@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -51,9 +52,9 @@ class AddSelfFix(
         "trait"
     }
 
-    override fun getFamilyName() = "Add self to $elementName"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.add.self.to", elementName)
 
-    override fun getText() = "Add self to $elementName"
+    override fun getText() = RsBundle.message("intention.family.name.add.self.to", elementName)
 
     override fun invoke(project: Project, editor: Editor?, element: RsFunction) {
         val hasParameters = element.rawValueParameters.isNotEmpty()

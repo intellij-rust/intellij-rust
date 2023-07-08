@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
@@ -19,7 +20,7 @@ import org.rust.openapiext.createSmartPointer
 import org.rust.openapiext.showErrorHint
 
 class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTypeParamIntention.Context>() {
-    override fun getText(): String = "Convert `impl Trait` to type parameter"
+    override fun getText(): String = RsBundle.message("intention.name.convert.impl.trait.to.type.parameter")
     override fun getFamilyName(): String = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
@@ -45,7 +46,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
         if (argType.descendantsOfType<RsTraitType>().any { it.impl != null }) {
             OuterImplTestMark.hit()
             if (fnSignature.isIntentionPreviewElement) return
-            editor.showErrorHint("Please convert innermost `impl Trait` first", HintManager.UNDER)
+            editor.showErrorHint(RsBundle.message("hint.text.please.convert.innermost.impl.trait.first"), HintManager.UNDER)
             return
         }
 

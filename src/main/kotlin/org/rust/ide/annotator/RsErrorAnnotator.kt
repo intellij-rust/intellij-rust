@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.SmartList
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.*
@@ -507,7 +508,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 holder,
                 traitRef,
                 traitRef,
-                "The precise format of `Fn`-family traits' type parameters is subject to change",
+                RsBundle.message("inspection.message.precise.format.fn.family.traits.type.parameters.subject.to.change"),
                 experimentalFixes = listOf(UNBOXED_CLOSURES.addFeatureFix(traitRef))
             )
         }
@@ -517,7 +518,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 holder,
                 traitRef,
                 traitRef,
-                "Parenthetical notation is only stable when used with `Fn`-family traits",
+                RsBundle.message("inspection.message.parenthetical.notation.only.stable.when.used.with.fn.family.traits"),
                 experimentalFixes = listOf(UNBOXED_CLOSURES.addFeatureFix(traitRef))
             )
         }
@@ -616,7 +617,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val reason = metaItems.singleOrNull { it.name == "reason" }?.value
             val reasonSuffix = if (reason != null) ": $reason" else ""
             val feature = CompilerFeature.find(featureName) ?: CompilerFeature(featureName, FeatureState.ACTIVE, null)
-            feature.check(holder, startElement, null, "`$featureName` is unstable$reasonSuffix")
+            feature.check(holder, startElement, null, RsBundle.message("inspection.message.unstable", featureName, reasonSuffix))
         }
     }
 
@@ -678,7 +679,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val element = path.referenceNameElement ?: return
             holder.createErrorAnnotation(
                 element,
-                "Invalid path: self and super are allowed only at the beginning"
+                RsBundle.message("inspection.message.invalid.path.self.super.are.allowed.only.at.beginning")
             )
             return
         }
@@ -687,7 +688,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (path.self != null && parent !is RsPath && parent !is RsUseSpeck && parent !is RsVisRestriction) {
             val function = path.ancestorStrict<RsFunction>()
             if (function == null) {
-                holder.createErrorAnnotation(path, "self value is not available in this context")
+                holder.createErrorAnnotation(path, RsBundle.message("inspection.message.self.value.not.available.in.this.context"))
                 return
             }
 
@@ -862,7 +863,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         // mods inside blocks require explicit path attribute
         // https://github.com/rust-lang/rust/pull/31534
         if (modDecl.isLocal && pathAttribute == null) {
-            val message = "Cannot declare a non-inline module inside a block unless it has a path attribute"
+            val message = RsBundle.message("inspection.message.cannot.declare.non.inline.module.inside.block.unless.it.has.path.attribute")
             holder.createErrorAnnotation(modDecl, message)
             return
         }
@@ -1139,7 +1140,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
-            holder.createErrorAnnotation(o, "Chained comparison operator require parentheses", AddTurbofishFix())
+            holder.createErrorAnnotation(o, RsBundle.message("inspection.message.chained.comparison.operator.require.parentheses"), AddTurbofishFix())
         }
     }
 
@@ -1159,7 +1160,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val coloncolon = args.node.findChildByType(RsElementTypes.COLONCOLON)?.psi ?: return
         // `::` is redundant only in types
         if (!isTypePart(args)) return
-        val annotation = holder.newWeakWarningAnnotation(coloncolon, "Redundant `::`", RemoveElementFix(coloncolon))
+        val annotation = holder.newWeakWarningAnnotation(coloncolon, RsBundle.message("inspection.message.redundant"), RemoveElementFix(coloncolon))
             ?: return
         annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL).create()
     }
@@ -1220,7 +1221,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 holder,
                 pat.patList.first(),
                 pat.patList.last(),
-                "multiple patterns in `if let` and `while let` are unstable"
+                RsBundle.message("inspection.message.multiple.patterns.in.if.let.while.let.are.unstable")
             )
         }
     }
@@ -1228,7 +1229,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkLetExpr(holder: RsAnnotationHolder, element: RsLetExpr) {
         val parent = element.parent
         if (parent !is RsCondition && parent !is RsMatchArmGuard) {
-            LET_CHAINS.check(holder, element, null, "`let` expressions in this position are unstable")
+            LET_CHAINS.check(holder, element, null, RsBundle.message("inspection.message.let.expressions.in.this.position.are.unstable"))
         }
 
         val pat = element.pat
@@ -1353,7 +1354,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             // The current version of rustc (1.33.0) prints
             // "`extern crate self;` requires renaming" error message
             // but it looks like quite unclear
-            holder.createErrorAnnotation(externCrate, "`extern crate self` requires `as name`")
+            holder.createErrorAnnotation(externCrate, RsBundle.message("inspection.message.extern.crate.self.requires.as.name"))
         }
         return true
     }
@@ -1373,7 +1374,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkPolybound(holder: RsAnnotationHolder, o: RsPolybound) {
         if (o.lparen != null && o.bound.lifetime != null) {
-            holder.createErrorAnnotation(o, "Parenthesized lifetime bounds are not supported")
+            holder.createErrorAnnotation(o, RsBundle.message("inspection.message.parenthesized.lifetime.bounds.are.not.supported"))
         }
     }
 
@@ -1403,7 +1404,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val op = range.dotdotdot ?: range.dotdoteq ?: return
         if (op == range.dotdotdot) {
             // rustc doesn't have an error code for this ("error: unexpected token: `...`")
-            holder.createErrorAnnotation(op, "`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range")
+            holder.createErrorAnnotation(op, RsBundle.message("inspection.message.syntax.deprecated.use.for.exclusive.range.or.for.inclusive.range"))
             return
         }
 
@@ -1632,7 +1633,7 @@ private fun checkParamAttrs(holder: RsAnnotationHolder, o: RsOuterAttributeOwner
     if (outerAttrs.isEmpty()) return
     val startElement = outerAttrs.first()
     val endElement = outerAttrs.last()
-    val message = "attributes on function parameters is experimental"
+    val message = RsBundle.message("inspection.message.attributes.on.function.parameters.experimental")
     val diagnostic = when (PARAM_ATTRS.availability(startElement)) {
         NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, emptyList())
         CAN_BE_ADDED -> {

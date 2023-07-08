@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import org.rust.RsBundle
 import org.rust.ide.template.postfix.RsPostfixTemplateProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -44,9 +45,9 @@ open class RsPostfixTemplateEditor(provider: RsPostfixTemplateProvider) :
         group.add(EnterCustomTypeNameAction())
     }
 
-    private inner class EnterCustomTypeNameAction : DumbAwareAction("Enter Type Name...") {
+    private inner class EnterCustomTypeNameAction : DumbAwareAction(RsBundle.message("action.enter.type.name.text")) {
         override fun actionPerformed(e: AnActionEvent) {
-            val typeName = Messages.showInputDialog(myPanel, "Enter custom type name. Type parameters are not supported.", "Enter Type Name", null)
+            val typeName = Messages.showInputDialog(myPanel, RsBundle.message("dialog.message.enter.custom.type.name.type.parameters.are.not.supported"), RsBundle.message("dialog.title.enter.type.name"), null)
             if (typeName != null) {
                 val userEnteredType = RsPostfixTemplateExpressionCondition(RsPostfixTemplateExpressionCondition.Type.UserEntered, typeName)
                 myExpressionTypesListModel.addElement(userEnteredType)

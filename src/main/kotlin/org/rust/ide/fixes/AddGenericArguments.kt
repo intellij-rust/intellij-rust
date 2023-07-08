@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import org.rust.RsBundle
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.RsElementTypes.COMMA
@@ -24,8 +25,8 @@ class AddGenericArguments(
     private val declaration: SmartPsiElementPointer<RsGenericDeclaration>,
     element: RsMethodOrPath
 ) : RsQuickFixBase<RsMethodOrPath>(element) {
-    override fun getText(): String = "Add missing $argumentsName"
-    override fun getFamilyName() = "Add missing generic arguments"
+    override fun getText(): String = RsBundle.message("intention.name.add.missing", argumentsName)
+    override fun getFamilyName() = RsBundle.message("intention.family.name.add.missing.generic.arguments")
 
     override fun invoke(project: Project, editor: Editor?, element: RsMethodOrPath) {
         val inserted = insertGenericArgumentsIfNeeded(element) ?: return

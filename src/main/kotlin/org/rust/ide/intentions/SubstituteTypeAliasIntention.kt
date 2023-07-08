@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.ide.refactoring.inlineTypeAlias.RsInlineTypeAliasProcessor
 import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType
 import org.rust.ide.refactoring.inlineTypeAlias.tryGetTypeAliasSubstitutionUsingParent
@@ -23,7 +24,7 @@ import org.rust.lang.core.types.rawType
 
 /** See also [RsInlineTypeAliasProcessor] */
 class SubstituteTypeAliasIntention : RsElementBaseIntentionAction<SubstituteTypeAliasIntention.Context>() {
-    override fun getText() = "Substitute type alias"
+    override fun getText() = RsBundle.message("intention.name.substitute.type.alias")
     override fun getFamilyName() = text
 
     data class Context(

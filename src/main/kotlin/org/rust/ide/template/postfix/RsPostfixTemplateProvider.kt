@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jdom.Element
+import org.rust.RsBundle
 import org.rust.ide.refactoring.introduceVariable.extractExpression
 import org.rust.ide.template.postfix.editable.RsEditablePostfixTemplate
 import org.rust.ide.template.postfix.editable.RsPostfixTemplateEditor
@@ -105,7 +106,7 @@ class LetPostfixTemplate(provider: RsPostfixTemplateProvider) :
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         if (expression !is RsExpr) return
         extractExpression(
-            editor, expression, postfixLet = true, "Postfix `let` Template"
+            editor, expression, postfixLet = true, RsBundle.message("command.name.postfix.let.template")
         )
     }
 }

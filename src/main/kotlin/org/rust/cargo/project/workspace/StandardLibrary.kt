@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.delete
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
@@ -71,7 +73,7 @@ data class StandardLibrary(
         ): StandardLibrary? {
             val srcDir = findSrcDir(sources) ?: return null
 
-            fun warn(message: String) {
+            fun warn(message: @Nls String) {
                 LOG.warn(message)
                 listener?.warning(message, "")
             }
@@ -80,13 +82,13 @@ data class StandardLibrary(
                 val rustcVersion = rustcInfo?.version
                 val semverVersion = rustcVersion?.semver
                 if (semverVersion == null) {
-                    warn("Toolchain version is unknown. Hardcoded stdlib structure will be used")
+                    warn(RsBundle.message("toolchain.version.is.unknown.hardcoded.stdlib.structure.will.be.used"))
                     fetchHardcodedStdlib(srcDir)
                 } else {
                     val buildTarget = cargoConfig.buildTarget ?: rustcVersion.host
                     val result = fetchActualStdlib(project, srcDir, rustcVersion, buildTarget, rustcInfo.rustupActiveToolchain, listener)
                     if (result == null) {
-                        warn("Fetching actual stdlib info failed. Hardcoded stdlib structure will be used")
+                        warn(RsBundle.message("fetching.actual.stdlib.info.failed.hardcoded.stdlib.structure.will.be.used"))
                     }
                     result ?: fetchHardcodedStdlib(srcDir)
                 }
@@ -308,7 +310,7 @@ class StdlibDataFetcher private constructor(
             toolchainOverride = activeToolchain,
             listener = listener
         ).unwrapOrElse {
-            listener?.error("Failed to fetch stdlib package info", it.message.orEmpty())
+            listener?.error(RsBundle.message("build.event.title.failed.to.fetch.stdlib.package.info"), it.message.orEmpty())
             throw it
         }
 
@@ -387,7 +389,7 @@ class StdlibDataFetcher private constructor(
                 // `test` package depends on all other stdlib packages,
                 // so it's enough to vendor only its dependencies
                 cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor, activeToolchain, listener).unwrapOrElse {
-                    listener?.error("Failed to load stdlib dependencies", it.message.orEmpty())
+                    listener?.error(RsBundle.message("build.event.title.failed.to.load.stdlib.dependencies"), it.message.orEmpty())
                     LOG.error(it)
                     return null
                 }

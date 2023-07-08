@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
+import org.rust.RsBundle
 import org.rust.ide.fixes.insertGenericArgumentsIfNeeded
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
 import org.rust.ide.utils.PsiInsertionPlace
@@ -24,7 +25,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.createSmartPointer
 
 class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention.Context>() {
-    override fun getText() = "Implement trait"
+    override fun getText() = RsBundle.message("intention.name.implement.trait")
     override fun getFamilyName() = text
 
     class Context(

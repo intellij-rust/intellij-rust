@@ -8,6 +8,7 @@ package org.rust.ide.inspections.lints
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -26,7 +27,7 @@ class RsNonShorthandFieldPatternsInspection : RsLintInspection() {
 
             holder.registerLintProblem(
                 o,
-                "The `$identifier:` in this pattern is redundant",
+                RsBundle.message("inspection.message.in.this.pattern.redundant", identifier),
                 RsLintHighlightingType.WEAK_WARNING,
                 listOf(UseShorthandFieldPatternFix(o, identifier))
             )
@@ -39,8 +40,8 @@ class RsNonShorthandFieldPatternsInspection : RsLintInspection() {
         element: RsPatFieldFull,
         private val identifier: String
     ) : RsQuickFixBase<RsPatFieldFull>(element) {
-        override fun getFamilyName(): String = "Use shorthand field pattern"
-        override fun getText(): String = "Use shorthand field pattern: `$identifier`"
+        override fun getFamilyName(): String = RsBundle.message("intention.family.name.use.shorthand.field.pattern")
+        override fun getText(): String = RsBundle.message("intention.name.use.shorthand.field.pattern", identifier)
 
         override fun invoke(project: Project, editor: Editor?, element: RsPatFieldFull) {
             val patBinding = RsPsiFactory(project).createPatBinding(element.pat.text)

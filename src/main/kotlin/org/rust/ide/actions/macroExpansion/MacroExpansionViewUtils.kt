@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
 import com.intellij.util.DocumentUtil
+import org.rust.RsBundle
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
@@ -55,7 +56,7 @@ fun expandMacroForViewWithProgress(
     ctx: RsPossibleMacroCall,
     expandRecursively: Boolean
 ): RsResult<MacroExpansionViewDetails, GetMacroExpansionError> {
-    val progressTitle = "${if (expandRecursively) "Recursive" else "Single step"} expansion progress..."
+    val progressTitle = RsBundle.message("progress.title.choice.recursive.single.step.expansion.progress", if (expandRecursively) 0 else 1)
     return project.computeWithCancelableProgress(progressTitle) {
         runReadAction { expandMacroForView(ctx, expandRecursively) }
     }
@@ -92,12 +93,11 @@ private fun expandMacroForView(macroToExpand: RsPossibleMacroCall, expandRecursi
     )
 }
 
-@Suppress("UnstableApiUsage")
 @PopupTitle
 private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): String {
     val path = macroToExpand.path?.text
     val name = when (val kind = macroToExpand.kind) {
-        is RsPossibleMacroCallKind.MacroCall -> "$path! macro"
+        is RsPossibleMacroCallKind.MacroCall -> RsBundle.message("popup.title.macro", path ?: "")
         is RsPossibleMacroCallKind.MetaItem -> if (RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)) {
             "#[derive($path)]"
         } else {
@@ -105,9 +105,9 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expan
         }
     }
     return if (expandRecursively) {
-        "Recursive expansion of $name"
+        RsBundle.message("popup.title.recursive.expansion", name)
     } else {
-        "First level expansion of $name"
+        RsBundle.message("popup.title.first.level.expansion", name)
     }
 }
 

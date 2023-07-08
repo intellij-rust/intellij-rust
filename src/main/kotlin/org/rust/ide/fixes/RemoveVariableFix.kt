@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatIdent
@@ -24,8 +25,8 @@ class RemoveVariableFix(
     binding: RsPatBinding,
     private val bindingName: String
 ) : RsQuickFixBase<RsPatBinding>(binding) {
-    override fun getText() = "Remove variable `${bindingName}`"
-    override fun getFamilyName() = "Remove variable"
+    override fun getText() = RsBundle.message("intention.name.remove.variable", bindingName)
+    override fun getFamilyName() = RsBundle.message("intention.family.name.remove.variable")
 
     override fun invoke(project: Project, editor: Editor?, element: RsPatBinding) {
         val patIdent = element.topLevelPattern as? RsPatIdent ?: return

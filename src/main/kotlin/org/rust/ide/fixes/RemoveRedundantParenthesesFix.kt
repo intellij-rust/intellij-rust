@@ -7,10 +7,11 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsParenExpr
 
 class RemoveRedundantParenthesesFix(element: RsParenExpr) : RsQuickFixBase<RsParenExpr>(element) {
-    override fun getText(): String = "Remove parentheses from expression"
+    override fun getText(): String = RsBundle.message("intention.name.remove.parentheses.from.expression")
 
     override fun getFamilyName(): String = text
 

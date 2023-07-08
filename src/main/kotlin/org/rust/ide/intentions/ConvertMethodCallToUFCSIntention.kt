@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.PsiModificationUtil
@@ -21,7 +22,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class ConvertMethodCallToUFCSIntention : RsElementBaseIntentionAction<ConvertMethodCallToUFCSIntention.Context>() {
-    override fun getText() = "Convert to UFCS"
+    override fun getText() = RsBundle.message("intention.name.convert.to.ufcs")
     override fun getFamilyName() = text
 
     data class Context(

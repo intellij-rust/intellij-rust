@@ -6,10 +6,12 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction
 import org.rust.lang.RsConstants.MOD_RS_FILE
 import org.rust.lang.core.psi.RsFile
@@ -23,10 +25,11 @@ class AddModuleFileFix(
     private val expandModuleFirst: Boolean,
     private val location: Location = Location.File
 ) : RsQuickFixBase<RsModDeclItem>(modDecl) {
-    private val text = "Create module file `${modDecl.path}`"
+    @IntentionName
+    private val text = RsBundle.message("intention.name.create.module.file", modDecl.path)
     override fun getText() = text
 
-    override fun getFamilyName() = "Create module file"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.create.module.file")
 
     // No intention preview because it creates new file
     override fun getFileModifierForPreview(target: PsiFile): FileModifier? = null

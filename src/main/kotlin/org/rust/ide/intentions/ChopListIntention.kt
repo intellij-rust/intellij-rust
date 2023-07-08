@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.rust.RsBundle
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DOTDOT
@@ -60,19 +61,19 @@ abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
 class ChopParameterListIntention : ChopListIntentionBase<RsValueParameterList, RsValueParameter>(
     RsValueParameterList::class.java,
     RsValueParameter::class.java,
-    "Put parameters on separate lines"
+    RsBundle.message("intention.name.put.parameters.on.separate.lines")
 )
 
 class ChopArgumentListIntention : ChopListIntentionBase<RsValueArgumentList, RsExpr>(
     RsValueArgumentList::class.java,
     RsExpr::class.java,
-    "Put arguments on separate lines"
+    RsBundle.message("intention.name.put.arguments.on.separate.lines")
 )
 
 class ChopFieldListIntention : ChopListIntentionBase<RsBlockFields, RsNamedFieldDecl>(
     RsBlockFields::class.java,
     RsNamedFieldDecl::class.java,
-    "Put fields on separate lines"
+    RsBundle.message("intention.name.put.fields.on.separate.lines")
 )
 
 /**
@@ -81,7 +82,7 @@ class ChopFieldListIntention : ChopListIntentionBase<RsBlockFields, RsNamedField
 class ChopLiteralFieldListIntention : ChopListIntentionBase<RsStructLiteralBody, RsStructLiteralField>(
     RsStructLiteralBody::class.java,
     RsStructLiteralField::class.java,
-    "Put fields on separate lines"
+    RsBundle.message("intention.name.put.fields.on.separate.lines")
 ) {
     override fun getElements(context: RsStructLiteralBody): List<PsiElement> =
         super.getElements(context) + listOfNotNull(context.dotdot)
@@ -96,5 +97,5 @@ class ChopLiteralFieldListIntention : ChopListIntentionBase<RsStructLiteralBody,
 class ChopVariantListIntention : ChopListIntentionBase<RsEnumBody, RsEnumVariant>(
     RsEnumBody::class.java,
     RsEnumVariant::class.java,
-    "Put variants on separate lines"
+    RsBundle.message("intention.name.put.variants.on.separate.lines")
 )

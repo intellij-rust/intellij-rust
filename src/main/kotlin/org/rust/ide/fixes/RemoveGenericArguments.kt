@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
 import org.rust.lang.core.psi.RsTypeArgumentList
 import org.rust.lang.core.psi.ext.RsMethodOrPath
@@ -19,7 +20,7 @@ class RemoveGenericArguments(
     private val startIndex: Int,
     private val endIndex: Int
 ) : RsQuickFixBase<RsMethodOrPath>(element) {
-    override fun getText(): String = "Remove redundant generic arguments"
+    override fun getText(): String = RsBundle.message("intention.name.remove.redundant.generic.arguments")
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, element: RsMethodOrPath) {

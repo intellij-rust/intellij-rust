@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.fixes.ReplaceCastWithLiteralSuffixFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -37,7 +38,7 @@ class RsReplaceCastWithSuffixInspection : RsLintInspection() {
 
             holder.registerLintProblem(
                 castExpr,
-                "Can be replaced with literal suffix",
+                RsBundle.message("inspection.message.can.be.replaced.with.literal.suffix"),
                 RsLintHighlightingType.WEAK_WARNING,
                 fixes = listOf(ReplaceCastWithLiteralSuffixFix(castExpr))
             )

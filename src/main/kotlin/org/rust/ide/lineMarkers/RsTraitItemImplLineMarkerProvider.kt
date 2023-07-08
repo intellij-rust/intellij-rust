@@ -52,11 +52,11 @@ class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val icon: Icon
         if (superItem.isAbstract) {
             if (!implementingOption.isEnabled) return
-            action = "Implements"
+            action = RsBundle.message("tooltip.implements")
             icon = RsIcons.IMPLEMENTING_METHOD
         } else {
             if (!overridingOption.isEnabled) return
-            action = "Overrides"
+            action = RsBundle.message("tooltip.overrides")
             icon = RsIcons.OVERRIDING_METHOD
         }
 
@@ -70,7 +70,7 @@ class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
         val builder = NavigationGutterIconBuilder
             .create(icon)
             .setTargets(listOf(superItem))
-            .setTooltipText("$action $type in `${trait.name}`")
+            .setTooltipText(RsBundle.message("tooltip.in", action, type, trait.name?:""))
 
         result.add(builder.createLineMarkerInfo(element))
     }

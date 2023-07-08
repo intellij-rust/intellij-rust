@@ -7,6 +7,7 @@ package org.rust.ide.surroundWith.expression
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
@@ -19,7 +20,7 @@ import org.rust.lang.core.types.type
 
 class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
 
-    @Suppress("DialogTitleCapitalization")
+    @NlsSafe @Suppress("DialogTitleCapitalization")
     override fun getTemplateDescription(): String = "!(expr)"
 
     override fun createTemplate(project: Project): RsUnaryExpr =

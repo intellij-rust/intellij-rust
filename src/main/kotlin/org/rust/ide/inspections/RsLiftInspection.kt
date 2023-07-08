@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -44,7 +45,7 @@ class RsLiftInspection : RsLocalInspectionTool() {
         registerProblem(
             expr,
             keyword.textRangeInParent,
-            "Return can be lifted out of '$keywordName'",
+            RsBundle.message("inspection.message.return.can.be.lifted.out", keywordName),
             LiftReturnOutFix(expr, keywordName)
         )
     }
@@ -53,8 +54,8 @@ class RsLiftInspection : RsLocalInspectionTool() {
         element: RsExpr,
         private val keyword: String
     ) : RsQuickFixBase<RsExpr>(element) {
-        override fun getFamilyName(): String = "Lift return"
-        override fun getText(): String = "Lift return out of '$keyword'"
+        override fun getFamilyName(): String = RsBundle.message("intention.family.name.lift.return")
+        override fun getText(): String = RsBundle.message("intention.name.lift.return.out", keyword)
 
         override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
             val foldableReturns = element.getFoldableReturns() ?: return

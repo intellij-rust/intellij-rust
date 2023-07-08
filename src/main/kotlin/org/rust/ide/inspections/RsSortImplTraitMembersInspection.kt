@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsVisitor
@@ -29,7 +30,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
             holder.registerProblem(
                 impl,
                 textRange,
-                "Different impl member order from the trait",
+                RsBundle.message("inspection.message.different.impl.member.order.from.trait"),
                 SortImplTraitMembersFix(impl)
             )
         }
@@ -49,7 +50,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     }
 
     private class SortImplTraitMembersFix(element: RsImplItem) : RsQuickFixBase<RsImplItem>(element) {
-        override fun getText() = "Apply same member order"
+        override fun getText() = RsBundle.message("intention.name.apply.same.member.order")
         override fun getFamilyName() = text
 
         override fun invoke(project: Project, editor: Editor?, element: RsImplItem) {

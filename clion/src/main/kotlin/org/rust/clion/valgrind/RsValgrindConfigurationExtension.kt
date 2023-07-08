@@ -34,6 +34,7 @@ import com.jetbrains.cidr.cpp.profiling.ui.MemoryProfileOutputPanel
 import com.jetbrains.cidr.cpp.valgrind.*
 import com.jetbrains.cidr.cpp.valgrind.actions.EditValgrindSettingsAction
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -66,7 +67,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
 
         val programPath = toolchain.toLocalPath(cmdLine.exePath)
         if (!File(programPath).exists()) {
-            throw ExecutionException("File not found: $programPath")
+            throw ExecutionException(RsBundle.message("dialog.message.file.not.found", programPath))
         }
 
         val project = configuration.project

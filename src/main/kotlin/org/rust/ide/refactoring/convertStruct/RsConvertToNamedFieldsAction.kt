@@ -18,6 +18,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.GridBag
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsBaseEditorRefactoringAction
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.ext.RsFieldsOwner
@@ -52,7 +53,7 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
     }
 
     private class Dialog(project: Project, val element: RsFieldsOwner) : RefactoringDialog(project, false) {
-        val cb = JBCheckBox("Convert all usages", true)
+        val cb = JBCheckBox(RsBundle.message("checkbox.convert.all.usages"), true)
         val editors = (0..element.tupleFields!!.tupleFieldDeclList.size).map {
             EditorTextField("_$it").apply {
                 addDocumentListener(object : DocumentListener {
@@ -65,7 +66,7 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
 
         init {
             super.init()
-            title = "Convert to Named Fields Settings"
+            title = RsBundle.message("dialog.title.convert.to.named.fields.settings")
         }
 
         override fun doValidateAll(): List<ValidationInfo> {
@@ -74,7 +75,7 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
                 .filter { !isValidRustVariableIdentifier(it.text) }
                 .map {
                     refactorAction.isEnabled = false
-                    ValidationInfo("Invalid identifier", it)
+                    ValidationInfo(RsBundle.message("dialog.message.invalid.identifier"), it)
                 }
         }
 
@@ -91,7 +92,7 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
                 .setDefaultFill(GridBagConstraints.HORIZONTAL)
                 .setDefaultInsets(0, 0, 2, 2)
             gridPanel.add(
-                JBLabel("struct ${(element as RsNameIdentifierOwner).name!!}{"),
+                JBLabel(RsBundle.message("label.struct", (element as RsNameIdentifierOwner).name!!)),
                 gridBuilder.nextLine().next()
             )
             val input = element.tupleFields!!.tupleFieldDeclList

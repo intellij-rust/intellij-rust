@@ -5,8 +5,10 @@
 
 package org.rust.ide.fixes
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
@@ -16,8 +18,9 @@ import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 
 class AddMutableFix(binding: RsNamedElement) : RsQuickFixBase<RsNamedElement>(binding) {
-    private val _text = "Make `${binding.name}` mutable"
-    override fun getFamilyName(): String = "Make mutable"
+    @IntentionName
+    private val _text = RsBundle.message("intention.name.make.mutable", binding.name?:"")
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.make.mutable")
     override fun getText(): String = _text
     val mutable = true
 

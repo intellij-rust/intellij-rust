@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 
@@ -18,7 +19,7 @@ class AddFormatStringFix(
     private val formatStringPosition: Int,
 ) : LocalQuickFixAndIntentionActionOnPsiElement(call) {
 
-    override fun getText(): String = "Add format string"
+    override fun getText(): String = RsBundle.message("intention.name.add.format.string")
     override fun getFamilyName(): String = text
 
     override fun invoke(

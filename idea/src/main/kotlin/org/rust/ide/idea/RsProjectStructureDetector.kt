@@ -12,6 +12,7 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.ide.module.CargoConfigurationWizardStep
 import org.rust.ide.module.RsModuleType
@@ -27,7 +28,7 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
     ): DirectoryProcessingResult {
         if (children.any { it.name == CargoConstants.MANIFEST_FILE }) {
             result.add(object : DetectedProjectRoot(dir) {
-                override fun getRootTypeName(): String = "Rust"
+                override fun getRootTypeName(): String = RsBundle.message("rust")
             })
         }
 

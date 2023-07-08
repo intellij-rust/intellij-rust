@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.toml.isCargoToml
 import org.rust.toml.isDependencyListHeader
@@ -20,7 +21,7 @@ import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 
 class ExpandDependencySpecificationIntention : RsTomlElementBaseIntentionAction<TomlKeyValue>() {
-    override fun getText() = "Expand dependency specification"
+    override fun getText() = RsBundle.message("intention.name.expand.dependency.specification")
     override fun getFamilyName(): String = text
 
     override fun findApplicableContextInternal(project: Project, editor: Editor, element: PsiElement): TomlKeyValue? {

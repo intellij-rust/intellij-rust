@@ -24,7 +24,7 @@ import org.rust.openapiext.elementUnderCaretInEditor
 import org.rust.openapiext.isUnitTestMode
 
 class RsChangeSignatureHandler : ChangeSignatureHandler {
-    override fun getTargetNotFoundMessage(): String = "The caret should be positioned at a function or method"
+    override fun getTargetNotFoundMessage(): String = RsBundle.message("dialog.message.caret.should.be.positioned.at.function.or.method")
 
     override fun findTargetMember(element: PsiElement): RsFunction? {
         for (el in element.ancestors) {
@@ -87,7 +87,7 @@ class RsChangeSignatureHandler : ChangeSignatureHandler {
         @DialogMessage
         private fun checkFunction(function: RsFunction): String? {
             if (function.containingCrate.origin != PackageOrigin.WORKSPACE) {
-                return "Cannot change signature of function in a foreign crate"
+                return RsBundle.message("dialog.message.cannot.change.signature.function.in.foreign.crate")
             }
             if (function.valueParameters != function.rawValueParameters) {
                 return RsBundle.message("refactoring.change.signature.error.cfg.disabled.parameters")

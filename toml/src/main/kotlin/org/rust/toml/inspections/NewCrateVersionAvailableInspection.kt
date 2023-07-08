@@ -8,6 +8,7 @@ package org.rust.toml.inspections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import io.github.z4kn4fein.semver.Version
+import org.rust.RsBundle
 import org.rust.toml.crates.local.CargoRegistryCrate
 import org.rust.toml.crates.local.CrateVersionRequirement
 import org.rust.toml.stringValue
@@ -34,7 +35,7 @@ class NewCrateVersionAvailableInspection : CrateVersionInspection() {
 
         holder.registerProblem(
             versionElement,
-            "A newer version is available for crate ${dependency.crateName}: $newerVersion",
+            RsBundle.message("inspection.message.newer.version.available.for.crate", dependency.crateName, newerVersion),
             ProblemHighlightType.WEAK_WARNING,
             UpdateCrateVersionFix(versionElement, newerVersion.toString())
         )

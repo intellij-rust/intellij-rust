@@ -5,8 +5,10 @@
 
 package org.rust.ide.fixes
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsExpr
@@ -37,12 +39,13 @@ class ChangeReprAttributeFix(
     enumName: String,
     private val actualTy: String
 ) : RsQuickFixBase<RsElement>(element) {
+    @IntentionName
     private val _text: String = run {
-        "Change representation of enum `$enumName` to `#[repr($actualTy)]`"
+        RsBundle.message("intention.name.change.representation.enum.to.repr", enumName, actualTy)
     }
 
     override fun getText(): String = _text
-    override fun getFamilyName(): String = "Change `repr` attribute"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.change.repr.attribute")
 
     override fun invoke(project: Project, editor: Editor?, element: RsElement) {
         val owner = findEnumOwner(element) as? RsDocAndAttributeOwner ?: return

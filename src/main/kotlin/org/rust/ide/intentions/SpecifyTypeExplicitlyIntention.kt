@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.import.RsImportHelper
@@ -28,8 +29,8 @@ import org.rust.lang.core.types.type
 
 
 class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeExplicitlyIntention.Context>() {
-    override fun getFamilyName() = "Specify type explicitly"
-    override fun getText() = "Specify type explicitly"
+    override fun getFamilyName() = RsBundle.message("intention.name.specify.type.explicitly")
+    override fun getText() = RsBundle.message("intention.name.specify.type.explicitly")
 
     data class Context(
         val type: Ty,

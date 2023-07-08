@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.RsBundle
 import org.rust.ide.fixes.ChangeTryMacroToTryOperator
 import org.rust.lang.core.macros.isExprOrStmtContext
 import org.rust.lang.core.psi.RsMacroCall
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.ext.isStdTryMacro
 class RsTryMacroInspection : RsLocalInspectionTool() {
 
     @Suppress("DialogTitleCapitalization")
-    override fun getDisplayName(): String = "try! macro usage"
+    override fun getDisplayName(): String = RsBundle.message("try.macro.usage")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitMacroCall2(o: RsMacroCall) {
@@ -25,7 +26,7 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
             if (!isApplicable) return
             holder.registerProblem(
                 o,
-                "try! macro can be replaced with ? operator",
+                RsBundle.message("inspection.message.try.macro.can.be.replaced.with.operator"),
                 ChangeTryMacroToTryOperator(o)
             )
         }

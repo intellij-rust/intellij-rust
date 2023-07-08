@@ -14,6 +14,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
 import org.rust.openapiext.fullWidthCell
@@ -59,10 +60,10 @@ private class DialogExtractFunctionUi(
 
         val visibilityBox = ComboBox<String>()
         with(visibilityBox) {
-            addItem("Public")
-            addItem("Private")
+            addItem(RsBundle.message("public"))
+            addItem(RsBundle.message("private"))
         }
-        visibilityBox.selectedItem = "Private"
+        visibilityBox.selectedItem = RsBundle.message("private")
         val signatureComponent = RsSignatureComponent(config.signature, project)
         signatureComponent.minimumSize = JBUI.size(300, 30)
 
@@ -76,14 +77,14 @@ private class DialogExtractFunctionUi(
         }
 
         val panel = panel {
-            row("Name:") { fullWidthCell(functionNameField) }
-            row("Visibility:") { cell(visibilityBox) }
-            row("Parameters:") { fullWidthCell(parameterPanel) }
-            row("Signature:") { fullWidthCell(signatureComponent) }
+            row(RsBundle.message("name2")) { fullWidthCell(functionNameField) }
+            row(RsBundle.message("visibility")) { cell(visibilityBox) }
+            row(RsBundle.message("parameters")) { fullWidthCell(parameterPanel) }
+            row(RsBundle.message("signature")) { fullWidthCell(signatureComponent) }
         }
 
         val extractDialog = dialog(
-            "Extract Function",
+            RsBundle.message("dialog.title.extract.function"),
             panel,
             resizable = true,
             focusedComponent = functionNameField.focusableComponent,

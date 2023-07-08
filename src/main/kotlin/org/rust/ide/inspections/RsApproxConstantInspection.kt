@@ -7,6 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.fixes.RsQuickFixBase
@@ -33,9 +34,9 @@ class RsApproxConstantInspection : RsLocalInspectionTool() {
                     is TyFloat -> type.name
                     else -> "f64"
                 }
-                val path = "$lib::$type::consts::${constant.name}"
+                val path = RsBundle.message("inspection.message.consts", lib, type, constant.name)
                 val fix = ReplaceWithPredefinedQuickFix(o, path)
-                holder.registerProblem(o, "Approximate value of `$path` found. Consider using it directly.", fix)
+                holder.registerProblem(o, RsBundle.message("inspection.message.approximate.value.found.consider.using.it.directly", path), fix)
             }
         }
     }
@@ -45,8 +46,8 @@ class RsApproxConstantInspection : RsLocalInspectionTool() {
         private val path: String
     ) : RsQuickFixBase<RsLitExpr>(element) {
 
-        override fun getFamilyName() = "Replace with predefined constant"
-        override fun getText() = "Replace with `$path`"
+        override fun getFamilyName() = RsBundle.message("intention.family.name.replace.with.predefined.constant")
+        override fun getText() = RsBundle.message("intention.name.replace.with2", path)
 
         override fun invoke(project: Project, editor: Editor?, element: RsLitExpr) {
             val pathExpr = RsPsiFactory(project).createExpression(path)

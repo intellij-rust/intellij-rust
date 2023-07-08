@@ -5,6 +5,7 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.openapi.util.NlsSafe
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.ImportCandidatesCollector
 import org.rust.ide.utils.import.ImportContext
@@ -29,7 +30,7 @@ import org.rust.lang.utils.evaluation.evaluate
 import org.rust.stdext.joinToWithBuffer
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
-fun RsTypeReference.getStubOnlyText(
+@NlsSafe fun RsTypeReference.getStubOnlyText(
     subst: Substitution = emptySubstitution,
     renderLifetimes: Boolean = true,
     shortPaths: Boolean = true,

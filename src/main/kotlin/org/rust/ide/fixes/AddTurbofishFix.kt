@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
+import org.rust.RsBundle
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsBinaryExpr
@@ -33,7 +34,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
         val offset: Int
     )
 
-    override fun getText() = "Add turbofish operator"
+    override fun getText() = RsBundle.message("intention.name.add.turbofish.operator")
     override fun getFamilyName() = text
 
     private fun resolveMatchExpression(element: PsiElement): RsBinaryExpr? {

@@ -6,8 +6,11 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
@@ -58,7 +61,9 @@ open class AddRemainingArmsFix(
     }
 
     companion object {
-        const val NAME = "Add remaining patterns"
+        @IntentionName
+        @IntentionFamilyName
+        val NAME = RsBundle.message("intention.name.add.remaining.patterns")
 
         fun findArmsInsertionPlaceIn(match: RsMatchExpr): ArmsInsertionPlace? {
             val expr = match.expr ?: return null
@@ -93,6 +98,8 @@ class AddWildcardArmFix(match: RsMatchExpr) : AddRemainingArmsFix(match, emptyLi
     )
 
     companion object {
-        const val NAME = "Add _ pattern"
+        @IntentionName
+        @IntentionFamilyName
+        val NAME = RsBundle.message("intention.name.add.pattern")
     }
 }

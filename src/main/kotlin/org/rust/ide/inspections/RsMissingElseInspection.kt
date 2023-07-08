@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsIfExpr
@@ -22,7 +23,7 @@ import org.rust.lang.core.psi.ext.startOffset
  * QuickFix: Change to `else if`
  */
 class RsMissingElseInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Missing else"
+    override fun getDisplayName() = RsBundle.message("missing.else")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
@@ -38,8 +39,8 @@ class RsMissingElseInspection : RsLocalInspectionTool() {
                 holder.registerProblem(
                     expr.parent,
                     TextRange(rangeStart, rangeStart + rangeLen),
-                    "Suspicious if. Did you mean `else if`?",
-                    SubstituteTextFix.insert("Change to `else if`", nextIf.containingFile, nextIf.startOffset, "else "))
+                    RsBundle.message("inspection.message.suspicious.if.did.you.mean.else.if"),
+                    SubstituteTextFix.insert(RsBundle.message("intention.name.change.to.else.if"), nextIf.containingFile, nextIf.startOffset, "else "))
             }
         }
 

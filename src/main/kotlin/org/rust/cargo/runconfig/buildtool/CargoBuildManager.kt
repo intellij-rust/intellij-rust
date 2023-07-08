@@ -26,12 +26,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SystemNotifications
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -88,8 +90,8 @@ object CargoBuildManager {
         return execute(CargoBuildContext(
             cargoProject = cargoProject,
             environment = environment,
-            taskName = "Build",
-            progressTitle = "Building...",
+            taskName = RsBundle.message("progress.title.build"),
+            progressTitle = RsBundle.message("progress.text.building1"),
             isTestBuild = state.commandLine.command in listOf("test", "bench"),
             buildId = buildId,
             parentId = buildId
@@ -254,8 +256,8 @@ object CargoBuildManager {
     fun showBuildNotification(
         project: Project,
         messageType: MessageType,
-        message: String,
-        details: String? = null,
+        @NlsContexts.SystemNotificationTitle message: String,
+        @NlsContexts.SystemNotificationText details: String? = null,
         time: Long = 0
     ) {
         val notificationContent = buildNotificationMessage(message, details, time)
@@ -276,9 +278,10 @@ object CargoBuildManager {
         )
     }
 
+    @NlsContexts.NotificationContent
     private fun buildNotificationMessage(message: String, details: String?, time: Long): String {
-        var notificationContent = message + if (details == null) "" else " with $details"
-        if (time > 0) notificationContent += " in " + NlsMessages.formatDuration(time)
+        var notificationContent = RsBundle.message("notification.content.choice.with", message, details?:"", if (details == null) 0 else 1)
+        if (time > 0) notificationContent += RsBundle.message("notification.content.in", NlsMessages.formatDuration(time))
         return notificationContent
     }
 

@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.utils.expandStructFields
 import org.rust.ide.utils.expandTupleStructFields
 import org.rust.lang.core.psi.RsPatStruct
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.RsPsiFactory
 class AddStructFieldsPatFix(
     element: PsiElement
 ) : RsQuickFixBase<PsiElement>(element) {
-    override fun getText() = "Add missing fields"
+    override fun getText() = RsBundle.message("intention.name.add.missing.fields")
 
     override fun getFamilyName() = text
 

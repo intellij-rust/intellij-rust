@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.resolve.knownItems
 
 class AddAsyncRecursionAttributeFix(function: RsFunction): RsQuickFixBase<RsFunction>(function) {
-    override fun getText(): String = "Add `async_recursion` attribute"
+    override fun getText(): String = RsBundle.message("intention.name.add.async.recursion.attribute")
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, element: RsFunction) {

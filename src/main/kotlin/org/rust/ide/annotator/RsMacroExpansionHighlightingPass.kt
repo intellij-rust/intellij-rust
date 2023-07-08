@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.ide.annotator.format.RsFormatMacroAnnotator
 import org.rust.ide.colors.RsColor
 import org.rust.ide.fixes.RsQuickFixBase
@@ -183,7 +184,7 @@ class RsMacroExpansionHighlightingPass(
                 .severity(severity)
                 .textAttributes(color.textAttributesKey)
                 .range(mappedRange)
-                .descriptionAndTooltip("Conditionally disabled code")
+                .descriptionAndTooltip(RsBundle.message("text.conditionally.disabled.code"))
                 .createUnconditionally()
         }
     }

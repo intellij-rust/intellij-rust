@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showYesNoDialog
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.ext.*
 
 class RsFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
@@ -44,8 +45,8 @@ class RsFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
 
         private fun askWhetherShouldSearchForUsagesOfSuperItem(project: Project): Boolean =
             showYesNoDialog(
-                "Find Usages",
-                "Do you want to find usages of the base declaration?",
+                RsBundle.message("dialog.title.find.usages"),
+                RsBundle.message("dialog.message.do.you.want.to.find.usages.base.declaration"),
                 project,
                 icon = Messages.getQuestionIcon()
             )

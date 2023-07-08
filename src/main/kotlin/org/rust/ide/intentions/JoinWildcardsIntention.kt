@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
 class JoinWildcardsIntention : RsElementBaseIntentionAction<List<RsPatWild>>() {
-    override fun getFamilyName(): String = "Replace successive `_` with `..`"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.replace.successive.with")
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
@@ -46,7 +47,7 @@ class JoinWildcardsIntention : RsElementBaseIntentionAction<List<RsPatWild>>() {
                 if (patWildSeq.size > 0) {
                     val patWildSeqRange = TextRange(patWildSeq.first().startOffset, patWildSeq.last().endOffset)
                     if (element.startOffset in patWildSeqRange) {
-                        text = if (patWildSeq.size == 1) "Replace `_` with `..`" else familyName
+                        text = if (patWildSeq.size == 1) RsBundle.message("intention.name.replace.with") else familyName
                         if (!PsiModificationUtil.canReplaceAll(patWildSeq)) return null
                         return patWildSeq
                     }

@@ -8,6 +8,7 @@ package org.rust.ide.inspections.lints
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -33,11 +34,11 @@ class RsUnnecessaryQualificationsInspection : RsLintInspection() {
                     val range = TextRange(0, unnecessaryLength)
 
                     val fix = SubstituteTextFix.delete(
-                        "Remove unnecessary path prefix",
+                        RsBundle.message("intention.name.remove.unnecessary.path.prefix"),
                         path.containingFile,
                         TextRange(path.startOffset, pathRestStart)
                     )
-                    holder.registerLintProblem(path, "Unnecessary qualification", range, RsLintHighlightingType.UNUSED_SYMBOL, listOf(fix))
+                    holder.registerLintProblem(path, RsBundle.message("inspection.message.unnecessary.qualification"), range, RsLintHighlightingType.UNUSED_SYMBOL, listOf(fix))
                 }
             }
             super.visitPath(path)

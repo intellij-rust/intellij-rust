@@ -8,18 +8,20 @@ package org.rust.ide.template
 import com.intellij.codeInsight.template.TemplateActionContext
 import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import org.rust.RsBundle
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocComment
 
-sealed class RsContextType(presentableName: String) : TemplateContextType(presentableName) {
+sealed class RsContextType(@NlsContexts.Label presentableName: String) : TemplateContextType(presentableName) {
 
     final override fun isInContext(context: TemplateActionContext): Boolean {
         if (!PsiUtilCore.getLanguageAtOffset(context.file, context.startOffset).isKindOf(RsLanguage)) {
@@ -38,11 +40,11 @@ sealed class RsContextType(presentableName: String) : TemplateContextType(presen
 
     override fun createHighlighter(): SyntaxHighlighter = RsHighlighter()
 
-    class Generic : RsContextType("Rust") {
+    class Generic : RsContextType(RsBundle.message("label.rust")) {
         override fun isInContext(element: PsiElement): Boolean = true
     }
 
-    class Statement : RsContextType("Statement") {
+    class Statement : RsContextType(RsBundle.message("label.statement")) {
         override fun isInContext(element: PsiElement): Boolean {
             // Used to support cases when identifier is parsed together with next statement, e.g.:
             // fn main() {
@@ -54,7 +56,7 @@ sealed class RsContextType(presentableName: String) : TemplateContextType(presen
         }
     }
 
-    class Expression : RsContextType("Expression") {
+    class Expression : RsContextType(RsBundle.message("label.expression")) {
         override fun isInContext(element: PsiElement): Boolean {
             // We are inside block but there is no item nor attr between
             if (owner(element) !is RsBlock) return false
@@ -76,26 +78,26 @@ sealed class RsContextType(presentableName: String) : TemplateContextType(presen
         }
     }
 
-    class Item : RsContextType("Item") {
+    class Item : RsContextType(RsBundle.message("label.item")) {
         override fun isInContext(element: PsiElement): Boolean =
             // We are inside item but there is no block between
             owner(element) is RsItemElement
     }
 
-    class Struct : RsContextType("Structure") {
+    class Struct : RsContextType(RsBundle.message("label.structure")) {
         override fun isInContext(element: PsiElement): Boolean =
             // Structs can't be nested or contain other expressions,
             // so it is ok to look for any Struct ancestor.
             element.ancestorStrict<RsStructItem>() != null
     }
 
-    class Mod : RsContextType("Module") {
+    class Mod : RsContextType(RsBundle.message("label.module")) {
         override fun isInContext(element: PsiElement): Boolean
             // We are inside RsMod
             = owner(element) is RsMod
     }
 
-    class Attribute : RsContextType("Attribute") {
+    class Attribute : RsContextType(RsBundle.message("label.attribute")) {
         override fun isInContext(element: PsiElement): Boolean =
             element.ancestorStrict<RsAttr>() != null
     }

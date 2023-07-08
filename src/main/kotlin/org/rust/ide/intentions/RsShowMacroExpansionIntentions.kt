@@ -9,6 +9,7 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
 import org.rust.ide.actions.macroExpansion.RsShowMacroExpansionActionBase
 import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
@@ -27,12 +28,12 @@ import org.rust.stdext.RsResult.Ok
 
 class RsShowRecursiveMacroExpansionIntention : RsShowMacroExpansionIntentionBase() {
     override val expandRecursively: Boolean get() = true
-    override fun getText() = "Show recursive macro expansion"
+    override fun getText() = RsBundle.message("intention.name.show.recursive.macro.expansion")
 }
 
 class RsShowSingleStepMacroExpansionIntention : RsShowMacroExpansionIntentionBase() {
     override val expandRecursively: Boolean get() = false
-    override fun getText() = "Show single step macro expansion"
+    override fun getText() = RsBundle.message("intention.name.show.single.step.macro.expansion")
 }
 
 abstract class RsShowMacroExpansionIntentionBase : RsElementBaseIntentionAction<RsPossibleMacroCall>() {

@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.RsBundle
 import org.rust.ide.fixes.EncloseExprInBracesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -65,9 +66,9 @@ class RsWrongGenericArgumentsOrderInspection : RsLocalInspectionTool() {
 
         for ((param, arg) in params.zip(args)) {
             val text = when {
-                param is RsTypeParameter && arg !in typeArguments -> "${kindName(arg)} provided when a type was expected"
-                param is RsConstParameter && arg !in constArguments -> "${kindName(arg)} provided when a constant was expected"
-                param is RsLifetimeParameter && arg !in lifetimeArguments -> "${kindName(arg)} provided when a lifetime was expected"
+                param is RsTypeParameter && arg !in typeArguments -> RsBundle.message("inspection.message.provided.when.type.was.expected", kindName(arg))
+                param is RsConstParameter && arg !in constArguments -> RsBundle.message("inspection.message.provided.when.constant.was.expected", kindName(arg))
+                param is RsLifetimeParameter && arg !in lifetimeArguments -> RsBundle.message("inspection.message.provided.when.lifetime.was.expected", kindName(arg))
                 else -> continue
             }
             val fixes = if (param is RsConstParameter && arg is RsTypeReference) {

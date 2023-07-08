@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
@@ -33,6 +34,8 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.*
@@ -114,7 +117,7 @@ object RsExternalLinterUtils {
         }
 
         val future = CompletableFuture<RsExternalLinterResult?>()
-        val task = object : Task.Backgroundable(project, "Analyzing project with ${args.linter.title}...", true) {
+        val task = object : Task.Backgroundable(project, RsBundle.message("progress.title.analyzing.project.with", args.linter.title), true) {
 
             override fun run(indicator: ProgressIndicator) {
                 widget?.inProgress = true
@@ -212,7 +215,7 @@ fun AnnotationHolder.createAnnotationsForFile(
         message.quickFixes
             .singleOrNull { it.applicability <= minApplicability }
             ?.let { f ->
-                val key = HighlightDisplayKey.findOrRegister(RUST_EXTERNAL_LINTER_ID, "Rust external linter")
+                val key = HighlightDisplayKey.findOrRegister(RUST_EXTERNAL_LINTER_ID, RsBundle.message("rust.external.linter"))
                 annotationBuilder.newFix(f).key(key).registerFix()
             }
 
@@ -237,8 +240,8 @@ class RsExternalLinterResult(commandOutput: List<String>, val executionTime: Lon
 private data class RsExternalLinterFilteredMessage(
     val severity: HighlightSeverity,
     val textRange: TextRange,
-    val message: String,
-    val htmlTooltip: String,
+    @Nls val message: String,
+    @Nls val htmlTooltip: String,
     val lint: RsLint.ExternalLinterLint?,
     val quickFixes: List<ApplySuggestionFix>
 ) {
@@ -268,7 +271,7 @@ private data class RsExternalLinterFilteredMessage(
 
             val textRange = span.toTextRange(document) ?: return null
 
-            val tooltip = buildString {
+            @NlsSafe val tooltip = buildString {
                 append(formatMessage(StringEscapeUtils.escapeHtml(message.message)).escapeUrls())
                 val code = message.code.formatAsLink()
                 if (code != null) {

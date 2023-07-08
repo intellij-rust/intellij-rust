@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
 import com.intellij.ui.awt.RelativePoint
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -188,9 +189,9 @@ private object OpenSettingsAction : GutterIconNavigationHandler<PsiElement> {
     ) : AnAction() {
 
         init {
-            val text = if (newState.isEnabled) "Enable" else "Disable"
-            templatePresentation.description = "$text all features"
-            templatePresentation.text = "$text All Features"
+            val text = if (newState.isEnabled) RsBundle.message("action.enable.text") else RsBundle.message("disable")
+            templatePresentation.description = RsBundle.message("action.all.features.description", text)
+            templatePresentation.text = RsBundle.message("action.all.features.text", text)
         }
 
         override fun actionPerformed(e: AnActionEvent) {

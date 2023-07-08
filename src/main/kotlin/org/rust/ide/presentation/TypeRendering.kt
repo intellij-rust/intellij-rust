@@ -5,6 +5,7 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.openapi.util.NlsSafe
 import org.rust.ide.utils.import.ImportCandidatesCollector
 import org.rust.ide.utils.import.ImportContext
 import org.rust.lang.core.psi.RsConstParameter
@@ -29,7 +30,7 @@ import org.rust.stdext.withPrevious
 
 private const val MAX_SHORT_TYPE_LEN = 50
 
-fun Ty.render(
+@NlsSafe fun Ty.render(
     context: RsElement? = null,
     level: Int = Int.MAX_VALUE,
     unknown: String = "<unknown>",

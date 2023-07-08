@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsBlockExpr
@@ -19,7 +20,7 @@ import org.rust.lang.core.psi.ext.syntaxTailStmt
 import org.rust.openapiext.moveCaretToOffset
 
 class WrapLambdaExprIntention : RsElementBaseIntentionAction<RsExpr>() {
-    override fun getText() = "Add braces to lambda expression"
+    override fun getText() = RsBundle.message("intention.name.add.braces.to.lambda.expression")
     override fun getFamilyName() = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

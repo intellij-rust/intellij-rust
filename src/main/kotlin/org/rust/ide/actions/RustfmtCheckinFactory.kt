@@ -40,7 +40,7 @@ class RustfmtCheckinFactory : CheckinHandlerFactory() {
 
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext) = object : CheckinHandler() {
         override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
-            return BooleanCommitOption.create(panel.project, this, false, "Run rustfmt",
+            return BooleanCommitOption.create(panel.project, this, false, RsBundle.message("run.rustfmt"),
                 { isEnabled(panel) },
                 { value: Boolean -> setEnabled(panel, value) })
         }
@@ -123,13 +123,13 @@ class RustfmtCheckinFactory : CheckinHandlerFactory() {
             listOf(errorLines.first(), null)
         }
         val errorDetails = restOfTheError?.let {
-            "<br/><br/>Details:<br/>$restOfTheError"
+            "<br/><br/>${RsBundle.message("details")}<br/>$restOfTheError"
         } ?: ""
 
         val buttons = arrayOf(commitButtonMessage(executor, panel), CommonBundle.getCancelButtonText())
         val question: String = RsBundle.message("rust.checkin.factory.fmt.commit.anyway.question")
-        val dialogText = "<html><body>$errorHeader$firstLineError<br/><b>$question</b> $errorDetails</body></html>\n"
-        val answer = Messages.showDialog(panel.project, dialogText, "Rustfmt", null, buttons, 0, 1, UIUtil.getWarningIcon())
+        val dialogText = RsBundle.message("dialog.message.html.body.br.b.b.body.html", errorHeader, firstLineError?:"", question, errorDetails)
+        val answer = Messages.showDialog(panel.project, dialogText, RsBundle.message("notification.title.rustfmt"), null, buttons, 0, 1, UIUtil.getWarningIcon())
         return when (answer) {
             Messages.OK -> CheckinHandler.ReturnResult.COMMIT
             Messages.NO -> CheckinHandler.ReturnResult.CLOSE_WINDOW

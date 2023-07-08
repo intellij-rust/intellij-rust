@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.RemoveCurlyBracesIntention
 import org.rust.lang.core.psi.RsUseGroup
 import org.rust.lang.core.psi.RsUseItem
@@ -21,7 +22,7 @@ import org.rust.lang.core.psi.ext.parentUseSpeck
  * Fix that removes a use speck or a whole use item.
  */
 class RemoveImportFix(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
-    override fun getText() = "Remove unused import"
+    override fun getText() = RsBundle.message("intention.name.remove.unused.import")
     override fun getFamilyName() = text
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {

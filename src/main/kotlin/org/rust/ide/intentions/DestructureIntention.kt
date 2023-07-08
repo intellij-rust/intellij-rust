@@ -13,6 +13,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.presentation.render
 import org.rust.ide.refactoring.findBinding
@@ -26,7 +27,7 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.createSmartPointer
 
 class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.Context>() {
-    override fun getText(): String = "Use destructuring declaration"
+    override fun getText(): String = RsBundle.message("intention.name.use.destructuring.declaration")
     override fun getFamilyName(): String = text
 
     // TODO should be InvokeInside.MACRO_EXPANSION, but reference search (needed for `renameNewBindings`)

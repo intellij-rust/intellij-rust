@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import org.rust.RsBundle
 import org.rust.ide.fixes.RemoveRefFix
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsPathExpr
@@ -19,7 +20,7 @@ import org.rust.lang.core.types.type
  * Quick fix: Use the owned value as the argument.
  */
 class RsDropRefInspection : RsLocalInspectionTool() {
-    override fun getDisplayName(): String = "Drop reference"
+    override fun getDisplayName(): String = RsBundle.message("drop.reference")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
@@ -39,7 +40,7 @@ class RsDropRefInspection : RsLocalInspectionTool() {
             val fixes = RemoveRefFix.createIfCompatible(arg)?.let { arrayOf(it) } ?: LocalQuickFix.EMPTY_ARRAY
             holder.registerProblem(
                 expr,
-                "Call to std::mem::drop with a reference argument. Dropping a reference does nothing",
+                RsBundle.message("inspection.message.call.to.std.mem.drop.with.reference.argument.dropping.reference.does.nothing"),
                 *fixes)
         }
     }

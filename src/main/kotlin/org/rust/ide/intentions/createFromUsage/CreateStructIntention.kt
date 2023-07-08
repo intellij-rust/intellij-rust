@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.PsiInsertionPlace
@@ -24,7 +25,7 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.createSmartPointer
 
 class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention.Context>() {
-    override fun getFamilyName() = "Create struct"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.create.struct")
 
     class Context(
         val name: String,
@@ -44,7 +45,7 @@ class CreateStructIntention : RsElementBaseIntentionAction<CreateStructIntention
             val name = path.referenceName ?: return null
             val place = PsiInsertionPlace.forItemInModBefore(targetMod, structLiteral) ?: return null
 
-            text = "Create struct `$name`"
+            text = RsBundle.message("intention.name.create.struct", name)
             return Context(name, structLiteral, targetMod, place)
         }
         return null

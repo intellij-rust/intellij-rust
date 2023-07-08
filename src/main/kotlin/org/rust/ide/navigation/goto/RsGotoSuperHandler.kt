@@ -13,6 +13,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.ide.navigation.getPsiElementPopup
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
@@ -29,7 +30,7 @@ class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
         when (targets.size) {
             0 -> return
             1 -> targets.single().navigate(true)
-            else -> getPsiElementPopup(targets.toTypedArray(), "Choose Module Declaration")
+            else -> getPsiElementPopup(targets.toTypedArray(), RsBundle.message("popup.title.choose.module.declaration"))
                 .showInBestPositionFor(editor)
         }
     }

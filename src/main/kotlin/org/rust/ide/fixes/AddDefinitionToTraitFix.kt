@@ -7,13 +7,14 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.refactoring.extractTrait.makeAbstract
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class AddDefinitionToTraitFix(member: RsAbstractable) : RsQuickFixBase<RsAbstractable>(member) {
-    override fun getText() = "Add definition to trait"
+    override fun getText() = RsBundle.message("intention.name.add.definition.to.trait")
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, element: RsAbstractable) {

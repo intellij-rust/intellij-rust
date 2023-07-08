@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import org.rust.RsBundle
 import org.rust.ide.navigation.hidePopupIfDumbModeStarts
 import org.rust.ide.refactoring.MOCK
 import org.rust.lang.core.psi.RsFunction
@@ -28,7 +29,7 @@ fun showEnclosingFunctionsChooser(editor: Editor,
         return
     }
     val highlighter = AtomicReference(ScopeHighlighter(editor))
-    val title = "Introduce Parameter to Method"
+    val title = RsBundle.message("introduce.parameter.to.method")
     val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(methods)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(methods.first(), true)
