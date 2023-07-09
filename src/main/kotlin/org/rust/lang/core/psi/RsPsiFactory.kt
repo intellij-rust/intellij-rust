@@ -86,6 +86,11 @@ class RsPsiFactory(
             ?: error("Failed to create self element")
     }
 
+    fun createSelfWithType(text: String): RsSelfParameter {
+        return createFromText<RsFunction>("fn main(self: $text){}")?.selfParameter
+            ?: error("Failed to create self element")
+    }
+
     fun createIdentifier(text: String): PsiElement =
         createFromText<RsModDeclItem>("mod ${text.escapeIdentifierIfNeeded()};")?.identifier
             ?: error("Failed to create identifier: `$text`")

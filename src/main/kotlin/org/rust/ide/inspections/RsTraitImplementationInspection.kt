@@ -66,11 +66,12 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
     ) {
         val params = fn.valueParameterList ?: return
         val selfArg = fn.selfParameter
+        val superSelfParameter = superFn.selfParameter
 
         if (selfArg != null && superFn.selfParameter == null) {
-            RsDiagnostic.DeclMissingFromTraitError(selfArg, fn, selfArg).addToHolder(holder)
-        } else if (selfArg == null && superFn.selfParameter != null) {
-            RsDiagnostic.DeclMissingFromImplError(params, fn, superFn.selfParameter).addToHolder(holder)
+            RsDiagnostic.DeclMissingFromTraitError(selfArg, fn, superFn, selfArg).addToHolder(holder)
+        } else if (selfArg == null && superSelfParameter != null) {
+            RsDiagnostic.DeclMissingFromImplError(params, fn, superFn, superSelfParameter).addToHolder(holder)
         }
 
         val paramsCount = fn.valueParameters.size

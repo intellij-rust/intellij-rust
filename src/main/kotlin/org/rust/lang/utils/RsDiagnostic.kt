@@ -527,15 +527,33 @@ sealed class RsDiagnostic(
         )
     }
 
+    abstract class MissingSelfError(
+        element: PsiElement,
+        protected val selfParameter: RsSelfParameter
+    ) : RsDiagnostic(element) {
+        protected fun getFixes(removeElement: RsFunction, addElement: RsFunction): List<QuickFixWithRange> {
+            val fixes = mutableListOf<LocalQuickFix>()
+            if (removeElement.containingCrate.origin == PackageOrigin.WORKSPACE) {
+                fixes.add(RemoveSelfFix(removeElement))
+            }
+            if (addElement.containingCrate.origin == PackageOrigin.WORKSPACE) {
+                fixes.add(AddSelfFix(addElement, AddSelfFix.SelfType.fromSelf(selfParameter)))
+            }
+            return fixes.toQuickFixInfo()
+        }
+    }
+
     class DeclMissingFromTraitError(
         element: PsiElement,
         private val fn: RsFunction,
-        private val selfParameter: RsSelfParameter
-    ) : RsDiagnostic(element) {
+        private val superFn: RsFunction,
+        selfParameter: RsSelfParameter
+    ) : MissingSelfError(element, selfParameter) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0185,
-            errorText()
+            errorText(),
+            fixes = getFixes(fn, superFn)
         )
 
         private fun errorText(): String {
@@ -546,16 +564,18 @@ sealed class RsDiagnostic(
     class DeclMissingFromImplError(
         element: PsiElement,
         private val fn: RsFunction,
-        private val selfParameter: RsSelfParameter?
-    ) : RsDiagnostic(element) {
+        private val superFn: RsFunction,
+        selfParameter: RsSelfParameter
+    ) : MissingSelfError(element, selfParameter) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0186,
-            errorText()
+            errorText(),
+            fixes = getFixes(superFn, fn)
         )
 
         private fun errorText(): String {
-            return "Method `${fn.name}` has a `${selfParameter?.canonicalDecl}` declaration in the trait, but not in the impl"
+            return "Method `${fn.name}` has a `${selfParameter.canonicalDecl}` declaration in the trait, but not in the impl"
         }
     }
 
