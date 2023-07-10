@@ -7,6 +7,7 @@ package org.rust.ide.newProject
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
+import kotlin.streams.asSequence
 
 /**
  * Validates package name while new project creation.
@@ -36,16 +37,22 @@ object RsPackageNameValidator {
         "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"
     )
 
-    @Suppress("UnstableApiUsage")
+    /**
+     * `-`: Since using the command create package
+     */
+    private val SPECIAL_START_BLACKLIST = setOf('-')
+
     @DialogMessage
     fun validate(name: String, isBinary: Boolean): String? = when {
         name.isEmpty() -> "Package name can't be empty"
         name in KEYWORDS_BLACKLIST || name == "test" -> "The name `$name` cannot be used as a crate name"
         isBinary && name in BINARY_BLACKLIST -> "The name `$name` cannot be used as a crate name"
-        name[0].isDigit() -> "Package names starting with a digit cannot be used as a crate name"
-        !name.all { it.isLetterOrDigit() || it == '-' || it == '_' } ->
-            "Package names should contain only letters, digits, `-` and `_`"
+        name[0].isDigit() -> "The name `$name` cannot be used as a package name, the name cannot start with a digit"
+        name[0] in SPECIAL_START_BLACKLIST -> "The name `$name` cannot be the name of a package, and the name cannot start with `${name[0]}` (special character)"
+        name[0] != '_' && !Character.isUnicodeIdentifierStart(name.codePointAt(0)) -> "Invalid character `${name[0]}` in package name: `$name`, the first character must be a Unicode XID start character (most letters or `_`)"
         SystemInfo.isWindows && name.lowercase() in WINDOWS_BLACKLIST -> "The name `$name` is a reserved Windows filename"
-        else -> null
+        else -> name.codePoints().skip(1).asSequence().find { it != 0x002D && !Character.isUnicodeIdentifierPart(it) }?.let {
+            "Invalid character `${Character.toString(it)}` in package name: `$name`, characters must be Unicode XID continue characters (numbers, `-`, `_`, or most letters)"
+        }
     }
 }
