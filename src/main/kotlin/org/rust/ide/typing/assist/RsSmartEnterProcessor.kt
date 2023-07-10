@@ -43,8 +43,7 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
             val elementType = element.node.elementType
             if (elementType == LBRACE || elementType == RBRACE) continue
 
-            val isSuitableElement = element is RsMatchArm || element is RsTypeAlias || element is RsTraitAlias
-                || element is RsConstant || element is RsExternCrateItem
+            val isSuitableElement = isSuitableElement(element)
             val parent = element.parent
             val stopAtParent = parent is RsBlock || parent is RsFunction || parent is RsStructItem
             if (isSuitableElement || stopAtParent) return element
@@ -65,5 +64,14 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
             plainEnter(editor)
             return true
         }
+    }
+
+    companion object {
+        fun isSuitableElement(element: PsiElement): Boolean =
+            element is RsMatchArm
+                || element is RsTypeAlias
+                || element is RsTraitAlias
+                || element is RsConstant
+                || element is RsExternCrateItem
     }
 }
