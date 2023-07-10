@@ -14,6 +14,8 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
+import org.rust.lang.core.CompilerFeature
+import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFunctionStub
@@ -33,12 +35,13 @@ val RsFunction.isTest: Boolean
     get() = queryAttributes.isTest
 
 val RsFunction.isMain: Boolean get() {
-    if (name != "main") return false
-    val parent = parent
+    val parent = context
     if (parent !is RsFile || !parent.isCrateRoot) return false
     if (parent.queryAttributes.hasAttribute("no_main")) return false
     val targetKind = containingCargoTarget?.kind ?: return false
-    return targetKind.isBin || targetKind.isExampleBin || targetKind.isCustomBuild
+    if (!(targetKind.isBin || targetKind.isExampleBin || targetKind.isCustomBuild)) return false
+    val hasStartFeature = CompilerFeature.START.availability(parent) == FeatureAvailability.AVAILABLE
+    return (hasStartFeature && queryAttributes.hasAtomAttribute("start")) || name == "main"
 }
 
 private val QueryAttributes<*>.isTest
