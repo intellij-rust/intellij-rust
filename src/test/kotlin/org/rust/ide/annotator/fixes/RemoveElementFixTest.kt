@@ -107,4 +107,16 @@ class RemoveElementFixSyntaxTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::
     """, """
         struct T(i32);
     """)
+
+    fun `test remove impl in type bound`() = checkFixByText("Remove `impl` keyword", """
+        fn foo<U: <error descr="Expected trait bound, found `impl Trait` type">impl/*caret*/</error> T>() {}
+    """, """
+        fn foo<U: T>() {}
+    """)
+
+    fun `test remove dyn in type bound`() = checkFixByText("Remove `dyn` keyword", """
+        fn foo<U: <error descr="Invalid `dyn` keyword">dyn/*caret*/</error> T>() {}
+    """, """
+        fn foo<U: T>() {}
+    """)
 }
