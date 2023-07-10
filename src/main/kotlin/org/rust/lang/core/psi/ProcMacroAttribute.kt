@@ -188,6 +188,39 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
             explicitCrate: Crate? = null,
             withDerives: Boolean = false,
             ignoreProcMacrosDisabled: Boolean = false,
+        ): ProcMacroAttribute<RsMetaItem>? = getProcMacroAttributeWithHardcoded(
+            owner,
+            stub,
+            explicitCrate,
+            withDerives,
+            ignoreProcMacrosDisabled,
+            null
+        )
+
+        /**
+         * Returns proc macro attributes from [RS_HARDCODED_PROC_MACRO_ATTRIBUTES] list applied to [owner],
+         * if any
+         */
+        fun getHardcodedProcMacroAttributes(owner: RsAttrProcMacroOwner): List<KnownProcMacroKind> {
+            val ignoredAttributes = mutableListOf<KnownProcMacroKind>()
+            getProcMacroAttributeWithHardcoded(
+                owner,
+                owner.attributeStub,
+                null,
+                withDerives = false,
+                ignoreProcMacrosDisabled = false,
+                outIgnoredAttributes = ignoredAttributes
+            )
+            return ignoredAttributes
+        }
+
+        private fun getProcMacroAttributeWithHardcoded(
+            owner: RsAttrProcMacroOwner,
+            stub: RsAttributeOwnerStub?,
+            explicitCrate: Crate?,
+            withDerives: Boolean,
+            ignoreProcMacrosDisabled: Boolean,
+            outIgnoredAttributes: MutableList<KnownProcMacroKind>?,
         ): ProcMacroAttribute<RsMetaItem>? {
             val attrs = getProcMacroAttributeWithoutResolve(
                 owner,
@@ -208,6 +241,9 @@ sealed class ProcMacroAttribute<out T : RsMetaItemPsiOrStub> {
                             firstSeenAttrMacro = attr
                         }
                         val kind = attr.attr.resolveToProcMacroWithoutPsi(checkIsMacroAttr = false)?.kind
+                        if (kind != null) {
+                            outIgnoredAttributes?.add(kind)
+                        }
                         if (kind == null || !kind.treatAsBuiltinAttr) {
                             return firstSeenAttrMacro
                         }

@@ -709,6 +709,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsCompileErrorMacroInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="The entry point is async"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsAsyncMainFunctionInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
