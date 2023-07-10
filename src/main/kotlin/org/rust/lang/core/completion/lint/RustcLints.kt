@@ -174,6 +174,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("unsupported_calling_conventions", false),
     Lint("unused_allocation", false),
     Lint("unused_assignments", false),
+    Lint("unused_associated_type_bounds", false),
     Lint("unused_attributes", false),
     Lint("unused_braces", false),
     Lint("unused_comparisons", false),
