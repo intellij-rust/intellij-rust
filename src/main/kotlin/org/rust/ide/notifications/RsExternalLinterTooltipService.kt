@@ -30,7 +30,7 @@ class RsExternalLinterTooltipService(private val project: Project) : Disposable 
 
     private fun createTooltip(turnedOn: Boolean): GotItTooltip {
         val headerText = RsBundle.message("0.on.the.fly.analysis.is.turned.1.choice.0.on.1.off", linter.title, if (turnedOn) 0 else 1)
-        val text = RsBundle.message("the.analysis.shows.all.problems.reported.by.0.but.consumes.more.system.resources.when.turned.off.only.the.limited.set.of.problems.supported.by.intellij.rust.engine.are.shown", linter.title)
+        val text = RsBundle.message("external.linter.tooltip", linter.title)
         return GotItTooltip("rust.linter.on-the-fly.got.it", text, this)
             .withHeader(headerText)
             .withLink(RsBundle.message("configure")) {

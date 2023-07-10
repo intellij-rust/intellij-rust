@@ -433,7 +433,7 @@ open class CargoProjectsServiceImpl(
             .minOrNull()
         if (minToolchainVersion != null && minToolchainVersion < RsToolchainBase.MIN_SUPPORTED_TOOLCHAIN) {
             if (!isLegacyRustNotificationShowed) {
-                val content = RsBundle.message("notification.content.rust.b.b.no.longer.supported.it.may.lead.to.unexpected.errors.consider.upgrading.your.toolchain.to.at.least.b.b", minToolchainVersion, RsToolchainBase.MIN_SUPPORTED_TOOLCHAIN)
+                val content = RsBundle.message("notification.content.rust.toolchain.no.longer.supported", minToolchainVersion, RsToolchainBase.MIN_SUPPORTED_TOOLCHAIN)
                 project.showBalloon(content, NotificationType.WARNING)
             }
             isLegacyRustNotificationShowed = true

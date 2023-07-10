@@ -102,7 +102,7 @@ class CargoTestRunState(
 
         private fun showRustcBootstrapWarning(project: Project) {
             @NlsSafe val RUSTC_BOOTSSTRAP = "${RUSTC_BOOTSTRAP}=1"
-            @Nls val content = RsBundle.message("to.support.0.the.ide.runs.1.with.the.2.environment.variable.which.may.rarely.cause.inconsistent.build.test.results.3.you.can.avoid.potential.inconsistencies.by.4", HtmlChunk.link("changes", RsBundle.message("rust.1.70.0.stable")), HtmlChunk.text(RsBundle.message("cargo.test")).bold(), HtmlChunk.text(RUSTC_BOOTSSTRAP).bold(), HtmlChunk.br(), HtmlChunk.link("disable", RsBundle.message("disabling.the.test.tool.window")))
+            @Nls val content = RsBundle.message("rustc.bootstrap.warning", HtmlChunk.link("changes", RsBundle.message("rust.1.70.0.stable")), HtmlChunk.text(RsBundle.message("cargo.test")).bold(), HtmlChunk.text(RUSTC_BOOTSSTRAP).bold(), HtmlChunk.br(), HtmlChunk.link("disable", RsBundle.message("disabling.the.test.tool.window")))
             project.showBalloon(
                 RsBundle.message("notification.title.potentially.inconsistent.build.test.results"),
                 content,

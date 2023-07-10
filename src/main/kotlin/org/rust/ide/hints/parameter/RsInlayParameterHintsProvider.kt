@@ -41,7 +41,7 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     override fun getBlacklistExplanationHTML(): String {
         @Suppress("HardCodedStringLiteral")
-        return RsBundle.message("to.disable.hints.for.a.function.use.the.appropriate.pattern.br.b.std.b.functions.from.the.standard.library.br.b.std.fs.b.functions.from.the.i.std.fs.i.module.with.two.parameters.br.b.b.single.parameter.function.where.the.parameter.name.ends.with.i.i.br.b.key.value.b.functions.with.parameters.i.key.i.and.i.value.i.br.b.put.key.value.b.i.put.i.functions.with.i.key.i.and.i.value.i.parameters").trimIndent()
+        return RsBundle.message("code.vision.disable.hints.message").trimIndent()
     }
 
     companion object {
