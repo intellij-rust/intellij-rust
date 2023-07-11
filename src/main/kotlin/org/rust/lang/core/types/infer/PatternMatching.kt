@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtUnknown
-import org.rust.lang.core.types.normType
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.utils.evaluation.ConstExpr
@@ -78,8 +78,8 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                 tupleFields
                     .getOrNull(idx)
                     ?.typeReference
-                    ?.normType(fcx.ctx)
-                    ?.substituteOrUnknown(expected.typeParameterValues)
+                    ?.rawType
+                    ?.substituteAndNormalizeOrUnknown(expected.typeParameterValues, fcx.ctx)
                     ?: TyUnknown
             }
         }
@@ -95,8 +95,8 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                 val kind = patField.kind
                 val fieldType = structFields[kind.fieldName]
                     ?.typeReference
-                    ?.normType(fcx.ctx)
-                    ?.substituteOrUnknown(expected.typeParameterValues)
+                    ?.rawType
+                    ?.substituteAndNormalizeOrUnknown(expected.typeParameterValues, fcx.ctx)
                     ?: TyUnknown
 
                 when (kind) {
