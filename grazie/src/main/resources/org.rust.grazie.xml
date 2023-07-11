@@ -5,7 +5,8 @@
     </dependencies>
 
     <extensions defaultExtensionNs="com.intellij.grazie">
-        <grammar.strategy language="Rust" implementationClass="org.rust.grazie.RsGrammarCheckingStrategy"/>
+        <textExtractor language="Rust"
+                       implementationClass="org.rust.grazie.RsTextExtractor"/>
         <disableChecking language="Rust"/>
     </extensions>
 </idea-plugin>
