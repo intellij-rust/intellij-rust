@@ -64,7 +64,7 @@ abstract class RsShowMacroExpansionActionBase(private val expandRecursively: Boo
 
     companion object {
         fun showMacroExpansionError(editor: Editor, error: GetMacroExpansionError) {
-            editor.showErrorHint(RsBundle.message("hint.text.failed.to.expand.macro", error.toUserViewableMessage()))
+            editor.showErrorHint(RsBundle.message("macro.expansion.error.start", error.toUserViewableMessage()))
         }
     }
 }
