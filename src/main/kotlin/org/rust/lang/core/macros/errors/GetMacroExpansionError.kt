@@ -34,6 +34,9 @@ sealed class GetMacroExpansionError {
     object ExpansionNameNotFound : GetMacroExpansionError()
     object ExpansionFileNotFound : GetMacroExpansionError()
     object InconsistentExpansionCacheAndVfs : GetMacroExpansionError()
+    object VirtualFileFoundButPsiIsNull : GetMacroExpansionError()
+    object VirtualFileFoundButPsiIsUnknown : GetMacroExpansionError()
+    object TooLargeExpansion : GetMacroExpansionError()
 
     object CfgDisabled : GetMacroExpansionError()
     object Skipped : GetMacroExpansionError()
@@ -87,6 +90,9 @@ sealed class GetMacroExpansionError {
         ExpansionNameNotFound -> RsBundle.message("macro.expansion.error.ExpansionNameNotFound.message")
         ExpansionFileNotFound -> RsBundle.message("macro.expansion.error.ExpansionFileNotFound.message")
         InconsistentExpansionCacheAndVfs -> RsBundle.message("macro.expansion.error.InconsistentExpansionCacheAndVfs.message")
+        VirtualFileFoundButPsiIsNull -> RsBundle.message("macro.expansion.error.VirtualFileFoundButPsiIsNull.message")
+        VirtualFileFoundButPsiIsUnknown -> RsBundle.message("macro.expansion.error.VirtualFileFoundButPsiIsUnknown.message")
+        TooLargeExpansion -> RsBundle.message("macro.expansion.error.TooLargeExpansion.message")
     }
 
     override fun toString(): String = "${GetMacroExpansionError::class.simpleName}.${javaClass.simpleName}"

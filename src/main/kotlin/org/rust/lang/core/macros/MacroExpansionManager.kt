@@ -24,9 +24,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -773,8 +771,15 @@ private class MacroExpansionServiceImplInner(
 
         val macroIndex = info.getMacroIndex(call, info.crate)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, null)))
-        val expansionFile = getExpansionFile(info.defMap, macroIndex)
+        val expansionVirtualFile = getExpansionVirtualFile(info.defMap, macroIndex)
             ?: return everChanged(Err(getReasonWhyExpansionFileNotFound(call, info.crate, info.defMap, macroIndex)))
+
+        val expansionFile = when (val expansionPsiFile = expansionVirtualFile.toPsiFile(project)) {
+            is RsFile -> expansionPsiFile
+            is PsiLargeFile, is PsiPlainTextFile -> return everChanged(Err(GetMacroExpansionError.TooLargeExpansion))
+            null -> return everChanged(Err(GetMacroExpansionError.VirtualFileFoundButPsiIsNull))
+            else -> return everChanged(Err(GetMacroExpansionError.VirtualFileFoundButPsiIsUnknown))
+        }
 
         if (getExpandedFromByExpansionFile(expansionFile) != call) {
             return everChanged(Err(GetMacroExpansionError.InconsistentExpansionExpandedFrom))
@@ -876,7 +881,7 @@ private class MacroExpansionServiceImplInner(
                     return@run modData.toRsMod(this).singleOrNull()
                 }
                 if (parentIndex in defMap.macroCallToExpansionName) {
-                    return@run getExpansionFile(defMap, parentIndex)
+                    return@run getExpansionPsiFile(defMap, parentIndex)
                 }
                 nestedIndices += parentIndex.last
             }
@@ -916,14 +921,18 @@ private class MacroExpansionServiceImplInner(
         return null
     }
 
-    private fun getExpansionFile(defMap: CrateDefMap, callIndex: MacroIndex): RsFile? {
+    private fun getExpansionPsiFile(defMap: CrateDefMap, callIndex: MacroIndex): RsFile? {
+        return getExpansionVirtualFile(defMap, callIndex)?.toPsiFile(project) as? RsFile
+    }
+
+    private fun getExpansionVirtualFile(defMap: CrateDefMap, callIndex: MacroIndex): VirtualFile? {
         val expansionName = defMap.macroCallToExpansionName[callIndex] ?: return null
         // "/rust_expanded_macros/<projectId>/<crateId>/<mixHash>_<order>.rs"
         val expansionPath = "${defMap.crate}/${expansionNameToPath(expansionName)}"
         val file = expansionsDirVi.findFileByRelativePath(expansionPath) ?: return null
         if (!file.isValid) return null
         testAssert { file.fileType == RsFileType }
-        return file.toPsiFile(project) as? RsFile
+        return file
     }
 
     private fun getReasonWhyExpansionFileNotFound(
