@@ -175,6 +175,17 @@ fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteOrUnknown(subst: Substitutio
         }
     }).tryEvaluate()
 
+fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteAndNormalizeOrUnknown(
+    subst: Substitution,
+    ctx: RsInferenceContext,
+    recursionDepth: Int = 0
+): T {
+    val substituted = substituteOrUnknown(subst)
+    val (bound, obligations) = ctx.normalizeAssociatedTypesIn(substituted, recursionDepth)
+    obligations.forEach(ctx.fulfill::registerPredicateObligation)
+    return bound
+}
+
 fun <T> TypeFoldable<T>.containsTyOfClass(classes: List<Class<*>>): Boolean =
     visitWith(object : TypeVisitor {
         override fun visitTy(ty: Ty): Boolean =
