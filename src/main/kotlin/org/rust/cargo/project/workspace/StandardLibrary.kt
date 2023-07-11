@@ -88,8 +88,8 @@ data class StandardLibrary(
                     warn(RsBundle.message("toolchain.version.is.unknown.hardcoded.stdlib.structure.will.be.used"))
                     fetchHardcodedStdlib(srcDir)
                 } else {
-                    val buildTarget = cargoConfig.buildTarget ?: rustcVersion.host
-                    val result = fetchActualStdlib(project, srcDir, rustcVersion, buildTarget, rustcInfo.rustupActiveToolchain, listener)
+                    val buildTargets = cargoConfig.buildTargets.ifEmpty { listOfNotNull(rustcVersion.host) }
+                    val result = fetchActualStdlib(project, srcDir, rustcVersion, buildTargets, rustcInfo.rustupActiveToolchain, listener)
                     if (result == null) {
                         warn(RsBundle.message("fetching.actual.stdlib.info.failed.hardcoded.stdlib.structure.will.be.used"))
                     }
@@ -116,13 +116,13 @@ data class StandardLibrary(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
-            buildTarget: String?,
+            buildTargets: List<String>,
             activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean = false
         ): StandardLibrary? {
             try {
-                return StdlibDataFetcher.create(project, srcDir, version, buildTarget, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
+                return StdlibDataFetcher.create(project, srcDir, version, buildTargets, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
             } catch (e: Throwable) {
                 if (isUnitTestMode) {
                     // Don't fail a test - we have some tests that check error recovery during stdlib fetching
@@ -131,7 +131,7 @@ data class StandardLibrary(
                     LOG.error(e)
                 }
                 if (!cleanVendorDir && e is CargoMetadataException) {
-                    return fetchActualStdlib(project, srcDir, version, buildTarget, activeToolchain, listener, cleanVendorDir = true)
+                    return fetchActualStdlib(project, srcDir, version, buildTargets, activeToolchain, listener, cleanVendorDir = true)
                 }
             }
             return null
@@ -200,7 +200,7 @@ class StdlibDataFetcher private constructor(
     private val version: RustcVersion,
     private val testPackageSrcDir: VirtualFile,
     private val stdlibDependenciesDir: Path,
-    private val buildTarget: String?,
+    private val buildTargets: List<String>,
     private val activeToolchain: String?,
     private val listener: ProcessProgressListener?
 ) {
@@ -312,7 +312,7 @@ class StdlibDataFetcher private constructor(
         val metadataProject = cargo.fetchMetadata(
             project,
             pathAsPath,
-            buildTarget = buildTarget,
+            buildTargets = buildTargets,
             toolchainOverride = activeToolchain,
             environmentVariables = additionalEnvVariables(version),
             listener = listener
@@ -333,7 +333,7 @@ class StdlibDataFetcher private constructor(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
-            buildTarget: String?,
+            buildTargets: List<String>,
             activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean
@@ -360,7 +360,7 @@ class StdlibDataFetcher private constructor(
                 version,
                 testPackageSrcDir,
                 stdlibDependenciesDir,
-                buildTarget,
+                buildTargets,
                 activeToolchain,
                 listener
             )

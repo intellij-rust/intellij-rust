@@ -164,11 +164,11 @@ class Cargo(
     fun fullProjectDescription(
         owner: Project,
         projectDirectory: Path,
-        buildTarget: String? = null,
+        buildTargets: List<String> = emptyList(),
         rustcVersion: RustcVersion?,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-        val rawData = fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
+        val rawData = fetchMetadata(owner, projectDirectory, buildTargets, listener = listenerProvider(CargoCallType.METADATA))
             .unwrapOrElse { return Err(it) }
 
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
@@ -188,15 +188,16 @@ class Cargo(
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
-        buildTarget: String?,
+        buildTargets: List<String>,
         toolchainOverride: String? = null,
         environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
         listener: ProcessListener?,
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        if (buildTarget != null) {
+        for (it in buildTargets) {
+            // only include dependencies from the target platforms
             additionalArgs.add("--filter-platform")
-            additionalArgs.add(buildTarget)
+            additionalArgs.add(it)
         }
 
         val json = CargoCommandLine(
@@ -276,8 +277,6 @@ class Cargo(
             return Err(RsDeserializationException(e))
         }
 
-        val buildTargetNode = tree.at("/build/target")
-        var buildTarget = if (buildTargetNode.isMissingNode) null else buildTargetNode.asText()
         val env = tree.at("/env").fields().asSequence().toList().mapNotNull { field ->
             // Value can be either string or object with additional `forced` and `relative` params.
             // https://doc.rust-lang.org/cargo/reference/config.html#env
@@ -296,13 +295,24 @@ class Cargo(
             }
         }.toMap()
 
-        // If build target ends with `.json`, it's a custom toolchain.
-        // To make it work in all cases (for example, fetching stdlib metadata for the same build target),
-        // we save the corresponding path as absolute one not to depend on working directory
-        if (buildTarget != null && buildTarget.endsWith(".json")) {
-            buildTarget = projectDirectory.resolve(buildTarget).toAbsolutePath().systemIndependentPath
+        val buildTargets = getBuildTargets(tree).map {
+            // If a build target ends with `.json`, it's a custom toolchain.
+            // To make it work in all cases (for example, fetching stdlib metadata for the same build target),
+            // we save the corresponding path as absolute one not to depend on working directory
+            if (it.endsWith(".json")) {
+                projectDirectory.resolve(it).toAbsolutePath().systemIndependentPath
+            } else {
+                it
+            }
         }
-        return Ok(CargoConfig(buildTarget, env))
+        return Ok(CargoConfig(buildTargets, env))
+    }
+
+    private fun getBuildTargets(tree: JsonNode): List<String> {
+        val buildTargetNode = tree.at("/build/target")
+        if (buildTargetNode.isTextual) return listOf(buildTargetNode.asText())
+        if (buildTargetNode.isArray) return buildTargetNode.map { it.asText() }
+        return emptyList()
     }
 
     private fun fetchBuildScriptsInfo(

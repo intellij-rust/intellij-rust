@@ -361,10 +361,11 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         }
 
         CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
+        val buildTargets = cargoConfig.buildTargets.ifEmpty { listOfNotNull(rustcInfo?.version?.host) }
         val (projectDescriptionData, status) = cargo.fullProjectDescription(
             childContext.project,
             projectDirectory,
-            cargoConfig.buildTarget ?: rustcInfo?.version?.host,
+            buildTargets,
             rustcInfo?.version,
         ) {
             when (it) {
