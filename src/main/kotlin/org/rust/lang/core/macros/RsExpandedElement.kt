@@ -24,7 +24,7 @@ interface RsExpandedElement : RsElement {
     companion object {
         fun getContextImpl(psi: RsExpandedElement, isIndexAccessForbidden: Boolean = false): PsiElement? {
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
-            val parent = psi.stubParent
+            val parent = psi.parent
             if (parent is RsFile && !isIndexAccessForbidden) {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
