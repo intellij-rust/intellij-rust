@@ -68,6 +68,14 @@
                          implementationClass="org.rust.toml.inspections.TomlInvalidKeywordSegmentInspection"/>
 
 
+        <localInspection language="TOML"
+                         displayName="Duplicated key"
+                         groupPath="Rust"
+                         groupName="Cargo.toml"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="org.rust.toml.inspections.TomlDuplicatedKeyInspection"/>
+
         <intentionAction>
             <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
             <category>Rust/Cargo.toml</category>
