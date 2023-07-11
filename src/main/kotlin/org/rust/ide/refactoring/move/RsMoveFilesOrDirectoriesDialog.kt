@@ -22,6 +22,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.IncorrectOperationException
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler.Companion.adjustForMove
@@ -43,7 +44,7 @@ class RsMoveFilesOrDirectoriesDialog(
 
     init {
         check(!isUnitTestMode)
-        title = "Move (Rust)"
+        title = RsBundle.message("dialog.title.move.rust")
     }
 
     override fun performMove(targetDirectory: PsiDirectory) {
@@ -54,10 +55,10 @@ class RsMoveFilesOrDirectoriesDialog(
             for (element in filesOrDirectoriesToMove) {
                 if (element is RsFile) {
                     if (element.parent == targetDirectory) {
-                        showError("Please choose target directory different from current")
+                        showError(RsBundle.message("dialog.message.please.choose.target.directory.different.from.current"))
                         return
                     }
-                    CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, null, element, element.name, "Move")
+                    CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, null, element, element.name, RsBundle.message("dialog.title.move"))
                 }
                 MoveFilesOrDirectoriesUtil.checkMove(element, targetDirectory)
             }
@@ -136,8 +137,8 @@ class RsMoveFilesOrDirectoriesDialog(
 
         private fun askShouldMoveIfNoNewParentMod(project: Project): Boolean {
             val result = showOkCancelDialog(
-                "Move",
-                "File will not be included in module tree after move. Continue?",
+                RsBundle.message("dialog.title.move"),
+                RsBundle.message("dialog.message.file.will.not.be.included.in.module.tree.after.move.continue"),
                 Messages.getOkButton(),
                 project = project
             )

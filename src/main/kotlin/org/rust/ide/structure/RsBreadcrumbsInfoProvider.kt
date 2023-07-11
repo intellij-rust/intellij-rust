@@ -6,8 +6,10 @@
 package org.rust.ide.structure
 
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
+import org.jetbrains.annotations.Nls
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -17,7 +19,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
     private interface RsElementHandler<T : RsElement> {
         fun accepts(e: PsiElement): Boolean
 
-        fun elementInfo(e: T): String
+        @NlsSafe fun elementInfo(e: T): String
     }
 
     private val handlers = listOf<RsElementHandler<*>>(
@@ -227,6 +229,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
     override fun getElementTooltip(e: PsiElement): String? = null
 
+    @Nls
     fun getBreadcrumb(e: RsElement): String? = handler(e)?.elementInfo(e)
 
     companion object {

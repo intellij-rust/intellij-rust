@@ -6,6 +6,7 @@
 package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
+import org.rust.RsBundle
 import org.rust.toml.isFeatureListHeader
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
@@ -34,7 +35,7 @@ class CargoTomlCyclicFeatureInspection : CargoTomlInspectionToolBase() {
                 if (featureName == parentFeatureName) {
                     holder.registerProblem(
                         element,
-                        "Cyclic feature dependency: feature `$parentFeatureName` depends on itself"
+                        RsBundle.message("inspection.message.cyclic.feature.dependency.feature.depends.on.itself", parentFeatureName)
                     )
                 }
             }

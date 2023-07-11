@@ -170,8 +170,8 @@ open class CargoCommandConfiguration(
         if (isRedirectInput) {
             val file = redirectInputFile
             when {
-                file?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
-                !file.isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
+                file?.exists() != true -> throw RuntimeConfigurationWarning(RsBundle.message("dialog.message.input.file.doesn.t.exist"))
+                !file.isFile -> throw RuntimeConfigurationWarning(RsBundle.message("dialog.message.input.file.not.valid"))
             }
         }
 
@@ -237,11 +237,11 @@ open class CargoCommandConfiguration(
 
     fun clean(): CleanConfiguration {
         val workingDirectory = workingDirectory
-            ?: return CleanConfiguration.error("No working directory specified")
+            ?: return CleanConfiguration.error(RsBundle.message("dialog.message.no.working.directory.specified"))
 
         val cmd = run {
             val parsed = ParsedCommand.parse(command)
-                ?: return CleanConfiguration.error("No command specified")
+                ?: return CleanConfiguration.error(RsBundle.message("dialog.message.no.command.specified"))
 
             CargoCommandLine(
                 parsed.command,
@@ -260,14 +260,14 @@ open class CargoCommandConfiguration(
         }
 
         val toolchain = project.toolchain
-            ?: return CleanConfiguration.error("No Rust toolchain specified")
+            ?: return CleanConfiguration.error(RsBundle.message("dialog.message.no.rust.toolchain.specified"))
 
         if (!toolchain.looksLikeValidToolchain()) {
-            return CleanConfiguration.error("Invalid toolchain: ${toolchain.presentableLocation}")
+            return CleanConfiguration.error(RsBundle.message("dialog.message.invalid.toolchain", toolchain.presentableLocation))
         }
 
         if (!toolchain.isRustupAvailable && channel != RustChannel.DEFAULT) {
-            return CleanConfiguration.error("Channel '$channel' is set explicitly with no rustup available")
+            return CleanConfiguration.error(RsBundle.message("dialog.message.channel.set.explicitly.with.no.rustup.available", channel))
         }
 
         return CleanConfiguration.Ok(cmd, toolchain)

@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.RsPsiFactory
@@ -32,7 +33,7 @@ import org.rust.lang.core.types.ty.Mutability
  * ```
  */
 class SetMutableIntention : ChangeReferenceMutabilityIntention() {
-    override fun getText() = "Set reference mutable"
+    override fun getText() = RsBundle.message("intention.name.set.reference.mutable")
     override val newMutability: Mutability get() = Mutability.MUTABLE
 }
 
@@ -50,7 +51,7 @@ class SetMutableIntention : ChangeReferenceMutabilityIntention() {
  * ```
  */
 class SetImmutableIntention : ChangeReferenceMutabilityIntention() {
-    override fun getText() = "Set reference immutable"
+    override fun getText() = RsBundle.message("intention.name.set.reference.immutable")
     override val newMutability: Mutability get() = Mutability.IMMUTABLE
 }
 

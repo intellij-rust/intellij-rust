@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.util.registry.Registry
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
@@ -24,7 +25,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
     var ignoreWithoutQuickFix: Boolean = true
 
-    override fun getDisplayName() = "Unresolved reference"
+    override fun getDisplayName() = RsBundle.message("inspection.message.unresolved.reference2")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
@@ -68,7 +69,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         if (element.shouldIgnoreUnresolvedReference()) return
 
         val referenceName = element.referenceName
-        val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
+        val description = if (referenceName == null) RsBundle.message("inspection.message.unresolved.reference2") else RsBundle.message("inspection.message.unresolved.reference", referenceName)
         val fixes = createQuickFixes(candidates, element, context)
 
         val highlightedElement = element.referenceNameElement ?: element
@@ -115,7 +116,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         }
 
     override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
-        addCheckbox("Ignore unresolved references with a possibly high false positive rate", "ignoreWithoutQuickFix")
+        addCheckbox(RsBundle.message("checkbox.ignore.unresolved.references.with.possibly.high.false.positive.rate"), "ignoreWithoutQuickFix")
     }
 
     companion object {

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.inspections.lints.isCamelCase
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
@@ -26,7 +27,7 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.moveCaretToOffset
 
 class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStructIntention.Context>() {
-    override fun getFamilyName() = "Create tuple struct"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.create.tuple.struct")
 
     class Context(
         val name: String,
@@ -52,7 +53,7 @@ class CreateTupleStructIntention : RsElementBaseIntentionAction<CreateTupleStruc
             if (expectedType !is TyUnknown) return null
             val place = PsiInsertionPlace.forItemInModBefore(targetMod, functionCall) ?: return null
 
-            text = "Create tuple struct `$name`"
+            text = RsBundle.message("intention.name.create.tuple.struct", name)
             return Context(name, functionCall, targetMod, place)
         }
         return null

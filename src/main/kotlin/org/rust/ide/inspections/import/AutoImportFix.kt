@@ -11,12 +11,14 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.BatchQuickFix
 import com.intellij.codeInspection.CommonProblemDescriptor
 import com.intellij.codeInspection.HintAction
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
@@ -119,7 +121,8 @@ class AutoImportFix(element: RsElement, private val context: Context) :
     }
 
     companion object {
-        const val NAME = "Import"
+        @IntentionFamilyName
+        val NAME = RsBundle.message("intention.name.import")
 
         fun findApplicableContext(path: RsPath, type: ImportContext.Type = ImportContext.Type.AUTO_IMPORT): Context? {
             if (path.reference == null) return null

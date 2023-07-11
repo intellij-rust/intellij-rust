@@ -18,6 +18,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
+import org.rust.RsBundle
 import org.rust.ide.fixes.ChangeToFieldShorthandFix
 import org.rust.ide.fixes.deleteUseSpeck
 import org.rust.ide.fixes.updateMutable
@@ -198,10 +199,10 @@ class RsInlineFunctionProcessor(
         returnExpr.replace(returnValue)
     }
 
-    override fun getCommandName(): String = "Inline function ${originalFunction.name}"
+    override fun getCommandName(): String = RsBundle.message("command.name.inline.function", originalFunction.name?:"")
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
-        RsInlineUsageViewDescriptor(originalFunction, "Function to inline")
+        RsInlineUsageViewDescriptor(originalFunction, RsBundle.message("list.item.function.to.inline"))
 
     override fun getElementsToWrite(descriptor: UsageViewDescriptor): Collection<PsiElement> =
         when {

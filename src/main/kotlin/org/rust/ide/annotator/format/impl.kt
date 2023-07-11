@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import org.intellij.lang.annotations.Language
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.PackageOrigin.WORKSPACE
@@ -182,7 +183,7 @@ fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
         val range = ctx.toSourceRange(parameter.range)
 
         if (completeMatch.groups[3] != null) {
-            errors.add(ErrorAnnotation(range, "Invalid format string: unmatched '}'"))
+            errors.add(ErrorAnnotation(range, RsBundle.message("inspection.message.invalid.format.string.unmatched")))
         }
 
         if (parameter.innerContent != null && parameter.innerContentMatch != null) {
@@ -192,7 +193,7 @@ fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
                 val possibleEnd = parameter.innerContentMatch.value.length - 1
                 errors.add(ErrorAnnotation(
                     ctx.toSourceRange(possibleEnd..possibleEnd, innerContent.range.first),
-                    "Invalid format string: } expected.\nIf you intended to print `{` symbol, you can escape it using `{{`"
+                    RsBundle.message("inspection.message.invalid.format.string.expected.if.you.intended.to.print.symbol.you.can.escape.it.using")
                 ))
                 continue
             }
@@ -201,7 +202,7 @@ fun checkSyntaxErrors(ctx: ParseContext): List<ErrorAnnotation> {
             if (validParsedEnd != innerContent.value.length) {
                 errors.add(ErrorAnnotation(
                     ctx.toSourceRange(validParsedEnd until innerContent.value.length, innerContent.range.first),
-                    "Invalid format string"
+                    RsBundle.message("inspection.message.invalid.format.string")
                 ))
             }
         }
@@ -330,24 +331,24 @@ private fun checkParameter(
     when (val lookup = parameter.lookup) {
         is ParameterLookup.Named -> {
             if (lookup.name !in ctx.namedArguments && !implicitNamedArgsAvailable) {
-                errors.add(ErrorAnnotation(parameter.range, "There is no argument named `${lookup.name}`"))
+                errors.add(ErrorAnnotation(parameter.range, RsBundle.message("inspection.message.there.no.argument.named", lookup.name)))
             }
         }
         is ParameterLookup.Positional -> {
             if (lookup.position >= ctx.arguments.size) {
                 val count = when (ctx.arguments.size) {
-                    0 -> "no arguments were given"
-                    1 -> "there is 1 argument"
-                    else -> "there are ${ctx.arguments.size} arguments"
+                    0 -> RsBundle.message("inspection.message.no.arguments.were.given")
+                    1 -> RsBundle.message("inspection.message.there.argument")
+                    else -> RsBundle.message("inspection.message.there.are.arguments", ctx.arguments.size)
                 }
-                errors.add(ErrorAnnotation(parameter.range, "Invalid reference to positional argument ${lookup.position} ($count)"))
+                errors.add(ErrorAnnotation(parameter.range, RsBundle.message("inspection.message.invalid.reference.to.positional.argument", lookup.position, count)))
             }
         }
     }
 
     if (errors.isEmpty() && parameter is FormatParameter.Value) {
         if (parameter.type == null) {
-            errors.add(ErrorAnnotation(parameter.typeRange, "Unknown format trait `${parameter.typeStr}`"))
+            errors.add(ErrorAnnotation(parameter.typeRange, RsBundle.message("inspection.message.unknown.format.trait", parameter.typeStr)))
         }
     }
 
@@ -385,8 +386,10 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
     if (!IGNORED_FORMAT_TYPES.any { expr.type.containsTyOfClass(it::class.java) } &&
         !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
         val fix = createParameterTraitMismatchFix(parameter, expr, argument)
-        val error = "`${expr.type.render()}` doesn't implement `${requiredTrait.name}`" +
-            " (required by ${parameter.matchInfo.text})"
+        val error = RsBundle.message(
+            "inspection.message.doesn.t.implement.required.by", expr.type.render(), requiredTrait.name
+            ?: "", parameter.matchInfo.text
+        )
         val diagnostic = RsDiagnostic.TraitIsNotImplemented(argument, error, fix)
         return ErrorAnnotation(
             argument.textRange,
@@ -410,7 +413,7 @@ private fun createParameterTraitMismatchFix(
                 return null
             }
             SubstituteTextFix.replace(
-                "Change format parameter to `{:?}`",
+                RsBundle.message("intention.name.change.format.parameter.to"),
                 argument.containingFile,
                 parameter.range,
                 "{:?}"
@@ -442,7 +445,7 @@ private fun checkSpecifierType(argument: RsFormatMacroArg, parameter: FormatPara
     val expr = argument.expr
     val type = expr.type.stripReferences()
     if (type !in ALLOWED_SPECIFIERS_TYPES) {
-        return ErrorAnnotation(argument.textRange, "${parameter.specifier.capitalized()} specifier must be of type `usize`")
+        return ErrorAnnotation(argument.textRange, RsBundle.message("inspection.message.specifier.must.be.type.usize", parameter.specifier.capitalized()))
     }
     return null
 }
@@ -456,12 +459,12 @@ private fun checkArgument(argument: RsFormatMacroArg, ctx: FormatContext): List<
     if (name == null) {
         val firstNamed = ctx.arguments.indexOfFirst { it.eq != null }
         if (firstNamed != -1 && firstNamed < position) {
-            errors.add(ErrorAnnotation(argument.textRange, "Positional arguments cannot follow named arguments"))
+            errors.add(ErrorAnnotation(argument.textRange, RsBundle.message("inspection.message.positional.arguments.cannot.follow.named.arguments")))
         } else if (!hasPositionalParameter) {
-            errors.add(ErrorAnnotation(argument.textRange, "Argument never used"))
+            errors.add(ErrorAnnotation(argument.textRange, RsBundle.message("inspection.message.argument.never.used")))
         }
     } else if (name !in ctx.namedParameters.map { it.second.name } && !hasPositionalParameter) {
-        errors.add(ErrorAnnotation(argument.textRange, "Named argument never used"))
+        errors.add(ErrorAnnotation(argument.textRange, RsBundle.message("inspection.message.named.argument.never.used")))
     }
 
     if (errors.isEmpty()) {

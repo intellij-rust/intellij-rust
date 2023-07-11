@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -32,7 +33,7 @@ import org.rust.openapiext.moveCaretToOffset
  * ```
  */
 class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatementsIntention.Context>() {
-    override fun getText() = "Nest use statements"
+    override fun getText() = RsBundle.message("intention.name.nest.use.statements")
     override fun getFamilyName() = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

@@ -16,6 +16,7 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerCommandException
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
 import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriver
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -94,7 +95,8 @@ class RsDebugProcessConfigurationHelper(
     private fun DebuggerDriver.loadRustcSources() {
         if (commitHash == null) return
 
-        val sysroot = checkSysroot(sysroot, "Cannot load rustc sources") ?: return
+        val sysroot = checkSysroot(sysroot, RsBundle.message("notification.content.cannot.load.rustc.sources"))
+            ?: return
         val sourceMapCommand = when (this) {
             is LLDBDriver -> "settings set target.source-map"
             is GDBDriver -> "set substitute-path"
@@ -116,7 +118,8 @@ class RsDebugProcessConfigurationHelper(
     private fun LLDBDriver.loadPrettyPrinters() {
         when (settings.lldbRenderers) {
             LLDBRenderers.COMPILER -> {
-                val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
+                val sysroot = checkSysroot(sysroot, RsBundle.message("notification.content.cannot.load.rustc.renderers"))
+                    ?: return
                 val basePath = "$sysroot/lib/rustlib/etc"
 
                 // MSVC toolchain does not contain Python pretty-printers.
@@ -144,7 +147,8 @@ class RsDebugProcessConfigurationHelper(
     private fun GDBDriver.loadPrettyPrinters() {
         val path = when (settings.gdbRenderers) {
             GDBRenderers.COMPILER -> {
-                val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
+                val sysroot = checkSysroot(sysroot, RsBundle.message("notification.content.cannot.load.rustc.renderers"))
+                    ?: return
                 "$sysroot/lib/rustlib/etc".systemDependentAndEscaped()
             }
             GDBRenderers.BUNDLED -> {

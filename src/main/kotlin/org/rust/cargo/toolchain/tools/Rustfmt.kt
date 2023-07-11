@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.project.settings.toolchain
@@ -119,7 +120,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             EnvironmentVariablesData.create(settings.envs, true)
         )
 
-        return project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {
+        return project.computeWithCancelableProgress(RsBundle.message("progress.title.reformatting.cargo.project.with.rustfmt")) {
             project.toolchain
                 ?.cargoOrWrapper(cargoProject.workingDirectory)
                 ?.toGeneralCommandLine(project, commandLine)
@@ -155,7 +156,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             val message = message.orEmpty().trimEnd('\n')
             if (message.isNotEmpty()) {
                 val html = "<html>${message.escaped.replace("\n", "<br>")}</html>"
-                project.showBalloon("Rustfmt", html, NotificationType.ERROR, RustfmtEditSettingsAction("Show settings..."))
+                project.showBalloon(RsBundle.message("notification.title.rustfmt"), html, NotificationType.ERROR, RustfmtEditSettingsAction(RsBundle.message("action.show.settings.text")))
             }
         }
     }

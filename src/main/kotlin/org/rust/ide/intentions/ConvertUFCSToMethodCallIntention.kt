@@ -8,12 +8,13 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class ConvertUFCSToMethodCallIntention : RsElementBaseIntentionAction<ConvertUFCSToMethodCallIntention.Context>() {
-    override fun getText() = "Convert to method call"
+    override fun getText() = RsBundle.message("intention.name.convert.to.method.call")
     override fun getFamilyName() = text
 
     data class Context(

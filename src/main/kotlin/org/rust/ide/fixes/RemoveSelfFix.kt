@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
@@ -19,9 +20,9 @@ class RemoveSelfFix(function: RsFunction) : RsQuickFixBase<RsFunction>(function)
         "trait"
     }
 
-    override fun getFamilyName(): String = "Remove self from $elementName"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.remove.self.from", elementName)
 
-    override fun getText(): String = "Remove self from $elementName"
+    override fun getText(): String = RsBundle.message("intention.family.name.remove.self.from", elementName)
 
     override fun invoke(project: Project, editor: Editor?, element: RsFunction) {
         element.selfParameter?.delete()

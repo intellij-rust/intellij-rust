@@ -35,7 +35,7 @@ class RsPathStatementsInspection : RsLintInspection() {
                 val (description, fixes) = when (expr.implLookup.needsDrop(expr.type, expr)) {
                     ThreeValuedLogic.True ->
                         RsBundle.message("inspection.PathStatementsInspection.description.drops.value") to
-                            listOf(SubstituteTextFix.replace("Use `drop` to clarify the intent: `drop(${expr.text});`", expr.containingFile, expr.textRange, "drop(${expr.text})"))
+                            listOf(SubstituteTextFix.replace(RsBundle.message("intention.name.use.drop.to.clarify.intent.drop", expr.text), expr.containingFile, expr.textRange, "drop(${expr.text})"))
 
                     ThreeValuedLogic.False ->
                         RsBundle.message("inspection.PathStatementsInspection.description.no.effect") to

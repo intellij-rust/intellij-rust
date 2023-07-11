@@ -8,13 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class MergeIfsIntention : RsElementBaseIntentionAction<MergeIfsIntention.Context>() {
-    override fun getText(): String = "Merge with the nested 'if' expression"
+    override fun getText(): String = RsBundle.message("intention.name.merge.with.nested.if.expression")
     override fun getFamilyName(): String = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

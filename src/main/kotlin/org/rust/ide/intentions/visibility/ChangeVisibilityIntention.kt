@@ -8,6 +8,7 @@ package org.rust.ide.intentions.visibility
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.intentions.util.macros.InvokeInside
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityIntention.Context>() {
-    override fun getFamilyName(): String = "Change item visibility"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.change.item.visibility")
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
@@ -32,7 +33,7 @@ abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVi
 
         val name = (visibleElement as? RsNamedElement)?.name?.let { " `$it`" } ?: ""
 
-        text = "Make$name $visibility"
+        text = RsBundle.message("intention.name.make", name, visibility)
 
         return Context(visibleElement)
     }

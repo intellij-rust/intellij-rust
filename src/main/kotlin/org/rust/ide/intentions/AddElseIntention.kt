@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.lang.core.psi.RsIfExpr
@@ -18,7 +19,7 @@ import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.moveCaretToOffset
 
 class AddElseIntention : RsElementBaseIntentionAction<PsiInsertionPlace>() {
-    override fun getText() = "Add else branch to this if statement"
+    override fun getText() = RsBundle.message("intention.name.add.else.branch.to.this.if.statement")
     override fun getFamilyName(): String = text
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL

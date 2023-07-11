@@ -7,11 +7,12 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsConvertBlockToLoopFix(element: RsBlockExpr): RsQuickFixBase<RsBlockExpr>(element) {
-    override fun getFamilyName(): String = "Convert to loop"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.convert.to.loop")
 
     override fun getText(): String = familyName
 

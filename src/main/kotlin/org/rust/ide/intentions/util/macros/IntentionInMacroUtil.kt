@@ -18,6 +18,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
@@ -153,8 +154,7 @@ object IntentionInMacroUtil {
             // This message should not be shown to users really often since we do the best to filter out
             // unsuitable intentions during availability check
             originalEditor?.showErrorHint(
-                "Some of the elements that the action is going to change exist only in the macro expansion " +
-                    "and so cannot be changed by the action"
+                RsBundle.message("hint.text.some.elements.that.action.going.to.change.exist.only.in.macro.expansion.so.cannot.be.changed.by.action")
             )
             return
         }

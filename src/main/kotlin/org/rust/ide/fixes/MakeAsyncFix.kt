@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
@@ -18,11 +19,11 @@ class MakeAsyncFix(function: RsFunctionOrLambda) : RsQuickFixBase<RsFunctionOrLa
     private val isFunction: Boolean = function is RsFunction
 
     override fun getText(): String {
-        val item = if (isFunction) "function" else "lambda"
-        return "Make $item async"
+        val item = if (isFunction) RsBundle.message("intention.name.function") else RsBundle.message("intention.name.lambda")
+        return RsBundle.message("intention.name.make.async", item)
     }
 
-    override fun getFamilyName(): String = "Make async"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.make.async")
 
     override fun invoke(project: Project, editor: Editor?, element: RsFunctionOrLambda) {
         if (element.isAsync) return

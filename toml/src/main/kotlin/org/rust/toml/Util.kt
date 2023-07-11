@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.notifications.showBalloonWithoutProject
@@ -37,7 +38,7 @@ private val computeOnce: Boolean by lazy {
         true
     } catch (e: LinkageError) {
         showBalloonWithoutProject(
-            "Incompatible TOML plugin version, code completion for Cargo.toml is not available.",
+            RsBundle.message("notification.content.incompatible.toml.plugin.version.code.completion.for.cargo.toml.not.available"),
             NotificationType.WARNING
         )
         false

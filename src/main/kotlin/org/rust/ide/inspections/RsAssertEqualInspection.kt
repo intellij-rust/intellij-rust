@@ -7,6 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
@@ -37,7 +38,7 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
 
             holder.registerProblem(
                 o,
-                "assert!(a $operator b) can be $macroName!(a, b)",
+                RsBundle.message("inspection.message.assert.b.can.be.b", operator, macroName),
                 SpecializedAssertQuickFix(o, macroName)
             )
         }
@@ -66,7 +67,7 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
         element: RsMacroCall,
         private val assertName: String
     ) : RsQuickFixBase<RsMacroCall>(element) {
-        override fun getText() = "Convert to $assertName!"
+        override fun getText() = RsBundle.message("intention.name.convert.to.macro", assertName)
         override fun getFamilyName(): String = text
 
         override fun invoke(project: Project, editor: Editor?, element: RsMacroCall) {

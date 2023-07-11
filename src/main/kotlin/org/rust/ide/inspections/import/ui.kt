@@ -16,6 +16,7 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.TextWithIcon
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
@@ -63,7 +64,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
         val candidatePsiItems = items.map(::ImportCandidatePsiElement)
 
         // TODO: sort items in popup
-        val step = object : BaseListPopupStep<ImportCandidatePsiElement>("Item to Import", candidatePsiItems) {
+        val step = object : BaseListPopupStep<ImportCandidatePsiElement>(RsBundle.message("popup.title.item.to.import"), candidatePsiItems) {
             override fun isAutoSelectionEnabled(): Boolean = false
             override fun isSpeedSearchEnabled(): Boolean = true
             override fun hasSubstep(selectedValue: ImportCandidatePsiElement?): Boolean = false

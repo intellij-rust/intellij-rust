@@ -8,6 +8,7 @@ package org.rust.ide.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import org.rust.RsBundle
 import org.rust.cargo.project.settings.externalLinterSettings
 
 class ToggleExternalLinterOnTheFlyAction : ToggleAction() {
@@ -27,6 +28,6 @@ class ToggleExternalLinterOnTheFlyAction : ToggleAction() {
     override fun update(e: AnActionEvent) {
         super.update(e)
         val externalLinterName = e.project?.externalLinterSettings?.tool?.title ?: "External Linter"
-        e.presentation.text = "Run $externalLinterName on the Fly"
+        e.presentation.text = RsBundle.message("action.run.on.fly.text", externalLinterName)
     }
 }

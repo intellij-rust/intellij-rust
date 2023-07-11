@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.RsPsiFactory
@@ -19,8 +20,8 @@ import org.rust.lang.core.types.ty.Ty
 class AddTypeFix(anchor: PsiElement, ty: Ty) : RsQuickFixBase<PsiElement>(anchor) {
     private val typeText: String = ty.renderInsertionSafe()
 
-    override fun getFamilyName(): String = "Add type"
-    override fun getText(): String = "Add type $typeText"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.add.type")
+    override fun getText(): String = RsBundle.message("intention.name.add.type", typeText)
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         val factory = RsPsiFactory(project)

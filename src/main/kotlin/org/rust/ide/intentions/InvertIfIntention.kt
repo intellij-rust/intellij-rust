@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.ide.intentions.InvertIfIntention.Context.ContextWithElse
 import org.rust.ide.intentions.InvertIfIntention.Context.ContextWithoutElse
 import org.rust.ide.intentions.util.macros.InvokeInside
@@ -56,7 +57,7 @@ import org.rust.lang.utils.negate
  */
 class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context>() {
     override fun getFamilyName(): String = text
-    override fun getText() = "Invert if condition"
+    override fun getText() = RsBundle.message("intention.name.invert.if.condition")
 
     override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 

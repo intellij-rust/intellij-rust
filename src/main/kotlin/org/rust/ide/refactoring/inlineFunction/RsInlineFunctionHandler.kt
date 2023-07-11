@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
@@ -30,7 +31,7 @@ class RsInlineFunctionHandler : InlineActionHandler() {
         val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset)
 
         if (RsInlineFunctionProcessor.doesFunctionHaveMultipleReturns(function)) {
-            errorHint(project, editor, "Cannot inline function with more than one exit points")
+            errorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.function.with.more.than.one.exit.points"))
             return
         }
 
@@ -39,18 +40,18 @@ class RsInlineFunctionHandler : InlineActionHandler() {
             if (reference != null) {
                 allowInlineThisOnly = true
             } else {
-                errorHint(project, editor, "Cannot inline function with recursive calls")
+                errorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.function.with.recursive.calls"))
                 return
             }
         }
 
         if (reference != null && RsInlineFunctionProcessor.checkIfLoopCondition(function, reference.element)) {
-            errorHint(project, editor, "Cannot inline multiline function into \"while\" loop condition")
+            errorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.multiline.function.into.while.loop.condition"))
             return
         }
 
         if (function.block == null) {
-            errorHint(project, editor, "Cannot inline an empty function")
+            errorHint(project, editor, RsBundle.message("dialog.message.cannot.inline.empty.function"))
             return
         }
 

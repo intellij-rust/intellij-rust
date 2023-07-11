@@ -15,6 +15,7 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.CachingSimpleNode
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.SimpleTreeStructure
+import org.rust.RsBundle
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -83,10 +84,10 @@ class CargoProjectTreeStructure(
                     }
                     is CargoProject.UpdateStatus.NeedsUpdate -> {
                         attrs = attrs.derive(SimpleTextAttributes.STYLE_WAVED, null, null, JBColor.GRAY)
-                        presentation.tooltip = "Project needs update"
+                        presentation.tooltip = RsBundle.message("tooltip.project.needs.update")
                     }
                     is CargoProject.UpdateStatus.UpToDate -> {
-                        presentation.tooltip = "Project is up-to-date"
+                        presentation.tooltip = RsBundle.message("tooltip.project.up.to.date")
                     }
                 }
                 presentation.addText(cargoProject.presentableName, attrs)
@@ -130,7 +131,7 @@ class CargoProjectTreeStructure(
                 super.update(presentation)
                 val targetKind = target.kind
                 if (targetKind != Unknown) {
-                    presentation.tooltip = "${StringUtil.capitalize(targetKind.name)} target `${name}`"
+                    presentation.tooltip = RsBundle.message("tooltip.target", StringUtil.capitalize(targetKind.name), name)
                 }
             }
 

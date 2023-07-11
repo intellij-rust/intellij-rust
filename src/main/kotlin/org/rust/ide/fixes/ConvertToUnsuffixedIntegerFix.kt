@@ -5,9 +5,11 @@
 
 package org.rust.ide.fixes
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.RsPsiFactory
@@ -15,9 +17,9 @@ import org.rust.lang.core.psi.kind
 
 class ConvertToUnsuffixedIntegerFix private constructor(
     element: RsLitExpr,
-    private val textTemplate: String
+    @IntentionName private val textTemplate: String
 ): RsQuickFixBase<RsLitExpr>(element) {
-    override fun getFamilyName(): String = "Convert to unsuffixed integer"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.convert.to.unsuffixed.integer")
 
     override fun getText(): String {
         return String.format(textTemplate, convertToUnsuffixedInteger(myStartElement.element))
@@ -32,13 +34,14 @@ class ConvertToUnsuffixedIntegerFix private constructor(
 
 
     companion object {
-        fun createIfCompatible(element: RsLitExpr, textTemplate: String): ConvertToUnsuffixedIntegerFix? {
+        fun createIfCompatible(element: RsLitExpr, @IntentionName textTemplate: String): ConvertToUnsuffixedIntegerFix? {
             if (convertToUnsuffixedInteger(element) != null) {
                 return ConvertToUnsuffixedIntegerFix(element, textTemplate)
             }
             return null
         }
 
+        @IntentionName
         private fun convertToUnsuffixedInteger(element: PsiElement?): String? {
             if (element == null) return null
             if (element !is RsLitExpr) return null

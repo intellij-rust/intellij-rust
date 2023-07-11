@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.ui.GotItTooltip
+import org.rust.RsBundle
 import org.rust.cargo.project.configurable.RsExternalLinterConfigurable
 import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.toolchain.ExternalLinter
@@ -28,12 +29,11 @@ class RsExternalLinterTooltipService(private val project: Project) : Disposable 
     override fun dispose() {}
 
     private fun createTooltip(turnedOn: Boolean): GotItTooltip {
-        val headerText = "${linter.title} on the fly analysis is turned " + if (turnedOn) "ON" else "OFF"
-        val text = "The analysis shows all problems reported by ${linter.title}, but consumes more system resources. " +
-            "When turned off, only the limited set of problems supported by IntelliJ Rust engine are shown."
+        val headerText = RsBundle.message("0.on.the.fly.analysis.is.turned.1.choice.0.on.1.off", linter.title, if (turnedOn) 0 else 1)
+        val text = RsBundle.message("external.linter.tooltip", linter.title)
         return GotItTooltip("rust.linter.on-the-fly.got.it", text, this)
             .withHeader(headerText)
-            .withLink("Configure...") {
+            .withLink(RsBundle.message("configure")) {
                 project.showSettingsDialog<RsExternalLinterConfigurable>()
             }
     }

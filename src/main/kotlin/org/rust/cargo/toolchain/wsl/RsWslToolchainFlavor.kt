@@ -12,6 +12,7 @@ import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.util.io.isDirectory
+import org.rust.RsBundle
 import org.rust.cargo.toolchain.flavors.RsToolchainFlavor
 import org.rust.ide.experiments.RsExperiments.WSL_TOOLCHAIN
 import org.rust.openapiext.computeWithCancelableProgress
@@ -23,7 +24,7 @@ import java.nio.file.Path
 class RsWslToolchainFlavor : RsToolchainFlavor() {
 
     override fun getHomePathCandidates(): Sequence<Path> = sequence {
-        val distributions = compute("Getting installed distributions...") {
+        val distributions = compute(RsBundle.message("progress.title.getting.installed.distributions")) {
             WslDistributionManager.getInstance().installedDistributions
         }
         for (distro in distributions) {
@@ -45,7 +46,7 @@ class RsWslToolchainFlavor : RsToolchainFlavor() {
 fun WSLDistribution.getHomePathCandidates(): Sequence<Path> = sequence {
     @Suppress("UnstableApiUsage", "UsePropertyAccessSyntax")
     val root = getUNCRootPath()
-    val environment = compute("Getting environment variables...") { environment }
+    val environment = compute(RsBundle.message("progress.title.getting.environment.variables")) { environment }
     if (environment != null) {
         val home = environment["HOME"]
         val remoteCargoPath = home?.let { "$it/.cargo/bin" }

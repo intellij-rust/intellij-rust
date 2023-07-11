@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
@@ -27,7 +28,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionIntention.Context>() {
-    override fun getFamilyName() = "Create function"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.create.function")
 
     sealed interface Context {
         val name: String
@@ -119,7 +120,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                     val place = FunctionInsertionPlace.In(
                         PsiInsertionPlace.forItemInModAfter(target, functionCall) ?: return null
                     )
-                    text = "Create function `$name`"
+                    text = RsBundle.message("intention.name.create.function", name)
                     Context.Function(functionCall, name, place, target)
                 }
 
@@ -129,13 +130,13 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                         target.name ?: return null,
                         target
                     )
-                    text = "Create associated function `${target.name}::$name`"
+                    text = RsBundle.message("intention.name.create.associated.function", target.name ?: "", name)
                     Context.Function(functionCall, name, place, target.containingMod)
                 }
 
                 is RsImplItem -> {
                     val place = FunctionInsertionPlace.In(PsiInsertionPlace.forTraitOrImplMember(target) ?: return null)
-                    text = "Create associated function `Self::$name`"
+                    text = RsBundle.message("intention.name.create.associated.function.self", name)
                     Context.Function(functionCall, name, place, target.containingMod)
                 }
 
@@ -162,7 +163,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                 )
             }
 
-            text = "Create method `$name`"
+            text = RsBundle.message("intention.name.create.method", name)
             return Context.Method(methodCall, name, place, type.item)
         }
         return null

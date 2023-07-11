@@ -9,6 +9,7 @@ import com.intellij.structuralsearch.PredefinedConfigurationUtil
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.rust.RsBundle
 import org.rust.lang.RsFileType
 
 object RsPredefinedConfigurations {
@@ -25,7 +26,7 @@ object RsPredefinedConfigurations {
     fun createPredefinedTemplates(): Array<Configuration> = arrayOf(
         // Declarations
         searchTemplate(
-            "Constants equal to 1",
+            RsBundle.message("constants.equal.to.1"),
             "constants = 1",
             """
                 const 'Name\: '_t = 1;
@@ -35,7 +36,7 @@ object RsPredefinedConfigurations {
 
         // Structs
         searchTemplate(
-            "Structs deriving Default",
+            RsBundle.message("structs.deriving.default"),
             "structs deriving default",
             """
                 #[derive(Default)]
@@ -44,7 +45,7 @@ object RsPredefinedConfigurations {
             STRUCT_TYPE,
         ),
         searchTemplate(
-            "Structs with a u8 field",
+            RsBundle.message("structs.with.a.u8.field"),
             "structs with a u8 field",
             """
                 struct 'Name {

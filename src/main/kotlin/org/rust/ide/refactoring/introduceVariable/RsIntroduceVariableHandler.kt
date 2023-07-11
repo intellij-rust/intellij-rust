@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.rust.RsBundle
 import org.rust.ide.refactoring.findCandidateExpressionsToExtract
 import org.rust.ide.refactoring.showExpressionChooser
 import org.rust.lang.core.psi.RsExpr
@@ -37,7 +38,7 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
         } else {
             val extractor = { expr: RsExpr ->
                 extractExpression(
-                    editor, expr, postfixLet = false, "Introduce Local Variable"
+                    editor, expr, postfixLet = false, RsBundle.message("command.name.introduce.local.variable")
                 )
             }
             if (exprs.size == 1) {

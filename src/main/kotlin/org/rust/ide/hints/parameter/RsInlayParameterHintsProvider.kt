@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
 import com.intellij.codeInsight.hints.Option
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
@@ -39,14 +40,8 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
     override fun getInlayPresentation(inlayText: String): String = inlayText
 
     override fun getBlacklistExplanationHTML(): String {
-        return """
-            To disable hints for a function use the appropriate pattern:<br />
-            <b>std::*</b> - functions from the standard library<br />
-            <b>std::fs::*(*, *)</b> - functions from the <i>std::fs</i> module with two parameters<br />
-            <b>(*_)</b> - single parameter function where the parameter name ends with <i>_</i><br />
-            <b>(key, value)</b> - functions with parameters <i>key</i> and <i>value</i><br />
-            <b>*.put(key, value)</b> - <i>put</i> functions with <i>key</i> and <i>value</i> parameters
-        """.trimIndent()
+        @Suppress("HardCodedStringLiteral")
+        return RsBundle.message("code.vision.disable.hints.message").trimIndent()
     }
 
     companion object {

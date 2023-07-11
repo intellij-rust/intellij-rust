@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.CheckBox
 import com.intellij.util.text.nullize
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -28,7 +29,7 @@ abstract class RsCommandConfigurationEditor<T : RsCommandConfiguration>(
     abstract val command: RsCommandLineEditor
 
     protected val emulateTerminal: JCheckBox =
-        CheckBox("Emulate terminal in output console", RsCommandConfiguration.emulateTerminalDefault)
+        CheckBox(RsBundle.message("checkbox.emulate.terminal.in.output.console"), RsCommandConfiguration.emulateTerminalDefault)
 
     protected fun currentWorkspace(): CargoWorkspace? =
         CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace

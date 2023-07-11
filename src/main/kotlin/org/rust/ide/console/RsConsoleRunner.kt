@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.MessageCategory
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -126,7 +128,7 @@ class RsConsoleRunner(project: Project) :
         executeAction.registerCustomShortcutSet(getExecuteActionShortcut(), consoleEditor.component)
 
         val actionShortcutText = KeymapUtil.getFirstKeyboardShortcutText(executeAction)
-        consoleEditor.setPlaceholder("<$actionShortcutText> to execute")
+        consoleEditor.setPlaceholder(RsBundle.message("0.to.execute", actionShortcutText))
         consoleEditor.setShowPlaceholderWhenFocused(true)
 
         return executeAction
@@ -147,9 +149,9 @@ class RsConsoleRunner(project: Project) :
 
         try {
             initAndRun()
-            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Connecting to Console", false) {
+            ProgressManager.getInstance().run(object : Task.Backgroundable(project, RsBundle.message("progress.title.connecting.to.console"), false) {
                 override fun run(indicator: ProgressIndicator) {
-                    indicator.text = "Connecting to console..."
+                    indicator.text = RsBundle.message("progress.text.connecting.to.console")
                     connect()
                     if (requestEditorFocus) {
                         consoleView?.requestFocus()
@@ -169,9 +171,9 @@ class RsConsoleRunner(project: Project) :
         TransactionGuard.submitTransaction(project) { saveAllDocuments() }
 
         ApplicationManager.getApplication().executeOnPooledThread {
-            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Connecting to Console", false) {
+            ProgressManager.getInstance().run(object : Task.Backgroundable(project, RsBundle.message("progress.title.connecting.to.console"), false) {
                 override fun run(indicator: ProgressIndicator) {
-                    indicator.text = "Connecting to console..."
+                    indicator.text = RsBundle.message("progress.text.connecting.to.console")
                     try {
                         initAndRun()
                         connect()
@@ -240,7 +242,7 @@ class RsConsoleRunner(project: Project) :
     }
 
     fun rerun() {
-        object : Task.Backgroundable(project, "Restarting console", true) {
+        object : Task.Backgroundable(project, RsBundle.message("progress.title.restarting.console"), true) {
             override fun run(indicator: ProgressIndicator) {
                 val processHandler = processHandler
                 if (processHandler != null) {
@@ -283,7 +285,7 @@ class RsConsoleRunner(project: Project) :
         errorViewPanel.addMessage(MessageCategory.ERROR, messages.toTypedArray(), null, -1, -1, null)
         panel.add(errorViewPanel, BorderLayout.CENTER)
 
-        val contentDescriptor = RunContentDescriptor(null, processHandler, panel, "Error Running Console")
+        val contentDescriptor = RunContentDescriptor(null, processHandler, panel, RsBundle.message("tab.title.error.running.console"))
 
         showConsole(executor, contentDescriptor)
     }
@@ -295,6 +297,7 @@ class RsConsoleRunner(project: Project) :
     companion object {
         val LOG: Logger = logger<RsConsoleRunner>()
 
-        const val TOOL_WINDOW_TITLE: String = "Rust REPL"
+        @Nls
+        val TOOL_WINDOW_TITLE: String = RsBundle.message("rust.repl")
     }
 }

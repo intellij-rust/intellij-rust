@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -149,7 +150,7 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
 class TraitImplementationInfo private constructor(
     val trait: RsTraitItem,
-    val traitName: String,
+    @NlsContexts.Label val traitName: String,
     traitMembers: RsMembers,
     implMembers: RsMembers
 ) {

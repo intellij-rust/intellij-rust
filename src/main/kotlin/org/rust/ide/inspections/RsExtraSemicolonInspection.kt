@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.RsBundle
 import org.rust.ide.fixes.RemoveSemicolonFix
 import org.rust.lang.core.dfa.ExitPoint
 import org.rust.lang.core.psi.RsFunction
@@ -20,7 +21,7 @@ import org.rust.lang.core.types.ty.TyUnit
  * ```
  */
 class RsExtraSemicolonInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Extra semicolon"
+    override fun getDisplayName() = RsBundle.message("extra.semicolon")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
@@ -31,7 +32,7 @@ class RsExtraSemicolonInspection : RsLocalInspectionTool() {
                     if (exitPoint is ExitPoint.InvalidTailStatement) {
                         holder.registerProblem(
                             exitPoint.stmt,
-                            "Function returns () instead of ${retType.text}",
+                            RsBundle.message("inspection.message.function.returns.instead", retType.text),
                             RemoveSemicolonFix(exitPoint.stmt)
                         )
                     }

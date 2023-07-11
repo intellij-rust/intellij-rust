@@ -8,6 +8,7 @@ package org.rust.ide.template.postfix.editable
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition
 import com.intellij.openapi.util.text.StringUtil
 import org.jdom.Element
+import org.rust.RsBundle
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.ty.*
@@ -69,7 +70,7 @@ class RsPostfixTemplateExpressionCondition(private val expressionType: Type, pri
 
     override fun getPresentableName(): String {
         return when (expressionType) {
-            Type.UserEntered -> "Type: $userEnteredTypeName"
+            Type.UserEntered -> RsBundle.message("type.0", userEnteredTypeName)
             else -> expressionType.id
         }
     }

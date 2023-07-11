@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.contextOfType
+import org.rust.RsBundle
 import org.rust.ide.fixes.RemoveElementFix
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.RsProblemsHolder
@@ -15,7 +16,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class RsUnusedMutInspection : RsLintInspection() {
-    override fun getDisplayName(): String = "No mutable required"
+    override fun getDisplayName(): String = RsBundle.message("no.mutable.required")
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedMut
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
@@ -33,7 +34,7 @@ class RsUnusedMutInspection : RsLintInspection() {
                 val mut = o.mut ?: return
                 holder.registerLintProblem(
                     mut,
-                    "Unused `mut`",
+                    RsBundle.message("inspection.message.unused.mut"),
                     RsLintHighlightingType.UNUSED_SYMBOL,
                     listOf(RemoveElementFix(mut)),
                 )

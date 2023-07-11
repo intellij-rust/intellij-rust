@@ -20,6 +20,8 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.CargoRunStateBase
@@ -32,8 +34,8 @@ import org.rust.debugger.settings.RsDebuggerSettings
 
 object RsDebugRunnerUtils {
 
-    // TODO: move into bundle
-    const val ERROR_MESSAGE_TITLE: String = "Unable to run debugger"
+    @Nls
+    val ERROR_MESSAGE_TITLE: String = RsBundle.message("unable.to.run.debugger")
 
     fun showRunContent(
         state: CargoRunStateBase,

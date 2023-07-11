@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -17,7 +18,7 @@ import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.type
 
 class InitializeWithDefaultValueFix(element: RsElement) : RsQuickFixBase<RsElement>(element) {
-    override fun getText() = "Initialize with a default value"
+    override fun getText() = RsBundle.message("intention.name.initialize.with.default.value")
     override fun getFamilyName() = name
 
     override fun invoke(project: Project, editor: Editor?, element: RsElement) {

@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -20,8 +21,8 @@ class DeriveTraitsFix(
 
     private val itemName: String? = item.name
 
-    override fun getText(): String = "Add #[derive($traits)] to `$itemName`"
-    override fun getFamilyName(): String = "Derive trait"
+    override fun getText(): String = RsBundle.message("intention.name.add.derive.to", traits, itemName ?: "")
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.derive.trait")
 
     override fun invoke(project: Project, editor: Editor?, element: RsStructOrEnumItemElement) {
         invoke(element, traits)

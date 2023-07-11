@@ -17,6 +17,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.BitUtil
 import com.intellij.util.containers.Stack
+import org.rust.RsBundle
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
@@ -592,7 +593,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             val specialParser = SPECIAL_MACRO_PARSERS[macroName]
             if (specialParser != null && specialParser(b, level + 1)) {
                 if (braceKind.needsSemicolon && mode.semicolon && !consumeToken(b, SEMICOLON)) {
-                    b.error("`;` expected, got '${b.tokenText}'")
+                    b.error(RsBundle.message("parsing.error.expected.got2", b.tokenText?:""))
                     return mode.pin
                 }
                 return true
@@ -600,11 +601,11 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
 
         if (braceKind == null || !parseMacroArgumentLazy(b, level + 1)) {
-            b.error("<macro argument> expected, got '${b.tokenText}'")
+            b.error(RsBundle.message("parsing.error.macro.argument.expected.got", b.tokenText?:""))
             return mode.pin
         }
         if (braceKind.needsSemicolon && mode.semicolon && !consumeToken(b, SEMICOLON)) {
-            b.error("`;` expected, got '${b.tokenText}'")
+            b.error(RsBundle.message("parsing.error.expected.got", b.tokenText?:""))
             return mode.pin
         }
         return true
@@ -830,7 +831,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
             val lastToken = b.tokenType
             if (lastToken == null || lastToken !in RIGHT_BRACES) {
-                b.error("'${leftBrace.closeText}' expected")
+                b.error(RsBundle.message("parsing.error.expected2", leftBrace.closeText))
                 return pos.close(lastToken == null)
             }
 
@@ -838,7 +839,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             if (rightBrace == leftBrace) {
                 b.advanceLexer() // Consume '}' or ')' or ']'
             } else {
-                b.error("'${leftBrace.closeText}' expected")
+                b.error(RsBundle.message("parsing.error.expected", leftBrace.closeText))
                 if (leftBrace == rootBrace) {
                     // Recovery loop. Consume everything until [rightBrace] is [leftBrace]
                     while (rightBrace != leftBrace && !b.eof()) {

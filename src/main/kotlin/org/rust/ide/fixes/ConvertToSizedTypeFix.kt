@@ -8,14 +8,13 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeReference
 
-private const val FAMILY_NAME: String = "Convert to Sized type"
-
 abstract class ConvertToSizedTypeFix(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
 
-    override fun getFamilyName(): String = FAMILY_NAME
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.convert.to.sized.type")
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         if (element !is RsTypeReference) return
@@ -29,7 +28,7 @@ abstract class ConvertToSizedTypeFix(element: PsiElement) : RsQuickFixBase<PsiEl
 
 class ConvertToReferenceFix(element: PsiElement) : ConvertToSizedTypeFix(element) {
 
-    override fun getText(): String = "Convert to reference"
+    override fun getText(): String = RsBundle.message("intention.name.convert.to.reference")
 
     override fun newTypeReference(factory: RsPsiFactory, typeReference: RsTypeReference): RsTypeReference =
         factory.createType("&${typeReference.text}")
@@ -37,7 +36,7 @@ class ConvertToReferenceFix(element: PsiElement) : ConvertToSizedTypeFix(element
 
 class ConvertToBoxFix(element: PsiElement) : ConvertToSizedTypeFix(element) {
 
-    override fun getText(): String = "Convert to Box"
+    override fun getText(): String = RsBundle.message("intention.name.convert.to.box")
 
     override fun newTypeReference(factory: RsPsiFactory, typeReference: RsTypeReference): RsTypeReference =
         factory.createType("Box<${typeReference.text}>")

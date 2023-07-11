@@ -206,7 +206,7 @@ private class BackgroundableProjectTaskRunner(
     private val parentRunner: CargoBuildTaskRunner,
     private val totalPromise: AsyncPromise<ProjectTaskRunner.Result>,
     private val waitingIndicator: Future<ProgressIndicator>
-) : Task.Backgroundable(project, "Building...", true) {
+) : Task.Backgroundable(project, RsBundle.message("progress.title.building"), true) {
     val executionStarted: CompletableFuture<Boolean> = CompletableFuture()
 
     override fun run(indicator: ProgressIndicator) {
@@ -283,7 +283,7 @@ private class WaitingTask(
     project: Project,
     val waitingIndicator: CompletableFuture<ProgressIndicator>,
     val executionStarted: Future<Boolean>
-) : Task.Backgroundable(project, "Waiting for the current build to finish...", true) {
+) : Task.Backgroundable(project, RsBundle.message("progress.text.waiting.for.current.build.to.finish"), true) {
     override fun run(indicator: ProgressIndicator) {
         // Wait until queued task will start executing.
         // Needed so that user can cancel build tasks from queue.

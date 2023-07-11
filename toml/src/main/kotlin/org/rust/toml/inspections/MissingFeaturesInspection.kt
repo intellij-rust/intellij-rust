@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -99,7 +100,7 @@ class MissingFeaturesInspection : LocalInspectionTool() {
                 arrayOf(
                     manager.createProblemDescriptor(
                         file,
-                        "Missing features: ${missingFeatures.joinToString()}",
+                        RsBundle.message("inspection.message.missing.features", missingFeatures.joinToString()),
                         isOnTheFly,
                         arrayOf(EnableCargoFeaturesFix(cargoProject, missingFeatures)),
                         ProblemHighlightType.WARNING

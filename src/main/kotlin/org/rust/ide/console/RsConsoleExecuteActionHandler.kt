@@ -8,6 +8,8 @@ package org.rust.ide.console
 import com.intellij.execution.console.LanguageConsoleView
 import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.ProcessHandler
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.openapiext.showErrorHint
 
 class RsConsoleExecuteActionHandler(
@@ -42,8 +44,10 @@ class RsConsoleExecuteActionHandler(
     private fun copyToHistoryAndExecute(console: LanguageConsoleView) = super.runExecuteAction(console)
 
     companion object {
-        const val prevCommandRunningMessage: String =
-            "Previous command is still running. Please wait or press Ctrl+C in console to interrupt."
-        const val consoleIsNotEnabledMessage: String = "Console is not enabled."
+        @Nls
+        val prevCommandRunningMessage: String =
+            RsBundle.message("previous.command.is.still.running.please.wait.or.press.ctrl.c.in.console.to.interrupt")
+        @Nls
+        val consoleIsNotEnabledMessage: String = RsBundle.message("console.is.not.enabled")
     }
 }

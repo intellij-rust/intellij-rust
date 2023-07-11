@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring.suggested
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.suggested.*
 import org.rust.ide.utils.import.createVirtualImportContext
@@ -25,8 +26,9 @@ class RsSuggestedRefactoringUI : SuggestedRefactoringUI() {
         return data.newSignature.parameters
             .filter { data.oldSignature.parameterById(it.id) == null }
             .map {
+                @NlsSafe val name = it.name
                 NewParameterData(
-                    it.name,
+                    name,
                     RsExpressionCodeFragment(
                         importContext.project,
                         "",

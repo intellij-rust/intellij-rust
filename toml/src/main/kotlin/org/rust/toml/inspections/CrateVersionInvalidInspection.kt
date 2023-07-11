@@ -7,6 +7,7 @@ package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.rust.RsBundle
 import org.rust.toml.crates.local.CargoRegistryCrate
 import org.rust.toml.crates.local.CrateVersionRequirement
 import org.rust.toml.stringValue
@@ -25,7 +26,7 @@ class CrateVersionInvalidInspection : CrateVersionInspection() {
         if (versionReq == null) {
             holder.registerProblem(
                 versionElement,
-                "Invalid version requirement $versionText",
+                RsBundle.message("inspection.message.invalid.version.requirement", versionText),
                 ProblemHighlightType.WEAK_WARNING
             )
             return
@@ -37,9 +38,9 @@ class CrateVersionInvalidInspection : CrateVersionInspection() {
         }
 
         if (compatibleVersions.isEmpty()) {
-            holder.registerProblem(versionElement, "No version matching $versionText found for crate ${dependency.crateName}")
+            holder.registerProblem(versionElement, RsBundle.message("inspection.message.no.version.matching.found.for.crate", versionText, dependency.crateName))
         } else if (compatibleVersions.all { it.isYanked }) {
-            holder.registerProblem(versionElement, "All versions matching $versionText for crate ${dependency.crateName} are yanked")
+            holder.registerProblem(versionElement, RsBundle.message("inspection.message.all.versions.matching.for.crate.are.yanked", versionText, dependency.crateName))
         }
     }
 }

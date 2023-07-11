@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,6 +29,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
@@ -640,25 +642,25 @@ class Cargo(
         }
 
         fun checkNeedInstallGrcov(project: Project): Boolean {
-            val crateName = "grcov"
+            val crateName = RsBundle.message("notification.content.grcov")
             val minVersion = "0.7.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least4", crateName, minVersion),
                 minVersion
             )
         }
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
-            val crateName = "cargo-expand"
+            val crateName = RsBundle.message("notification.content.cargo.expand")
             val minVersion = "1.0.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least3", crateName, minVersion),
                 minVersion
             )
         }
@@ -670,19 +672,19 @@ class Cargo(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least2", crateName, minVersion),
                 minVersion
             )
         }
 
         fun checkNeedInstallWasmPack(project: Project): Boolean {
-            val crateName = "wasm-pack"
+            val crateName = RsBundle.message("notification.content.wasm.pack")
             val minVersion = "0.9.1".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least", crateName, minVersion),
                 minVersion
             )
         }
@@ -691,20 +693,20 @@ class Cargo(
             project: Project,
             crateName: String,
             notificationType: NotificationType,
-            message: String? = null,
+            @NlsContexts.NotificationContent message: String? = null,
             minVersion: SemVer? = null
         ): Boolean {
             val cargo = project.toolchain?.cargo() ?: return false
             val isNotInstalled = { cargo.checkBinaryCrateIsNotInstalled(crateName, minVersion) }
             val needInstall = if (isDispatchThread) {
-                project.computeWithCancelableProgress("Checking if $crateName is installed...", isNotInstalled)
+                project.computeWithCancelableProgress(RsBundle.message("progress.title.checking.if.installed", crateName), isNotInstalled)
             } else {
                 isNotInstalled()
             }
 
             if (needInstall) {
                 project.showBalloon(
-                    "<code>$crateName</code> is not installed",
+                    RsBundle.message("notification.title.code.code.not.installed", crateName),
                     message ?: "",
                     notificationType,
                     InstallBinaryCrateAction(crateName)

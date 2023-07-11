@@ -7,6 +7,7 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.presentation.ImportingPsiRenderer
 import org.rust.ide.presentation.PsiRenderingOptions
 import org.rust.ide.presentation.renderTraitRef
@@ -38,7 +39,7 @@ import org.rust.lang.core.types.infer.substitute
  * ```
  */
 class AddMissingSupertraitImplFix(implItem: RsImplItem) : RsQuickFixBase<RsImplItem>(implItem) {
-    override fun getText(): String = "Implement missing supertrait(s)"
+    override fun getText(): String = RsBundle.message("intention.name.implement.missing.supertrait.s")
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, element: RsImplItem) {

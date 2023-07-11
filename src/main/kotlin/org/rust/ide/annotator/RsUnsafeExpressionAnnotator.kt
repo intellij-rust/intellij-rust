@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -49,24 +50,24 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
                 }
                 else -> return // unreachable
             }
-            holder.holder.createUnsafeAnnotation(textRange, "Call to unsafe function")
+            holder.holder.createUnsafeAnnotation(textRange, RsBundle.message("inspection.message.call.to.unsafe.function"))
         } else {
-            RsDiagnostic.UnsafeError(expr, "Call to unsafe function requires unsafe function or block").addToHolder(holder)
+            RsDiagnostic.UnsafeError(expr, RsBundle.message("inspection.message.call.to.unsafe.function.requires.unsafe.function.or.block")).addToHolder(holder)
         }
     }
 
     private fun annotateUnsafeStaticRef(expr: RsPathExpr, element: RsConstant, holder: RsAnnotationHolder) {
         val constantType = when {
-            element.kind == RsConstantKind.MUT_STATIC -> "mutable"
-            element.kind == RsConstantKind.STATIC && element.parent is RsForeignModItem -> "extern"
+            element.kind == RsConstantKind.MUT_STATIC -> RsBundle.message("inspection.message.mutable")
+            element.kind == RsConstantKind.STATIC && element.parent is RsForeignModItem -> RsBundle.message("inspection.message.extern")
             else -> return
         }
 
         if (expr.isInUnsafeContext) {
             val textRange = expr.path.textRangeOfLastSegment ?: return
-            holder.holder.createUnsafeAnnotation(textRange, "Use of unsafe $constantType static")
+            holder.holder.createUnsafeAnnotation(textRange, RsBundle.message("inspection.message.use.unsafe.static", constantType))
         } else {
-            RsDiagnostic.UnsafeError(expr, "Use of $constantType static is unsafe and requires unsafe function or block")
+            RsDiagnostic.UnsafeError(expr, RsBundle.message("inspection.message.use.static.unsafe.requires.unsafe.function.or.block", constantType))
                 .addToHolder(holder)
         }
     }
@@ -88,7 +89,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
             val item = type.item
             if (item !is RsStructItem) return
             if (item.kind == RsStructKind.UNION && !o.expr.isInUnsafeContext) {
-                RsDiagnostic.UnsafeError(o, "Access to union field is unsafe and requires unsafe function or block").addToHolder(holder)
+                RsDiagnostic.UnsafeError(o, RsBundle.message("inspection.message.access.to.union.field.unsafe.requires.unsafe.function.or.block")).addToHolder(holder)
             }
         }
     }
@@ -112,9 +113,9 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         if (element.expr?.type !is TyPointer) return
 
         if (element.isInUnsafeContext) {
-            holder.holder.createUnsafeAnnotation(mul.textRange, "Unsafe dereference of raw pointer")
+            holder.holder.createUnsafeAnnotation(mul.textRange, RsBundle.message("inspection.message.unsafe.dereference.raw.pointer"))
         } else {
-            RsDiagnostic.UnsafeError(element, "Dereference of raw pointer requires unsafe function or block")
+            RsDiagnostic.UnsafeError(element, RsBundle.message("inspection.message.dereference.raw.pointer.requires.unsafe.function.or.block"))
                 .addToHolder(holder)
         }
     }
@@ -129,7 +130,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
             if (macroDef != null && macroDef.hasRustcBuiltinMacro && !macroExpr.isInUnsafeContext) {
                 RsDiagnostic.UnsafeError(
                     macroExpr,
-                    "use of `$macroName!()` is unsafe and requires unsafe function or block"
+                    RsBundle.message("inspection.message.use.unsafe.requires.unsafe.function.or.block", macroName)
                 ).addToHolder(holder)
             }
         }

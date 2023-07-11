@@ -6,9 +6,11 @@
 package org.rust.ide.fixes
 
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.annotator.getFunctionCallContext
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.changeSignature.*
@@ -36,8 +38,9 @@ class ChangeFunctionSignatureFix private constructor(
     private val signature: Signature,
     private val priority: PriorityAction.Priority? = null
 ) : RsQuickFixBase<RsValueArgumentList>(argumentList), PriorityAction {
+    @IntentionName
     private val fixText: String = run {
-        val callableType = if (function.isMethod) "method" else "function"
+        val callableType = if (function.isMethod) RsBundle.message("intention.name.method") else RsBundle.message("intention.name.function")
         val name = function.name
         val changes = signature.actions.withIndex().filter { (_, item) -> item !is SignatureAction.KeepParameter }
         val arguments = getEffectiveArguments(argumentList, function)
@@ -45,40 +48,40 @@ class ChangeFunctionSignatureFix private constructor(
         if (changes.size == 1) {
             val (index, action) = changes[0]
             val indexOffset = index + 1
-            val ordinal = "$indexOffset${numberSuffix(indexOffset)}"
+            val ordinal = RsBundle.message("intention.name.", indexOffset, numberSuffix(indexOffset))
             val parameterFormat = function.valueParameters.getOrNull(index)?.pat?.formatParameter(index)
 
             when (action) {
                 is SignatureAction.ChangeParameterType -> {
                     val argument = arguments[action.argumentIndex]
-                    "Change type of $parameterFormat of $callableType `$name` to `${renderType(argument.type)}`"
+                    RsBundle.message("intention.name.change.type.to", parameterFormat?:"", callableType, name?:"", renderType(argument.type))
                 }
                 is SignatureAction.InsertArgument -> {
                     val argument = arguments[action.argumentIndex]
-                    "Add `${renderType(argument.type)}` as `$ordinal` parameter to $callableType `$name`"
+                    RsBundle.message("intention.name.add.as.parameter.to", renderType(argument.type), ordinal, callableType, name?:"")
                 }
-                SignatureAction.RemoveParameter -> "Remove $parameterFormat from $callableType `$name`"
+                SignatureAction.RemoveParameter -> RsBundle.message("intention.name.remove.from", parameterFormat?:"", callableType, name?:"")
                 is SignatureAction.KeepParameter -> error("unreachable")
             }
         } else {
             val actions = signature.actions.filter { it !is SignatureAction.RemoveParameter }
             val signatureText = actions.joinToString(", ") { action ->
                 when (action) {
-                    is SignatureAction.InsertArgument -> "<b>${renderType(arguments[action.argumentIndex].type)}</b>"
+                    is SignatureAction.InsertArgument -> RsBundle.message("intention.name.b.b2", renderType(arguments[action.argumentIndex].type))
                     is SignatureAction.KeepParameter -> renderType(
                         function.valueParameters[action.parameterIndex].typeReference?.normType ?: TyUnknown
                     )
-                    is SignatureAction.ChangeParameterType -> "<b>${renderType(arguments[action.argumentIndex].type)}</b>"
+                    is SignatureAction.ChangeParameterType -> RsBundle.message("intention.name.b.b", renderType(arguments[action.argumentIndex].type))
                     SignatureAction.RemoveParameter -> error("unreachable")
                 }
             }
 
-            "<html>Change signature to $name($signatureText)</html>"
+            RsBundle.message("intention.name.html.change.signature.to.html", name?:"", signatureText)
         }
     }
 
     override fun getText(): String = fixText
-    override fun getFamilyName(): String = "Change function signature"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.change.function.signature")
 
     override fun startInWriteAction(): Boolean = false
 

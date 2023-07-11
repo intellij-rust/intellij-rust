@@ -25,66 +25,68 @@
         <elementDescriptionProvider implementation="org.rust.toml.CargoTomlElementDescriptionProvider"/>
 
         <!--suppress PluginXmlExtensionRegistration -->
-        <localInspection groupName="Rust"
-                         displayName="Missing features"
+        <localInspection groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.toml.inspections.MissingFeaturesInspection"/>
+                         implementationClass="org.rust.toml.inspections.MissingFeaturesInspection"
+                         key="inspection.missing.features.display.name" bundle="messages.RsBundle"/>
 
         <localInspection language="TOML"
                          groupPath="Rust"
-                         groupName="Cargo.toml"
-                         displayName="Cyclic feature dependency"
+                         groupKey="cargo.toml"
                          enabledByDefault="true"
                          level="ERROR"
-                         implementationClass="org.rust.toml.inspections.CargoTomlCyclicFeatureInspection"/>
+                         implementationClass="org.rust.toml.inspections.CargoTomlCyclicFeatureInspection"
+                         key="inspection.cargo.toml.cyclic.feature.display.name" bundle="messages.RsBundle"/>
         <localInspection language="TOML"
-                         displayName="Crate not found"
                          groupPath="Rust"
-                         groupName="Cargo.toml"
+                         groupKey="cargo.toml"
                          enabledByDefault="true"
                          level="WARNING"
-                         implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"/>
+                         implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"
+                         key="inspection.crate.not.found.display.name" bundle="messages.RsBundle"/>
 
         <localInspection language="TOML"
-                         displayName="Invalid crate version"
                          groupPath="Rust"
-                         groupName="Cargo.toml"
+                         groupKey="cargo.toml"
                          enabledByDefault="true"
                          level="WARNING"
-                         implementationClass="org.rust.toml.inspections.CrateVersionInvalidInspection"/>
+                         implementationClass="org.rust.toml.inspections.CrateVersionInvalidInspection"
+                         key="inspection.crate.version.invalid.display.name" bundle="messages.RsBundle"/>
         <localInspection language="TOML"
-                         displayName="New crate version available"
                          groupPath="Rust"
-                         groupName="Cargo.toml"
+                         groupKey="cargo.toml"
                          enabledByDefault="true"
                          level="WARNING"
-                         implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"/>
+                         implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"
+                         key="inspection.new.crate.version.available.display.name" bundle="messages.RsBundle"/>
         <localInspection language="TOML"
-                         displayName="Invalid keywords section"
                          groupPath="Rust"
-                         groupName="Cargo.toml"
+                         groupKey="cargo.toml"
                          enabledByDefault="true"
                          level="ERROR"
-                         implementationClass="org.rust.toml.inspections.TomlInvalidKeywordSegmentInspection"/>
+                         implementationClass="org.rust.toml.inspections.TomlInvalidKeywordSegmentInspection"
+                         key="inspection.toml.invalid.keyword.segment.display.name" bundle="messages.RsBundle"/>
 
 
         <localInspection language="TOML"
-                         displayName="Duplicated key"
+                         key="inspection.duplicated.key.display.name" bundle="messages.RsBundle"
                          groupPath="Rust"
-                         groupName="Cargo.toml"
+                         groupKey="cargo.toml"
                          enabledByDefault="true"
                          level="ERROR"
                          implementationClass="org.rust.toml.inspections.TomlDuplicatedKeyInspection"/>
 
         <intentionAction>
+            <bundleName>messages.RsBundle</bundleName>
             <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
-            <category>Rust/Cargo.toml</category>
+            <categoryKey>rust.cargo.toml</categoryKey>
             <language>TOML</language>
         </intentionAction>
 
         <intentionAction>
+            <bundleName>messages.RsBundle</bundleName>
             <className>org.rust.toml.intentions.SimplifyDependencySpecificationIntention</className>
-            <category>Rust/Cargo.toml</category>
+            <categoryKey>rust.cargo.toml</categoryKey>
             <language>TOML</language>
         </intentionAction>
 

@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import org.rust.RsBundle
 import org.rust.ide.fixes.AddGenericArguments
 import org.rust.ide.fixes.RemoveGenericArguments
 import org.rust.lang.core.psi.*
@@ -65,7 +66,7 @@ class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
             else -> "generic"
         }
 
-        val problemText = "Wrong number of $argumentName arguments: expected $errorText, found $actualArgs"
+        val problemText = RsBundle.message("inspection.message.wrong.number.arguments.expected.found", argumentName, errorText, actualArgs)
         val fixes = getFixes(declaration, element, actualArgs, expectedTotalParams)
 
         RsDiagnostic.WrongNumberOfGenericArguments(element, problemText, fixes).addToHolder(holder)

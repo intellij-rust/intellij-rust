@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.lang.core.completion.safeGetOriginalOrSelf
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -21,8 +22,8 @@ class RemoveParameterFix(
     binding: RsPatBinding,
     private val bindingName: String
 ) : RsQuickFixBase<RsPatBinding>(binding) {
-    override fun getText() = "Remove parameter `${bindingName}`"
-    override fun getFamilyName() = "Remove parameter"
+    override fun getText() = RsBundle.message("intention.name.remove.parameter", bindingName)
+    override fun getFamilyName() = RsBundle.message("intention.family.name.remove.parameter")
 
     override fun invoke(project: Project, editor: Editor?, element: RsPatBinding) {
         val patIdent = element.topLevelPattern as? RsPatIdent ?: return

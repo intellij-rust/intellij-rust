@@ -334,380 +334,380 @@
         <commandLineInspectionProjectConfigurator
             implementation="org.rust.ide.inspections.CargoCommandLineInspectionProjectConfigurator"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Rust"
-                         displayName="Trait objects must include the dyn keyword"
+        <localInspection language="Rust" groupPath="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.lints.RsBareTraitObjectsInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsBareTraitObjectsInspection"
+                         key="inspection.rs.bare.trait.objects.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Deprecated element"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsDeprecationInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsDeprecationInspection"
+                         key="inspection.rs.deprecation.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Approximate Constants"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsApproxConstantInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsApproxConstantInspection"
+                         key="inspection.rs.approx.constant.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Unsafe CString pointer"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsCStringPointerInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsCStringPointerInspection"
+                         key="inspection.rs.c.string.pointer.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Unresolved reference"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsUnresolvedReferenceInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsUnresolvedReferenceInspection"
+                         key="inspection.rs.unresolved.reference.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Double negation"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsDoubleNegInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsDoubleNegInspection"
+                         key="inspection.rs.double.neg.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Suspicious assignment"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSuspiciousAssignmentInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsSuspiciousAssignmentInspection"
+                         key="inspection.rs.suspicious.assignment.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Dangling else"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsDanglingElseInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsDanglingElseInspection"
+                         key="inspection.rs.dangling.else.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Missing else"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsMissingElseInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsMissingElseInspection"
+                         key="inspection.rs.missing.else.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Redundant else"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsRedundantElseInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsRedundantElseInspection"
+                         key="inspection.rs.redundant.else.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Dropping reference"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsDropRefInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsDropRefInspection"
+                         key="inspection.rs.drop.ref.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Argument naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsArgumentNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsArgumentNamingInspection"
+                         key="inspection.rs.argument.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Associated type naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsAssocTypeNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsAssocTypeNamingInspection"
+                         key="inspection.rs.assoc.type.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Constant naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsConstNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsConstNamingInspection"
+                         key="inspection.rs.const.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Enum naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsEnumNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsEnumNamingInspection"
+                         key="inspection.rs.enum.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Enum variant naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsEnumVariantNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsEnumVariantNamingInspection"
+                         key="inspection.rs.enum.variant.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Function naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsFunctionNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsFunctionNamingInspection"
+                         key="inspection.rs.function.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Lifetime naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsLifetimeNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsLifetimeNamingInspection"
+                         key="inspection.rs.lifetime.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Macro naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsMacroNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsMacroNamingInspection"
+                         key="inspection.rs.macro.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Method naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsMethodNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsMethodNamingInspection"
+                         key="inspection.rs.method.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Module naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsModuleNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsModuleNamingInspection"
+                         key="inspection.rs.module.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Static constant naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsStaticConstNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsStaticConstNamingInspection"
+                         key="inspection.rs.static.const.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Self convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsSelfConventionInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsSelfConventionInspection"
+                         key="inspection.rs.self.convention.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Struct naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsStructNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsStructNamingInspection"
+                         key="inspection.rs.struct.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Field naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsFieldNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsFieldNamingInspection"
+                         key="inspection.rs.field.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Trait naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsTraitNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsTraitNamingInspection"
+                         key="inspection.rs.trait.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Type alias naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsTypeAliasNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsTypeAliasNamingInspection"
+                         key="inspection.rs.type.alias.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Type parameter naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsTypeParameterNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsTypeParameterNamingInspection"
+                         key="inspection.rs.type.parameter.naming.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust,Lints" groupName="Naming conventions"
-                         displayName="Variable naming convention"
+        <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsVariableNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsVariableNamingInspection"
+                         key="inspection.rs.variable.naming.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Extra semicolon"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsExtraSemicolonInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsExtraSemicolonInspection"
+                         key="inspection.rs.extra.semicolon.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="try! macro usage"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsTryMacroInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsTryMacroInspection"
+                         key="inspection.rs.try.macro.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unnecessary cast"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryCastInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryCastInspection"
+                         key="inspection.rs.unnecessary.cast.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Cast can be replaced with literal suffix"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsReplaceCastWithSuffixInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsReplaceCastWithSuffixInspection"
+                         key="inspection.rs.replace.cast.with.suffix.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="While true loop"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsWhileTrueLoopInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsWhileTrueLoopInspection"
+                         key="inspection.rs.while.true.loop.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="println!(&quot;&quot;) usage"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsSimplifyPrintInspection"
+                         key="inspection.rs.simplify.print.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Simplify boolean expression"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"
+                         key="inspection.rs.simplify.boolean.expression.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Condition of 'if' expression is constant"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsConstantConditionIfInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsConstantConditionIfInspection"
+                         key="inspection.rs.constant.condition.if.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unused mut modifier"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnusedMutInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedMutInspection"
+                         key="inspection.rs.unused.mut.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Wrong generic arguments number"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsNumberInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsNumberInspection"
+                         key="inspection.rs.wrong.generic.arguments.number.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Wrong generic arguments order"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsOrderInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsOrderInspection"
+                         key="inspection.rs.wrong.generic.arguments.order.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Wrong lifetime parameters number"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsWrongLifetimeParametersNumberInspection"
+                         key="inspection.rs.wrong.lifetime.parameters.number.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Wrong type or const parameters number"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsWrongGenericParametersNumberInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericParametersNumberInspection"
+                         key="inspection.rs.wrong.generic.parameters.number.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Re-assign immutable variable"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsReassignImmutableInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsReassignImmutableInspection"
+                         key="inspection.rs.reassign.immutable.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Borrow checker"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsBorrowCheckerInspection"
+                         key="inspection.rs.borrow.checker.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Field initialization shorthand"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsFieldInitShorthandInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsFieldInitShorthandInspection"
+                         key="inspection.rs.field.init.shorthand.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Non-shorthand field patterns"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsNonShorthandFieldPatternsInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsNonShorthandFieldPatternsInspection"
+                         key="inspection.rs.non.shorthand.field.patterns.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unused must_use"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnusedMustUseInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedMustUseInspection"
+                         key="inspection.rs.unused.must.use.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Double must_use"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsDoubleMustUseInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsDoubleMustUseInspection"
+                         key="inspection.rs.double.must.use.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Redundant semicolons"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsRedundantSemicolonsInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsRedundantSemicolonsInspection"
+                         key="inspection.rs.redundant.semicolons.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Path statements"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsPathStatementsInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsPathStatementsInspection"
+                         key="inspection.rs.path.statements.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Assert Equal"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsAssertEqualInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsAssertEqualInspection"
+                         key="inspection.rs.assert.equal.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Experimental checks"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="false" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsExperimentalChecksInspection"
+                         key="inspection.rs.experimental.checks.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Type checker"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsTypeCheckInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsTypeCheckInspection"
+                         key="inspection.rs.type.check.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Different impl member order from the trait"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsSortImplTraitMembersInspection"
+                         key="inspection.rs.sort.impl.trait.members.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Needless lifetimes"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsNeedlessLifetimesInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsNeedlessLifetimesInspection"
+                         key="inspection.rs.needless.lifetimes.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Assign to immutable"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsAssignToImmutableInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsAssignToImmutableInspection"
+                         key="inspection.rs.assign.to.immutable.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Trait implementation"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"
+                         key="inspection.rs.trait.implementation.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Cast to bool"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsCastToBoolInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsCastToBoolInspection"
+                         key="inspection.rs.cast.to.bool.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Constant refers to statics"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsConstReferStaticInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsConstReferStaticInspection"
+                         key="inspection.rs.const.refer.static.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Attribute without parentheses"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsAttrWithoutParenthesesInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsAttrWithoutParenthesesInspection"
+                         key="inspection.rs.attr.without.parentheses.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unreachable patterns"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.checkMatch.RsUnreachablePatternsInspection"/>
+                         implementationClass="org.rust.ide.inspections.checkMatch.RsUnreachablePatternsInspection"
+                         key="inspection.rs.unreachable.patterns.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Non-exhaustive match"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.checkMatch.RsNonExhaustiveMatchInspection"/>
+                         implementationClass="org.rust.ide.inspections.checkMatch.RsNonExhaustiveMatchInspection"
+                         key="inspection.rs.non.exhaustive.match.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Return can be lifted out"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsLiftInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsLiftInspection"
+                         key="inspection.rs.lift.display.name"/>
 
-        <globalInspection language="Rust" groupName="Rust"
-                          displayName="External Linter"
+        <globalInspection language="Rust" groupKey="rust"
                           enabledByDefault="true" level="ERROR"
-                          implementationClass="org.rust.ide.inspections.RsExternalLinterInspection"/>
+                          implementationClass="org.rust.ide.inspections.RsExternalLinterInspection"
+                          key="inspection.rs.external.linter.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Liveness analysis"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsLivenessInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsLivenessInspection"
+                         key="inspection.rs.liveness.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Main function not found"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsMainFunctionNotFoundInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsMainFunctionNotFoundInspection"
+                         key="inspection.rs.main.function.not.found.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Detached file"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"
+                         key="inspection.rs.detached.file.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Duplicate trait method parameter name"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsDuplicatedTraitMethodBindingInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsDuplicatedTraitMethodBindingInspection"
+                         key="inspection.rs.duplicated.trait.method.binding.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unreachable code"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnreachableCodeInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnreachableCodeInspection"
+                         key="inspection.rs.unreachable.code.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unknown crate types"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnknownCrateTypesInspection"
+                         key="inspection.rs.unknown.crate.types.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unused import"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnusedImportInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedImportInspection"
+                         key="inspection.rs.unused.import.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unnecessarily qualified path"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryQualificationsInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryQualificationsInspection"
+                         key="inspection.rs.unnecessary.qualifications.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Wrong associated type arguments"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection"
+                         key="inspection.rs.wrong.assoc.type.arguments.display.name"/>
 
-        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
-                         displayName="Unused labels"
+        <localInspection language="Rust" groupPath="Rust" groupKey="lints"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.lints.RsUnusedLabelsInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsUnusedLabelsInspection"
+                         key="inspection.rs.unused.labels.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="Compile Error macro"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsCompileErrorMacroInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsCompileErrorMacroInspection"
+                         key="inspection.rs.compile.error.macro.display.name"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="The entry point is async"
@@ -756,387 +756,387 @@
 
         <intentionAction>
             <className>org.rust.ide.intentions.ImplTraitToTypeParamIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractInlineModuleIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddDeriveIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RemoveCurlyBracesIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ReplaceLineCommentWithBlockCommentIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ReplaceBlockCommentWithLineCommentIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddCurlyBracesIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RemoveDbgIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.WrapLambdaExprIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapSingleExprIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.DemorgansLawIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SimplifyBooleanExpressionIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapToMatchIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapToTryIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddElseIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MoveTypeConstraintToWhereClauseIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MatchToIfLetIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MoveGuardToMatchArmIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SetMutableIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SetImmutableIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImplIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnElideLifetimesIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.IfLetToMatchIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SpecifyTypeExplicitlyIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinWildcardsIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ToggleIgnoreTestIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MoveTypeConstraintToParameterListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.FlipBinaryExpressionIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SplitIfIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.MergeIfsIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RsShowRecursiveMacroExpansionIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RsShowSingleStepMacroExpansionIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.RunCargoExpandIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.GenerateDocStubIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.NestUseStatementsIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.FlattenUseStatementsIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopParameterListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinParameterListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopArgumentListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinArgumentListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopFieldListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinFieldListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopLiteralFieldListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinLiteralFieldListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ChopVariantListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.JoinVariantListIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.InvertIfIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.DestructureIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.addFmtStringArgument.AddFmtStringArgumentIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertToStructIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertToTupleIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddStructFieldsPatIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddStructFieldsLiteralIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddStructFieldsLiteralRecursiveIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractEnumVariantIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.IntroduceLocalVariableIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertUFCSToMethodCallIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertMethodCallToUFCSIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImportIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImportForPatternIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.SubstituteTypeAliasIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateFunctionIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertClosureToFunctionIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ConvertFunctionToClosureIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddRemainingArmsIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddWildcardArmIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.visibility.MakePubIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.visibility.MakePubCrateIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.visibility.MakePrivateIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ShareInPlaygroundIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ToggleFeatureIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateStructIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateTupleStructIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.createFromUsage.CreateEnumVariantIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddImplTraitIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ExtractStructFieldsIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.UnwrapConstructorIntention</className>
-            <category>Rust</category>
+            <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
 
@@ -1252,8 +1252,8 @@
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
 
-        <notificationGroup id="Rust Plugin" displayType="BALLOON"/>
-        <notificationGroup id="Rust Build Log" displayType="NONE"/>
+        <notificationGroup id="Rust Plugin" displayType="BALLOON" bundle="messages.RsBundle" key="notification.group.rust.plugin"/>
+        <notificationGroup id="Rust Build Log" displayType="NONE" key="notification.group.rust.plugin"/>
 
         <!-- Editor Tab Title Providers -->
 

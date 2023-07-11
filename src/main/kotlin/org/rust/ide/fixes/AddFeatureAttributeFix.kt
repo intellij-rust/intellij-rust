@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsElement
@@ -21,8 +22,8 @@ class AddFeatureAttributeFix(
     private val featureName: String,
     element: PsiElement
 ) : RsQuickFixBase<PsiElement>(element) {
-    override fun getFamilyName(): String = "Add feature attribute"
-    override fun getText(): String = "Add `$featureName` feature"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.add.feature.attribute")
+    override fun getText(): String = RsBundle.message("intention.name.add.feature", featureName)
 
     // TODO: Add intention preview
     override fun getFileModifierForPreview(target: PsiFile): FileModifier? = null

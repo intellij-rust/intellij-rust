@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.ide.newProject.RsPackageNameValidator
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.trimmedText
@@ -55,7 +57,7 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
     val crateName get() = name.trimmedText
 
     init {
-        title = "New Cargo Crate"
+        title = RsBundle.message("dialog.title.new.cargo.crate")
         init()
     }
 
@@ -66,8 +68,8 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
     }
 
     override fun createCenterPanel(): JComponent = panel {
-        row("Name") { cell(name) }
-        row("Type") { cell(typeCombobox) }
+        row(RsBundle.message("name")) { cell(name) }
+        row(RsBundle.message("type")) { cell(typeCombobox) }
     }
 
     override fun getPreferredFocusedComponent(): JComponent = name
@@ -77,10 +79,11 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
 
         val validationError = RsPackageNameValidator.validate(name, binary)
         validationError?.let {
-            return ValidationInfo(it, this.name)
+            @NlsSafe val error = it
+            return ValidationInfo(error, this.name)
         }
 
-        if (root.findChild(name) != null) return ValidationInfo("Directory $name already exists.", this.name)
+        if (root.findChild(name) != null) return ValidationInfo(RsBundle.message("dialog.message.directory.already.exists", name), this.name)
         return null
     }
 }

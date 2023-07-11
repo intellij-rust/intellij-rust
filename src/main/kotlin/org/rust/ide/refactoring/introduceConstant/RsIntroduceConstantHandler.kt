@@ -15,6 +15,7 @@ import com.intellij.psi.PsiParserFacade
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.rust.RsBundle
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
@@ -119,7 +120,7 @@ private fun replaceWithConstant(
             ?: error("Impossible because we just created a constant with a name"))
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        RsInPlaceVariableIntroducer(insertedConstant, editor, project, "Choose a constant name", replaced)
+        RsInPlaceVariableIntroducer(insertedConstant, editor, project, RsBundle.message("command.name.choose.constant.name"), replaced)
             .performInplaceRefactoring(linkedSetOf(name))
     }
 }

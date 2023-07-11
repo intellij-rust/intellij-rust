@@ -15,7 +15,9 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
@@ -32,7 +34,7 @@ import java.util.concurrent.CompletableFuture
 
 abstract class RsExecutableRunner(
     protected val executorId: String,
-    private val errorMessageTitle: String
+    @NlsContexts.DialogTitle private val errorMessageTitle: String
 ) : RsDefaultProgramRunnerBase() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration) return false
@@ -46,7 +48,7 @@ abstract class RsExecutableRunner(
     override fun execute(environment: ExecutionEnvironment) {
         val state = environment.state as CargoRunStateBase
         val project = environment.project
-        val host = project.computeWithCancelableProgress("Checking if toolchain is supported...") {
+        val host = project.computeWithCancelableProgress(RsBundle.message("progress.title.checking.if.toolchain.supported")) {
             state.rustVersion()?.host.orEmpty()
         }
         if (!checkToolchainConfigured(project)) return

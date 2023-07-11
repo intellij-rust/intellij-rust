@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.ScrollPaneFactory
@@ -24,7 +25,7 @@ interface RsMoveNodeInfo {
 
 class RsMoveMemberSelectionPanel(
     val project: Project,
-    title: String,
+    @NlsContexts.Separator title: String,
     nodesAll: List<RsMoveNodeInfo>,
     nodesSelected: List<RsMoveNodeInfo>
 ) : JPanel() {

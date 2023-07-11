@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.openapi.util.text.StringUtil
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsVisitor
@@ -52,8 +53,7 @@ class RsWrongGenericParametersNumberInspection : RsLocalInspectionTool() {
 
         val paramName = "$paramType ${StringUtil.pluralize("parameter", typeParameters.size)}"
         val superParamName = "$paramType ${StringUtil.pluralize("parameter", superTypeParameters.size)}"
-        val problemText = "$itemType `$itemName` has ${typeParameters.size} $paramName " +
-            "but its trait declaration has ${superTypeParameters.size} $superParamName"
+        val problemText = RsBundle.message("inspection.message.has.but.its.trait.declaration.has", itemType, itemName, typeParameters.size, paramName, superTypeParameters.size, superParamName)
         RsDiagnostic.WrongNumberOfGenericParameters(toHighlight, problemText).addToHolder(holder)
     }
 }

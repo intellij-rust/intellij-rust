@@ -7,12 +7,13 @@ package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.utils.BooleanExprSimplifier
 import org.rust.ide.utils.isPure
 import org.rust.lang.core.psi.RsExpr
 
 class SimplifyBooleanExpressionFix(expr: RsExpr) : RsQuickFixBase<RsExpr>(expr) {
-    override fun getText(): String = "Simplify boolean expression"
+    override fun getText(): String = RsBundle.message("intention.name.simplify.boolean.expression")
     override fun getFamilyName() = text
 
     override fun invoke(project: Project, editor: Editor?, element: RsExpr) {

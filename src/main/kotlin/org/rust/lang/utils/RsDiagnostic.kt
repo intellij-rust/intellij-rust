@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
@@ -78,6 +80,7 @@ sealed class RsDiagnostic(
         private val expectedTy: Ty,
         private val actualTy: Ty
     ) : RsDiagnostic(element, inspectionClass = RsTypeCheckInspection::class.java), TypeFoldable<TypeError> {
+        @Nls
         private val description: String? = if (expectedTy.hasTyInfer || actualTy.hasTyInfer) {
             // if types contain infer types, they will be replaced with more specific (e.g. `{integer}` with `i32`)
             // so we capture string representation of types right here
@@ -90,7 +93,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0308,
-                "mismatched types",
+                RsBundle.message("inspection.message.mismatched.types"),
                 description ?: expectedFound(element, expectedTy, actualTy),
                 fixes = buildList {
                     if (element is RsElement) {
@@ -114,7 +117,7 @@ sealed class RsDiagnostic(
                         val pat = parent.pat
                         if (pat is RsPatIdent &&
                             !actualTy.containsTyOfClass(TyUnknown::class.java, TyAnon::class.java)) {
-                            val text = "Change type of `${pat.patBinding.identifier.text ?: "?"}` to `${actualTy.renderInsertionSafe()}`"
+                            val text = RsBundle.message("intention.name.change.type.to2", pat.patBinding.identifier.text ?: "?", actualTy.renderInsertionSafe())
                             add(ConvertLetDeclTypeFix(parent, text, actualTy))
                         }
                     }
@@ -237,9 +240,10 @@ sealed class RsDiagnostic(
         private fun isTraitWithTySubstImplForActual(lookup: ImplLookup, trait: RsTraitItem?, ty: TyReference): Boolean =
             trait != null && lookup.canSelectWithDeref(TraitRef(actualTy, trait.withSubst(ty.referenced)))
 
+        @Nls
         private fun expectedFound(element: PsiElement, expectedTy: Ty, actualTy: Ty): String {
             val useQualifiedName = getConflictingNames(element, expectedTy, actualTy)
-            return "expected `${expectedTy.rendered(useQualifiedName)}`, found `${actualTy.rendered(useQualifiedName)}`"
+            return RsBundle.message("expected.0.found.1", expectedTy.rendered(useQualifiedName),actualTy.rendered(useQualifiedName))
         }
 
         /**
@@ -301,7 +305,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0614,
-            "type ${ty.rendered(getConflictingNames(element, ty))} cannot be dereferenced"
+            RsBundle.message("inspection.message.type.cannot.be.dereferenced", ty.rendered(getConflictingNames(element, ty)))
         )
     }
 
@@ -314,7 +318,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             errorCode,
-            "$itemType `${element.text}` is private",
+            RsBundle.message("inspection.message.private", itemType, element.text),
             fixes = listOfFixes(fix)
         )
     }
@@ -328,14 +332,14 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             if (element.parent is RsStructLiteralField) E0451 else E0616,
-            "Field `$fieldName` of struct `$structName` is private",
+            RsBundle.message("inspection.message.field.struct.private", fieldName, structName),
             fixes = listOfFixes(fix)
         )
     }
 
     class UnsafeError(
         element: RsExpr,
-        private val message: String
+        @InspectionMessage private val message: String
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
@@ -351,7 +355,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0121,
-            "The type placeholder `_` is not allowed within types on item signatures"
+            RsBundle.message("inspection.message.type.placeholder.not.allowed.within.types.on.item.signatures")
         )
     }
 
@@ -361,7 +365,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0120,
-            "Drop can be only implemented by structs and enums"
+            RsBundle.message("inspection.message.drop.can.be.only.implemented.by.structs.enums")
         )
     }
 
@@ -375,7 +379,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0424,
-                "The self keyword was used in a static method",
+                RsBundle.message("inspection.message.self.keyword.was.used.in.static.method"),
                 fixes = fixes.toQuickFixInfo()
             )
         }
@@ -387,7 +391,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0449,
-            "Unnecessary visibility qualifier",
+            RsBundle.message("inspection.message.unnecessary.visibility.qualifier"),
             fixes = listOfFixes(RemoveElementFix(element, "visibility qualifier"))
         )
     }
@@ -398,7 +402,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0198,
-            "Negative implementations are not unsafe"
+            RsBundle.message("inspection.message.negative.implementations.are.not.unsafe")
         )
     }
 
@@ -412,8 +416,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Implementing the trait `$traitName` is not unsafe"
+            return RsBundle.message("inspection.message.implementing.trait.not.unsafe", traitName)
         }
     }
 
@@ -428,8 +433,9 @@ sealed class RsDiagnostic(
             fixes = listOfFixes(AddUnsafeFix.create(element))
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "The trait `$traitName` requires an `unsafe impl` declaration"
+            return RsBundle.message("inspection.message.trait.requires.unsafe.impl.declaration", traitName)
         }
     }
 
@@ -440,7 +446,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0518,
-            "Attribute should be applied to function or closure",
+            RsBundle.message("inspection.message.attribute.should.be.applied.to.function.or.closure"),
             fixes = listOfFixes(RemoveAttrFix(attr))
         )
     }
@@ -455,8 +461,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Requires an `unsafe impl` declaration due to `#[$attrRequiringUnsafeImpl]` attribute"
+            return RsBundle.message("inspection.message.requires.unsafe.impl.declaration.due.to.attribute", attrRequiringUnsafeImpl)
         }
     }
 
@@ -479,13 +486,14 @@ sealed class RsDiagnostic(
                 else -> E0407
             }
 
+        @InspectionMessage
         private fun errorText(): String {
             val itemType = when (member) {
-                is RsTypeAlias -> "Type"
-                is RsConstant -> "Const"
-                else -> "Method"
+                is RsTypeAlias -> RsBundle.message("inspection.message.type2")
+                is RsConstant -> RsBundle.message("inspection.message.const2")
+                else -> RsBundle.message("inspection.message.method")
             }
-            return "$itemType `${member.name}` is not a member of trait `$traitName`"
+            return RsBundle.message("inspection.message.not.member.trait", itemType, member.name?:"", traitName)
         }
     }
 
@@ -507,13 +515,14 @@ sealed class RsDiagnostic(
                 else -> E0324
             }
 
+        @InspectionMessage
         private fun errorText(): String {
             val itemType = when (member) {
-                is RsTypeAlias -> "type"
-                is RsConstant -> "const"
-                else -> "method"
+                is RsTypeAlias -> RsBundle.message("inspection.message.type")
+                is RsConstant -> RsBundle.message("inspection.message.const")
+                else -> RsBundle.message("intention.name.method")
             }
-            return "item `${member.name}` is an associated $itemType, which doesn't match its trait `$traitName`"
+            return RsBundle.message("inspection.message.item.associated.which.doesn.t.match.its.trait", member.name?:"", itemType, traitName)
         }
     }
 
@@ -523,7 +532,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0184,
-            "Cannot implement both Copy and Drop"
+            RsBundle.message("inspection.message.cannot.implement.both.copy.drop")
         )
     }
 
@@ -556,8 +565,9 @@ sealed class RsDiagnostic(
             fixes = getFixes(fn, superFn)
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Method `${fn.name}` has a `${selfParameter.canonicalDecl}` declaration in the impl, but not in the trait"
+            return RsBundle.message("inspection.message.method.has.declaration.in.impl.but.not.in.trait", fn.name?:"", selfParameter.canonicalDecl)
         }
     }
 
@@ -574,8 +584,9 @@ sealed class RsDiagnostic(
             fixes = getFixes(superFn, fn)
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Method `${fn.name}` has a `${selfParameter.canonicalDecl}` declaration in the trait, but not in the impl"
+            return RsBundle.message("inspection.message.method.has.declaration.in.trait.but.not.in.impl", fn.name?:"",selfParameter.canonicalDecl)
         }
     }
 
@@ -589,8 +600,9 @@ sealed class RsDiagnostic(
             fixes = listOfFixes(ReplaceWithStdMemDropFix(element.parent)) // e.parent: fn's name -> RsMethodCall or RsCallExpr
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead"
+            return RsBundle.message("inspection.message.explicit.calls.to.drop.are.forbidden.use.std.mem.drop.instead")
         }
     }
 
@@ -607,8 +619,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Method `${fn.name}` has $paramsCount ${pluralize("parameter", paramsCount)} but the declaration in trait `$traitName` has $superParamsCount"
+            return RsBundle.message("inspection.message.method.has.but.declaration.in.trait.has", fn.name?:"", paramsCount, pluralize("parameter", paramsCount), traitName, superParamsCount)
         }
     }
 
@@ -616,7 +629,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0054,
-            "It is not allowed to cast to a bool.",
+            RsBundle.message("inspection.message.it.not.allowed.to.cast.to.bool"),
             fixes = listOfFixes(CompareWithZeroFix.createIfCompatible(castExpr))
         )
     }
@@ -626,18 +639,14 @@ sealed class RsDiagnostic(
             ERROR,
             E0013,
             when (constContext) {
-                is RsConstContextKind.Constant -> "Const `${constContext.psi.name.orEmpty()}` cannot refer to static " +
-                    "`${element.text}`"
+                is RsConstContextKind.Constant -> RsBundle.message("inspection.message.const.cannot.refer.to.static", constContext.psi.name.orEmpty(), element.text)
 
-                is RsConstContextKind.ConstFn -> "Constant function `${constContext.psi.name.orEmpty()}` cannot refer " +
-                    "to static `${element.text}`"
+                is RsConstContextKind.ConstFn -> RsBundle.message("inspection.message.constant.function.cannot.refer.to.static", constContext.psi.name.orEmpty(), element.text)
 
-                is RsConstContextKind.EnumVariantDiscriminant -> "Enum variant `${constContext.psi.name.orEmpty()}`'s " +
-                    "discriminant value cannot refer to static `${element.text}`"
+                is RsConstContextKind.EnumVariantDiscriminant -> RsBundle.message("inspection.message.enum.variant.s.discriminant.value.cannot.refer.to.static", constContext.psi.name.orEmpty(), element.text)
 
-                RsConstContextKind.ArraySize -> "Array size cannot refer to static `${element.text}`"
-                RsConstContextKind.ConstGenericArgument -> "Const generic argument cannot refer to static " +
-                    "`${element.text}`"
+                RsConstContextKind.ArraySize -> RsBundle.message("inspection.message.array.size.cannot.refer.to.static", element.text)
+                RsConstContextKind.ConstGenericArgument -> RsBundle.message("inspection.message.const.generic.argument.cannot.refer.to.static", element.text)
             }
         )
     }
@@ -657,11 +666,9 @@ sealed class RsDiagnostic(
             fixes = fixes,
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "This function takes${if (functionType.variadic) " at least" else ""}" +
-                " $expectedCount ${pluralize("parameter", expectedCount)}" +
-                " but $realCount ${pluralize("parameter", realCount)}" +
-                " ${if (realCount == 1) "was" else "were"} supplied"
+            return RsBundle.message("inspection.message.this.function.takes.choice.at.least.but.choice.was.were.supplied", if (functionType.variadic) 0 else 1, expectedCount, pluralize("parameter", expectedCount), realCount, pluralize("parameter", realCount), if (realCount == 1) 0 else 1)
         }
 
         enum class FunctionType(val variadic: Boolean, val errorCode: RsErrorCode) {
@@ -677,7 +684,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0069,
-            "`return;` in a function whose return type is not `()`"
+            RsBundle.message("inspection.message.return.in.function.whose.return.type.not")
         )
     }
 
@@ -688,7 +695,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0081,
-            "Discriminant value `$id` already exists"
+            RsBundle.message("inspection.message.discriminant.value.already.exists", id)
         )
     }
 
@@ -699,7 +706,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0084,
-            "Enum with no variants can't have `repr` attribute",
+            RsBundle.message("inspection.message.enum.with.no.variants.can.t.have.repr.attribute"),
             fixes = listOfFixes(RemoveAttrFix(attr))
         )
     }
@@ -714,8 +721,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Field `$fieldName` is already declared"
+            return RsBundle.message("inspection.message.field.already.declared", fieldName)
         }
     }
 
@@ -726,7 +734,7 @@ sealed class RsDiagnostic(
             override fun prepare() = PreparedAnnotation(
                 ERROR,
                 E0132,
-                "Functions with a `start` attribute must return `isize`"
+                RsBundle.message("inspection.message.functions.with.start.attribute.must.return.isize")
             )
         }
 
@@ -734,7 +742,7 @@ sealed class RsDiagnostic(
             override fun prepare() = PreparedAnnotation(
                 ERROR,
                 E0132,
-                "Start attribute can be placed only on functions"
+                RsBundle.message("inspection.message.start.attribute.can.be.placed.only.on.functions")
             )
         }
 
@@ -745,11 +753,13 @@ sealed class RsDiagnostic(
             override fun prepare() = PreparedAnnotation(
                 ERROR,
                 E0132,
-                "Functions with a `start` attribute must have " + when (num) {
+                RsBundle.message(
+                    "inspection.message.functions.with.start.attribute.must.have", when (num) {
                     0 -> "`isize` as first parameter"
                     1 -> "`*const *const u8` as second parameter"
                     else -> "the following signature: `fn(isize, *const *const u8) -> isize`"
                 }
+                )
             )
         }
     }
@@ -764,8 +774,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "`$lifetimeName` is a reserved lifetime name"
+            return RsBundle.message("inspection.message.reserved.lifetime.name", lifetimeName)
         }
     }
 
@@ -775,7 +786,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0267,
-            "`${element.text}` cannot be used in closures, only inside `loop` and `while` blocks"
+            RsBundle.message("inspection.message.cannot.be.used.in.closures.only.inside.loop.while.blocks", element.text)
         )
     }
 
@@ -785,7 +796,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0268,
-            "`${element.text}` may only be used inside `loop` and `while` blocks"
+            RsBundle.message("inspection.message.may.only.be.used.inside.loop.while.blocks", element.text)
         )
     }
 
@@ -799,8 +810,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Identifier `$fieldName` is bound more than once in this parameter list"
+            return RsBundle.message("inspection.message.identifier.bound.more.than.once.in.this.parameter.list", fieldName)
         }
     }
 
@@ -812,7 +824,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0416,
-                "Identifier `$name` is bound more than once in the same pattern"
+                RsBundle.message("inspection.message.identifier.bound.more.than.once.in.same.pattern", name)
             )
         }
     }
@@ -827,8 +839,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "The name `$genericParamName` is already used for a generic parameter in this item's generic parameters"
+            return RsBundle.message("inspection.message.name.already.used.for.generic.parameter.in.this.item.s.generic.parameters", genericParamName)
         }
     }
 
@@ -842,10 +855,11 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
             val itemKind = found.itemKindName
             val name = found.name
-            return "Expected trait, found $itemKind `$name`"
+            return RsBundle.message("inspection.message.expected.trait.found", itemKind, name?:"")
         }
     }
 
@@ -859,8 +873,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Duplicate definitions with name `$fieldName`"
+            return RsBundle.message("inspection.message.duplicate.definitions.with.name", fieldName)
         }
     }
 
@@ -894,8 +909,8 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             errorCode,
-            "The name `$itemName` is defined multiple times",
-            "`$itemName` must be defined only once in the $itemType namespace of this $scopeType"
+            RsBundle.message("inspection.message.name.defined.multiple.times", itemName),
+            RsBundle.message("tooltip.must.be.defined.only.once.in.namespace.this", itemName, itemType, scopeType)
         )
 
         companion object {
@@ -916,7 +931,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0322,
-            "Explicit impls for the `Sized` trait are not permitted"
+            RsBundle.message("inspection.message.explicit.impls.for.sized.trait.are.not.permitted")
         )
     }
 
@@ -926,7 +941,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0328,
-            "Explicit impls for the `Unsize` trait are not permitted"
+            RsBundle.message("inspection.message.explicit.impls.for.unsize.trait.are.not.permitted")
         )
     }
 
@@ -936,7 +951,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0379,
-            "Trait functions cannot be declared const"
+            RsBundle.message("inspection.message.trait.functions.cannot.be.declared.const")
         )
     }
 
@@ -949,8 +964,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Use of undeclared label `${element.text}`"
+            return RsBundle.message("inspection.message.use.undeclared.label", element.text)
         }
     }
 
@@ -963,8 +979,9 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Use of unreachable label `${element.text}`"
+            return RsBundle.message("inspection.message.use.unreachable.label", element.text)
         }
     }
 
@@ -981,8 +998,9 @@ sealed class RsDiagnostic(
             )
         }
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Use of undeclared lifetime name `${element.text}`"
+            return RsBundle.message("inspection.message.use.undeclared.lifetime.name", element.text)
         }
     }
 
@@ -999,8 +1017,9 @@ sealed class RsDiagnostic(
             fixes = listOfFixes(ImplementMembersFix(impl))
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Not all trait items implemented, missing: $missing"
+            return RsBundle.message("inspection.message.not.all.trait.items.implemented.missing", missing)
         }
     }
 
@@ -1014,14 +1033,15 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Can't find crate for `$crateName`"
+            return RsBundle.message("inspection.message.can.t.find.crate.for", crateName)
         }
     }
 
     class TraitIsNotImplemented(
         element: RsElement,
-        private val description: String,
+        @InspectionMessage private val description: String,
         private val fix: LocalQuickFix?,
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
@@ -1039,8 +1059,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0277,
-            header = "the trait bound `$ty: std::marker::Sized` is not satisfied",
-            description = "`$ty` does not have a constant size known at compile-time",
+            header = RsBundle.message("inspection.message.trait.bound.std.marker.sized.not.satisfied", ty),
+            description = RsBundle.message("tooltip.does.not.have.constant.size.known.at.compile.time", ty),
             fixes = listOfFixes(ConvertToReferenceFix(element), ConvertToBoxFix(element))
         )
     }
@@ -1056,8 +1076,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0277,
-            header = "the trait bound `$typeText: $missingTrait` is not satisfied",
-            description = "the trait `$missingTrait` is not implemented for `$typeText`",
+            header = RsBundle.message("inspection.message.trait.bound.not.satisfied", typeText, missingTrait),
+            description = RsBundle.message("tooltip.trait.not.implemented.for", missingTrait, typeText),
             fixes = listOfNotNull(fix)
         )
     }
@@ -1065,7 +1085,7 @@ sealed class RsDiagnostic(
     class ExperimentalFeature(
         element: PsiElement,
         endElement: PsiElement?,
-        private val message: String,
+        @InspectionMessage private val message: String,
         private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element, endElement) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
@@ -1079,7 +1099,7 @@ sealed class RsDiagnostic(
     class RemovedFeature(
         element: PsiElement,
         endElement: PsiElement?,
-        private val message: String,
+        @InspectionMessage private val message: String,
         private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element, endElement) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
@@ -1099,10 +1119,11 @@ sealed class RsDiagnostic(
             header = errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
             // TODO: support other cases
             return when (val elementType = element.elementType) {
-                RsElementTypes.CRATE -> "`crate` in paths can only be used in start position"
+                RsElementTypes.CRATE -> RsBundle.message("inspection.message.crate.in.paths.can.only.be.used.in.start.position")
                 else -> error("Unexpected element type: `$elementType`")
             }
         }
@@ -1114,7 +1135,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0106,
-            "Missing lifetime specifier"
+            RsBundle.message("inspection.message.missing.lifetime.specifier")
         )
     }
 
@@ -1129,14 +1150,15 @@ sealed class RsDiagnostic(
             errorText()
         )
 
+        @InspectionMessage
         private fun errorText(): String {
-            return "Wrong number of lifetime arguments: expected $expectedLifetimes, found $actualLifetimes"
+            return RsBundle.message("inspection.message.wrong.number.lifetime.arguments.expected.found", expectedLifetimes, actualLifetimes)
         }
     }
 
     class WrongNumberOfGenericArguments(
         element: PsiElement,
-        private val errorText: String,
+        @InspectionMessage private val errorText: String,
         private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation {
@@ -1151,7 +1173,7 @@ sealed class RsDiagnostic(
 
     class WrongOrderOfGenericArguments(
         element: PsiElement,
-        private val errorText: String,
+        @InspectionMessage private val errorText: String,
         private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
@@ -1162,7 +1184,7 @@ sealed class RsDiagnostic(
         )
     }
 
-    class WrongNumberOfGenericParameters(element: PsiElement, private val errorText: String) : RsDiagnostic(element) {
+    class WrongNumberOfGenericParameters(element: PsiElement, @InspectionMessage private val errorText: String) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
@@ -1178,7 +1200,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0118,
-            "Can impl only `struct`s, `enum`s, `union`s and trait objects"
+            RsBundle.message("inspection.message.can.impl.only.struct.s.enum.s.union.s.trait.objects")
         )
     }
 
@@ -1188,13 +1210,13 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0586,
-            "inclusive ranges must be bounded at the end (`..=b` or `a..=b`)"
+            RsBundle.message("inspection.message.inclusive.ranges.must.be.bounded.at.end.b.or.b")
         )
     }
 
     class InvalidReprAlign(
         element: PsiElement,
-        private val message: String,
+        @InspectionMessage private val message: String,
         private val fixes: List<LocalQuickFix> = emptyList()
     ): RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
@@ -1213,7 +1235,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0594,
-            "Cannot assign to $message",
+            RsBundle.message("inspection.message.cannot.assign.to", message),
             fixes = listOfFixes(fix)
         )
     }
@@ -1225,7 +1247,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0384,
-            "Cannot assign twice to immutable variable",
+            RsBundle.message("inspection.message.cannot.assign.twice.to.immutable.variable"),
             fixes = listOfFixes(fix)
         )
     }
@@ -1236,8 +1258,8 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0704,
-            "Incorrect visibility restriction",
-            "Visibility restriction with module path should start with `in` keyword",
+            RsBundle.message("inspection.message.incorrect.visibility.restriction"),
+            RsBundle.message("tooltip.visibility.restriction.with.module.path.should.start.with.in.keyword"),
             fixes = listOfFixes(FixVisRestriction(visRestriction))
         )
     }
@@ -1249,7 +1271,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0708,
-            "async non-move closures with parameters are currently not supported"
+            RsBundle.message("inspection.message.async.non.move.closures.with.parameters.are.currently.not.supported")
         )
     }
 
@@ -1257,7 +1279,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0742,
-            "Visibilities can only be restricted to ancestor modules",
+            RsBundle.message("inspection.message.visibilities.can.only.be.restricted.to.ancestor.modules"),
         )
     }
 
@@ -1267,7 +1289,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             UNKNOWN_SYMBOL,
             E0583,
-            "File not found for module `${modDecl.name}`",
+            RsBundle.message("inspection.message.file.not.found.for.module", modDecl.name ?: ""),
             fixes = AddModuleFileFix.createFixes(modDecl, expandModuleFirst = false).toQuickFixInfo()
         )
     }
@@ -1279,7 +1301,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0004,
-            "Match must be exhaustive",
+            RsBundle.message("inspection.message.match.must.be.exhaustive"),
             fixes = listOfFixes(
                 AddRemainingArmsFix(matchExpr, patterns).takeIf { patterns.isNotEmpty() },
                 AddWildcardArmFix(matchExpr).takeIf { matchExpr.arms.isNotEmpty() }
@@ -1291,13 +1313,13 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0618,
-            "Expected function, found `${element.text}`"
+            RsBundle.message("inspection.message.expected.function.found", element.text)
         )
     }
 
     class IncorrectlyDeclaredAlignRepresentationHint(
         element: PsiElement,
-        private val message: String,
+        @InspectionMessage private val message: String,
         private val fixes: List<LocalQuickFix> = emptyList()
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
@@ -1313,7 +1335,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0695,
-                "Unlabeled `${element.text}` inside of a labeled block"
+                RsBundle.message("inspection.message.unlabeled.inside.labeled.block", element.text)
             )
         }
     }
@@ -1322,7 +1344,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0732,
-            "`#[repr(inttype)]` must be specified"
+            RsBundle.message("inspection.message.repr.inttype.must.be.specified")
         )
     }
 
@@ -1333,7 +1355,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0741,
-            "$typeName doesn't derive both `PartialEq` and `Eq`"
+            RsBundle.message("inspection.message.doesn.t.derive.both.partialeq.eq", typeName)
         )
     }
 
@@ -1342,7 +1364,7 @@ sealed class RsDiagnostic(
             PreparedAnnotation(
                 ERROR,
                 E0562,
-                "`impl Trait` not allowed outside of function and inherent method return types",
+                RsBundle.message("inspection.message.impl.trait.not.allowed.outside.function.inherent.method.return.types"),
                 fixes = fixes.toQuickFixInfo()
             )
     }
@@ -1352,7 +1374,7 @@ sealed class RsDiagnostic(
             PreparedAnnotation(
                 ERROR,
                 E0667,
-                "`impl Trait` is not allowed in path parameters"
+                RsBundle.message("inspection.message.impl.trait.not.allowed.in.path.parameters")
             )
     }
 
@@ -1361,7 +1383,7 @@ sealed class RsDiagnostic(
             PreparedAnnotation(
                 ERROR,
                 E0666,
-                "nested `impl Trait` is not allowed"
+                RsBundle.message("inspection.message.nested.impl.trait.not.allowed")
             )
     }
 
@@ -1372,11 +1394,11 @@ sealed class RsDiagnostic(
         private val actualAmount: Int
     ) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
-            val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Tuple struct"
+            val itemType = if (declaration is RsEnumVariant) RsBundle.message("inspection.message.enum.variant") else RsBundle.message("inspection.message.tuple.struct")
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                "$itemType pattern does not correspond to its declaration: expected $expectedAmount ${pluralize("field", expectedAmount)}, found $actualAmount",
+                RsBundle.message("inspection.message.pattern.does.not.correspond.to.its.declaration.expected.found", itemType, expectedAmount, pluralize("field", expectedAmount), actualAmount),
                 fixes = listOfFixes(AddStructFieldsPatFix(element), AddPatRestFix(element))
             )
         }
@@ -1388,12 +1410,12 @@ sealed class RsDiagnostic(
         private val missingFields: List<RsFieldDecl>
     ) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
-            val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Struct"
+            val itemType = if (declaration is RsEnumVariant) RsBundle.message("inspection.message.enum.variant") else RsBundle.message("inspection.message.struct")
             val missingFieldNames = missingFields.joinToString(", ") { "`${it.name!!}`" }
             return PreparedAnnotation(
                 ERROR,
                 E0027,
-                "$itemType pattern does not mention ${pluralize("field", missingFields.size)} $missingFieldNames",
+                RsBundle.message("inspection.message.pattern.does.not.mention", itemType, pluralize("field", missingFields.size), missingFieldNames),
                 fixes = listOfFixes(AddStructFieldsPatFix(element), AddPatRestFix(element))
             )
         }
@@ -1404,7 +1426,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0026,
-                "Extra field found in the $kindName pattern: `${extraField.kind.fieldName}`"
+                RsBundle.message("inspection.message.extra.field.found.in.pattern", kindName, extraField.kind.fieldName)
             )
         }
     }
@@ -1417,7 +1439,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0025,
-                "Field `$name` bound multiple times in the pattern"
+                RsBundle.message("inspection.message.field.bound.multiple.times.in.pattern", name)
             )
         }
     }
@@ -1431,7 +1453,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                "Extra fields found in the tuple struct pattern: expected $expectedAmount, found $extraFieldsAmount"
+                RsBundle.message("inspection.message.extra.fields.found.in.tuple.struct.pattern.expected.found", expectedAmount, extraFieldsAmount)
             )
         }
     }
@@ -1441,7 +1463,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 null,
-                "Union patterns requires a field"
+                RsBundle.message("inspection.message.union.patterns.requires.field")
             )
         }
     }
@@ -1451,7 +1473,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 null,
-                "Union patterns should have exactly one field"
+                RsBundle.message("inspection.message.union.patterns.should.have.exactly.one.field")
             )
         }
     }
@@ -1461,7 +1483,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0601,
-                "`main` function not found in crate `$crateName`",
+                RsBundle.message("inspection.message.main.function.not.found.in.crate", crateName),
                 fixes = listOfFixes(AddMainFnFix(element))
             )
         }
@@ -1482,7 +1504,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0435,
-            "A non-constant value was used in a constant expression"
+            RsBundle.message("inspection.message.non.constant.value.was.used.in.constant.expression")
         )
     }
 
@@ -1490,7 +1512,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0015,
-            "Calls in constants are limited to constant functions, tuple structs and tuple variants"
+            RsBundle.message("inspection.message.calls.in.constants.are.limited.to.constant.functions.tuple.structs.tuple.variants")
         )
     }
 
@@ -1498,7 +1520,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0774,
-            "`derive` may only be applied to structs, enums and unions",
+            RsBundle.message("inspection.message.derive.may.only.be.applied.to.structs.enums.unions"),
             fixes = listOfFixes(RemoveAttrFix(element as RsAttr))
         )
     }
@@ -1507,14 +1529,14 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             null,
-            "Malformed `$attrName` attribute input: missing parentheses",
+            RsBundle.message("inspection.message.malformed.attribute.input.missing.parentheses", attrName),
             fixes = listOfFixes(AddAttrParenthesesFix(element as RsMetaItem, attrName))
         )
     }
 
     class ReprAttrUnsupportedItem(
         element: PsiElement,
-        private val errorText: String
+        @InspectionMessage private val errorText: String
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
@@ -1531,7 +1553,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0552,
-            "Unrecognized representation $reprName",
+            RsBundle.message("inspection.message.unrecognized.representation", reprName),
             fixes = listOfFixes(RemoveReprValueFix(element))
         )
     }
@@ -1544,7 +1566,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             if (exportedItem is RsMod) E0365 else E0364,
-            "`$name` is private, and cannot be re-exported",
+            RsBundle.message("inspection.message.private.cannot.be.re.exported", name),
             fixes = listOfFixes(MakePublicFix.createIfCompatible(exportedItem, exportedItem.name, false))
         )
     }
@@ -1553,7 +1575,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             null,
-            "Defaults for const parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions",
+            RsBundle.message("inspection.message.defaults.for.const.parameters.are.only.allowed.in.struct.enum.type.or.trait.definitions"),
         )
     }
 
@@ -1561,7 +1583,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0116,
-            "Cannot define inherent `impl` for a type outside of the crate where the type is defined"
+            RsBundle.message("inspection.message.cannot.define.inherent.impl.for.type.outside.crate.where.type.defined")
         )
     }
 
@@ -1569,7 +1591,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0117,
-            "Only traits defined in the current crate can be implemented for arbitrary types"
+            RsBundle.message("inspection.message.only.traits.defined.in.current.crate.can.be.implemented.for.arbitrary.types")
         )
     }
 
@@ -1580,7 +1602,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0536,
-            "Expected 1 cfg-pattern",
+            RsBundle.message("inspection.message.expected.cfg.pattern"),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1593,7 +1615,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0537,
-            "Invalid predicate `$name`",
+            RsBundle.message("inspection.message.invalid.predicate", name),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1605,8 +1627,8 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0703,
-            "Invalid ABI: found $abiName",
-            description = "valid ABIs: ${SUPPORTED_CALLING_CONVENTIONS.keys.joinToString(", ")}",
+            RsBundle.message("inspection.message.invalid.abi.found", abiName),
+            description = RsBundle.message("tooltip.valid.abis", SUPPORTED_CALLING_CONVENTIONS.keys.joinToString(", ")),
             fixes = createSuggestionFixes().toQuickFixInfo()
         )
 
@@ -1626,7 +1648,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0554,
-            "`#![feature]` may not be used on the $channelName release channel",
+            RsBundle.message("inspection.message.feature.may.not.be.used.on.release.channel", channelName),
             fixes = listOfFixes(quickFix)
         )
     }
@@ -1639,7 +1661,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0557,
-            "Feature `$featureName` has been removed",
+            RsBundle.message("inspection.message.feature.has.been.removed", featureName),
             fixes = listOfFixes(quickFix)
         )
     }
@@ -1648,7 +1670,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             null,
-            "Expressions must be enclosed in braces to be used as const generic arguments",
+            RsBundle.message("inspection.message.expressions.must.be.enclosed.in.braces.to.be.used.as.const.generic.arguments"),
             fixes = listOfFixes(EncloseExprInBracesFix(element as RsExpr))
         )
     }
@@ -1657,7 +1679,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             null,
-            "Lifetimes cannot use keyword names"
+            RsBundle.message("inspection.message.lifetimes.cannot.use.keyword.names")
         )
     }
 
@@ -1665,7 +1687,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             null,
-            "Invalid label name `$labelName`"
+            RsBundle.message("inspection.message.invalid.label.name", labelName)
         )
     }
 
@@ -1673,7 +1695,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0429,
-            "`self` imports are only allowed within a { } list",
+            RsBundle.message("inspection.message.self.imports.are.only.allowed.within.list"),
         )
     }
 
@@ -1681,7 +1703,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0430,
-            "The `self` import appears more than once in the list",
+            RsBundle.message("inspection.message.self.import.appears.more.than.once.in.list"),
         )
     }
 
@@ -1689,7 +1711,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0431,
-            "`self` import can only appear in an import list with a non-empty prefix",
+            RsBundle.message("inspection.message.self.import.can.only.appear.in.import.list.with.non.empty.prefix"),
         )
     }
 
@@ -1697,7 +1719,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0728,
-            "`await` is only allowed inside `async` functions and blocks",
+            RsBundle.message("inspection.message.await.only.allowed.inside.async.functions.blocks"),
             fixes = listOfFixes(fix)
         )
     }
@@ -1709,7 +1731,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0434,
-            "Can't capture dynamic environment in a fn item",
+            RsBundle.message("inspection.message.can.t.capture.dynamic.environment.in.fn.item"),
             fixes = listOfFixes(fix)
         )
     }
@@ -1718,7 +1740,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0733,
-            "Recursion in an `async fn` requires boxing",
+            RsBundle.message("inspection.message.recursion.in.async.fn.requires.boxing"),
             fixes = listOfFixes(fix)
         )
     }
@@ -1731,7 +1753,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0220,
-            "Associated type `$name` not found for `$trait`",
+            RsBundle.message("inspection.message.associated.type.not.found.for", name, trait),
             fixes = listOfFixes(RemoveAssocTypeBindingFix(element))
         )
     }
@@ -1740,10 +1762,11 @@ sealed class RsDiagnostic(
         element: RsElement,
         private val missingTypes: List<RsWrongAssocTypeArgumentsInspection.MissingAssocTypeBinding>
     ) : RsDiagnostic(element) {
+        @InspectionMessage
         private fun getText(): String {
-            val typeText = pluralize("type", missingTypes.size)
-            val missing = missingTypes.joinToString(", ") { "`${it.name}` (from trait `${it.trait}`)" }
-            return "The value of the associated $typeText $missing must be specified"
+            val typeText = pluralize(RsBundle.message("inspection.message.type"), missingTypes.size)
+            val missing = missingTypes.joinToString(", ") { RsBundle.message("inspection.message.from.trait", it.name, it.trait) }
+            return RsBundle.message("inspection.message.value.associated.must.be.specified", typeText, missing)
         }
 
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
@@ -1761,7 +1784,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0044,
-            "Foreign items may not have $kinds parameters",
+            RsBundle.message("inspection.message.foreign.items.may.not.have.parameters", kinds),
         )
     }
 
@@ -1771,7 +1794,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0130,
-            "Patterns aren't allowed in foreign function declarations",
+            RsBundle.message("inspection.message.patterns.aren.t.allowed.in.foreign.function.declarations"),
         )
     }
 
@@ -1781,7 +1804,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0642,
-            "Patterns aren't allowed in functions without bodies",
+            RsBundle.message("inspection.message.patterns.aren.t.allowed.in.functions.without.bodies"),
         )
     }
 
@@ -1792,7 +1815,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0561,
-            "Patterns aren't allowed in function pointer types"
+            RsBundle.message("inspection.message.patterns.aren.t.allowed.in.function.pointer.types")
         )
     }
 
@@ -1803,7 +1826,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0197,
-            "Inherent impls cannot be unsafe",
+            RsBundle.message("inspection.message.inherent.impls.cannot.be.unsafe"),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1815,7 +1838,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0131,
-            "`main` function is not allowed to have generic parameters",
+            RsBundle.message("inspection.message.main.function.not.allowed.to.have.generic.parameters"),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1826,7 +1849,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0203,
-            "Type parameter has more than one relaxed default bound, only one is supported"
+            RsBundle.message("inspection.message.type.parameter.has.more.than.one.relaxed.default.bound.only.one.supported")
         )
     }
 
@@ -1837,7 +1860,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0571,
-            "`break` with value from a `$kind` loop"
+            RsBundle.message("inspection.message.break.with.value.from.loop", kind)
         )
     }
 
@@ -1849,7 +1872,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0590,
-            "`$kind` with no label in the condition of a `while` loop",
+            RsBundle.message("inspection.message.with.no.label.in.condition.while.loop", kind),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1861,7 +1884,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0696,
-            "`continue` pointing to a labeled block",
+            RsBundle.message("inspection.message.continue.pointing.to.labeled.block"),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1873,7 +1896,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0224,
-            "At least one trait is required for an object type"
+            RsBundle.message("inspection.message.at.least.one.trait.required.for.object.type")
         )
     }
 
@@ -1883,7 +1906,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0206,
-            "The trait `Copy` may not be implemented for this type"
+            RsBundle.message("inspection.message.trait.copy.may.not.be.implemented.for.this.type")
         )
     }
 
@@ -1894,7 +1917,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0777,
-            "Expected path to a trait, found literal",
+            RsBundle.message("inspection.message.expected.path.to.trait.found.literal"),
             fixes = fixes.toQuickFixInfo()
         )
     }
@@ -1905,7 +1928,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0785,
-            "Cannot define inherent `impl` for a dyn auto trait"
+            RsBundle.message("inspection.message.cannot.define.inherent.impl.for.dyn.auto.trait")
         )
     }
 
@@ -1916,7 +1939,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0784,
-            "Union expressions should have exactly one field",
+            RsBundle.message("inspection.message.union.expressions.should.have.exactly.one.field"),
             fixes = fixes.toQuickFixInfo(),
         )
     }
@@ -1928,7 +1951,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0226,
-            "Only a single explicit lifetime bound is permitted",
+            RsBundle.message("inspection.message.only.single.explicit.lifetime.bound.permitted"),
             fixes = fixes.toQuickFixInfo(),
         )
     }
@@ -1940,7 +1963,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             null,
-            "`${element.text}` is reserved keyword",
+            RsBundle.message("inspection.message.reserved.keyword", element.text),
             fixes = fixes.toQuickFixInfo(),
         )
     }
@@ -1952,7 +1975,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0316,
-            "Nested quantification of lifetimes",
+            RsBundle.message("inspection.message.nested.quantification.lifetimes"),
             fixes = fixes.toQuickFixInfo(),
         )
     }
@@ -1964,7 +1987,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0183,
-            "Manual implementations of `$fnType` are experimental",
+            RsBundle.message("inspection.message.manual.implementations.are.experimental", fnType),
             fixes = listOfFixes(UNBOXED_CLOSURES.addFeatureFix(element))
         )
     }
@@ -1975,7 +1998,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0225,
-            "Only auto traits can be used as additional traits in a trait object"
+            RsBundle.message("inspection.message.only.auto.traits.can.be.used.as.additional.traits.in.trait.object")
         )
     }
 
@@ -1988,8 +2011,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             null,
-            "Wrong meta list delimiters",
-            description = "The delimiters should be `(` and `)`",
+            RsBundle.message("inspection.message.wrong.meta.list.delimiters"),
+            description = RsBundle.message("tooltip.delimiters.should.be"),
             fixes = listOfFixes(fix),
         )
     }
@@ -1997,12 +2020,12 @@ sealed class RsDiagnostic(
     class MalformedAttributeInput(
         element: PsiElement,
         private val name: String,
-        private val suggestions: String
+        @Tooltip private val suggestions: String
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             null,
-            "Malformed `${name}` attribute input",
+            RsBundle.message("inspection.message.malformed.attribute.input", name),
             description = suggestions,
         )
     }
@@ -2014,8 +2037,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             null,
-            "Suffixed literals are not allowed in attributes",
-            description = "Instead of using a suffixed literal (`1u8`, `1.0f32`, etc.), use an unsuffixed version (`1`, `\n" + "1.0`, etc.)",
+            RsBundle.message("inspection.message.suffixed.literals.are.not.allowed.in.attributes"),
+            description = RsBundle.message("tooltip.instead.using.suffixed.literal.1u8.0f32.etc.use.unsuffixed.version.etc"),
             fixes = listOfFixes(fix),
         )
     }
@@ -2028,8 +2051,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             WARN,
             null,
-            "Unused attribute",
-            description = if (isFutureWarning) "This was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!" else "",
+            RsBundle.message("inspection.message.unused.attribute"),
+            description = if (isFutureWarning) RsBundle.message("tooltip.this.was.previously.accepted.by.compiler.but.being.phased.out.it.will.become.hard.error.in.future.release") else "",
             fixes = listOfFixes(fix)
         )
     }
@@ -2042,7 +2065,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             null,
-            "Multiple '$name' attributes",
+            RsBundle.message("inspection.message.multiple.attributes", name),
             fixes = listOfFixes(fix),
         )
     }
@@ -2053,7 +2076,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0045,
-            "C-variadic function must have a compatible calling convention, like `C` or `cdecl`"
+            RsBundle.message("inspection.message.c.variadic.function.must.have.compatible.calling.convention.like.c.or.cdecl")
         )
     }
 
@@ -2064,7 +2087,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0538,
-            "Multiple '${itemName}' items",
+            RsBundle.message("inspection.message.multiple.items", itemName),
         )
     }
 
@@ -2075,7 +2098,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0541,
-            "Unknown meta item '${itemName}'",
+            RsBundle.message("inspection.message.unknown.meta.item", itemName),
         )
     }
 
@@ -2085,7 +2108,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0551,
-            "Incorrect meta item",
+            RsBundle.message("inspection.message.incorrect.meta.item"),
         )
     }
 
@@ -2096,7 +2119,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0382,
-            "Use of moved value",
+            RsBundle.message("inspection.message.use.moved.value"),
             fixes = listOfFixes(fix)
         )
     }
@@ -2108,7 +2131,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0381,
-            "Use of possibly uninitialized variable",
+            RsBundle.message("inspection.message.use.possibly.uninitialized.variable"),
             fixes = listOfFixes(fix)
         )
     }
@@ -2117,7 +2140,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0505,
-            "A value was moved out while it was still borrowed",
+            RsBundle.message("inspection.message.value.was.moved.out.while.it.was.still.borrowed"),
         )
     }
 
@@ -2129,8 +2152,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             severity,
             E0782,
-            "Trait objects must include the `dyn` keyword",
-            description = if (!element.isAtLeastEdition2021) "This is accepted in the current edition (Rust 2018) but is a hard error in Rust 2021!" else "",
+            RsBundle.message("inspection.message.trait.objects.must.include.dyn.keyword"),
+            description = if (!element.isAtLeastEdition2021) RsBundle.message("tooltip.this.accepted.in.current.edition.rust.but.hard.error.in.rust") else "",
             fixes = listOfFixes(fix)
         )
     }
@@ -2256,11 +2279,12 @@ private fun Severity.toHighlightSeverity(): HighlightSeverity = when (this) {
     ERROR, UNKNOWN_SYMBOL -> HighlightSeverity.ERROR
 }
 
-private fun simpleHeader(error: RsErrorCode?, description: String): String =
+@InspectionMessage
+private fun simpleHeader(error: RsErrorCode?, @InspectionMessage description: String): String =
     if (error == null) {
         description
     } else {
-        "$description [${error.code}]"
+        RsBundle.message("inspection.message.", description, error.code)
     }
 
 private fun htmlHeader(error: RsErrorCode?, description: String): String =

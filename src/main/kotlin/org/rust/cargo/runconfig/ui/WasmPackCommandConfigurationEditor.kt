@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.panel
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.util.WasmPackCommandCompletionProvider
@@ -22,7 +23,7 @@ class WasmPackCommandConfigurationEditor(project: Project)
     )
 
     override fun createEditor(): JComponent = panel {
-        row("Command:") {
+        row(RsBundle.message("command2")) {
             fullWidthCell(command)
         }
 

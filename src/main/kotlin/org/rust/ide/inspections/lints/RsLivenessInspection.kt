@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.RemoveParameterFix
 import org.rust.ide.fixes.RemoveVariableFix
@@ -79,11 +80,11 @@ class RsLivenessInspection : RsLintInspection() {
         val isSimplePat = binding.topLevelPattern is RsPatIdent
         val message = if (isSimplePat) {
             when (kind) {
-                Parameter -> "Parameter `$name` is never used"
-                Variable -> "Variable `$name` is never used"
+                Parameter -> RsBundle.message("inspection.message.parameter.never.used", name)
+                Variable -> RsBundle.message("inspection.message.variable.never.used", name)
             }
         } else {
-            "Binding `$name` is never used"
+            RsBundle.message("inspection.message.binding.never.used", name)
         }
 
         val fixes = mutableListOf<LocalQuickFix>(RenameFix(binding, "_$name"))

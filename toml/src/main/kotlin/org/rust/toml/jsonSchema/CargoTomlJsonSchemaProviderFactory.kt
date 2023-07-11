@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
+import org.rust.RsBundle
 
 class CargoTomlJsonSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware {
     override fun getProviders(project: Project): List<JsonSchemaFileProvider> {
@@ -24,7 +25,7 @@ class CargoTomlJsonSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware 
 // because it suggests unexpected completion variants like `{}`
 class CargoTomlJsonSchemaFileProvider : JsonSchemaFileProvider {
     override fun isAvailable(file: VirtualFile): Boolean = file.name == "Cargo.toml"
-    override fun getName(): String = "Cargo.toml schema"
+    override fun getName(): String = RsBundle.message("cargo.toml.schema")
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
     override fun isUserVisible(): Boolean = false
     override fun getSchemaFile(): VirtualFile? {

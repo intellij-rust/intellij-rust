@@ -5,8 +5,10 @@
 
 package org.rust.ide.fixes
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.ext.UnaryOperator
@@ -21,14 +23,15 @@ import org.rust.lang.core.psi.ext.operatorType
 class RemoveRefFix private constructor(
     expr: RsUnaryExpr
 ) : RsQuickFixBase<RsUnaryExpr>(expr) {
+    @IntentionName
     private val _text: String = when (val operatorType = expr.operatorType) {
-        UnaryOperator.REF -> "Remove &"
-        UnaryOperator.REF_MUT -> "Remove &mut"
+        UnaryOperator.REF -> RsBundle.message("intention.name.remove", "&")
+        UnaryOperator.REF_MUT -> RsBundle.message("intention.name.remove", "&mut")
         else -> error("Illegal operator type: expected REF or REF_MUT, got $operatorType")
     }
 
     override fun getText() = _text
-    override fun getFamilyName() = "Remove reference"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.remove.reference")
 
     override fun invoke(project: Project, editor: Editor?, element: RsUnaryExpr) {
         element.expr?.let { element.replace(it) }

@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.intentions.AddImportForPatternIntention.Context
 import org.rust.lang.core.psi.RsMatchArm
@@ -19,8 +20,8 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAncestorOf
 
 class AddImportForPatternIntention : RsElementBaseIntentionAction<Context>() {
-    override fun getText(): String = "Import"
-    override fun getFamilyName(): String = "Add import for path in pattern"
+    override fun getText(): String = RsBundle.message("intention.name.import")
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.add.import.for.path.in.pattern")
 
     override fun startInWriteAction(): Boolean = false
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiFile = currentFile

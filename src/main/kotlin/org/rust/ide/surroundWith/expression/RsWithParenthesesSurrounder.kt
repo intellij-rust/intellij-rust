@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.RsPsiFactory
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.ext.endOffset
 class RsWithParenthesesSurrounder : RsExpressionSurrounderBase<RsParenExpr>() {
 
     @Suppress("DialogTitleCapitalization")
-    override fun getTemplateDescription(): String = "(expr)"
+    override fun getTemplateDescription(): String = RsBundle.message("action.expr.text")
 
     override fun createTemplate(project: Project): RsParenExpr =
         RsPsiFactory(project).createExpression("(a)") as RsParenExpr

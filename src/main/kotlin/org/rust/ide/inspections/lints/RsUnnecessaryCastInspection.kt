@@ -7,6 +7,7 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.fixes.RemoveCastFix
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -89,7 +90,7 @@ class RsUnnecessaryCastInspection : RsLintInspection() {
                 val castAs = castExpr.`as` ?: return
                 holder.registerLintProblem(
                     castExpr,
-                    "Unnecessary cast",
+                    RsBundle.message("inspection.message.unnecessary.cast"),
                     TextRange(castAs.textRange.startOffset - castExpr.textRange.startOffset, castExpr.typeReference.textRange.endOffset - castExpr.textRange.startOffset),
                     RsLintHighlightingType.UNUSED_SYMBOL,
                     fixes = listOf(RemoveCastFix(castExpr))

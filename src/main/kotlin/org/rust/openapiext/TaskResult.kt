@@ -5,7 +5,10 @@
 
 package org.rust.openapiext
 
+import com.intellij.build.events.BuildEventsNls
+import org.jetbrains.annotations.Nls
+
 sealed class TaskResult<out T> {
     class Ok<out T>(val value: T) : TaskResult<T>()
-    class Err<out T>(val reason: String, val message: String? = null) : TaskResult<T>()
+    class Err<out T>(@Nls val reason: String, @BuildEventsNls.Message val message: String? = null) : TaskResult<T>()
 }

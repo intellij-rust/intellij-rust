@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
+import org.rust.RsBundle
 import org.rust.ide.fixes.ChangeToFieldShorthandFix
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsStructLiteralField
@@ -18,7 +19,7 @@ class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
             if (!(init is RsPathExpr && init.text == o.identifier?.text)) return
             holder.registerProblem(
                 o,
-                "Expression can be simplified",
+                RsBundle.message("inspection.message.expression.can.be.simplified"),
                 ProblemHighlightType.WEAK_WARNING,
                 ChangeToFieldShorthandFix(o)
             )

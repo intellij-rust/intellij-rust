@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.formatter.FormatterUtil
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.project.settings.toolchain
@@ -65,7 +66,7 @@ class RustfmtFormattingService : AsyncDocumentFormattingService() {
                                 if (exitCode == 0) {
                                     request.onTextReady(output.stdout)
                                 } else {
-                                    request.onError("Rustfmt", output.stderr)
+                                    request.onError(RsBundle.message("notification.title.rustfmt"), output.stderr)
                                 }
                             }
                         })

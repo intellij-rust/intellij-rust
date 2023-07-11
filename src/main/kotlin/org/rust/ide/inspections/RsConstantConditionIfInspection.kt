@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.prevLeaf
+import org.rust.RsBundle
 import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
@@ -34,7 +35,7 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
                     SimplifyFix(condition, conditionValue)
                 }
 
-                holder.registerProblem(condition, "Condition is always ''$conditionValue''", fix)
+                holder.registerProblem(condition, RsBundle.message("inspection.message.condition.always", conditionValue), fix)
             }
         }
 
@@ -48,7 +49,7 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
             ifRange
         }
         return SubstituteTextFix.delete(
-            "Delete expression",
+            RsBundle.message("intention.name.delete.expression"),
             ifExpr.containingFile,
             deletionRange
         )
@@ -59,7 +60,7 @@ private class SimplifyFix(
     element: RsCondition,
     private val conditionValue: Boolean,
 ) : RsQuickFixBase<RsCondition>(element) {
-    override fun getText(): String = "Simplify expression"
+    override fun getText(): String = RsBundle.message("intention.name.simplify.expression")
     override fun getFamilyName(): String = name
 
     override fun invoke(project: Project, editor: Editor?, element: RsCondition) {

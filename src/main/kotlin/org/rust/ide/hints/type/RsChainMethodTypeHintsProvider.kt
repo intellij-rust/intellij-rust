@@ -19,6 +19,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.annotations.Nls
 import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.findExpansionElements
@@ -150,6 +151,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
     companion object {
         val KEY: SettingsKey<Settings> = SettingsKey("chain-method.hints")
 
+        @Nls
         private fun String.escapeIfNeeded(): String = if (isNewSettingsEnabled) escaped else this
 
         private val isNewSettingsEnabled: Boolean

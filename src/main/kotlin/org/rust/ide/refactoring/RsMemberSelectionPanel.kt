@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.refactoring.classMembers.MemberInfoBase
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable
@@ -17,7 +18,7 @@ import org.rust.lang.core.psi.ext.RsItemElement
 import javax.swing.Icon
 
 class RsMemberSelectionPanel(
-    title: String,
+    @NlsContexts.Separator title: String,
     memberInfo: List<RsMemberInfo>
 ) : MemberSelectionPanelBase<
     RsItemElement,

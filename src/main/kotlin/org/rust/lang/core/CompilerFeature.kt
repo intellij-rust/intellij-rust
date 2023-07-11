@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.util.text.SemVer
+import org.rust.RsBundle
 import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.fixes.AddFeatureAttributeFix
@@ -92,8 +93,8 @@ class CompilerFeature(
         holder,
         element,
         null,
-        "$presentableFeatureName is experimental",
-        "$presentableFeatureName has been removed",
+        RsBundle.message("inspection.message.experimental", presentableFeatureName),
+        RsBundle.message("inspection.message.has.been.removed2", presentableFeatureName),
         experimentalFixes,
         removedFixes
     )
@@ -108,8 +109,8 @@ class CompilerFeature(
         holder,
         element,
         null,
-        "$presentableFeatureName is experimental",
-        "$presentableFeatureName has been removed",
+        RsBundle.message("inspection.message.experimental", presentableFeatureName),
+        RsBundle.message("inspection.message.has.been.removed2", presentableFeatureName),
         experimentalFixes,
         removedFixes
     )
@@ -118,8 +119,8 @@ class CompilerFeature(
         holder: AnnotationHolder,
         startElement: PsiElement,
         endElement: PsiElement?,
-        experimentalMessage: String,
-        removedMessage: String = "`$name` has been removed",
+        @InspectionMessage experimentalMessage: String,
+        @InspectionMessage removedMessage: String = RsBundle.message("inspection.message.has.been.removed", name),
         experimentalFixes: List<LocalQuickFix> = emptyList(),
         removedFixes: List<LocalQuickFix> = emptyList()
     ) = getDiagnostic(
@@ -136,7 +137,7 @@ class CompilerFeature(
         startElement: PsiElement,
         endElement: PsiElement?,
         @InspectionMessage experimentalMessage: String,
-        @InspectionMessage removedMessage: String = "`$name` has been removed",
+        @InspectionMessage removedMessage: String = RsBundle.message("inspection.message.has.been.removed", name),
         experimentalFixes: List<LocalQuickFix> = emptyList(),
         removedFixes: List<LocalQuickFix> = emptyList()
     ) = getDiagnostic(
@@ -153,8 +154,8 @@ class CompilerFeature(
     private fun getDiagnostic(
         startElement: PsiElement,
         endElement: PsiElement?,
-        experimentalMessage: String,
-        removedMessage: String,
+        @InspectionMessage experimentalMessage: String,
+        @InspectionMessage removedMessage: String,
         experimentalFixes: List<LocalQuickFix>,
         removedFixes: List<LocalQuickFix>
     ) = when (availability(startElement)) {

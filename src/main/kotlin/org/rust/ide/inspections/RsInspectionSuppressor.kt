@@ -12,6 +12,7 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -38,7 +39,7 @@ class RsInspectionSuppressor : InspectionSuppressor {
     private class SuppressInspectionFix(id: String) : AbstractBatchSuppressByNoInspectionCommentFix(id, id == SuppressionUtil.ALL) {
 
         init {
-            text = if (id == SuppressionUtil.ALL) "Suppress all inspections for item" else "Suppress for item with comment"
+            text = if (id == SuppressionUtil.ALL) RsBundle.message("intention.name.suppress.all.inspections.for.item") else RsBundle.message("intention.name.suppress.for.item.with.comment")
         }
 
         override fun getContainer(context: PsiElement?): PsiElement? {

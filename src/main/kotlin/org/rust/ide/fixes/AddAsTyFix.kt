@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.core.psi.RsExpr
@@ -22,8 +23,8 @@ class AddAsTyFix(
     @SafeFieldForPreview
     private val ty: Ty,
 ) : RsQuickFixBase<RsExpr>(expr) {
-    override fun getFamilyName(): String = "Add safe cast"
-    override fun getText(): String = "Add safe cast to ${ty.shortPresentableText}"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.add.safe.cast")
+    override fun getText(): String = RsBundle.message("intention.name.add.safe.cast.to", ty.shortPresentableText)
 
     override fun invoke(project: Project, editor: Editor?, element: RsExpr) {
         element.replace(RsPsiFactory(project).createCastExpr(element, ty.renderInsertionSafe(element)))

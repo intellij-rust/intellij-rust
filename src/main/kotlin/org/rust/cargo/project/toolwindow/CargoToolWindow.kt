@@ -24,6 +24,8 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
@@ -121,17 +123,8 @@ class CargoToolWindow(
         }
     }
 
-    private fun html(body: String): String = """
-        <html>
-        <head>
-            ${UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())}
-            <style>body {background: #${ColorUtil.toHex(UIUtil.getTreeBackground())}; text-align: center; }</style>
-        </head>
-        <body>
-            $body
-        </body>
-        </html>
-    """
+    @Nls
+    private fun html(body: String): String = RsBundle.message("html.head.0.style.body.background.1.text.align.center.style.head.body.2.body.html", UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()), ColorUtil.toHex(UIUtil.getTreeBackground()), body)
 
     companion object {
         private val LOG: Logger = logger<CargoToolWindow>()

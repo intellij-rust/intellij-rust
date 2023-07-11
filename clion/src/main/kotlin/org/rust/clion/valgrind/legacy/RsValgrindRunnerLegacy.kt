@@ -6,13 +6,16 @@
 package org.rust.clion.valgrind.legacy
 
 import com.intellij.execution.configurations.RunProfile
+import com.intellij.openapi.util.NlsContexts
 import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 import org.rust.clion.valgrind.RsValgrindConfigurationExtension
 
-private const val ERROR_MESSAGE_TITLE: String = "Unable to run Valgrind"
+@NlsContexts.DialogTitle
+private val ERROR_MESSAGE_TITLE: String = RsBundle.message("dialog.title.unable.to.run.valgrind")
 
 /**
  * This runner is used if [isBuildToolWindowAvailable] is false.

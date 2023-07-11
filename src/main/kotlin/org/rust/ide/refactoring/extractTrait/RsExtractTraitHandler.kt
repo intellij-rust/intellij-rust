@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
@@ -93,7 +94,7 @@ class RsExtractTraitDialog(
 
     override fun createCenterPanel(): JComponent = panel {
         row {
-            label("Trait name:")
+            label(RsBundle.message("label.trait.name"))
         }
         row {
             fullWidthCell(traitNameField).focused()
@@ -101,7 +102,7 @@ class RsExtractTraitDialog(
 
         row {
             resizableRow()
-            val members = RsMemberSelectionPanel("Members to form trait", memberInfos)
+            val members = RsMemberSelectionPanel(RsBundle.message("separator.members.to.form.trait"), memberInfos)
             members.minimumSize = JBUI.size(0, 200)
             members.table.addMemberInfoChangeListener { validateButtons() }
             fullWidthCell(members)
@@ -142,7 +143,7 @@ class RsExtractTraitDialog(
 @TestOnly
 val RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED: Key<Boolean> = Key("RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED")
 
-private fun Project.showRefactoringError(message: String?, helpId: String? = null) {
+private fun Project.showRefactoringError(@NlsContexts.DialogMessage message: String?, helpId: String? = null) {
     val title = RefactoringBundle.message("error.title")
     CommonRefactoringUtil.showErrorMessage(title, message, helpId, this)
 }

@@ -12,6 +12,7 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
@@ -46,14 +47,14 @@ class ImplsGutterIconBuilder(private val elementName: String, icon: Icon) :
     }
 
     private class ImplsNavigationGutterIconRenderer(
-        popupTitle: String?,
-        emptyText: String?,
+        @NlsContexts.PopupTitle popupTitle: String?,
+        @NlsContexts.PopupContent emptyText: String?,
         pointers: NotNullLazyValue<out List<SmartPsiElementPointer<*>>>,
         cellRenderer: Computable<out PsiElementListCellRenderer<*>>,
         private val elementName: String,
         private val alignment: Alignment,
         private val icon: Icon,
-        private val tooltipText: String?,
+        @NlsContexts.Tooltip private val tooltipText: String?,
         private val empty: Boolean
     ) : NavigationGutterIconRenderer(popupTitle, emptyText, cellRenderer, pointers, /* computeTargetsInBackground = */ !isUnitTestMode) {
         override fun isNavigateAction(): Boolean = !empty

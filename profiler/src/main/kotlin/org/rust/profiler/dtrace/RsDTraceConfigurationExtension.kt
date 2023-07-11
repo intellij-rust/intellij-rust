@@ -22,6 +22,7 @@ import com.intellij.profiler.*
 import com.intellij.profiler.clion.DTraceProfilerConfigurable
 import com.intellij.profiler.clion.NativeTargetProcess
 import com.intellij.profiler.clion.dtrace.DTraceProfilerSettings
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -46,7 +47,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
         validateDTraceSettings(configuration.project)
         val starterPath = profilerStarterPath()
-        if (!starterPath.exists()) throw ExecutionException("Internal error: Can't find process starter")
+        if (!starterPath.exists()) throw ExecutionException(RsBundle.message("dialog.message.internal.error.can.t.find.process.starter"))
         cmdLine.withEnvironment(DYLD_INSERT_LIBRARIES, starterPath.absolutePath)
     }
 
@@ -59,7 +60,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
 
         val targetProcess = (handler as? BaseProcessHandler<*>)?.process
-            ?: throw ExecutionException("Profiler connection error: can't detect target process id")
+            ?: throw ExecutionException(RsBundle.message("dialog.message.profiler.connection.error.can.t.detect.target.process.id"))
         val namedProcess = NativeTargetProcess(OSProcessUtil.getProcessID(targetProcess), configuration.name)
         val project = configuration.project
         @Suppress("UnstableApiUsage")

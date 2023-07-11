@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.EditDistance
+import org.rust.RsBundle
 
 /**
  * Changes the text of some element to the suggested name using the provided function.
@@ -20,8 +21,8 @@ class NameSuggestionFix<T : PsiElement>(
     @SafeFieldForPreview
     private val elementFactory: (name: String) -> T
 ): RsQuickFixBase<T>(element) {
-    override fun getFamilyName(): String = "Change name of element"
-    override fun getText(): String = "Change to `$newName`"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.change.name.element")
+    override fun getText(): String = RsBundle.message("intention.name.change.to", newName)
 
     override fun invoke(project: Project, editor: Editor?, element: T) {
         val newElement = elementFactory(newName)

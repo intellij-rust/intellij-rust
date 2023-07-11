@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros.errors
 
 import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.openapiext.RsPathManager
@@ -50,52 +51,43 @@ sealed class GetMacroExpansionError {
     // Failed to expand the macro because ...
     @Nls
     fun toUserViewableMessage(): String = when (this) {
-        MacroExpansionIsDisabled -> "macro expansion is disabled in project settings"
-        MacroExpansionEngineIsNotReady -> "macro expansion engine is not ready"
-        IncludingFileNotFound -> "including file is not found"
-        FileIncludedIntoMultiplePlaces -> "including file included in multiple places; " +
-            "IntelliJ-Rust supports only inclusion into one place"
-        OldEngineStd -> "the old macro expansion engine can't expand macros in Rust stdlib"
-        MemExpAttrMacro -> "the old macro expansion engine can't expand an attribute or derive macro"
-        is MemExpParsingError -> "can't parse `$expansionText` as `$context`"
-        CfgDisabled -> "the macro call is conditionally disabled with a `#[cfg()]` attribute"
-        MacroCallSyntax -> "there is an error in the macro call syntax"
-        MacroDefSyntax -> "there is an error in the macro definition syntax"
-        Skipped -> "expansion of this procedural macro is skipped by IntelliJ-Rust"
-        Unresolved -> "the macro is not resolved"
-        NoProcMacroArtifact -> "the procedural macro is not compiled successfully"
-        is UnmatchedProcMacroKind -> "`$defKind` proc macro can't be called as `$callKind`"
+        MacroExpansionIsDisabled -> RsBundle.message("macro.expansion.is.disabled.in.project.settings")
+        MacroExpansionEngineIsNotReady -> RsBundle.message("macro.expansion.engine.is.not.ready")
+        IncludingFileNotFound -> RsBundle.message("including.file.is.not.found")
+        FileIncludedIntoMultiplePlaces -> RsBundle.message("including.file.included.in.multiple.places.intellij.rust.supports.only.inclusion.into.one.place")
+        OldEngineStd -> RsBundle.message("the.old.macro.expansion.engine.can.t.expand.macros.in.rust.stdlib")
+        MemExpAttrMacro -> RsBundle.message("the.old.macro.expansion.engine.can.t.expand.an.attribute.or.derive.macro")
+        is MemExpParsingError -> RsBundle.message("can.t.parse.0.as.1", expansionText, context)
+        CfgDisabled -> RsBundle.message("the.macro.call.is.conditionally.disabled.with.a.cfg.attribute")
+        MacroCallSyntax -> RsBundle.message("there.is.an.error.in.the.macro.call.syntax")
+        MacroDefSyntax -> RsBundle.message("there.is.an.error.in.the.macro.definition.syntax")
+        Skipped -> RsBundle.message("expansion.of.this.procedural.macro.is.skipped.by.intellij.rust")
+        Unresolved -> RsBundle.message("the.macro.is.not.resolved")
+        NoProcMacroArtifact -> RsBundle.message("the.procedural.macro.is.not.compiled.successfully")
+        is UnmatchedProcMacroKind -> RsBundle.message("0.proc.macro.can.t.be.called.as.1", defKind, callKind)
         is ExpansionError -> when (e) {
-            BuiltinMacroExpansionError -> "built-in macro expansion is not supported"
-            DeclMacroExpansionError.DefSyntax -> "there is an error in the macro definition syntax"
-            DeclMacroExpansionError.TooLargeExpansion -> "the macro expansion is too large"
-            is DeclMacroExpansionError.Matching -> "can't match the macro call body against the " +
-                "macro definition pattern(s)"
-            is ProcMacroExpansionError.ServerSideError -> "a procedural macro error occurred:\n${e.message}"
-            is ProcMacroExpansionError.Timeout -> "procedural macro expansion timeout exceeded (${e.timeout} ms)"
-            is ProcMacroExpansionError.UnsupportedExpanderVersion -> "IntelliJ Rust can't expand procedural macros using " +
-                "your Rust toolchain version. It looks like the version is too recent. " +
-                "Consider downgrading your Rust toolchain to a previous version or try to update IntelliJ Rust plugin. " +
-                "(unsupported macro expander version ${e.version})"
-            is ProcMacroExpansionError.ProcessAborted -> "the procedural macro expander process unexpectedly exited " +
-                "with code ${e.exitCode}"
-            is ProcMacroExpansionError.IOExceptionThrown -> "an exception thrown during communicating with proc " +
-                "macro expansion server; see logs for more details"
-            ProcMacroExpansionError.CantRunExpander -> "error occurred during `${RsPathManager.INTELLIJ_RUST_NATIVE_HELPER}` " +
-                "process creation; see logs for more details"
-            ProcMacroExpansionError.ExecutableNotFound -> "`${RsPathManager.INTELLIJ_RUST_NATIVE_HELPER}` executable is not found; " +
-                "(maybe it's not provided for your platform by IntelliJ-Rust)"
-            ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> "procedural macro expansion is not enabled"
+            BuiltinMacroExpansionError -> RsBundle.message("built.in.macro.expansion.is.not.supported")
+            DeclMacroExpansionError.DefSyntax -> RsBundle.message("there.is.an.error.in.the.macro.definition.syntax")
+            DeclMacroExpansionError.TooLargeExpansion -> RsBundle.message("the.macro.expansion.is.too.large")
+            is DeclMacroExpansionError.Matching -> RsBundle.message("can.t.match.the.macro.call.body.against.the.macro.definition.pattern.s")
+            is ProcMacroExpansionError.ServerSideError -> RsBundle.message("a.procedural.macro.error.occurred.0", e.message)
+            is ProcMacroExpansionError.Timeout -> RsBundle.message("procedural.macro.expansion.timeout.exceeded.0.ms", e.timeout)
+            is ProcMacroExpansionError.UnsupportedExpanderVersion -> RsBundle.message("intellij.rust.can.t.expand.procedural.macros.using.your.rust.toolchain.version.it.looks.like.the.version.is.too.recent.consider.downgrading.your.rust.toolchain.to.a.previous.version.or.try.to.update.intellij.rust.plugin.unsupported.macro.expander.version.0", e.version)
+            is ProcMacroExpansionError.ProcessAborted -> RsBundle.message("the.procedural.macro.expander.process.unexpectedly.exited.with.code.0", e.exitCode)
+            is ProcMacroExpansionError.IOExceptionThrown -> RsBundle.message("an.exception.thrown.during.communicating.with.proc.macro.expansion.server.see.logs.for.more.details")
+            ProcMacroExpansionError.CantRunExpander -> RsBundle.message("error.occurred.during.0.process.creation.see.logs.for.more.details", RsPathManager.INTELLIJ_RUST_NATIVE_HELPER)
+            ProcMacroExpansionError.ExecutableNotFound -> RsBundle.message("0.executable.is.not.found.maybe.it.s.not.provided.for.your.platform.by.intellij.rust", RsPathManager.INTELLIJ_RUST_NATIVE_HELPER)
+            ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> RsBundle.message("procedural.macro.expansion.is.not.enabled")
         }
-        ModDataNotFound -> "internal error: can't find ModData for containing mod of the macro call"
-        InconsistentExpansionExpandedFrom -> "internal error: `macro.expansion.expandedFrom != macro`; " +
-            "maybe the macro invocation is inside a module that conflicts with another module name?"
-        ModDataNotFound -> "can't find ModData for containing mod of the macro call"
-        TooDeepExpansion -> "recursion limit reached"
-        NoMacroIndex -> "can't find macro index of the macro call"
-        ExpansionNameNotFound -> "internal error: expansion name not found"
-        ExpansionFileNotFound -> "the macro is not yet expanded"
-        InconsistentExpansionCacheAndVfs -> "internal error: expansion file not found, but cache has valid expansion"
+
+        ModDataNotFound -> RsBundle.message("internal.error.can.t.find.moddata.for.containing.mod.of.the.macro.call")
+        InconsistentExpansionExpandedFrom -> RsBundle.message("internal.error.macro.expansion.expandedfrom.macro.maybe.the.macro.invocation.is.inside.a.module.that.conflicts.with.another.module.name")
+        ModDataNotFound -> RsBundle.message("can.t.find.moddata.for.containing.mod.of.the.macro.call")
+        TooDeepExpansion -> RsBundle.message("recursion.limit.reached")
+        NoMacroIndex -> RsBundle.message("can.t.find.macro.index.of.the.macro.call")
+        ExpansionNameNotFound -> RsBundle.message("internal.error.expansion.name.not.found")
+        ExpansionFileNotFound -> RsBundle.message("the.macro.is.not.yet.expanded")
+        InconsistentExpansionCacheAndVfs -> RsBundle.message("internal.error.expansion.file.not.found.but.cache.has.valid.expansion")
     }
 
     override fun toString(): String = "${GetMacroExpansionError::class.simpleName}.${javaClass.simpleName}"

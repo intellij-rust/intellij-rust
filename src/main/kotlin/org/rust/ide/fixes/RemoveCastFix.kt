@@ -5,15 +5,18 @@
 
 package org.rust.ide.fixes
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsCastExpr
 
 open class RemoveCastFix(
     element: RsCastExpr
 ) : RsQuickFixBase<RsCastExpr>(element) {
-    private val fixText: String = "Remove `as ${element.typeReference.text}`"
-    override fun getFamilyName(): String = "Remove unnecessary cast"
+    @IntentionName
+    private val fixText: String = RsBundle.message("intention.name.remove.as", element.typeReference.text)
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.remove.unnecessary.cast")
     override fun getText(): String = fixText
     override fun invoke(project: Project, editor: Editor?, element: RsCastExpr) {
         element.replace(element.expr)

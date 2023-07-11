@@ -29,6 +29,8 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.ui.JBUI
 import org.apache.commons.lang.StringEscapeUtils
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.ide.docs.signature
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
@@ -48,6 +50,7 @@ class RsMoveTopLevelItemsDialog(
     private val sourceMod: RsMod
 ) : RefactoringDialog(project, false) {
 
+    @Nls
     private val sourceFilePath: String = sourceMod.containingFile.virtualFile.path
     private val sourceFileField: JBTextField = JBTextField(sourceFilePath).apply { isEnabled = false }
     private val targetFileChooser: TextFieldWithBrowseButton = createTargetFileChooser(project)
@@ -62,12 +65,12 @@ class RsMoveTopLevelItemsDialog(
     init {
         check(!isUnitTestMode)
         super.init()
-        title = "Move Module Items"
+        title = RsBundle.message("dialog.title.move.module.items")
         validateButtons()
     }
 
     private fun createTargetFileChooser(project: Project): TextFieldWithBrowseButton {
-        return pathToRsFileTextField(disposable, "Choose Destination File", project, ::validateButtons)
+        return pathToRsFileTextField(disposable, RsBundle.message("dialog.title.choose.destination.file"), project, ::validateButtons)
             .also {
                 it.text = sourceFilePath
                 it.textField.caretPosition = sourceFilePath.removeSuffix(".rs").length
@@ -95,16 +98,16 @@ class RsMoveTopLevelItemsDialog(
             }
             .filter { it.member in itemsToMove }
 
-        return RsMoveMemberSelectionPanel(project, "Items to move", nodesAll, nodesSelected)
+        return RsMoveMemberSelectionPanel(project, RsBundle.message("separator.items.to.move"), nodesAll, nodesSelected)
             .also { it.tree.setInclusionListener { validateButtons() } }
     }
 
     override fun createCenterPanel(): JComponent {
         return panel {
-            row("From:") {
+            row(RsBundle.message("from")) {
                 fullWidthCell(sourceFileField)
             }
-            row("To:") {
+            row(RsBundle.message("to")) {
                 fullWidthCell(targetFileChooser).focused()
             }
             row {
@@ -170,18 +173,18 @@ class RsMoveTopLevelItemsDialog(
             return if (targetFile != null) {
                 targetFile.toPsiFile(project) as? RsMod
                     ?: run {
-                        project.showErrorMessage("Target file must be a Rust file")
+                        project.showErrorMessage(RsBundle.message("dialog.message.target.file.must.be.rust.file"))
                         null
                     }
             } else {
                 try {
                     createNewRustFile(targetFilePath, project, crateRoot, this)
                         ?: run {
-                            project.showErrorMessage("Can't create new Rust file or attach it to module tree")
+                            project.showErrorMessage(RsBundle.message("dialog.message.can.t.create.new.rust.file.or.attach.it.to.module.tree"))
                             null
                         }
                 } catch (e: Exception) {
-                    project.showErrorMessage("Error during creating new Rust file: ${e.message}")
+                    project.showErrorMessage(RsBundle.message("dialog.message.error.during.creating.new.rust.file", e.message?:""))
                     null
                 }
             }
@@ -197,7 +200,7 @@ class RsMoveTopLevelItemsDialog(
 class RsMoveMemberInfo(val member: RsItemElement) : RsMoveNodeInfo {
     override fun render(renderer: ColoredTreeCellRenderer) {
         val description = if (member is RsModItem) {
-            "mod ${member.modName}"
+            RsBundle.message("mod.0", member.modName?:"")
         } else {
             val descriptionHTML = buildString { member.signature(this) }
             val description = StringEscapeUtils.unescapeHtml(StringUtil.removeHtmlTags(descriptionHTML))
@@ -218,21 +221,21 @@ class RsMoveItemAndImplsInfo(
     override fun render(renderer: ColoredTreeCellRenderer) {
         val name = item.name
         val keyword = when (item) {
-            is RsStructItem -> "struct"
-            is RsEnumItem -> "enum"
-            is RsTypeAlias -> "type"
-            is RsTraitItem -> "trait"
+            is RsStructItem -> RsBundle.message("struct")
+            is RsEnumItem -> RsBundle.message("enum")
+            is RsTypeAlias -> RsBundle.message("type2")
+            is RsTraitItem -> RsBundle.message("trait")
             else -> null
         }
         if (name == null || keyword == null) {
-            renderer.append("item and impls", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            renderer.append(RsBundle.message("item.and.impls"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
             return
         }
 
         // "$keyword $name and impls"
         renderer.append("$keyword ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
         renderer.append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        renderer.append(" and impls", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        renderer.append(RsBundle.message("and.impls"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
 
     override val children: List<RsMoveMemberInfo> =

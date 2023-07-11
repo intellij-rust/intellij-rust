@@ -6,6 +6,7 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -67,7 +68,7 @@ private class FixAddExpect(anchor: RsExpr) : RsQuickFixBase<RsExpr>(anchor) {
     }
 }
 
-private class InspectionResult(val description: String, val fixes: List<LocalQuickFix>)
+private class InspectionResult(@InspectionMessage val description: String, val fixes: List<LocalQuickFix>)
 
 private fun inspectAndProposeFixes(expr: RsExpr): InspectionResult? {
     val mustUseAttrName = "must_use"

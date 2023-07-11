@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DOTDOT
@@ -61,19 +62,19 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
 class JoinParameterListIntention : JoinListIntentionBase<RsValueParameterList, RsValueParameter>(
     RsValueParameterList::class.java,
     RsValueParameter::class.java,
-    "Put parameters on one line"
+    RsBundle.message("intention.name.put.parameters.on.one.line")
 )
 
 class JoinArgumentListIntention : JoinListIntentionBase<RsValueArgumentList, RsExpr>(
     RsValueArgumentList::class.java,
     RsExpr::class.java,
-    "Put arguments on one line"
+    RsBundle.message("intention.name.put.arguments.on.one.line")
 )
 
 class JoinFieldListIntention : JoinListIntentionBase<RsBlockFields, RsNamedFieldDecl>(
     RsBlockFields::class.java,
     RsNamedFieldDecl::class.java,
-    "Put fields on one line",
+    RsBundle.message("intention.name.put.fields.on.one.line"),
     prefix = " ",
     suffix = " "
 )
@@ -81,7 +82,7 @@ class JoinFieldListIntention : JoinListIntentionBase<RsBlockFields, RsNamedField
 class JoinLiteralFieldListIntention : JoinListIntentionBase<RsStructLiteralBody, RsStructLiteralField>(
     RsStructLiteralBody::class.java,
     RsStructLiteralField::class.java,
-    "Put fields on one line",
+    RsBundle.message("intention.name.put.fields.on.one.line"),
     prefix = " ",
     suffix = " "
 ) {
@@ -98,7 +99,7 @@ class JoinLiteralFieldListIntention : JoinListIntentionBase<RsStructLiteralBody,
 class JoinVariantListIntention : JoinListIntentionBase<RsEnumBody, RsEnumVariant>(
     RsEnumBody::class.java,
     RsEnumVariant::class.java,
-    "Put variants on one line",
+    RsBundle.message("intention.name.put.variants.on.one.line"),
     prefix = " ",
     suffix = " "
 )

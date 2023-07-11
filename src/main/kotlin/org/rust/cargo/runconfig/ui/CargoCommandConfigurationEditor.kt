@@ -24,6 +24,7 @@ import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.text.nullize
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -62,7 +63,7 @@ class CargoCommandConfigurationEditor(project: Project)
             .sortedBy { it.index }
             .forEach { addItem(it) }
     }
-    private val channelLabel = Label("C&hannel:")
+    private val channelLabel = Label(RsBundle.message("label.channel"))
     private val channel = ComboBox<RustChannel>().apply {
         RustChannel.values()
             .sortedBy { it.index }
@@ -98,17 +99,17 @@ class CargoCommandConfigurationEditor(project: Project)
     }
 
     private val environmentVariables = EnvironmentVariablesComponent()
-    private val requiredFeatures = CheckBox("Implicitly add required features if possible", true)
-    private val allFeatures = CheckBox("Use all features in tests", false)
+    private val requiredFeatures = CheckBox(RsBundle.message("checkbox.implicitly.add.required.features.if.possible"), true)
+    private val allFeatures = CheckBox(RsBundle.message("checkbox.use.all.features.in.tests"), false)
     private val withSudo = CheckBox(
-        if (SystemInfo.isWindows) "Run with Administrator privileges" else "Run with root privileges",
+        if (SystemInfo.isWindows) RsBundle.message("checkbox.run.with.administrator.privileges") else RsBundle.message("checkbox.run.with.root.privileges"),
         false
     ).apply {
         // TODO: remove when `com.intellij.execution.process.ElevationService` supports error stream redirection
         // https://github.com/intellij-rust/intellij-rust/issues/7320
         isEnabled = isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)
     }
-    private val buildOnRemoteTarget = CheckBox("Build on remote target", true)
+    private val buildOnRemoteTarget = CheckBox(RsBundle.message("checkbox.build.on.remote.target"), true)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         super.resetEditorFrom(configuration)
@@ -151,13 +152,13 @@ class CargoCommandConfigurationEditor(project: Project)
 
         val toolchain = project.toolchain
         if (toolchain is RsWslToolchain && isRemoteTarget) {
-            throw ConfigurationException("Run targets cannot be used alongside with WSL toolchain")
+            throw ConfigurationException(RsBundle.message("dialog.message.run.targets.cannot.be.used.alongside.with.wsl.toolchain"))
         }
 
         val rustupAvailable = toolchain?.isRustupAvailable ?: false
         channel.isEnabled = rustupAvailable || configChannel != RustChannel.DEFAULT
         if (!rustupAvailable && configChannel != RustChannel.DEFAULT) {
-            throw ConfigurationException("Channel cannot be set explicitly because rustup is not available")
+            throw ConfigurationException(RsBundle.message("dialog.message.channel.cannot.be.set.explicitly.because.rustup.not.available"))
         }
 
         configuration.isRedirectInput = isRedirectInput.isSelected
@@ -167,7 +168,7 @@ class CargoCommandConfigurationEditor(project: Project)
     }
 
     override fun createEditor(): JComponent = panel {
-        row("&Command:") {
+        row(RsBundle.message("command")) {
             fullWidthCell(command)
                 .resizableColumn()
             channelLabel.labelFor = channel
@@ -196,7 +197,7 @@ class CargoCommandConfigurationEditor(project: Project)
             cell(isRedirectInput)
             fullWidthCell(redirectInput)
         }
-        row("Back&trace:") {
+        row(RsBundle.message("backtrace")) {
             cell(backtraceMode)
         }
     }.also { panel = it }

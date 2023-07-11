@@ -5,8 +5,10 @@
 
 package org.rust.ide.fixes
 
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.intentions.visibility.ChangeVisibilityIntention
 import org.rust.lang.core.psi.ext.RsVisibilityOwner
 
@@ -15,8 +17,9 @@ class MakePublicFix private constructor(
     elementName: String?,
     private val withinOneCrate: Boolean
 ) : RsQuickFixBase<RsVisibilityOwner>(element) {
-    private val _text = "Make `$elementName` public"
-    override fun getFamilyName(): String = "Make public"
+    @IntentionName
+    private val _text = RsBundle.message("intention.name.make.public", elementName?:"")
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.make.public")
     override fun getText(): String = _text
 
     override fun invoke(project: Project, editor: Editor?, element: RsVisibilityOwner) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
 import org.rust.cargo.project.settings.rustSettings
@@ -188,8 +189,8 @@ private fun discoverToolchain(project: Project) {
             project.rustSettings.modify { it.toolchain = toolchain }
         }
 
-        val tool = if (toolchain.isRustupAvailable) "rustup" else "Cargo at ${toolchain.presentableLocation}"
-        project.showBalloon("Using $tool", NotificationType.INFORMATION)
+        val tool = if (toolchain.isRustupAvailable) RsBundle.message("notification.content.rustup") else RsBundle.message("notification.content.cargo.at", toolchain.presentableLocation)
+        project.showBalloon(RsBundle.message("notification.content.using", tool), NotificationType.INFORMATION)
         project.cargoProjects.discoverAndRefresh()
     }
 }

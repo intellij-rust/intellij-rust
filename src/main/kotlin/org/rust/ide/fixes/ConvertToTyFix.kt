@@ -5,6 +5,7 @@
 
 package org.rust.ide.fixes
 
+import org.rust.RsBundle
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.ty.Ty
@@ -18,6 +19,6 @@ abstract class ConvertToTyFix(
     constructor(expr: RsExpr, ty: Ty, convertSubject: String) :
         this(expr, ty.render(), convertSubject)
 
-    override fun getFamilyName(): String = "Convert to type"
-    override fun getText(): String = "Convert to $tyName using $convertSubject"
+    override fun getFamilyName(): String = RsBundle.message("intention.family.name.convert.to.type")
+    override fun getText(): String = RsBundle.message("intention.name.convert.to.using", tyName, convertSubject)
 }

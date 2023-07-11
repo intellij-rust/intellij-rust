@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsPatStruct
 import org.rust.lang.core.psi.RsPatTupleStruct
@@ -16,7 +17,7 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class AddPatRestFix(element: PsiElement) : RsQuickFixBase<PsiElement>(element) {
-    override fun getText() = "Add '..'"
+    override fun getText() = RsBundle.message("intention.name.add")
 
     override fun getFamilyName() = text
 

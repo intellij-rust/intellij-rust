@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.checkMatch
 
+import org.rust.RsBundle
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
@@ -14,7 +15,7 @@ import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
 class RsNonExhaustiveMatchInspection : RsLocalInspectionTool() {
-    override fun getDisplayName(): String = "Non-exhaustive match"
+    override fun getDisplayName(): String = RsBundle.message("non.exhaustive.match")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitMatchExpr(matchExpr: RsMatchExpr) {

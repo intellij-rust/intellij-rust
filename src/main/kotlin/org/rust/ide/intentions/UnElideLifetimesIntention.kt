@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.intentions.UnElideLifetimesIntention.LifetimeContext
 import org.rust.ide.intentions.UnElideLifetimesIntention.PotentialLifetimeRef
 import org.rust.lang.core.psi.*
@@ -22,7 +23,7 @@ import org.rust.openapiext.moveCaretToOffset
 import org.rust.openapiext.setSelection
 
 class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>() {
-    override fun getText() = "Un-elide lifetimes"
+    override fun getText() = RsBundle.message("intention.name.un.elide.lifetimes")
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): LifetimeContext? {

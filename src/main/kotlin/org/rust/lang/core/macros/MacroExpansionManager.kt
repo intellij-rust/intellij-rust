@@ -39,6 +39,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.RsTask
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -512,7 +513,7 @@ private class MacroExpansionServiceImplInner(
     }
 
     private fun cleanMacrosDirectoryAndStorage() {
-        submitTask(object : Task.Backgroundable(project, "Cleaning outdated macros", false), RsTask {
+        submitTask(object : Task.Backgroundable(project, RsBundle.message("progress.title.cleaning.outdated.macros"), false), RsTask {
             override fun run(indicator: ProgressIndicator) {
                 if (!isUnitTestMode) checkReadAccessNotAllowed()
                 val vfs = MacroExpansionFileSystem.getInstance()

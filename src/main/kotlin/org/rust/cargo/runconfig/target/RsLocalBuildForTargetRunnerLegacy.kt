@@ -7,17 +7,16 @@ package org.rust.cargo.runconfig.target
 
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 
-private const val ERROR_MESSAGE_TITLE: String = "Unable to build"
-
 /**
  * This runner is used for remote targets if [isBuildToolWindowAvailable] is false.
  */
-class RsLocalBuildForTargetRunnerLegacy : RsAsyncRunner(DefaultRunExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
+class RsLocalBuildForTargetRunnerLegacy : RsAsyncRunner(DefaultRunExecutor.EXECUTOR_ID, RsBundle.message("dialog.title.unable.to.build")) {
     override fun getRunnerId(): String = RUNNER_ID
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {

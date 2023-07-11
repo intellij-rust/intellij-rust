@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix.notNullElements
+import org.rust.RsBundle
 import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
 import org.rust.ide.fixes.AddMutableFix
 import org.rust.ide.fixes.DeriveCopyFix
@@ -88,27 +89,27 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
     private fun registerProblem(holder: RsProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
         if (expr.isPhysical && nameExpr.isPhysical) {
             val fix = AddMutableFix.createIfCompatible(nameExpr)
-            holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", *notNullElements(fix))
+            holder.registerProblem(expr, RsBundle.message("inspection.message.cannot.borrow.immutable.local.variable.as.mutable", nameExpr.text), *notNullElements(fix))
         }
     }
 
     private fun registerUseOfMovedValueProblem(holder: RsProblemsHolder, use: RsElement) {
         if (use.isPhysical) {
             val fix = DeriveCopyFix.createIfCompatible(use)
-            holder.registerProblem(use, "Use of moved value", *notNullElements(fix))
+            holder.registerProblem(use, RsBundle.message("inspection.message.use.moved.value"), *notNullElements(fix))
         }
     }
 
     private fun registerMoveProblem(holder: RsProblemsHolder, element: RsElement) {
         if (element.isPhysical) {
-            holder.registerProblem(element, "Cannot move")
+            holder.registerProblem(element, RsBundle.message("inspection.message.cannot.move"))
         }
     }
 
     private fun registerUseOfUninitializedVariableProblem(holder: RsProblemsHolder, use: RsElement) {
         if (use.isPhysical) {
             val fix = InitializeWithDefaultValueFix.createIfCompatible(use)
-            holder.registerProblem(use, "Use of possibly uninitialized variable", *notNullElements(fix))
+            holder.registerProblem(use, RsBundle.message("inspection.message.use.possibly.uninitialized.variable"), *notNullElements(fix))
         }
     }
 

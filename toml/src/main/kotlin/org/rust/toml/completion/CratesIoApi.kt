@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.ide.notifications.showBalloon
 import org.rust.ide.utils.USER_AGENT
 import org.rust.openapiext.isUnitTestMode
@@ -67,10 +68,10 @@ private fun <T> requestCratesIo(context: PsiElement, path: String, cls: Class<T>
             Gson().fromJson(response, cls)
         }
     } catch (e: IOException) {
-        context.project.showBalloon("Could not reach crates.io", NotificationType.WARNING)
+        context.project.showBalloon(RsBundle.message("notification.content.could.not.reach.crates.io"), NotificationType.WARNING)
         null
     } catch (e: JsonSyntaxException) {
-        context.project.showBalloon("Bad answer from crates.io", NotificationType.WARNING)
+        context.project.showBalloon(RsBundle.message("notification.content.bad.answer.from.crates.io"), NotificationType.WARNING)
         null
     }
 }

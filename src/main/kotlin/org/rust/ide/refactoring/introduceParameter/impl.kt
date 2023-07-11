@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.rust.RsBundle
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
@@ -25,7 +26,7 @@ fun extractExpression(editor: Editor, expr: RsExpr) {
     val enclosingFunctions = findEnclosingFunctions(expr)
     when (enclosingFunctions.size) {
         0 -> {
-            val message = "No suitable function to extract parameter found."
+            val message = RsBundle.message("dialog.message.no.suitable.function.to.extract.parameter.found")
             val title = RefactoringBundle.message("introduce.parameter.title")
             val helpId = "refactoring.extractParameter"
             CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)
@@ -95,7 +96,7 @@ private class ParamIntroducer(
 
             if (newParameter != null) {
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-                RsInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter")
+                RsInPlaceVariableIntroducer(newParameter, editor, project, RsBundle.message("command.name.choose.parameter"))
                     .performInplaceRefactoring(suggestedNames.all)
             }
         }

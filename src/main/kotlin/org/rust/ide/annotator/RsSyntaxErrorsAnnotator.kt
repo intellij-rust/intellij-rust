@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.text.SemVer
+import org.rust.RsBundle
 import org.rust.cargo.util.parseSemVer
 import org.rust.ide.fixes.*
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_KEYWORDS
@@ -149,7 +150,7 @@ private fun checkItemOrMacro(item: RsElement, itemName: String, highlightElement
         val parent = item.context
         val owner = if (parent is RsMembers) parent.context else parent
         if (owner is RsItemElement && (owner is RsForeignModItem || owner is RsTraitOrImpl)) {
-            holder.newAnnotation(HighlightSeverity.ERROR, "$itemName are not allowed inside ${owner.article} ${owner.itemKindName}")
+            holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.are.not.allowed.inside", itemName, owner.article, owner.itemKindName))
                 .range(highlightElement).create()
         }
     }
@@ -163,7 +164,7 @@ private fun denyDefaultKeyword(item: RsElement, holder: AnnotationHolder, itemNa
     deny(
         item.node.findChildByType(RsElementTypes.DEFAULT)?.psi,
         holder,
-        "$itemName cannot have the `default` qualifier"
+        RsBundle.message("inspection.message.cannot.have.default.qualifier11", itemName)
     )
 }
 
@@ -185,38 +186,38 @@ private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
     }
     when (fn.owner) {
         is RsAbstractableOwner.Free -> {
-            require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
-            deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
+            require(fn.block, holder, RsBundle.message("inspection.message.must.have.body2", fn.title), fn.lastChild)
+            deny(fn.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier10", fn.title))
         }
         is RsAbstractableOwner.Trait -> {
-            deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
-            deny(fn.vis, holder, "${fn.title} cannot have the `pub` qualifier")
+            deny(fn.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier9", fn.title))
+            deny(fn.vis, holder, RsBundle.message("inspection.message.cannot.have.pub.qualifier2", fn.title))
             fn.const?.let { RsDiagnostic.ConstTraitFnError(it).addToHolder(holder) }
         }
         is RsAbstractableOwner.Impl -> {
-            require(fn.block, holder, "${fn.title} must have a body", fn.lastChild)
+            require(fn.block, holder, RsBundle.message("inspection.message.must.have.body", fn.title), fn.lastChild)
             if (fn.default != null) {
-                deny(fn.vis, holder, "Default ${fn.title.firstLower} cannot have the `pub` qualifier")
+                deny(fn.vis, holder, RsBundle.message("inspection.message.default.cannot.have.pub.qualifier", fn.title.firstLower))
             }
         }
         is RsAbstractableOwner.Foreign -> {
-            deny(fn.default, holder, "${fn.title} cannot have the `default` qualifier")
-            deny(fn.block, holder, "${fn.title} cannot have a body")
-            deny(fn.const, holder, "${fn.title} cannot have the `const` qualifier")
-            deny(fn.unsafe, holder, "${fn.title} cannot have the `unsafe` qualifier")
-            deny(fn.externAbi, holder, "${fn.title} cannot have an extern ABI")
+            deny(fn.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier8", fn.title))
+            deny(fn.block, holder, RsBundle.message("inspection.message.cannot.have.body2", fn.title))
+            deny(fn.const, holder, RsBundle.message("inspection.message.cannot.have.const.qualifier", fn.title))
+            deny(fn.unsafe, holder, RsBundle.message("inspection.message.cannot.have.unsafe.qualifier", fn.title))
+            deny(fn.externAbi, holder, RsBundle.message("inspection.message.cannot.have.extern.abi", fn.title))
         }
     }
 }
 
 private fun checkStructItem(holder: AnnotationHolder, struct: RsStructItem) {
     if (struct.kind == RsStructKind.UNION && struct.tupleFields != null) {
-        deny(struct.tupleFields, holder, "Union cannot be tuple-like")
+        deny(struct.tupleFields, holder, RsBundle.message("inspection.message.union.cannot.be.tuple.like"))
     }
 }
 
 private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
-    val title = "Type `${ta.identifier.text}`"
+    val title = RsBundle.message("inspection.message.type.0", ta.identifier.text)
 
     val eq = ta.eq
     val whereClauseBeforeEq = ta.whereClauseList.firstOrNull()?.takeIf { eq != null && it.startOffset < eq.startOffset }
@@ -224,31 +225,31 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
 
     when (val owner = ta.owner) {
         is RsAbstractableOwner.Free -> {
-            deny(ta.default, holder, "$title cannot have the `default` qualifier")
-            deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
-            require(ta.typeReference, holder, "$title should have a body`", ta)
-            deny(whereClauseAfterEq, holder, "$title cannot have `where` clause after the type")
+            deny(ta.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier7", title))
+            deny(ta.typeParamBounds, holder, RsBundle.message("inspection.message.bounds.on.have.no.effect3", title))
+            require(ta.typeReference, holder, RsBundle.message("inspection.message.should.have.body2", title), ta)
+            deny(whereClauseAfterEq, holder, RsBundle.message("inspection.message.cannot.have.where.clause.after.type", title))
         }
         is RsAbstractableOwner.Trait -> {
-            deny(ta.default, holder, "$title cannot have the `default` qualifier")
+            deny(ta.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier6", title))
         }
         is RsAbstractableOwner.Impl -> {
             if (owner.isInherent) {
-                deny(ta.default, holder, "$title cannot have the `default` qualifier")
+                deny(ta.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier5", title))
             }
-            deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
-            require(ta.typeReference, holder, "$title should have a body", ta)
+            deny(ta.typeParamBounds, holder, RsBundle.message("inspection.message.bounds.on.have.no.effect2", title))
+            require(ta.typeReference, holder, RsBundle.message("inspection.message.should.have.body", title), ta)
 
             val version = ta.cargoProject?.rustcInfo?.version?.semver ?: return
             if (version < DEPRECATED_WHERE_CLAUSE_LOCATION_VERSION) return
-            deny(whereClauseBeforeEq, holder, "$title cannot have `where` clause before the type", severity = HighlightSeverity.WEAK_WARNING)
+            deny(whereClauseBeforeEq, holder, RsBundle.message("inspection.message.cannot.have.where.clause.before.type", title), severity = HighlightSeverity.WEAK_WARNING)
         }
         RsAbstractableOwner.Foreign -> {
-            deny(ta.default, holder, "$title cannot have the `default` qualifier")
-            deny(ta.typeParameterList, holder, "$title cannot have generic parameters")
-            deny(ta.whereClause, holder, "$title cannot have `where` clause")
-            deny(ta.typeParamBounds, holder, "Bounds on $title have no effect")
-            deny(ta.typeReference, holder, "$title cannot have a body", ta)
+            deny(ta.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier4", title))
+            deny(ta.typeParameterList, holder, RsBundle.message("inspection.message.cannot.have.generic.parameters", title))
+            deny(ta.whereClause, holder, RsBundle.message("inspection.message.cannot.have.where.clause", title))
+            deny(ta.typeParamBounds, holder, RsBundle.message("inspection.message.bounds.on.have.no.effect", title))
+            deny(ta.typeReference, holder, RsBundle.message("inspection.message.cannot.have.body", title), ta)
         }
     }
 }
@@ -257,25 +258,25 @@ private val DEPRECATED_WHERE_CLAUSE_LOCATION_VERSION: SemVer = "1.61.0".parseSem
 
 private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
     val name = const.nameLikeElement.text
-    val title = if (const.static != null) "Static constant `$name`" else "Constant `$name`"
+    val title = if (const.static != null) RsBundle.message("inspection.message.static.constant", name) else RsBundle.message("inspection.message.constant", name)
     when (const.owner) {
         is RsAbstractableOwner.Free -> {
-            deny(const.default, holder, "$title cannot have the `default` qualifier")
-            require(const.expr, holder, "$title must have a value", const)
+            deny(const.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier3", title))
+            require(const.expr, holder, RsBundle.message("inspection.message.must.have.value2", title), const)
         }
         is RsAbstractableOwner.Foreign -> {
-            deny(const.default, holder, "$title cannot have the `default` qualifier")
-            require(const.static, holder, "Only static constants are allowed in extern blocks", const.const)
-            deny(const.expr, holder, "Static constants in extern blocks cannot have values", const.eq, const.expr)
+            deny(const.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier2", title))
+            require(const.static, holder, RsBundle.message("inspection.message.only.static.constants.are.allowed.in.extern.blocks"), const.const)
+            deny(const.expr, holder, RsBundle.message("inspection.message.static.constants.in.extern.blocks.cannot.have.values"), const.eq, const.expr)
         }
         is RsAbstractableOwner.Trait -> {
-            deny(const.vis, holder, "$title cannot have the `pub` qualifier")
-            deny(const.default, holder, "$title cannot have the `default` qualifier")
-            deny(const.static, holder, "Static constants are not allowed in traits")
+            deny(const.vis, holder, RsBundle.message("inspection.message.cannot.have.pub.qualifier", title))
+            deny(const.default, holder, RsBundle.message("inspection.message.cannot.have.default.qualifier", title))
+            deny(const.static, holder, RsBundle.message("inspection.message.static.constants.are.not.allowed.in.traits"))
         }
         is RsAbstractableOwner.Impl -> {
-            deny(const.static, holder, "Static constants are not allowed in impl blocks")
-            require(const.expr, holder, "$title must have a value", const)
+            deny(const.static, holder, RsBundle.message("inspection.message.static.constants.are.not.allowed.in.impl.blocks"))
+            require(const.expr, holder, RsBundle.message("inspection.message.must.have.value", title), const)
         }
     }
     checkConstantType(holder, const)
@@ -289,7 +290,7 @@ private fun checkConstantType(holder: AnnotationHolder, element: RsConstant) {
         } else {
             "static"
         }
-        val message = "Missing type for `$typeText` item"
+        val message = RsBundle.message("inspection.message.missing.type.for.item", typeText)
 
         val annotation = holder.newAnnotation(HighlightSeverity.ERROR, message)
             .range(nameElement)
@@ -307,14 +308,14 @@ private fun checkValueParameterList(holder: AnnotationHolder, params: RsValuePar
     val fn = params.parent as? RsFunction ?: return
     when (fn.owner) {
         is RsAbstractableOwner.Free -> {
-            deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
+            deny(params.selfParameter, holder, RsBundle.message("inspection.message.cannot.have.self.parameter2", fn.title))
             checkVariadic(holder, fn, params.variadic?.dotdotdot)
         }
         is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> {
-            deny(params.variadic?.dotdotdot, holder, "${fn.title} cannot be variadic")
+            deny(params.variadic?.dotdotdot, holder, RsBundle.message("inspection.message.cannot.be.variadic2", fn.title))
         }
         RsAbstractableOwner.Foreign -> {
-            deny(params.selfParameter, holder, "${fn.title} cannot have `self` parameter")
+            deny(params.selfParameter, holder, RsBundle.message("inspection.message.cannot.have.self.parameter", fn.title))
             checkDot3Parameter(holder, params.variadic?.dotdotdot)
         }
     }
@@ -325,7 +326,7 @@ private fun checkVariadic(holder: AnnotationHolder, fn: RsFunction, dot3: PsiEle
     if (fn.isUnsafe && fn.actualAbiName == "C") {
         C_VARIADIC.check(holder, dot3, "C-variadic functions")
     } else {
-        deny(dot3, holder, "${fn.title} cannot be variadic")
+        deny(dot3, holder, RsBundle.message("inspection.message.cannot.be.variadic", fn.title))
     }
 }
 
@@ -334,7 +335,7 @@ private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
     dot3.rightVisibleLeaves
         .first {
             if (it.text != ")") {
-                holder.newAnnotation(HighlightSeverity.ERROR, "`...` must be last in argument list for variadic function")
+                holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.must.be.last.in.argument.list.for.variadic.function"))
                     .range(it).create()
             }
             return
@@ -420,20 +421,20 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
 
 private fun checkDefaultParameterValue(holder: AnnotationHolder, default: RsDefaultParameterValue) {
     val fix = RemoveElementFix(default, "default parameter value")
-    deny(default.expr, holder, "Default parameter values are not supported in Rust", fix = fix)
+    deny(default.expr, holder, RsBundle.message("inspection.message.default.parameter.values.are.not.supported.in.rust"), fix = fix)
 }
 
 private fun checkTypeParamBounds(holder: AnnotationHolder, bounds: RsTypeParamBounds) {
     val impl = bounds.impl
     if (impl != null) {
         val fix = RemoveElementFix(impl, "`impl` keyword")
-        deny(impl, holder, "Expected trait bound, found `impl Trait` type", fix = fix)
+        deny(impl, holder, RsBundle.message("inspection.message.expected.trait.bound.found.impl.trait.type"), fix = fix)
     }
 
     val dyn = bounds.dyn
     if (dyn != null) {
         val fix = RemoveElementFix(dyn, "`dyn` keyword")
-        deny(dyn, holder, "Invalid `dyn` keyword", fix = fix)
+        deny(dyn, holder, RsBundle.message("inspection.message.invalid.dyn.keyword"), fix = fix)
     }
 }
 
@@ -442,20 +443,20 @@ private fun checkValueParameterInFunction(fn: RsFunction, param: RsValueParamete
     when (fn.owner) {
         is RsAbstractableOwner.Free,
         is RsAbstractableOwner.Impl -> {
-            require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            require(pat, holder, RsBundle.message("inspection.message.cannot.have.anonymous.parameters2", fn.title), param)
         }
 
         is RsAbstractableOwner.Foreign -> {
-            require(pat, holder, "${fn.title} cannot have anonymous parameters", param)
+            require(pat, holder, RsBundle.message("inspection.message.cannot.have.anonymous.parameters", fn.title), param)
         }
 
         is RsAbstractableOwner.Trait -> {
             if (pat == null) {
-                val message = "Anonymous functions parameters are deprecated (RFC 1685)"
+                val message = RsBundle.message("inspection.message.anonymous.functions.parameters.are.deprecated.rfc")
                 val annotation = holder.newAnnotation(HighlightSeverity.WARNING, message)
 
                 val fix = SubstituteTextFix.replace(
-                    "Add dummy parameter name",
+                    RsBundle.message("intention.name.add.dummy.parameter.name"),
                     param.containingFile,
                     param.textRange,
                     "_: ${param.text}"
@@ -490,7 +491,7 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
             .forEach {
                 holder.newAnnotation(
                     HighlightSeverity.ERROR,
-                    "Defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions"
+                    RsBundle.message("inspection.message.defaults.for.type.parameters.are.only.allowed.in.struct.enum.type.or.trait.definitions")
                 ).range(it).create()
             }
     } else {
@@ -499,7 +500,7 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
             .take(lastNotDefaultIndex)
             .filter { it.typeReference != null }
             .forEach {
-                holder.newAnnotation(HighlightSeverity.ERROR, "Type parameters with a default must be trailing")
+                holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.type.parameters.with.default.must.be.trailing"))
                     .range(it).create()
             }
     }
@@ -513,7 +514,7 @@ private fun checkTypeArgumentList(holder: AnnotationHolder, args: RsTypeArgument
     val startOfAssocTypeBindings = args.assocTypeBindingList.firstOrNull()?.textOffset ?: return
     for (generic in args.lifetimeList + args.typeReferenceList + args.exprList) {
         if (generic.textOffset > startOfAssocTypeBindings) {
-            holder.newAnnotation(HighlightSeverity.ERROR, "Generic arguments must come before the first constraint")
+            holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.generic.arguments.must.come.before.first.constraint"))
                 .range(generic).create()
         }
     }
@@ -529,7 +530,7 @@ private fun checkTypeList(typeList: PsiElement, elementsName: String, holder: An
             val newStateName = newKind.presentableName.capitalized()
             holder.newAnnotation(
                 HighlightSeverity.ERROR,
-                "$newStateName $elementsName must be declared prior to ${kind.presentableName} $elementsName"
+                RsBundle.message("inspection.message.must.be.declared.prior.to", newStateName, elementsName, kind.presentableName, elementsName)
             ).range(child).create()
         }
     }
@@ -539,7 +540,7 @@ private fun checkExternAbi(holder: AnnotationHolder, element: RsExternAbi) {
     val litExpr = element.litExpr ?: return
     val abyLiteralKind = litExpr.kind ?: return
     if (abyLiteralKind !is RsLiteralKind.String) {
-        holder.newAnnotation(HighlightSeverity.ERROR, "Non-string ABI literal").range(litExpr).create()
+        holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.non.string.abi.literal")).range(litExpr).create()
     }
 }
 
@@ -557,7 +558,7 @@ private fun checkForeignModItem(holder: AnnotationHolder, element: RsForeignModI
 
 private fun checkInvalidUnsafe(holder: AnnotationHolder, unsafe: PsiElement?, itemName: String) {
     if (unsafe != null) {
-        holder.newAnnotation(HighlightSeverity.ERROR, "$itemName cannot be declared unsafe").range(unsafe).create()
+        holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.cannot.be.declared.unsafe", itemName)).range(unsafe).create()
     }
 }
 
@@ -570,7 +571,7 @@ private fun checkLetExpr(holder: AnnotationHolder, element: RsLetExpr) {
     }) {
         ancestor = ancestor.parent
     }
-    deny(element, holder, "`let` expressions are not supported here")
+    deny(element, holder, RsBundle.message("inspection.message.let.expressions.are.not.supported.here"))
 }
 
 private fun checkPatRange(holder: AnnotationHolder, element: RsPatRange) {
@@ -578,14 +579,14 @@ private fun checkPatRange(holder: AnnotationHolder, element: RsPatRange) {
     val end = element.end
     when {
         element.dotdot != null -> when {
-            start == null && end == null -> deny(element.dotdot, holder, "Unexpected `..`")
+            start == null && end == null -> deny(element.dotdot, holder, RsBundle.message("inspection.message.unexpected3"))
         }
         element.dotdoteq != null -> when {
-            start == null && end == null -> deny(element.dotdoteq, holder, "Unexpected `..=`")
+            start == null && end == null -> deny(element.dotdoteq, holder, RsBundle.message("inspection.message.unexpected2"))
         }
         element.dotdotdot != null -> when {
-            start == null && end == null -> deny(element.dotdotdot, holder, "Unexpected `...`")
-            start == null -> deny(element.dotdotdot, holder, "Range-to patterns with `...` are not allowed")
+            start == null && end == null -> deny(element.dotdotdot, holder, RsBundle.message("inspection.message.unexpected"))
+            start == null -> deny(element.dotdotdot, holder, RsBundle.message("inspection.message.range.to.patterns.with.are.not.allowed"))
         }
     }
 }
@@ -614,7 +615,7 @@ private fun checkUnderscoreExpr(holder: AnnotationHolder, element: RsUnderscoreE
     }
 
     if (!isAllowed) {
-        deny(element, holder, "In expressions, `_` can only be used on the left-hand side of an assignment")
+        deny(element, holder, RsBundle.message("inspection.message.in.expressions.can.only.be.used.on.left.hand.side.assignment"))
     }
 }
 
@@ -689,7 +690,7 @@ private enum class TypeKind {
     }
 }
 
-private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Unit? =
+private fun require(el: PsiElement?, holder: AnnotationHolder, @InspectionMessage message: String, vararg highlightElements: PsiElement?): Unit? =
     if (el != null || highlightElements.combinedRange == null) null
     else {
         holder.newAnnotation(HighlightSeverity.ERROR, message)
