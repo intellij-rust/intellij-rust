@@ -26,4 +26,15 @@ class RsMacroErrorTest : RsMacroExpansionErrorTestBase() {
         #[cfg(not(intellij_rust))]
         foo! {}
     """)
+
+    fun `test macro inside an impl`() = checkError<GetMacroExpansionError.ExpansionError>("""
+        macro_rules! foo {
+            (bar) => { fn foo() {} };
+        }
+
+        struct S;
+        impl S {
+            foo! {}
+        }
+    """)
 }

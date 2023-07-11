@@ -190,7 +190,7 @@ private fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expan
     val mixHash = def.mixHash(callDataWithHash) ?: return Err(MacroCallSyntaxError)
     val (stub, expansionResult) = MacroExpansionSharedCache.getInstance()
         .createExpansionStub(call.project, this, def.data, callData, mixHash)
-        .unwrapOrElse { return Err(MacroCallSyntaxError) }
+        .unwrapOrElse { return Err(ExpansionError(it)) }
     val expandedText = expansionResult.text
 
     val factory = RsPsiFactory(call.project, markGenerated = false, eventSystemEnabled = stub != null)
