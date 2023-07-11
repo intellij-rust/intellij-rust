@@ -5,7 +5,7 @@
 
 package org.rust.debugger
 
-import java.io.File
+import java.nio.file.Path
 
 sealed class DebuggerAvailability<out T> {
     object Unavailable : DebuggerAvailability<Nothing>()
@@ -15,5 +15,5 @@ sealed class DebuggerAvailability<out T> {
     data class Binaries<T>(val binaries: T) : DebuggerAvailability<T>()
 }
 
-data class LLDBBinaries(val frameworkFile: File, val frontendFile: File)
-data class GDBBinaries(val gdbFile: File)
+data class LLDBBinaries(val frameworkFile: Path, val frontendFile: Path)
+data class GDBBinaries(val gdbFile: Path)

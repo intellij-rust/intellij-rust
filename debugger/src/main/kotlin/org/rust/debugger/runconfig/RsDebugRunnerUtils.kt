@@ -84,10 +84,8 @@ object RsDebugRunnerUtils {
     }
 
     fun checkToolchainConfigured(project: Project): Boolean {
-        val debuggerAvailability = when (RsDebuggerSettings.getInstance().debuggerKind) {
-            DebuggerKind.LLDB -> RsDebuggerToolchainService.getInstance().lldbAvailability()
-            DebuggerKind.GDB -> RsDebuggerToolchainService.getInstance().gdbAvailability()
-        }
+        val debuggerKind = RsDebuggerSettings.getInstance().debuggerKind
+        val debuggerAvailability = RsDebuggerToolchainService.getInstance().debuggerAvailability(debuggerKind)
 
         val (message, action) = when (debuggerAvailability) {
             DebuggerAvailability.Unavailable -> return false
@@ -104,9 +102,8 @@ object RsDebugRunnerUtils {
         }
 
         if (downloadDebugger) {
-            val result = RsDebuggerToolchainService.getInstance().downloadDebugger(project)
+            val result = RsDebuggerToolchainService.getInstance().downloadDebugger(project, debuggerKind)
             if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
-                RsDebuggerSettings.getInstance().lldbPath = result.lldbDir.absolutePath
                 return true
             }
         }

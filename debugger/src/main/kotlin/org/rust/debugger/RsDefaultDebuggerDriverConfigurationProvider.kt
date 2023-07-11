@@ -5,11 +5,15 @@
 
 package org.rust.debugger
 
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.removeUserData
 import com.jetbrains.cidr.ArchitectureType
+import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
+import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriver
 import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.debugger.settings.RsDebuggerSettings
@@ -37,6 +41,7 @@ class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurati
                 val gdbAvailability = RsDebuggerToolchainService.getInstance().gdbAvailability()
                 return when (gdbAvailability) {
                     DebuggerAvailability.Bundled -> RsGDBDriverConfiguration(isElevated, emulateTerminal)
+                    is DebuggerAvailability.Binaries -> RsCustomBinariesGDBDriverConfiguration(gdbAvailability.binaries, isElevated, emulateTerminal)
                     else -> null
                 }
             }
@@ -44,7 +49,7 @@ class RsDefaultDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurati
     }
 }
 
-class RsGDBDriverConfiguration(
+open class RsGDBDriverConfiguration(
     private val isElevated: Boolean,
     private val emulateTerminal: Boolean
 ) : GDBDriverConfiguration() {
@@ -54,6 +59,27 @@ class RsGDBDriverConfiguration(
     override fun isAttachSupported(): Boolean = false
     override fun isElevated(): Boolean = isElevated
     override fun emulateTerminal(): Boolean = emulateTerminal
+}
+
+private class RsCustomBinariesGDBDriverConfiguration(
+    private val binaries: GDBBinaries,
+    isElevated: Boolean,
+    emulateTerminal: Boolean
+) : RsGDBDriverConfiguration(isElevated, emulateTerminal) {
+    override fun getGDBExecutablePath(): String = binaries.gdbFile.toString()
+
+    override fun createDriverCommandLine(driver: DebuggerDriver, architectureType: ArchitectureType): GeneralCommandLine {
+        val cmd = super.createDriverCommandLine(driver, architectureType)
+        // `GDBDriverConfiguration` assumes that there are bundled C++ pretty-printers.
+        // It's not true in the case of Native Debugging Support plugin outside CLion,
+        // and gdb throws an exception `Error while executing Python code`.
+        // As a result, Rust pretty printers are not loaded as well.
+        // As a temporary workaround, just remove paths to C++ pretty printers.
+        // See https://youtrack.jetbrains.com/issue/CPP-34231
+        cmd.removeUserData(GDBDriver.PRETTY_PRINTERS_PATH)
+        cmd.removeUserData(GDBDriver.ENABLE_STL_PRETTY_PRINTERS)
+        return cmd
+    }
 }
 
 open class RsLLDBDriverConfiguration(
@@ -73,6 +99,6 @@ private class RsCustomBinariesLLDBDriverConfiguration(
 ) : RsLLDBDriverConfiguration(isElevated, emulateTerminal) {
     override fun getDriverName(): String = "Rust LLDB"
     override fun useSTLRenderers(): Boolean = false
-    override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile
-    override fun getLLDBFrontendFile(architectureType: ArchitectureType): File = binaries.frontendFile
+    override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile.toFile()
+    override fun getLLDBFrontendFile(architectureType: ArchitectureType): File = binaries.frontendFile.toFile()
 }

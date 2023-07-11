@@ -11,8 +11,8 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
-import org.rust.debugger.DebuggerKind
 import org.rust.debugger.DebuggerAvailability
+import org.rust.debugger.DebuggerKind
 import org.rust.debugger.RsDebuggerBundle
 import org.rust.debugger.RsDebuggerToolchainService
 import java.util.*
@@ -27,6 +27,8 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
         JBCheckBox(RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.debugger.automatically.checkbox"), RsDebuggerSettings.getInstance().downloadAutomatically)
 
     private var comment: JEditorPane? = null
+
+    private val currentDebuggerKind: DebuggerKind get() = debuggerKindCombobox.item
 
     override fun isModified(settings: RsDebuggerSettings): Boolean {
         return settings.debuggerKind != debuggerKindCombobox.item ||
@@ -78,16 +80,14 @@ class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
     }
 
     private fun downloadDebugger() {
-        val result = RsDebuggerToolchainService.getInstance().downloadDebugger()
+        val result = RsDebuggerToolchainService.getInstance().downloadDebugger(debuggerKind = currentDebuggerKind)
         if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
-            RsDebuggerSettings.getInstance().lldbPath = result.lldbDir.absolutePath
             update()
         }
     }
 
     private fun update() {
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val availability = RsDebuggerToolchainService.getInstance().lldbAvailability()
+        val availability = RsDebuggerToolchainService.getInstance().debuggerAvailability(currentDebuggerKind)
         val text = when (availability) {
             DebuggerAvailability.NeedToDownload -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.comment")
             DebuggerAvailability.NeedToUpdate -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.update.comment")
