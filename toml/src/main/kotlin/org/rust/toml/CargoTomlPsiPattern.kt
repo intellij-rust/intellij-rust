@@ -9,6 +9,7 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.cargo.CargoConstants
 import org.rust.lang.core.or
@@ -166,7 +167,7 @@ object CargoTomlPsiPattern {
             ).andNot(
                 cargoTomlPsiElement<PsiElement>().withPrevSiblingSkipping(
                     cargoTomlPsiElement<PsiWhiteSpace>(),
-                    cargoTomlPsiElement<TomlKeyValue>()
+                    cargoTomlPsiElement<TomlKeyValue>().withChild(cargoTomlPsiElement<PsiErrorElement>())
                 )
             )
 
@@ -324,7 +325,7 @@ object CargoTomlPsiPattern {
             cargoTomlPsiElement<TomlKeyValue>().andNot(
                 cargoTomlPsiElement<PsiElement>().withPrevSiblingSkipping(
                     cargoTomlPsiElement<PsiWhiteSpace>(),
-                    cargoTomlPsiElement<TomlKeyValue>()
+                    cargoTomlPsiElement<TomlKeyValue>().withChild(cargoTomlPsiElement<PsiErrorElement>())
                 )
             )
         )

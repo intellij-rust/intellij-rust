@@ -236,6 +236,13 @@ class CargoTomlPsiPatternTest : RsTestBase() {
        #^
     """)
 
+    fun `test inDependencyTableKey specific dependency table after another key`() = testPattern(inDependencyTableKey, """
+        [dependencies.serde]
+        version = "1.0"
+        features = []
+       #^
+    """)
+
     fun `test inDependencyTableKey not inline table value`() = testPatternNegative(inDependencyTableKey, """
         [dependencies]
         serde = { version = "1.0" }
