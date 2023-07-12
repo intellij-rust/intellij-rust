@@ -190,7 +190,8 @@ class Cargo(
         projectDirectory: Path,
         buildTarget: String?,
         toolchainOverride: String? = null,
-        listener: ProcessListener? = null
+        environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
+        listener: ProcessListener?,
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
         if (buildTarget != null) {
@@ -198,8 +199,13 @@ class Cargo(
             additionalArgs.add(buildTarget)
         }
 
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
-            .execute(owner, listener = listener)
+        val json = CargoCommandLine(
+            command = "metadata",
+            projectDirectory,
+            additionalArgs,
+            toolchain = toolchainOverride,
+            environmentVariables = environmentVariables
+        ).execute(owner, listener = listener)
             .unwrapOrElse { return Err(it) }
             .stdout
             .dropWhile { it != '{' }
@@ -217,6 +223,7 @@ class Cargo(
         projectDirectory: Path,
         dstPath: Path,
         toolchainOverride: String? = null,
+        environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
         listener: ProcessListener? = null
     ): RsProcessResult<Unit> {
         val additionalArgs = listOf("--respect-source-config", dstPath.toString())
@@ -224,7 +231,8 @@ class Cargo(
             "vendor",
             projectDirectory,
             additionalArgs,
-            toolchain = toolchainOverride
+            toolchain = toolchainOverride,
+            environmentVariables = environmentVariables,
         )
         commandLine.execute(owner, listener = listener).unwrapOrElse { return Err(it) }
         return Ok(Unit)
