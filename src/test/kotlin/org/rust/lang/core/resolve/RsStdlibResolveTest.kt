@@ -752,4 +752,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             Box::new(S(0i32)).foo();
         }                    //^
     """)
+
+    @MinRustcVersion("1.70.0")
+    fun `test i32 checked_ilog`() = stubOnlyResolve("""
+    //- main.rs
+        fn foo(i: i32) {
+            let _ = i.checked_ilog(i);
+        }           //^ ...core/src/num/mod.rs
+    """)
 }

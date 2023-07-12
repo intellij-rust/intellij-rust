@@ -284,6 +284,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo!(f64 0.);
         foo!(f32 0.0f32);
         foo!(f32 0.1e-3f32);
+        foo!(i32 -123);
+        foo!(f64 -123.456);
     """, """
         const VALUE: u8 = 0;
     """, """
@@ -296,6 +298,10 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         const VALUE: f32 = 0.0f32;
     """, """
         const VALUE: f32 = 0.1e-3f32;
+    """, """
+        const VALUE: i32 = -123;
+    """, """
+        const VALUE: f64 = -123.456;
     """)
 
     fun `test tt group`() = doTest("""
