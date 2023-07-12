@@ -150,8 +150,9 @@ class AddImportForPatternIntentionTest : RsIntentionTestBase(AddImportForPattern
         expectedElements: List<String>
     ) = checkAutoImportWithMultipleChoice(expectedElements, choice = null) {
         InlineFile(before.trimIndent()).withCaret()
-        launchAction()
+        val previewChecker = launchAction()
         testWrappingUnwrapper?.unwrap()
         myFixture.checkResult(replaceCaretMarker(before.trimIndent()))
+        previewChecker.checkPreview()
     }
 }
