@@ -21,9 +21,8 @@ class RsAsyncMainFunctionInspection: RsLocalInspectionTool() {
                 if (o.isMain && async != null) {
                     val hardcodedProMacros = ProcMacroAttribute.getHardcodedProcMacroAttributes(o)
                     val hasAsyncMainMacro = hardcodedProMacros.any { it == KnownProcMacroKind.ASYNC_MAIN }
-                    val name = o.name
-                    if (!hasAsyncMainMacro && name != null) {
-                        RsDiagnostic.AsyncMainFunction(async, name).addToHolder(holder)
+                    if (!hasAsyncMainMacro) {
+                        RsDiagnostic.AsyncMainFunction(async, o).addToHolder(holder)
                     }
                 }
             }

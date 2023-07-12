@@ -133,6 +133,17 @@ class Cargo(
         commandLine.run(cargoProject, "Install $crateName", saveConfiguration = false)
     }
 
+    fun addDependency(project: Project, crateName: String, features: List<String> = emptyList()) {
+        val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
+        val args = mutableListOf(crateName)
+        if (features.isNotEmpty()) {
+            args.add("--features")
+            args.add(features.joinToString(","))
+        }
+        val commandLine = CargoCommandLine.forProject(cargoProject, "add", args)
+        commandLine.run(cargoProject, "Add dependency $crateName", saveConfiguration = false)
+    }
+
     fun checkSupportForBuildCheckAllTargets(): Boolean {
         val lines = createBaseCommandLine("help", "check")
             .execute(toolchain.executionTimeoutInMilliseconds)
