@@ -400,13 +400,13 @@ private fun RsMetaItem.canBeAttrProcMacro(): Boolean =
 val RsFunction.functionName: String?
     get() = (this as RsFunctionImplMixin).functionName
 
+private val RS_FN_KEYWORDS = tokenSetOf(
+    RsElementTypes.VIS, RsElementTypes.DEFAULT, RsElementTypes.ASYNC, RsElementTypes.CONST,
+    RsElementTypes.UNSAFE, RsElementTypes.EXTERN_ABI
+)
+
 val RsFunction.firstKeyword: PsiElement
-    get() = node.findChildByType(
-        tokenSetOf(
-            RsElementTypes.VIS, RsElementTypes.DEFAULT, RsElementTypes.ASYNC, RsElementTypes.CONST,
-            RsElementTypes.UNSAFE, RsElementTypes.EXTERN_ABI
-        )
-    )?.psi ?: fn
+    get() = node.findChildByType(RS_FN_KEYWORDS)?.psi ?: fn
 
 val RsFunction.async: PsiElement?
     get() = node.findChildByType(RsElementTypes.ASYNC)?.psi
