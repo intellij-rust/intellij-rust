@@ -1562,4 +1562,60 @@ class RsCompletionTest : RsCompletionTestBase() {
         checkNotContainsCompletion("'b2", code)
         checkContainsCompletion(listOf("'b1", "'b3"), code)
     }
+
+    fun `test fn main 1`() = checkContainsCompletionPrefixes(listOf("fn main() {"), """
+        /*caret*/
+    """)
+
+    fun `test fn main 2`() = checkContainsCompletionPrefixes(listOf("fn main() {"), """
+        f/*caret*/
+    """)
+
+    fun `test fn main 3`() = checkContainsCompletionPrefixes(listOf("fn main() {"), """
+        fn/*caret*/
+    """)
+
+    fun `test fn main 4`() = doFirstCompletion("""
+        fn /*caret*/
+    """, """
+        fn main() {
+            /*caret*/
+        }
+    """)
+
+    fun `test fn main 5`() = doFirstCompletion("""
+        fn m/*caret*/
+    """, """
+        fn main() {
+            /*caret*/
+        }
+    """)
+
+    fun `test no fn main inside impl`() = checkNoCompletion("""
+        impl Foo {
+            fn ma/*caret*/
+        }
+    """)
+
+    fun `test no fn main inside library crate`() = checkNoCompletionByFileTree("""
+    //- lib.rs
+        fn ma/*caret*/
+    """)
+
+    fun `test no fn main if already have fn main`() = checkNoCompletion("""
+        fn main() {}
+        fn ma/*caret*/
+    """)
+
+    fun `test no fn main inside other function 1`() = checkNoCompletion("""
+        fn /*caret*/func() {}
+    """)
+
+    fun `test no fn main inside other function 2`() = checkNoCompletion("""
+        fn func()/*caret*/ {}
+    """)
+
+    fun `test no fn main inside other function 3`() = checkNoCompletion("""
+        fn func() /*caret*/{}
+    """)
 }

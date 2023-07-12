@@ -73,8 +73,8 @@ val RS_COMPLETION_WEIGHERS: List<Any> = listOf(
      */
     "priority",
 
-    // HINT: jump to `P::isImplMemberFullLineCompletion` docs
-    preferTrue(P::isImplMemberFullLineCompletion, id = "rust-impl-member-full-line-completion"),
+    // HINT: jump to `P::isFullLineCompletion` docs
+    preferTrue(P::isFullLineCompletion, id = "rust-impl-member-full-line-completion"),
     preferUpperVariant(P::keywordKind, id = "rust-prefer-keywords"),
     preferTrue(P::isSelfTypeCompatible, id = "rust-prefer-compatible-self-type"),
     preferTrue(P::isReturnTypeConformsToExpectedType, id = "rust-prefer-matching-expected-type"),

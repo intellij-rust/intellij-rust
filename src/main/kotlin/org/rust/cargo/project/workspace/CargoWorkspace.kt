@@ -206,6 +206,8 @@ interface CargoWorkspace {
         val isCustomBuild: Boolean get() = this == CustomBuild
         val isProcMacro: Boolean
             get() = this is Lib && this.kinds.contains(LibKind.PROC_MACRO)
+        val canHaveMainFunction: Boolean
+            get() = isBin || isExampleBin || isCustomBuild
     }
 
     enum class LibKind {
