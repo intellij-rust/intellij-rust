@@ -399,3 +399,14 @@ private fun RsMetaItem.canBeAttrProcMacro(): Boolean =
 /** See also [procMacroName] */
 val RsFunction.functionName: String?
     get() = (this as RsFunctionImplMixin).functionName
+
+val RsFunction.firstKeyword: PsiElement
+    get() = node.findChildByType(
+        tokenSetOf(
+            RsElementTypes.VIS, RsElementTypes.DEFAULT, RsElementTypes.ASYNC, RsElementTypes.CONST,
+            RsElementTypes.UNSAFE, RsElementTypes.EXTERN_ABI
+        )
+    )?.psi ?: fn
+
+val RsFunction.async: PsiElement?
+    get() = node.findChildByType(RsElementTypes.ASYNC)?.psi

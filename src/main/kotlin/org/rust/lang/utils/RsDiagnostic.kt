@@ -1489,13 +1489,14 @@ sealed class RsDiagnostic(
         }
     }
 
-    class AsyncMainFunction(element: PsiElement, private val entryPointName: String) : RsDiagnostic(element) {
+    class AsyncMainFunction(element: PsiElement, private val entryPoint: RsFunction) : RsDiagnostic(element) {
+        private val entryPointName = entryPoint.name
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
                 E0752,
                 "`$entryPointName` function is not allowed to be `async`",
-                fixes = listOfFixes(RemoveElementFix(element))
+                fixes = listOfFixes(RemoveElementFix(element), AddTokioMainFix(entryPoint))
             )
         }
     }

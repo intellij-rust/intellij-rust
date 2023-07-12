@@ -1508,7 +1508,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkIsAsyncContext(holder: RsAnnotationHolder, element: RsElement) {
         if (element.isInAsyncContext) return
         val function = element.ancestorStrict<RsFunctionOrLambda>() ?: return
-        val fix = MakeAsyncFix(function).takeIf { !function.returnsFuture() }
+        val fix = when {
+            function is RsFunction && !function.isAsync && function.isMain -> AddTokioMainFix(function)
+            !function.returnsFuture() -> MakeAsyncFix(function)
+            else -> null
+        }
         RsDiagnostic.AwaitOutsideAsyncContext(element, fix).addToHolder(holder)
     }
 
