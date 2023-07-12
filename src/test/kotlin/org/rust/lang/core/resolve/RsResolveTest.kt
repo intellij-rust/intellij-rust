@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockAdditionalCfgOptions
 import org.rust.WithoutExperimentalFeatures
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsImplItem
@@ -1593,6 +1594,22 @@ class RsResolveTest : RsResolveTestBase() {
                     }
                 }
             }
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve from a nested block under cfg attribute`() = checkByCode("""
+        fn main() {
+            {
+                let mut a = 1;
+                      //X
+                #[cfg(intellij_rust)]
+                {
+                    use foo::bar;
+                    a += 1;
+                } //^
+                a
+            };
         }
     """)
 }
