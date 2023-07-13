@@ -8,11 +8,10 @@ package org.rust.ide.annotator
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.HighlightDisplayKey
-import com.intellij.codeInsight.daemon.impl.*
-import com.intellij.codeInsight.intention.IntentionManager
-import com.intellij.codeInspection.SuppressableProblemGroup
-import com.intellij.lang.annotation.AnnotationSession
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.impl.FileStatusMap
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -47,8 +46,7 @@ class RsExternalLinterPass(
     private val file: PsiFile,
     private val editor: Editor
 ) : TextEditorHighlightingPass(file.project, editor.document), DumbAware {
-    @Suppress("UnstableApiUsage", "DEPRECATION")
-    private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file), false)
+    private val highlights: MutableList<HighlightInfo> = mutableListOf()
     @Volatile
     private var annotationInfo: Lazy<RsExternalLinterResult?>? = null
     private val annotationResult: RsExternalLinterResult? get() = annotationInfo?.value
@@ -56,7 +54,7 @@ class RsExternalLinterPass(
     private var disposable: Disposable = myProject
 
     override fun doCollectInformation(progress: ProgressIndicator) {
-        annotationHolder.clear()
+        highlights.clear()
         if (file !is RsFile || !isAnnotationPassEnabled) return
 
         val cargoTarget = file.containingCargoTarget ?: return
@@ -121,10 +119,7 @@ class RsExternalLinterPass(
     private fun doApply(annotationResult: RsExternalLinterResult) {
         if (file !is RsFile || !file.isValid) return
         try {
-            @Suppress("UnstableApiUsage")
-            annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                holder.createAnnotationsForFile(file, annotationResult, Applicability.UNSPECIFIED)
-            }
+            highlights.addHighlightsForFile(file, annotationResult, Applicability.UNSPECIFIED)
         } catch (t: Throwable) {
             if (t is ProcessCanceledException) throw t
             LOG.error(t)
@@ -146,30 +141,6 @@ class RsExternalLinterPass(
             DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.markFileUpToDate(document, id)
         }
     }
-
-    /**
-     * We pass suppress actions as options directly to [HighlightInfo.registerFix] because otherwise
-     * actions from [IntentionManager.getStandardIntentionOptions] will be added to the options list
-     */
-    private val highlights: List<HighlightInfo>
-        get() = annotationHolder.map { annotation ->
-            val quickFixes = annotation.quickFixes?.toList().orEmpty()
-            annotation.quickFixes?.clear()
-            val highlight = HighlightInfo.fromAnnotation(annotation)
-            val element = file.findElementAt(highlight.startOffset) ?: file.findElementAt(highlight.endOffset - 1)
-            val problemGroup = highlight.problemGroup as? SuppressableProblemGroup
-            val options = problemGroup?.getSuppressActions(element)?.toList()
-            for (quickFix in quickFixes) {
-                highlight.registerFix(
-                    quickFix.quickFix,
-                    options,
-                    HighlightDisplayKey.getDisplayNameByKey(quickFix.key),
-                    quickFix.textRange,
-                    quickFix.key
-                )
-            }
-            highlight
-        }
 
     private val isAnnotationPassEnabled: Boolean
         get() = myProject.externalLinterSettings.runOnTheFly

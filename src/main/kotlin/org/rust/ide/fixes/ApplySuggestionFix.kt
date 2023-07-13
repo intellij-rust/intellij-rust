@@ -8,6 +8,7 @@ package org.rust.ide.fixes
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.RsBundle
@@ -20,7 +21,8 @@ class ApplySuggestionFix(
     private val replacement: String,
     val applicability: Applicability,
     startElement: PsiElement,
-    endElement: PsiElement
+    endElement: PsiElement,
+    val textRange: TextRange
 ) : LocalQuickFixAndIntentionActionOnPsiElement(startElement, endElement) {
     override fun getFamilyName(): String = RsBundle.message("intention.family.name.apply.suggested.replacement.made.by.external.linter")
     override fun getText(): String = RsBundle.message("intention.name.external.linter", message)

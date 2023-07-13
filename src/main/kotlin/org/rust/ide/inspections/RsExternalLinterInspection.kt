@@ -5,13 +5,12 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.codeInspection.ex.GlobalInspectionContextUtil
 import com.intellij.codeInspection.reference.RefElement
 import com.intellij.codeInspection.ui.InspectionToolPresentation
-import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -32,7 +31,7 @@ import org.rust.cargo.toolchain.impl.Applicability
 import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.ide.annotator.RsExternalLinterResult
 import org.rust.ide.annotator.RsExternalLinterUtils
-import org.rust.ide.annotator.createAnnotationsForFile
+import org.rust.ide.annotator.addHighlightsForFile
 import org.rust.ide.annotator.createDisposableOnAnyPsiChange
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
@@ -135,13 +134,9 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         ): List<ProblemDescriptor> = buildList {
             for (file in analyzedFiles) {
                 if (!file.isValid) continue
-                @Suppress("UnstableApiUsage", "DEPRECATION")
-                val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
-                @Suppress("UnstableApiUsage")
-                annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                    holder.createAnnotationsForFile(file, annotationResult, Applicability.MACHINE_APPLICABLE)
-                }
-                addAll(ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file).toList())
+                val highlights = mutableListOf<HighlightInfo>()
+                highlights.addHighlightsForFile(file, annotationResult, Applicability.MACHINE_APPLICABLE)
+                highlights.mapNotNull { ProblemDescriptorUtil.toProblemDescriptor(file, it) }.forEach(::add)
             }
         }
 
