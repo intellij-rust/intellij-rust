@@ -9,16 +9,12 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
-import com.intellij.psi.util.CachedValue
-import com.intellij.util.CachedValueImpl
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsWhereClause
-import org.rust.lang.core.resolve.RsCachedImplItem
-import org.rust.lang.core.resolve.RsCachedTypeAlias
 import org.rust.lang.core.stubs.RsTypeAliasStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
@@ -57,9 +53,4 @@ abstract class RsTypeAliasImplMixin : RsStubbedNamedElementImpl<RsTypeAliasStub>
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
-
-    val cachedImplItem: CachedValue<RsCachedTypeAlias> = CachedValueImpl {
-        val cachedTypeAlias = RsCachedTypeAlias(this)
-        RsCachedImplItem.toCachedResult(this, containingCrate, cachedTypeAlias)
-    }
 }

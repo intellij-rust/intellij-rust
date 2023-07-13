@@ -14,8 +14,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.RustStructureChangeListener
 import org.rust.lang.core.psi.rustPsiManager
+import org.rust.lang.core.resolve.indexes.RsAliasIndex
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.indexes.RsTypeAliasIndex
 import org.rust.lang.core.types.TyFingerprint
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -66,10 +66,7 @@ class RsImplIndexAndTypeAliasCache(private val project: Project) : Disposable {
 
     fun findPotentialAliases(tyf: TyFingerprint): List<RsCachedTypeAlias> {
         return typeAliasIndexCache.getOrPut(tyf) {
-            RsTypeAliasIndex.findPotentialAliases(project, tyf).filter {
-                retainPsi(it.alias.containingFile)
-                it.isFreeAndValid
-            }
+            RsAliasIndex.findPotentialAliases(project, tyf)
         }
     }
 
