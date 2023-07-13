@@ -119,4 +119,12 @@ class RemoveElementFixSyntaxTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::
     """, """
         fn foo<U: T>() {}
     """)
+
+    fun `test struct inheritance`() = checkFixByText("Remove super structs", """
+        struct A; struct B;
+        struct C : <error descr="Struct inheritance is not supported in Rust">A,/*caret*/ B</error>;
+    """, """
+        struct A; struct B;
+        struct C;
+    """)
 }

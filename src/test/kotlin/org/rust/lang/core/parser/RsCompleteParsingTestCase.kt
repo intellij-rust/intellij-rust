@@ -88,6 +88,8 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     fun `test impl dyn type bound`() = doTest(true)
 
+    fun `test struct inheritance`() = doTest(true)
+
     override fun checkResult(targetDataName: String, file: PsiFile) {
         super.checkResult(targetDataName, file)
         check(!hasError(file)) {

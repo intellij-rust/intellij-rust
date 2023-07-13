@@ -510,4 +510,16 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         fn foo2<U: <error descr="Invalid `dyn` keyword">dyn</error> T + T>() {}
         fn foo3<T: <error descr="Invalid `dyn` keyword">dyn</error> Fn() -> i32>() {}
     """)
+
+    fun `test struct inheritance`() = checkErrors("""
+        struct A;
+        struct B : <error descr="Struct inheritance is not supported in Rust">A</error>;
+        struct C : <error descr="Struct inheritance is not supported in Rust">A, B</error>;
+        struct D : <error descr="Struct inheritance is not supported in Rust">A + B</error>;
+        struct E(i32) : <error descr="Struct inheritance is not supported in Rust">A</error>;
+        struct F : <error descr="Struct inheritance is not supported in Rust">A</error> { x: i32 }
+        struct G : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B;
+        struct H(i32) : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B;
+        struct I : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B { x: i32 }
+    """)
 }
