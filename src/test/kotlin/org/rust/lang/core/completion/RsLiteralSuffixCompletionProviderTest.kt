@@ -142,6 +142,18 @@ class RsLiteralSuffixCompletionProviderTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test completion for scientific notation and float suffix`() = checkContainsCompletion("1e5f32", """
+        fn main() {
+            let a = 1e5f/*caret*/
+        }
+    """)
+
+    fun `test no completion for scientific notation and integer suffix`() = checkNotContainsCompletion("1e5i32", """
+        fn main() {
+            let a = 1e5i/*caret*/
+        }
+    """)
+
     private fun possibleCompletions(prefix: String): List<String> {
         val suffixes = TyInteger.NAMES + TyFloat.NAMES
         return suffixes + suffixes.map { "$prefix$it" }

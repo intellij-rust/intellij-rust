@@ -36,7 +36,7 @@ object RsLiteralSuffixCompletionProvider : RsCompletionProvider() {
     }
 
     private fun getValidSuffixes(literal: String): List<String> {
-        if (literal.contains(".")) {
+        if (literal.contains(".") || literal.contains("e")) {
             return TyFloat.NAMES
         }
         if (literal.startsWith("0b") || literal.startsWith("0o")) {
