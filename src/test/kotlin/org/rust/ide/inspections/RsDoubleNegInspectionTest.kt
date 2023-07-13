@@ -30,4 +30,23 @@ class RsDoubleNegInspectionTest : RsInspectionsTestBase(RsDoubleNegInspection::c
             println!("{}",  <warning descr="--x could be misinterpreted as a pre-decrement, but effectively is a no-op">--(2*a + 1)</warning>);
         }
     """)
+
+    fun `test prefix decrement operator top expr`() = checkFixByText("Replace with `-= 1`", """
+        fn main() {
+            let mut a = 0;
+            <warning descr="--x could be misinterpreted as a pre-decrement, but effectively is a no-op">--/*caret*/a</warning>;
+        }
+    """, """
+        fn main() {
+            let mut a = 0;
+            a -= 1;
+        }
+    """)
+
+    fun `test prefix decrement operator nested expr`() = checkFixIsUnavailable("Replace with `+= 1`", """
+        fn main() {
+            let mut a = 0;
+            <warning descr="--x could be misinterpreted as a pre-decrement, but effectively is a no-op">--/*caret*/a</warning> < 1;
+        }
+    """)
 }

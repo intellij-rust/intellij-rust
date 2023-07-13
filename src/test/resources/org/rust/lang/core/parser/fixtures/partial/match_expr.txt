@@ -98,7 +98,7 @@ FILE
             PsiWhiteSpace(' ')
             PsiElement(})('}')
       PsiWhiteSpace(' ')
-      PsiErrorElement:';', <operator> or '}' expected, got '=>'
+      PsiErrorElement:'+', '-', ';', <operator> or '}' expected, got '=>'
         PsiElement(=>)('=>')
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)
@@ -110,7 +110,7 @@ FILE
       RsExprStmtImpl(EXPR_STMT)
         RsUnderscoreExprImpl(UNDERSCORE_EXPR)
           PsiElement(_)('_')
-        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got '=>'
+        PsiErrorElement:'(', '+', '-', ';', <operator>, '[' or '}' expected, got '=>'
           <empty list>
       PsiWhiteSpace(' ')
       PsiElement(=>)('=>')

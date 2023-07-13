@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import org.rust.RsBundle
+import org.rust.ide.fixes.ReplaceIncDecOperatorFix
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsVisitor
@@ -23,7 +24,8 @@ class RsDoubleNegInspection : RsLocalInspectionTool() {
         object : RsWithMacrosInspectionVisitor() {
             override fun visitUnaryExpr(expr: RsUnaryExpr) {
                 if (expr.isNegation && expr.expr.isNegation) {
-                    holder.registerProblem(expr, RsBundle.message("inspection.message.x.could.be.misinterpreted.as.pre.decrement.but.effectively.no.op"))
+                    val fixes = listOfNotNull(expr.minus?.let { ReplaceIncDecOperatorFix.create(it) }).toTypedArray()
+                    holder.registerProblem(expr, RsBundle.message("inspection.message.x.could.be.misinterpreted.as.pre.decrement.but.effectively.no.op"), *fixes)
                 }
             }
         }

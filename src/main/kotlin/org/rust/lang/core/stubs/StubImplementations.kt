@@ -345,6 +345,12 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "UNIT_EXPR" -> RsExprStubType("UNIT_EXPR", ::RsUnitExprImpl)
     "WHILE_EXPR" -> RsExprStubType("WHILE_EXPR", ::RsWhileExprImpl)
     "UNDERSCORE_EXPR" -> RsExprStubType("UNDERSCORE_EXPR", ::RsUnderscoreExprImpl)
+    "PREFIX_INC_EXPR" -> RsExprStubType("PREFIX_INC_EXPR", ::RsPrefixIncExprImpl)
+    "POSTFIX_INC_EXPR" -> RsExprStubType("POSTFIX_INC_EXPR", ::RsPostfixIncExprImpl)
+    "POSTFIX_DEC_EXPR" -> RsExprStubType("POSTFIX_DEC_EXPR", ::RsPostfixDecExprImpl)
+
+    "INC" -> RsPlaceholderStub.Type("INC", ::RsIncImpl)
+    "DEC" -> RsPlaceholderStub.Type("DEC", ::RsDecImpl)
 
     "VIS" -> RsVisStub.Type
     "VIS_RESTRICTION" -> RsPlaceholderStub.Type("VIS_RESTRICTION", ::RsVisRestrictionImpl)

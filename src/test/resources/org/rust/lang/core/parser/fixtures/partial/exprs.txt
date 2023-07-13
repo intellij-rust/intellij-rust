@@ -13,7 +13,7 @@ FILE
       RsExprStmtImpl(EXPR_STMT)
         RsLitExprImpl(LIT_EXPR)
           PsiElement(INTEGER_LITERAL)('2')
-        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'let'
+        PsiErrorElement:'(', '+', '-', ';', <operator>, '[' or '}' expected, got 'let'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsLetDeclImpl(LET_DECL)
@@ -48,7 +48,7 @@ FILE
           PsiElement(()('(')
           RsLitExprImpl(LIT_EXPR)
             PsiElement(INTEGER_LITERAL)('1')
-          PsiErrorElement:'(', ',', <operator> or '[' expected, got 'let'
+          PsiErrorElement:'(', '+', ',', '-', <operator> or '[' expected, got 'let'
             <empty list>
       PsiWhiteSpace('\n    ')
       RsLetDeclImpl(LET_DECL)

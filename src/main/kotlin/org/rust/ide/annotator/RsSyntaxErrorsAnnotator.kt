@@ -72,6 +72,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsDefaultParameterValue -> checkDefaultParameterValue(holder, element)
             is RsTypeParamBounds -> checkTypeParamBounds(holder, element)
             is RsSuperStructs -> checkSuperStructs(holder, element)
+            is RsPrefixIncExpr, is RsPostfixIncExpr, is RsPostfixDecExpr -> checkIncDecOp(holder, element as RsExpr)
             else -> {
                 checkReservedKeyword(holder, element)
             }
@@ -649,6 +650,16 @@ private fun checkLambdaExpr(holder: AnnotationHolder, lambda: RsLambdaExpr) {
             RsDiagnostic.AsyncNonMoveClosureWithParameters(asyncElement, valueParameterList).addToHolder(holder)
         }
     }
+}
+
+private fun checkIncDecOp(holder: AnnotationHolder, expr: RsExpr) {
+    val operator = when (expr) {
+        is RsPrefixIncExpr -> expr.inc
+        is RsPostfixIncExpr -> expr.inc
+        is RsPostfixDecExpr -> expr.dec
+        else -> return
+    }
+    RsDiagnostic.RustHasNoIncDecOperator(operator).addToHolder(holder)
 }
 
 private fun checkReservedKeyword(holder: AnnotationHolder, item: PsiElement) {
