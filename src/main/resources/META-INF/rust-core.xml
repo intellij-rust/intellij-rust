@@ -389,6 +389,11 @@
                          implementationClass="org.rust.ide.inspections.RsDropRefInspection"
                          key="inspection.rs.drop.ref.display.name"/>
 
+        <localInspection language="Rust" groupKey="rust"
+                         enabledByDefault="true" level="INFORMATION"
+                         implementationClass="org.rust.ide.inspections.RsDbgUsageInspection"
+                         key="dbg.usage"/>
+
         <localInspection language="Rust" groupPath="Rust,Lints" groupKey="naming.conventions"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsArgumentNamingInspection"
@@ -786,11 +791,6 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.AddCurlyBracesIntention</className>
-            <categoryKey>rust</categoryKey>
-            <language>Rust</language>
-        </intentionAction>
-        <intentionAction>
-            <className>org.rust.ide.intentions.RemoveDbgIntention</className>
             <categoryKey>rust</categoryKey>
             <language>Rust</language>
         </intentionAction>
