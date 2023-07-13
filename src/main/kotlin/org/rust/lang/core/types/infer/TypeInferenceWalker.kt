@@ -210,6 +210,9 @@ class RsTypeInferenceWalker(
             is RsRetExpr -> inferRetExprType(this)
             is RsBreakExpr -> inferBreakExprType(this)
             is RsLetExpr -> inferLetExprType(this)
+            is RsPrefixIncExpr -> inferPrefixIncExprType(this, expected)
+            is RsPostfixIncExpr -> inferPostfixIncExprType(this, expected)
+            is RsPostfixDecExpr -> inferPostfixDecExprType(this, expected)
             is RsContExpr -> TyNever
             else -> TyUnknown
         }
@@ -1007,6 +1010,15 @@ class RsTypeInferenceWalker(
             }
         }
     }
+
+    private fun inferPrefixIncExprType(expr: RsPrefixIncExpr, expected: Expectation): Ty =
+        expr.expr?.inferType(expected) ?: TyUnknown
+
+    private fun inferPostfixIncExprType(expr: RsPostfixIncExpr, expected: Expectation): Ty =
+        expr.expr.inferType(expected)
+
+    private fun inferPostfixDecExprType(expr: RsPostfixDecExpr, expected: Expectation): Ty =
+        expr.expr.inferType(expected)
 
     private fun inferDerefExprType(expr: RsUnaryExpr, operandExpr: RsExpr): Ty {
         // expectation must NOT be used for deref

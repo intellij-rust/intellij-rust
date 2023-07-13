@@ -90,6 +90,8 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     fun `test struct inheritance`() = doTest(true)
 
+    fun `test inc dec`() = doTest(true)
+
     override fun checkResult(targetDataName: String, file: PsiFile) {
         super.checkResult(targetDataName, file)
         check(!hasError(file)) {

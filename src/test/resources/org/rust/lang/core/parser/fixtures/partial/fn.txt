@@ -81,9 +81,10 @@ FILE
     PsiWhiteSpace(' ')
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
-      PsiWhiteSpace('\n    ')
       PsiErrorElement:'#', <item> or <statement> expected, got '+'
-        PsiElement(+)('+')
+        <empty list>
+      PsiWhiteSpace('\n    ')
+      PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
   PsiWhiteSpace('\n\n')

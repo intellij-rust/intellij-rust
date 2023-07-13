@@ -694,6 +694,21 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun rawKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeywordWithRollback(b, "raw", RAW)
 
     @JvmStatic
+    fun parseSecondPlusInIncrement(b: PsiBuilder, level: Int): Boolean = noWhiteSpaceBefore(b, PLUS)
+
+    @JvmStatic
+    fun parseSecondMinusInDecrement(b: PsiBuilder, level: Int): Boolean = noWhiteSpaceBefore(b, MINUS)
+
+    @JvmStatic
+    private fun noWhiteSpaceBefore(b: PsiBuilder, token: IElementType): Boolean =
+        if (b.tokenType == token && b.rawLookup(-1) == token) {
+            b.advanceLexer()
+            true
+        } else {
+            false
+        }
+
+    @JvmStatic
     private fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
         // We do not want whitespace between parts, so firstly we do raw lookup for each part,
         // and when we make sure that we have desired token, we consume and collapse it.

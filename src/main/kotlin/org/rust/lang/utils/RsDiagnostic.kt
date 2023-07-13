@@ -1275,6 +1275,23 @@ sealed class RsDiagnostic(
         )
     }
 
+    class RustHasNoIncDecOperator(element: RsElement) : RsDiagnostic(element) {
+        private val operatorName: String
+            get() = when (element.parent) {
+                is RsPrefixIncExpr -> "prefix increment"
+                is RsPostfixIncExpr -> "postfix increment"
+                is RsPostfixDecExpr -> "postfix decrement"
+                else -> error("invalid operator")
+            }
+
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            RsBundle.message("inspection.message.rust.has.no.incdec.operator", operatorName),
+            fixes = listOfFixes(ReplaceIncDecOperatorFix.create(element))
+        )
+    }
+
     class VisibilityRestrictionMustBeAncestorModule(element: PsiElement) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,

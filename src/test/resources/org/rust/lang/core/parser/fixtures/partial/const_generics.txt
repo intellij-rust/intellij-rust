@@ -92,7 +92,7 @@ FILE
                 PsiElement(INTEGER_LITERAL)('1')
               PsiWhiteSpace(' ')
               PsiElement(>)('>')
-        PsiErrorElement:'(', '::', ';', <operator>, '[', '{' or '}' expected, got '0'
+        PsiErrorElement:'(', '+', '-', '::', ';', <operator>, '[', '{' or '}' expected, got '0'
           <empty list>
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)

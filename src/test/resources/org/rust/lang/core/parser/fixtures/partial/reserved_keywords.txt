@@ -107,7 +107,7 @@ FILE
           RsStructLiteralBodyImpl(STRUCT_LITERAL_BODY)
             PsiElement({)('{')
             PsiElement(})('}')
-        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'while'
+        PsiErrorElement:'(', '+', '-', ';', <operator>, '[' or '}' expected, got 'while'
           <empty list>
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)
@@ -120,7 +120,7 @@ FILE
               RsLitExprImpl(LIT_EXPR)
                 PsiElement(BOOL_LITERAL)('true')
               PsiElement())(')')
-          PsiErrorElement:'(', <operator>, '[' or '{' expected, got ';'
+          PsiErrorElement:'(', '+', '-', <operator>, '[' or '{' expected, got ';'
             <empty list>
         PsiElement(;)(';')
       PsiWhiteSpace('\n\n    ')
@@ -142,7 +142,7 @@ FILE
       RsExprStmtImpl(EXPR_STMT)
         RsLitExprImpl(LIT_EXPR)
           PsiElement(INTEGER_LITERAL)('1')
-        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got ')'
+        PsiErrorElement:'(', '+', '-', ';', <operator>, '[' or '}' expected, got ')'
           <empty list>
       PsiElement())(')')
       PsiWhiteSpace(' ')

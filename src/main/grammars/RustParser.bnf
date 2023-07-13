@@ -1115,6 +1115,9 @@ Expr ::= RetExpr
        | BitXorBinExpr
        | BitAndBinExpr
        | BitShiftBinExpr
+       | PrefixIncExpr
+       | PostfixIncExpr
+       | PostfixDecExpr
        | AddBinExpr
        | MulBinExpr
        | CastExpr
@@ -1129,7 +1132,7 @@ Expr ::= RetExpr
 }
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
-  | '-' | '*' | '!' | '&' | static | move | AnyLitToken_first | while | if | for | continue | break  | loop | match | unsafe
+  | '+' | '-' | '*' | '!' | '&' | static | move | AnyLitToken_first | while | if | for | continue | break  | loop | match | unsafe
   | yield | "async" | "try" | '_'
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
@@ -1224,7 +1227,32 @@ TryExpr ::= Expr '?' {
 }
 
 UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut]) <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>> {
+  implements = "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+PrefixIncExpr ::= OuterAttr* Inc <<setStmtMode 'StmtMode.OFF'>> Expr <<resetFlags>> {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+PostfixIncExpr ::= Expr Inc {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+PostfixDecExpr ::= Expr Dec !Expr_first {
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+Inc ::= '+' <<parseSecondPlusInIncrement>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+Dec ::= '-' <<parseSecondMinusInDecrement>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

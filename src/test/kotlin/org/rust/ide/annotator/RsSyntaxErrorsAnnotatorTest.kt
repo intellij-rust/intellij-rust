@@ -522,4 +522,39 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         struct H(i32) : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B;
         struct I : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B { x: i32 }
     """)
+
+    fun `test prefix increment operator top expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            <error descr="Rust has no prefix increment operator">++</error>a;
+        }
+    """)
+
+    fun `test postfix increment operator top expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            a<error descr="Rust has no postfix increment operator">++</error>;
+        }
+    """)
+
+    fun `test postfix decrement operator top expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            a<error descr="Rust has no postfix decrement operator">--</error>;
+        }
+    """)
+
+    fun `test prefix increment operator nested expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            <error descr="Rust has no prefix increment operator">++</error>a < 1;
+        }
+    """)
+
+    fun `test postfix increment operator nested expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            a<error descr="Rust has no postfix increment operator">++</error> < 1;
+        }
+    """)
 }
