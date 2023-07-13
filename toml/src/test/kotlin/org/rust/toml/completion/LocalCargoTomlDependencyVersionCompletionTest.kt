@@ -148,11 +148,29 @@ class LocalCargoTomlDependencyVersionCompletionTest : LocalCargoTomlCompletionTe
         foo = { version = "1.0<caret>" }
     """, "foo" to CargoRegistryCrate.of("1.0"))
 
+    fun `test complete inside inline table when another key exists`() = doSingleCompletion("""
+        [dependencies]
+        foo = { features = [], version = "<caret>" }
+    """, """
+        [dependencies]
+        foo = { features = [], version = "1.0<caret>" }
+    """, "foo" to CargoRegistryCrate.of("1.0"))
+
     fun `test complete specific dependency version`() = doSingleCompletion("""
         [dependencies.foo]
         version = "<caret>"
     """, """
         [dependencies.foo]
+        version = "1.0<caret>"
+    """, "foo" to CargoRegistryCrate.of("1.0"))
+
+    fun `test complete specific dependency version with another existing key`() = doSingleCompletion("""
+        [dependencies.foo]
+        features = []
+        version = "<caret>"
+    """, """
+        [dependencies.foo]
+        features = []
         version = "1.0<caret>"
     """, "foo" to CargoRegistryCrate.of("1.0"))
 

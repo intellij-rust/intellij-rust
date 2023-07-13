@@ -16,7 +16,7 @@ class CargoTomlDependencyKeysCompletionProviderTest : LocalCargoTomlCompletionTe
 
     companion object {
         @JvmStatic
-        @Parameterized.Parameters
+        @Parameterized.Parameters(name = "{1}")
         fun data(): Iterable<Array<String>> {
             return listOf(
                 arrayOf("b", "branch", "\"", "\""),
@@ -53,12 +53,40 @@ class CargoTomlDependencyKeysCompletionProviderTest : LocalCargoTomlCompletionTe
         foo = { $keyName = $valueStart<caret>$valueEnd }
     """, "foo" to CargoRegistryCrate.of("0.1.0"))
 
+    fun `test complete inline table when another key already exists`() = doFirstCompletion("""
+        [dependencies]
+        foo = { features = [], ${prefix}<caret> }
+    """, """
+        [dependencies]
+        foo = { features = [], $keyName = $valueStart<caret>$valueEnd }
+    """, "foo" to CargoRegistryCrate.of("0.1.0"))
+
     fun `test complete table`() = doFirstCompletion("""
         [dependencies.foo]
         ${prefix}<caret>
     """, """
         [dependencies.foo]
         $keyName = $valueStart<caret>$valueEnd
+    """, "foo" to CargoRegistryCrate.of("0.1.0"))
+
+    fun `test complete when another key already exists`() = doFirstCompletion("""
+        [dependencies.foo]
+        version = "0.1.0"
+        ${prefix}<caret>
+    """, """
+        [dependencies.foo]
+        version = "0.1.0"
+        $keyName = $valueStart<caret>$valueEnd
+    """, "foo" to CargoRegistryCrate.of("0.1.0"))
+
+    fun `test complete when another key already exists after`() = doFirstCompletion("""
+        [dependencies.foo]
+        ${prefix}<caret>
+        version = "0.1.0"
+    """, """
+        [dependencies.foo]
+        $keyName = $valueStart<caret>$valueEnd
+        version = "0.1.0"
     """, "foo" to CargoRegistryCrate.of("0.1.0"))
 
     fun `test complete inline table when value already exists`() = doFirstCompletion("""
