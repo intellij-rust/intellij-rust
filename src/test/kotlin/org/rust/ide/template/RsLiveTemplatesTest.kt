@@ -211,6 +211,30 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test macro 1`() = expandSnippet("""
+        macro/*caret*/
+    """, """
+        macro_rules! /*caret*/ {
+            () => {};
+        }
+    """)
+
+    fun `test macro 2`() = expandSnippet("""
+        fn main() {
+            macro/*caret*/
+        }
+    """, """
+        fn main() {
+            macro_rules! /*caret*/ {
+                () => {};
+            }
+        }
+    """)
+
+    fun `test macro 3`() = noSnippet("""
+        fn macro/*caret*/
+    """)
+
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB)
 
