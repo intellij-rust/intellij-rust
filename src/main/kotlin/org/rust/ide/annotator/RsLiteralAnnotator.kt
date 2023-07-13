@@ -69,9 +69,11 @@ private val ASTNode.displayName: String
 
         STRING_LITERAL -> "string literal"
         BYTE_STRING_LITERAL -> "byte string literal"
+        CSTRING_LITERAL -> "C string literal"
 
         RAW_STRING_LITERAL -> "raw string literal"
         RAW_BYTE_STRING_LITERAL -> "raw byte string literal"
+        RAW_CSTRING_LITERAL -> "raw C string literal"
 
         else -> toString()
     }

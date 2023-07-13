@@ -17,17 +17,19 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
     BYTE_LITERAL,
     STRING_LITERAL,
     BYTE_STRING_LITERAL,
+    CSTRING_LITERAL,
     RAW_STRING_LITERAL,
-    RAW_BYTE_STRING_LITERAL
+    RAW_BYTE_STRING_LITERAL,
+    RAW_CSTRING_LITERAL
 ), MultiCharQuoteHandler {
     override fun isOpeningQuote(iterator: HighlighterIterator, offset: Int): Boolean {
         val elementType = iterator.tokenType
         val start = iterator.start
         // FIXME: Hashes?
         return when (elementType) {
-            RAW_BYTE_STRING_LITERAL ->
+            RAW_BYTE_STRING_LITERAL, RAW_CSTRING_LITERAL ->
                 offset - start <= 2
-            BYTE_STRING_LITERAL, RAW_STRING_LITERAL ->
+            BYTE_STRING_LITERAL, CSTRING_LITERAL, RAW_STRING_LITERAL ->
                 offset - start <= 1
             BYTE_LITERAL -> offset == start + 1
             else -> super.isOpeningQuote(iterator, offset)
@@ -84,7 +86,7 @@ class RsQuoteHandler : SimpleTokenSetQuoteHandler(
         val start = iterator.start
 
         // If we are inside raw literal then we don't have to deal with escapes
-        if (tt == RAW_STRING_LITERAL || tt == RAW_BYTE_STRING_LITERAL) {
+        if (tt == RAW_STRING_LITERAL || tt == RAW_BYTE_STRING_LITERAL || tt == RAW_CSTRING_LITERAL) {
             return getLiteralDumb(iterator)?.offsets?.value?.containsOffset(offset - start) ?: false
         }
 

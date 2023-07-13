@@ -45,7 +45,7 @@ class RsLitExprReferenceContributor : PsiReferenceContributor() {
 private class RsFileReferenceProvider : PsiReferenceProvider() {
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<FileReference> {
         val stringLiteral = (element as? RsLitExpr)?.kind as? RsLiteralKind.String ?: return emptyArray()
-        if (stringLiteral.isByte) return emptyArray()
+        if (stringLiteral.isByte || stringLiteral.isCStr) return emptyArray()
         val startOffset = stringLiteral.offsets.value?.startOffset ?: return emptyArray()
         val fs = element.containingFile.originalFile.virtualFile.fileSystem
         val literalValue = stringLiteral.value ?: ""

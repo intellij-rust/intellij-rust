@@ -83,6 +83,7 @@ class KnownItems(
     val Mutex: RsStructOrEnumItemElement? get() = findItem("std::sync::mutex::Mutex")
     val Path: RsStructOrEnumItemElement? get() = findItem("std::path::Path")
     val PathBuf: RsStructOrEnumItemElement? get() = findItem("std::path::PathBuf")
+    val CStr: RsStructOrEnumItemElement? get() = findItem("std::ffi::CStr")
 
     val Iterator: RsTraitItem? get() = findItem("core::iter::Iterator")
     val IntoIterator: RsTraitItem? get() = findItem("core::iter::IntoIterator")

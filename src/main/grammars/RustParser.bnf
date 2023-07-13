@@ -1460,16 +1460,16 @@ LitExpr ::= OuterAttr* AnyLitToken {
 }
 LitExprWithoutAttrs ::= AnyLitToken { elementType = LitExpr }
 
-private AnyLitToken ::= STRING_LITERAL | BYTE_STRING_LITERAL
-                      | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
+private AnyLitToken ::= STRING_LITERAL | BYTE_STRING_LITERAL | CSTRING_LITERAL
+                      | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL | RAW_CSTRING_LITERAL
                       | CHAR_LITERAL | BYTE_LITERAL
                       | FLOAT_LITERAL | <<parseFloatLiteral>> | INTEGER_LITERAL
                       | BOOL_LITERAL {
   consumeTokenMethod = "consumeTokenFast"
 }
 
-private AnyLitToken_first ::= STRING_LITERAL | BYTE_STRING_LITERAL
-                            | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
+private AnyLitToken_first ::= STRING_LITERAL | BYTE_STRING_LITERAL | CSTRING_LITERAL
+                            | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL | RAW_CSTRING_LITERAL
                             | CHAR_LITERAL | BYTE_LITERAL
                             | FLOAT_LITERAL | INTEGER_LITERAL
                             | BOOL_LITERAL
@@ -1603,8 +1603,8 @@ MacroBodyQuoteIdent ::= QUOTE_IDENTIFIER {
   implements = "org.rust.lang.core.psi.ext.RsReferenceElementBase"
   mixin = "org.rust.lang.core.psi.ext.RsMacroBodyQuoteIdentMixin"
 }
-StringLitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
-            | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL {
+StringLitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL | CSTRING_LITERAL
+            | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL | RAW_CSTRING_LITERAL {
   elementType = LitExpr
 }
 
