@@ -13,8 +13,8 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.toml.CargoTomlPsiPattern
 import org.rust.toml.StringValueInsertionHandler
-import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlKeySegment
+import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
 
 /** @see CargoTomlPsiPattern.inDependencyKeyValue */

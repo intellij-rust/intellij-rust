@@ -7,7 +7,6 @@ include(
     "clion",
     "debugger",
     "profiler",
-    "toml",
     "copyright",
     "coverage",
     "intelliLang",
