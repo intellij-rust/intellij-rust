@@ -709,10 +709,10 @@
                          implementationClass="org.rust.ide.inspections.RsCompileErrorMacroInspection"
                          key="inspection.rs.compile.error.macro.display.name"/>
 
-        <localInspection language="Rust" groupName="Rust"
-                         displayName="The entry point is async"
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsAsyncMainFunctionInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsAsyncMainFunctionInspection"
+                         key="inspection.rs.async.main.function.display.name"/>
 
         <!-- Surrounders -->
 
