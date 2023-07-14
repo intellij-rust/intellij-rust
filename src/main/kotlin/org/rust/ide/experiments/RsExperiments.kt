@@ -38,6 +38,7 @@ object RsExperiments {
 
     const val SOURCE_BASED_COVERAGE = "org.rust.coverage.source"
 
+    const val MIR_MOVE_ANALYSIS = "org.rust.mir.move-analysis"
     const val MIR_BORROW_CHECK = "org.rust.mir.borrow-check"
 }
 
