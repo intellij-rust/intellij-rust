@@ -53,11 +53,12 @@ class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::c
         project.cargoProjects.modifyFeatures(cargoProject, setOf(feature), initialState)
 
         InlineFile(code.trimIndent()).withCaret()
-        launchAction()
+        val previewChecker = launchAction()
 
         val cargoProjectRefreshed = project.cargoProjects.singleProject()
         val pkgRefreshed = cargoProjectRefreshed.workspaceOrFail().packages.single { it.origin == PackageOrigin.WORKSPACE }
 
         assertEquals(!initialState, pkgRefreshed.featureState[featureName])
+        previewChecker.checkPreview()
     }
 }

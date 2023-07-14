@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorModificationUtil
@@ -87,6 +88,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 }
             }
         })
+
+        extendWithFnTypeCompletion()
 
         extend(CompletionType.BASIC, afterIfOrWhilePattern(), RsKeywordCompletionProvider("let"))
         extend(CompletionType.BASIC, afterImplTraitPattern(), RsKeywordCompletionProvider("for"))
@@ -208,6 +211,18 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             .inside(psiElement<RsFunction>())
     }
 
+    private fun pathTypePattern(): PsiElementPattern.Capture<PsiElement> {
+        val parent = psiElement<RsPath>()
+            .with("RsPath") { path, _ ->
+                val identifier = path.identifier
+                path.firstChild == identifier && path.lastChild == identifier
+            }
+
+        return psiElement(IDENTIFIER)
+            .withParent(parent)
+            .withSuperParent<RsPathType>(2)
+    }
+
     private fun constParameterBeginningPattern(): PsiElementPattern.Capture<PsiElement> {
         val parent = psiElement<RsTypeParameter>()
             .with(object : PatternCondition<RsTypeParameter>("RsConstParameterBeginning") {
@@ -297,6 +312,26 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             ctx.document.insertString(ctx.selectionEndOffset, " {  }")
             EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
         }
+
+    private fun extendWithFnTypeCompletion() {
+        extend(CompletionType.BASIC, pathTypePattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+                val lookup = LookupElementBuilder
+                    .create("fn")
+                    .bold()
+                    .withTailText("()")
+                    .withInsertHandler { ctx, _ ->
+                        ctx.document.insertString(ctx.selectionEndOffset, "()")
+                        EditorModificationUtil.moveCaretRelatively(ctx.editor, 1)
+                    }
+                    .toRsLookupElement(RsLookupElementProperties())
+
+                @Suppress("UnstableApiUsage")
+                val wrapped = MLRankingIgnorable.wrap(lookup)
+                result.addElement(wrapped)
+            }
+        })
+    }
 
     companion object {
         @JvmField

@@ -12,35 +12,94 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.rust.stdext.RsResult
 
 fun CodeInsightTestFixture.checkPreviewAndLaunchAction(
     intention: IntentionAction,
     preview: String?,
-    isWrappingActive: Boolean = false,
-) {
-    val actualPreview = getIntentionPreviewText(intention)
-    check(actualPreview != null) {
-        "No intention preview for `${intention.getClassName()}`. " +
-            "Either support preview or pass `previewExpected = false`"
+    isWrappingActive: Boolean,
+): DeferredPreviewCheck {
+    val actualPreviewResult = try {
+        RsResult.Ok(getIntentionPreviewText(intention))
+    } catch (e: Throwable) {
+        RsResult.Err(e)
     }
+
     launchAction(intention)
-    if (isWrappingActive && preview != null) return //TODO support custom preview with test wrapping
+
+    val actualPreview = when (actualPreviewResult) {
+        is RsResult.Ok -> actualPreviewResult.ok ?: return DeferredPreviewCheck.FailNoPreview(intention)
+        is RsResult.Err -> return DeferredPreviewCheck.PreviewFailed(actualPreviewResult.err)
+    }
+
+    //TODO support custom preview with test wrapping
+    if (isWrappingActive && preview != null) {
+        return DeferredPreviewCheck.IgnorePreview
+    }
+
     val expectedPreview = preview?.trimIndent() ?: file.text
-    assertEquals(
-        "Intention `${intention.getClassName()}` produced different result when invoked in preview mode",
-        expectedPreview,
-        actualPreview
-    )
+    return DeferredPreviewCheck.CheckHasPreview(intention, expectedPreview, actualPreview)
 }
 
-fun CodeInsightTestFixture.checkNoPreview(intention: IntentionAction) {
+fun CodeInsightTestFixture.checkNoPreview(intention: IntentionAction): DeferredPreviewCheck {
     val previewInfo = IntentionPreviewPopupUpdateProcessor.getPreviewInfo(project, intention, file, editor)
-    assertEquals(
-        "Expected no intention preview for `${intention.getClassName()}`",
-        IntentionPreviewInfo.EMPTY,
-        previewInfo
-    )
+    return DeferredPreviewCheck.CheckNoPreview(intention, previewInfo)
+}
+
+sealed interface DeferredPreviewCheck {
+    fun checkPreview()
+
+    object IgnorePreview : DeferredPreviewCheck {
+        override fun checkPreview() {}
+    }
+
+    class PreviewFailed(
+        private val throwable: Throwable,
+    ) : DeferredPreviewCheck {
+        override fun checkPreview() {
+            throw throwable
+        }
+    }
+
+    class FailNoPreview(
+        private val intention: IntentionAction,
+    ) : DeferredPreviewCheck {
+        override fun checkPreview() {
+            Assert.fail(
+                "No intention preview for `${intention.getClassName()}`. " +
+                    "Either support preview or pass `previewExpected = false`"
+            )
+        }
+    }
+
+    class CheckHasPreview(
+        private val intention: IntentionAction,
+        private val expectedPreview: String?,
+        private val actualPreview: String,
+    ) : DeferredPreviewCheck {
+        override fun checkPreview() {
+            assertEquals(
+                "Intention `${intention.getClassName()}` produced different result when invoked in preview mode",
+                expectedPreview,
+                actualPreview
+            )
+        }
+    }
+
+    class CheckNoPreview(
+        private val intention: IntentionAction,
+        private val previewInfo: IntentionPreviewInfo
+    ) : DeferredPreviewCheck {
+        override fun checkPreview() {
+            assertEquals(
+                "Expected no intention preview for `${intention.getClassName()}`",
+                IntentionPreviewInfo.EMPTY,
+                previewInfo
+            )
+        }
+    }
 }
 
 private fun IntentionAction.getClassName(): String {

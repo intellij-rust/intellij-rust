@@ -21,6 +21,7 @@ import com.intellij.testFramework.fixtures.impl.BaseFixture
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.findAnnotationInstance
+import org.rust.ide.DeferredPreviewCheck
 import org.rust.ide.checkNoPreview
 import org.rust.ide.checkPreviewAndLaunchAction
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
@@ -229,8 +230,9 @@ abstract class AnnotationTestFixtureBase(
     ) {
         configure(before)
         checkBefore()
-        applyQuickFix(fixName, preview)
+        val previewChecker = applyQuickFix(fixName, preview)
         checkAfter(after)
+        previewChecker.checkPreview()
     }
 
     protected open fun checkHighlighting(
@@ -246,18 +248,20 @@ abstract class AnnotationTestFixtureBase(
         codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
-    fun applyQuickFix(name: String, preview: Preview?) {
+    fun applyQuickFix(name: String, preview: Preview?): DeferredPreviewCheck {
         val action = codeInsightFixture.findSingleIntention(name)
-        if (!skipPreview(action)) {
+        return if (!skipPreview(action)) {
             if (preview != null) {
                 val previewText = (preview as? ExplicitPreview)?.text
                 codeInsightFixture.checkPreviewAndLaunchAction(action, previewText, isWrappingActive)
             } else {
-                codeInsightFixture.checkNoPreview(action)
+                val previewChecker = codeInsightFixture.checkNoPreview(action)
                 codeInsightFixture.launchAction(action)
+                previewChecker
             }
         } else {
             codeInsightFixture.launchAction(action)
+            DeferredPreviewCheck.IgnorePreview
         }
     }
 

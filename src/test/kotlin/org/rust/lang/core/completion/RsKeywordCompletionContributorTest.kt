@@ -298,6 +298,18 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         unsafe fn /*caret*/
     """)
 
+    fun `test fn type 1`() = checkCompletion("fn", """
+        fn func(x: f/*caret*/) {}
+    """, """
+        fn func(x: fn(/*caret*/)) {}
+    """)
+
+    fun `test fn type 2`() = checkCompletion("fn", """
+        fn func(x: fn/*caret*/) {}
+    """, """
+        fn func(x: fn(/*caret*/)) {}
+    """)
+
     fun `test impl`() = checkCompletion("impl", """
         imp/*caret*/
     """, """
