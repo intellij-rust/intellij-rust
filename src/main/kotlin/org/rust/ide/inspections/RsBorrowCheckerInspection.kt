@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix.notNullElements
 import org.rust.RsBundle
 import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
+import org.rust.ide.experiments.RsExperiments.MIR_MOVE_ANALYSIS
 import org.rust.ide.fixes.AddMutableFix
 import org.rust.ide.fixes.DeriveCopyFix
 import org.rust.ide.fixes.InitializeWithDefaultValueFix
@@ -51,40 +52,59 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
                 // TODO: Remove this check when type inference is implemented for `asm!` macro calls
                 if (func.descendantsWithMacrosOfType<RsAsmMacroArgument>().isNotEmpty()) return
 
-                if (!usedMir) {
+                if (!usedMir.analyzedMoves) {
                     borrowCheckResult.usesOfMovedValue.forEach {
                         registerUseOfMovedValueProblem(holder, it.use)
                     }
+                }
+
+                if (!usedMir.analyzedUninit) {
                     borrowCheckResult.usesOfUninitializedVariable.forEach {
                         registerUseOfUninitializedVariableProblem(holder, it.use)
                     }
                 }
+
                 borrowCheckResult.moveErrors.forEach {
                     val move = it.from.element.ancestorOrSelf<RsExpr>()
                     if (move != null) registerMoveProblem(holder, move)
                 }
             }
 
-            private fun visitFunctionUsingMir(function: RsFunction): Boolean {
-                if (!isFeatureEnabled(MIR_BORROW_CHECK)) return false
-                val result = function.mirBorrowCheckResult ?: return false
-                for (element in result.usesOfMovedValue) {
-                    if (!element.isPhysical) continue
-                    val fix = DeriveCopyFix.createIfCompatible(element)
-                    RsDiagnostic.UseOfMovedValueError(element, fix).addToHolder(holder)
+            private fun visitFunctionUsingMir(function: RsFunction): MirAnalysisStatus {
+                val useMirMoveAnalysis = isFeatureEnabled(MIR_MOVE_ANALYSIS)
+                val useMirBorrowChecker = isFeatureEnabled(MIR_BORROW_CHECK)
+                if (!useMirBorrowChecker && !useMirMoveAnalysis) return MirAnalysisStatus.NONE
+                val result = function.mirBorrowCheckResult ?: return MirAnalysisStatus.NONE
+                if (useMirMoveAnalysis) {
+                    for (element in result.usesOfMovedValue) {
+                        if (!element.isPhysical) continue
+                        val fix = DeriveCopyFix.createIfCompatible(element)
+                        RsDiagnostic.UseOfMovedValueError(element, fix).addToHolder(holder)
+                    }
                 }
-                for (element in result.usesOfUninitializedVariable) {
-                    if (!element.isPhysical) continue
-                    val fix = InitializeWithDefaultValueFix.createIfCompatible(element)
-                    RsDiagnostic.UseOfUninitializedVariableError(element, fix).addToHolder(holder)
+                if (useMirBorrowChecker) {
+                    for (element in result.usesOfUninitializedVariable) {
+                        if (!element.isPhysical) continue
+                        val fix = InitializeWithDefaultValueFix.createIfCompatible(element)
+                        RsDiagnostic.UseOfUninitializedVariableError(element, fix).addToHolder(holder)
+                    }
+                    for (element in result.moveOutWhileBorrowedValues) {
+                        if (!element.isPhysical) continue
+                        RsDiagnostic.MoveOutWhileBorrowedError(element).addToHolder(holder)
+                    }
                 }
-                for (element in result.moveOutWhileBorrowedValues) {
-                    if (!element.isPhysical) continue
-                    RsDiagnostic.MoveOutWhileBorrowedError(element).addToHolder(holder)
-                }
-                return true
+                return MirAnalysisStatus(useMirMoveAnalysis, useMirBorrowChecker)
             }
         }
+
+    private data class MirAnalysisStatus(
+        val analyzedMoves: Boolean = false,
+        val analyzedUninit: Boolean = false,
+    ) {
+        companion object {
+            val NONE = MirAnalysisStatus()
+        }
+    }
 
     private fun registerProblem(holder: RsProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
         if (expr.isPhysical && nameExpr.isPhysical) {

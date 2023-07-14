@@ -6,12 +6,12 @@
 package org.rust.ide.inspections.borrowck
 
 import org.rust.*
-import org.rust.ide.experiments.RsExperiments.MIR_BORROW_CHECK
+import org.rust.ide.experiments.RsExperiments.MIR_MOVE_ANALYSIS
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.lang.core.macros.MacroExpansionManager
 
-@WithExperimentalFeatures(MIR_BORROW_CHECK)
+@WithExperimentalFeatures(MIR_MOVE_ANALYSIS)
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
     fun `test move by call 1`() = checkByText("""
@@ -388,9 +388,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    // TODO Overloaded RsBinaryExpr
-    fun `test no move error E0382 on binary expr as method call`() = expect<Throwable> {
-    checkByText("""
+    fun `test no move error E0382 on binary expr as method call`() = checkByText("""
         #[derive (PartialEq)]
         struct S { data: i32 }
 
@@ -402,7 +400,6 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
-    }
 
     fun `test no move error E0382 on ref String and &str`() = checkByText("""
         use std::string::String;
@@ -416,7 +413,6 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 on method call`() = checkByText("""
         struct S { }
         impl S {
@@ -430,7 +426,6 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 on field getter`() = checkByText("""
         struct S {
             data: (u16, u16, u16)
@@ -446,7 +441,6 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    @WithExperimentalFeatures() // TODO Fix E0505 false positive
     fun `test no move error E0382 when let in while`() = checkByText("""
         struct S { a: i32 }
 
@@ -507,17 +501,15 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move Box deref twice`() = checkByText("""
         struct S;
         fn main() {
             let x = Box::new(S);
             *x;
-            <error descr="Use of moved value">*x</error>;
+            <error descr="Use of moved value [E0382]">*x</error>;
         }
     """, checkWarn = false)
 
-    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move error when deref Rc`() = checkByText("""
         use std::rc::Rc;
         struct S;
@@ -527,7 +519,6 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
-    @WithExperimentalFeatures() // TODO support deref in gatherMoves
     fun `test move custom overloaded deref`() = checkByText("""
         struct S;
         struct SmartPointer {

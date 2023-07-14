@@ -36,5 +36,8 @@
         <experimentalFeature id="org.rust.mir.borrow-check" percentOfUsers="0">
             <description>Code analysis based on MIR borrow checker</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.mir.move-analysis" percentOfUsers="0">
+            <description>Move analysis based on MIR borrow checker</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>
