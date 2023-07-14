@@ -222,7 +222,7 @@ private fun checkSuperStructs(holder: AnnotationHolder, element: RsSuperStructs)
     deny(
         element,
         holder,
-        "Struct inheritance is not supported in Rust",
+        RsBundle.message("error.message.struct.inheritance.is.not.supported"),
         *element.typeReferenceList.toTypedArray(),
         fix = RemoveElementFix(element, "super structs")
     )
