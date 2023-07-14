@@ -159,7 +159,7 @@ fun createLookupElement(
     return lookup.toRsLookupElement(properties)
 }
 
-private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
+fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
     when (scopeEntry) {
         is AssocItemScopeEntryBase<*> ->
             instantiateMethodOwnerSubstitution(scopeEntry)
@@ -280,7 +280,12 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
     ) {
         val document = context.document
 
-        if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
+        val shouldEscapeName = element is RsNameIdentifierOwner
+            && !RsNamesValidator.isIdentifier(scopeName)
+            && scopeName !in CAN_NOT_BE_ESCAPED
+            /** Hack for [RsCommonCompletionProvider.addIteratorMethods] */
+            && !scopeName.startsWith("iter().")
+        if (shouldEscapeName) {
             document.insertString(context.startOffset, RS_RAW_PREFIX)
             context.commitDocument() // Fixed PSI element escape
         }

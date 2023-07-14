@@ -29,14 +29,13 @@ import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
-import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.expectedTypeCoercable
-import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.ExpectedType
 import org.rust.lang.core.types.infer.containsTyOfClass
+import org.rust.lang.core.types.infer.substituteAndNormalizeOrUnknown
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
+import org.rust.stdext.mapNotNullToSet
 
 object RsCommonCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(
@@ -188,21 +187,88 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         result: CompletionResultSet,
         context: RsCompletionContext
     ) {
+        val iterMethodInfo = IterMethodInfo(element)
+        val processor = MethodsAndFieldsCompletionProcessor(element, result, context)
+        addMethodAndFieldCompletionImpl(
+            element,
+            processor.wrapWithBeforeProcessingHandler(iterMethodInfo::process)
+        )
+
+        val iterMethodReturnType = iterMethodInfo.getReturnType(context) ?: return
+        addIteratorMethods(element, iterMethodReturnType, context, processor)
+    }
+
+    private fun addMethodAndFieldCompletionImpl(element: RsMethodOrField, processor: RsResolveProcessor) {
         val receiver = element.receiver.safeGetOriginalOrSelf()
         val lookup = ImplLookup.relativeTo(receiver)
         val receiverTy = receiver.type
+        addMethodAndFieldCompletionImpl(receiverTy, element, lookup, processor)
+    }
+
+    private fun addMethodAndFieldCompletionImpl(
+        receiverTy: Ty,
+        element: RsMethodOrField,
+        lookup: ImplLookup,
+        processor0: RsResolveProcessor
+    ) {
         val processResolveVariants = if (element is RsMethodCall) {
             ::processMethodCallExprResolveVariants
         } else {
             ::processDotExprResolveVariants
         }
-        var processor: RsResolveProcessor = MethodsAndFieldsCompletionProcessor(element, result, context)
+        var processor = processor0
         processor = deduplicateMethodCompletionVariants(processor)
         processor = filterMethodCompletionVariantsByTraitBounds(lookup, receiverTy, processor)
-        processor = ImportCandidatesCollector.filterAccessibleTraits(receiver, processor)
-        processor = filterCompletionVariantsByVisibility(receiver, processor)
+        processor = ImportCandidatesCollector.filterAccessibleTraits(element, processor)
+        processor = filterCompletionVariantsByVisibility(element, processor)
 
         processResolveVariants(lookup, receiverTy, element, processor)
+    }
+
+    private class IterMethodInfo(private val element: RsMethodOrField) {
+        private val entries: MutableList<MethodResolveVariant> = mutableListOf()
+
+        fun process(entry: ScopeEntry) {
+            if (entry.name == "iter" && entry is MethodResolveVariant) {
+                entries += entry
+            }
+        }
+
+        fun getReturnType(context: RsCompletionContext): Ty? {
+            // Add `.iter().something()` only for single `.iter()` method which doesn't require trait to import
+            val traitsInScope = entries
+                .mapNotNullToSet { it.source.requiredTraitInScope }
+                .filterInScope(element)
+                .toHashSet()
+            val entry = entries.singleOrNull {
+                val trait = it.source.requiredTraitInScope
+                trait == null || trait in traitsInScope
+            } ?: return null
+
+            val lookup = context.lookup ?: return null
+            val subst = lookup.ctx.getSubstitution(entry)
+            val returnType = entry.element.rawReturnType.substituteAndNormalizeOrUnknown(subst, lookup.ctx)
+
+            if (returnType is TyUnknown || returnType is TyUnit) return null
+            val iterator = lookup.items.Iterator ?: return null
+            if (!lookup.canSelectWithDeref(TraitRef(returnType, iterator.withSubst()))) return null
+
+            return returnType
+        }
+    }
+
+    private fun addIteratorMethods(
+        element: RsMethodOrField,
+        iterMethodReturnType: Ty,
+        context: RsCompletionContext,
+        originalProcessor: MethodsAndFieldsCompletionProcessor
+    ) {
+        val processor = createProcessor { entry ->
+            if (entry !is MethodResolveVariant) return@createProcessor
+            val entryWithIterPrefix = entry.copy(name = "iter().${entry.name}")
+            originalProcessor.process(entryWithIterPrefix)
+        }
+        addMethodAndFieldCompletionImpl(iterMethodReturnType, element, context.lookup ?: return, processor)
     }
 
     private fun addCompletionsForOutOfScopeItems(
