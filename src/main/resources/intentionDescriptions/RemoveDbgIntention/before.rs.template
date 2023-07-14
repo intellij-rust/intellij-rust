@@ -1,3 +1,0 @@
-fun main() {
-    let a = <spot>dbg!(4 + 2)</spot>;
-}

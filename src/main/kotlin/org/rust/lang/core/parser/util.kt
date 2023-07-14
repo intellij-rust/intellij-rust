@@ -43,6 +43,16 @@ inline fun <T> PsiBuilder.probe(action: () -> T): T {
     }
 }
 
+inline fun PsiBuilder.rollbackIfFalse(action: () -> Boolean): Boolean {
+    val mark = mark()
+    return if (action()) {
+        true
+    } else {
+        mark.rollbackTo()
+        false
+    }
+}
+
 fun PsiBuilder.Marker.close(result: Boolean): Boolean {
     if (result) {
         drop()
