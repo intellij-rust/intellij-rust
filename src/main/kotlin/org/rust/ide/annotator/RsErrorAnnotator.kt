@@ -1509,7 +1509,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (element.isInAsyncContext) return
         val function = element.ancestorStrict<RsFunctionOrLambda>() ?: return
         val fix = when {
-            function is RsFunction && !function.isAsync && function.isMain -> AddTokioMainFix(function)
+//            TODO: Re-enable once RUST-11432 is fixed
+//            function is RsFunction && !function.isAsync && function.isMain -> AddTokioMainFix(function)
             !function.returnsFuture() -> MakeAsyncFix(function)
             else -> null
         }

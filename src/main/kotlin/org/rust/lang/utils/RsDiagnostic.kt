@@ -1513,7 +1513,7 @@ sealed class RsDiagnostic(
                 ERROR,
                 E0752,
                 "`$entryPointName` function is not allowed to be `async`",
-                fixes = listOfFixes(RemoveElementFix(element), AddTokioMainFix(entryPoint))
+                fixes = listOfFixes(RemoveElementFix(element))// , AddTokioMainFix(entryPoint)) // TODO: re-enable once RUST-11432 is fixed
             )
         }
     }
