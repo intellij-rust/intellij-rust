@@ -32,7 +32,6 @@ import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection
 import org.rust.ide.presentation.render
-import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
@@ -117,8 +116,9 @@ sealed class RsDiagnostic(
                         val pat = parent.pat
                         if (pat is RsPatIdent &&
                             !actualTy.containsTyOfClass(TyUnknown::class.java, TyAnon::class.java)) {
-                            val text = RsBundle.message("intention.name.change.type.to2", pat.patBinding.identifier.text ?: "?", actualTy.renderInsertionSafe())
-                            add(ConvertLetDeclTypeFix(parent, text, actualTy))
+                            parent.typeReference?.let {
+                                add(ConvertTypeReferenceFix(it, pat.patBinding.identifier.text ?: "?", actualTy))
+                            }
                         }
                     }
                 }.toQuickFixInfo()
@@ -1522,6 +1522,20 @@ sealed class RsDiagnostic(
             ERROR,
             E0435,
             RsBundle.message("inspection.message.non.constant.value.was.used.in.constant.expression")
+        )
+    }
+
+    class LiteralOutOfRange(
+        element: PsiElement,
+        private val value: String,
+        private val ty: String,
+        private val fix: LocalQuickFix?
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            null,
+            RsBundle.message("inspection.message.literal.out.of.range", value, ty),
+            fixes = listOfFixes(fix)
         )
     }
 
