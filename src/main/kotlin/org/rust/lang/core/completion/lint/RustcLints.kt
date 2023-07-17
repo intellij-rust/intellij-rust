@@ -67,6 +67,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("improper_ctypes_definitions", false),
     Lint("incomplete_features", false),
     Lint("incomplete_include", false),
+    Lint("incorrect_fn_null_checks", false),
     Lint("indirect_structural_match", false),
     Lint("ineffective_unstable_trait_impl", false),
     Lint("inline_no_sanitize", false),

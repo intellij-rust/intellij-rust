@@ -173,7 +173,6 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("float_cmp_const", false),
     Lint("float_equality_without_abs", false),
     Lint("fn_address_comparisons", false),
-    Lint("fn_null_check", false),
     Lint("fn_params_excessive_bools", false),
     Lint("fn_to_numeric_cast", false),
     Lint("fn_to_numeric_cast_any", false),
