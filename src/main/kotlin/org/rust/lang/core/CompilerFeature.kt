@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.util.text.SemVer
+import org.jetbrains.annotations.Nls
 import org.rust.RsBundle
 import org.rust.cargo.util.parseSemVer
 import org.rust.ide.annotator.RsAnnotationHolder
@@ -86,7 +87,7 @@ class CompilerFeature(
     fun check(
         holder: RsAnnotationHolder,
         element: PsiElement,
-        presentableFeatureName: String,
+        presentableFeatureName: @Nls String,
         experimentalFixes: List<LocalQuickFix> = emptyList(),
         removedFixes: List<LocalQuickFix> = emptyList()
     ) = check(
