@@ -441,7 +441,7 @@ project(":") {
         api("io.github.z4kn4fein:semver:1.4.2") {
             excludeKotlinDeps()
         }
-        implementation("org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r") {
+        implementation("org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r") {
             exclude("org.slf4j")
         }
         testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
