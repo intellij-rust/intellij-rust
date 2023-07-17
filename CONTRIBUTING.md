@@ -188,7 +188,6 @@ The current Rust plugin modules:
 * `:clion` - contains code available only in CLion
 * `:debugger` - debugger related code
 * `:profiler` - profiler related code
-* `:toml` - integration with TOML plugin
 * `:intelliLang` - integration with [intelliLang](https://github.com/JetBrains/intellij-community/tree/master/plugins/IntelliLang) plugin
 * `:copyright` - integration with [copyright](https://github.com/JetBrains/intellij-community/tree/master/plugins/copyright) plugin
 * `:duplicates` - support `Duplicated code fragment` inspection

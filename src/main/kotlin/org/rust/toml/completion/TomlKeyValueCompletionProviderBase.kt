@@ -10,8 +10,8 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.ProcessingContext
 import org.rust.toml.getClosestKeyValueAncestor
-import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlKeySegment
+import org.toml.lang.psi.TomlKeyValue
 
 abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
