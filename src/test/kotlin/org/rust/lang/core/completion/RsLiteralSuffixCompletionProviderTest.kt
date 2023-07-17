@@ -154,6 +154,18 @@ class RsLiteralSuffixCompletionProviderTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test no completion for already existing integer suffix`() = checkNotContainsCompletion(possibleCompletions("1i32"), """
+        fn main() {
+            let a = 1i32i/*caret*/
+        }
+    """)
+
+    fun `test no completion for already existing float suffix`() = checkNotContainsCompletion(possibleCompletions("1.0f64"), """
+        fn main() {
+            let a = 1.0f64f/*caret*/
+        }
+    """)
+
     private fun possibleCompletions(prefix: String): List<String> {
         val suffixes = TyInteger.NAMES + TyFloat.NAMES
         return suffixes + suffixes.map { "$prefix$it" }

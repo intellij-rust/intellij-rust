@@ -23,9 +23,13 @@ object RsLiteralSuffixCompletionProvider : RsCompletionProvider() {
 
     override val elementPattern: ElementPattern<PsiElement>
         get() = psiElement<PsiElement>()
-            .withParent(psiElement<RsLitExpr>().with("isLiteralNumberWithoutPrefix") { psi ->
-                val kind = psi.getOriginalOrSelf().kind
-                kind is RsLiteralKind.Integer && kind.suffix != null || kind is RsLiteralKind.Float && kind.suffix != null
+            .withParent(psiElement<RsLitExpr>().with("isLiteralNumberWithoutExistingSuffix") { psi ->
+                val suffix = when (val kind = psi.getOriginalOrSelf().kind) {
+                    is RsLiteralKind.Integer -> kind.suffix
+                    is RsLiteralKind.Float -> kind.suffix
+                    else -> null
+                } ?: return@with false
+                !(TyInteger.NAMES + TyFloat.NAMES).any { suffix.contains(it) }
             })
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
