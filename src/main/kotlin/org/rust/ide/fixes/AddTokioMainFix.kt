@@ -14,6 +14,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 
 class AddTokioMainFix(function: RsFunction) : RsQuickFixBase<RsFunction>(function) {
@@ -28,8 +29,11 @@ class AddTokioMainFix(function: RsFunction) : RsQuickFixBase<RsFunction>(functio
 
     }
     override fun invoke(project: Project, editor: Editor?, element: RsFunction) {
+        if (!element.isAsync) {
+            val anchor = element.unsafe ?: element.externAbi ?: element.fn
+            element.addBefore(RsPsiFactory(project).createAsyncKeyword(), anchor)
+        }
         val anchor = element.outerAttrList.firstOrNull() ?: element.firstKeyword
-
         element.addOuterAttribute(Attribute("tokio::main"), anchor)
 
         if (!element.isIntentionPreviewElement && !hasTokio) {
