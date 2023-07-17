@@ -167,7 +167,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkMacro2(holder: RsAnnotationHolder, macro: RsMacro2) {
-        DECL_MACRO.check(holder, macro.macroKw, "`macro`")
+        DECL_MACRO.check(holder, macro.macroKw, RsBundle.message("macro"))
     }
 
 
@@ -182,7 +182,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val parentParent = parent?.context
 
         if (parent !is RsMatchArm && (parent !is RsLetExpr || parentParent !is RsCondition)) {
-            OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
+            OR_PATTERNS.check(holder, orPat, RsBundle.message("or.patterns.syntax"))
         }
 
         if (orPat.isTopLevel) {
@@ -464,7 +464,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkDuplicates(holder, variant)
         val discr = variant.variantDiscriminant ?: return
         if (variant.blockFields != null || variant.tupleFields != null) {
-            ARBITRARY_ENUM_DISCRIMINANT.check(holder, discr.expr ?: discr, "discriminant on a non-unit variant")
+            ARBITRARY_ENUM_DISCRIMINANT.check(holder, discr.expr ?: discr, RsBundle.message("discriminant.on.a.non.unit.variant"))
         }
     }
 
@@ -534,7 +534,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkYieldExpr(holder: RsAnnotationHolder, o: RsYieldExpr) {
-        GENERATORS.check(holder, o.yield, "`yield` syntax")
+        GENERATORS.check(holder, o.yield, RsBundle.message("yield.syntax"))
     }
 
     // E0040: Explicit destructor call (call to Drop::drop() method on an instance explicitly)
@@ -635,12 +635,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkPatBox(holder: RsAnnotationHolder, box: RsPatBox) {
-        BOX_PATTERNS.check(holder, box.box, "`box` pattern syntax")
+        BOX_PATTERNS.check(holder, box.box, RsBundle.message("box.pattern.syntax"))
     }
 
     private fun checkPatField(holder: RsAnnotationHolder, field: RsPatField) {
         val box = field.box ?: return
-        BOX_PATTERNS.check(holder, box, "`box` pattern syntax")
+        BOX_PATTERNS.check(holder, box, RsBundle.message("box.pattern.syntax"))
     }
 
     private fun checkPatBinding(holder: RsAnnotationHolder, binding: RsPatBinding) {
@@ -650,17 +650,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkPatRest(holder: RsAnnotationHolder, patRest: RsPatRest) {
         val parent = patRest.parent
         if (parent is RsPatSlice || parent is RsPatIdent && parent.parent is RsPatSlice) {
-            SLICE_PATTERNS.check(holder, patRest, "subslice patterns")
+            SLICE_PATTERNS.check(holder, patRest, RsBundle.message("subslice.patterns"))
         }
     }
 
     private fun checkPatRange(holder: RsAnnotationHolder, range: RsPatRange) {
         if (range.isExclusive && range.end != null) {
-            EXCLUSIVE_RANGE_PATTERN.check(holder, range, "exclusive range patterns")
+            EXCLUSIVE_RANGE_PATTERN.check(holder, range, RsBundle.message("exclusive.range.patterns"))
         }
 
         if (range.start == null && range.end != null) {
-            HALF_OPEN_RANGE_PATTERNS.check(holder, range, "half-open range patterns")
+            HALF_OPEN_RANGE_PATTERNS.check(holder, range, RsBundle.message("half.open.range.patterns"))
         }
 
         val op = range.op?.takeUnless { it == range.dotdot } ?: return
@@ -706,7 +706,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             if (qualifier != null || useSpeck != null && useSpeck.qualifier != null) {
                 RsDiagnostic.UndeclaredTypeOrModule(crate).addToHolder(holder)
             } else if (edition == Edition.EDITION_2015) {
-                CRATE_IN_PATHS.check(holder, crate, "`crate` in paths")
+                CRATE_IN_PATHS.check(holder, crate, RsBundle.message("crate.in.paths"))
             }
         }
 
@@ -809,12 +809,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkLetDecl(holder: RsAnnotationHolder, letDecl: RsLetDecl) {
         val pat = letDecl.pat
         if (letDecl.letElseBranch != null && pat != null && pat.isIrrefutable) {
-            IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
+            IRREFUTABLE_LET_PATTERNS.check(holder, pat, RsBundle.message("irrefutable.let.pattern"))
         }
     }
 
     private fun checkLetElseBranch(holder: RsAnnotationHolder, elseBranch: RsLetElseBranch) {
-        LET_ELSE.check(holder, elseBranch, "let else")
+        LET_ELSE.check(holder, elseBranch, RsBundle.message("let.else"))
     }
 
     private fun checkLabel(holder: RsAnnotationHolder, label: RsLabel) {
@@ -852,7 +852,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkMatchArmGuard(holder: RsAnnotationHolder, guard: RsMatchArmGuard) {
         val expr = guard.expr
         if (expr is RsLetExpr) {
-            IF_LET_GUARD.check(holder, expr.let, "if let guard")
+            IF_LET_GUARD.check(holder, expr.let, RsBundle.message("if.let.guard"))
         }
     }
 
@@ -876,7 +876,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 // sure that a mod is not a directory owner.
                 if (modDecl.cargoWorkspace != null) {
                     val addModule = AddModuleFileFix.createFixes(modDecl, expandModuleFirst = true)
-                    NON_MODRS_MODS.check(holder, modDecl, "mod statements in non-mod.rs files", addModule)
+                    NON_MODRS_MODS.check(holder, modDecl, RsBundle.message("mod.statements.in.non.mod.rs.files"), addModule)
                 }
                 return
             }
@@ -981,7 +981,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkConstTraitImpl(holder: RsAnnotationHolder, impl: RsImplItem) {
         val const = impl.const ?: return
-        CONST_TRAIT_IMPL.check(holder, const, "const trait impls")
+        CONST_TRAIT_IMPL.check(holder, const, RsBundle.message("const.trait.impls"))
     }
 
     // E0322: Explicit impls for the `Sized` trait are not permitted
@@ -1095,29 +1095,29 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkTypeAlias(holder: RsAnnotationHolder, ta: RsTypeAlias) {
         when (val owner = ta.owner) {
             is RsAbstractableOwner.Trait -> {
-                ta.typeReference?.let { ASSOCIATED_TYPE_DEFAULTS.check(holder, it, "associated type defaults") }
+                ta.typeReference?.let { ASSOCIATED_TYPE_DEFAULTS.check(holder, it, RsBundle.message("associated.type.defaults")) }
                 val typeParameterList = ta.typeParameterList
                 if (typeParameterList != null && typeParameterList.getGenericParameters().isNotEmpty()) {
-                    GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
+                    GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, RsBundle.message("generic.associated.types"))
                 }
                 for (whereClause in ta.whereClauseList) {
-                    GENERIC_ASSOCIATED_TYPES.check(holder, whereClause, "where clauses on associated types")
+                    GENERIC_ASSOCIATED_TYPES.check(holder, whereClause, RsBundle.message("where.clauses.on.associated.types"))
                 }
             }
             is RsAbstractableOwner.Impl -> {
                 if (owner.isInherent) {
-                    INHERENT_ASSOCIATED_TYPES.check(holder, ta, "inherent associated types")
+                    INHERENT_ASSOCIATED_TYPES.check(holder, ta, RsBundle.message("inherent.associated.types"))
                 }
                 val typeParameterList = ta.typeParameterList
                 if (typeParameterList != null && typeParameterList.getGenericParameters().isNotEmpty()) {
-                    GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, "generic associated types")
+                    GENERIC_ASSOCIATED_TYPES.check(holder, typeParameterList, RsBundle.message("generic.associated.types"))
                 }
                 for (whereClause in ta.whereClauseList) {
-                    GENERIC_ASSOCIATED_TYPES.check(holder, whereClause, "where clauses on associated types")
+                    GENERIC_ASSOCIATED_TYPES.check(holder, whereClause, RsBundle.message("where.clauses.on.associated.types"))
                 }
             }
             is RsAbstractableOwner.Foreign -> {
-                EXTERN_TYPES.check(holder, ta, "extern types")
+                EXTERN_TYPES.check(holder, ta, RsBundle.message("extern.types"))
             }
             else -> {}
         }
@@ -1129,12 +1129,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val box = o.box
         if (box != null) {
             val fix = ReplaceBoxSyntaxFix(o)
-            BOX_SYNTAX.check(holder, box, "`box` expression syntax", removedFixes = listOf(fix))
+            BOX_SYNTAX.check(holder, box, RsBundle.message("box.expression.syntax"), removedFixes = listOf(fix))
         }
 
         val raw = o.raw
         if (raw != null) {
-            RAW_REF_OP.check(holder, raw, "`raw address of` syntax")
+            RAW_REF_OP.check(holder, raw, RsBundle.message("raw.address.of.syntax"))
         }
     }
 
@@ -1234,7 +1234,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val pat = element.pat
         if (pat != null && pat.isIrrefutable) {
-            IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
+            IRREFUTABLE_LET_PATTERNS.check(holder, pat, RsBundle.message("irrefutable.let.pattern"))
         }
     }
 
@@ -1282,7 +1282,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkStartAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
         if (attr.metaItem.name != "start") return
 
-        START.check(holder, attr.metaItem, "#[start] function")
+        START.check(holder, attr.metaItem, RsBundle.message("start.function"))
 
         when (val owner = attr.owner) {
             is RsFunction -> {
@@ -1349,7 +1349,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkExternCrateSelf(holder: RsAnnotationHolder, externCrate: RsExternCrateItem): Boolean {
         if (externCrate.self == null) return false
-        EXTERN_CRATE_SELF.check(holder, externCrate, "`extern crate self`")
+        EXTERN_CRATE_SELF.check(holder, externCrate, RsBundle.message("extern.crate.self"))
         if (externCrate.alias == null) {
             // The current version of rustc (1.33.0) prints
             // "`extern crate self;` requires renaming" error message
@@ -1379,22 +1379,22 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkTildeConst(holder: RsAnnotationHolder, o: RsTildeConst) {
-        CONST_TRAIT_IMPL.check(holder, o, "const trait impls")
-        CONST_FN_TRAIT_BOUND.check(holder, o, "const fn trait bound")
+        CONST_TRAIT_IMPL.check(holder, o, RsBundle.message("const.trait.impls"))
+        CONST_FN_TRAIT_BOUND.check(holder, o, RsBundle.message("const.fn.trait.bound"))
     }
 
     private fun checkBlockExpr(holder: RsAnnotationHolder, expr: RsBlockExpr) {
         val label = expr.labelDecl
         if (label != null) {
-            LABEL_BREAK_VALUE.check(holder, label, "label on block")
+            LABEL_BREAK_VALUE.check(holder, label, RsBundle.message("label.on.block"))
         }
 
         val const = expr.const
         if (const != null) {
             if (expr.parent is RsPat) {
-                INLINE_CONST_PAT.check(holder, const, "inline const pat")
+                INLINE_CONST_PAT.check(holder, const, RsBundle.message("inline.const.pat"))
             } else {
-                INLINE_CONST.check(holder, const, "inline const")
+                INLINE_CONST.check(holder, const, RsBundle.message("inline.const"))
             }
         }
     }
@@ -1415,7 +1415,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkLambdaExpr(holder: RsAnnotationHolder, expr: RsLambdaExpr) {
         val const = expr.const ?: return
-        CONST_CLOSURES.check(holder, const, "const closures")
+        CONST_CLOSURES.check(holder, const, RsBundle.message("const.closures"))
     }
 
     private fun checkBreakExpr(holder: RsAnnotationHolder, expr: RsBreakExpr) {
@@ -1495,7 +1495,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.InvalidAbi(litExpr, abiName).addToHolder(holder)
         } else {
             val compilerFeature = SUPPORTED_CALLING_CONVENTIONS[abiName]
-            compilerFeature?.check(holder, litExpr, "$abiName ABI")
+            compilerFeature?.check(holder, litExpr, RsBundle.message("0.abi", abiName))
         }
     }
 
@@ -1584,7 +1584,7 @@ private fun checkDuplicates(
 }
 
 private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
-    MIN_CONST_GENERICS.check(holder, constParameter, "min const generics")
+    MIN_CONST_GENERICS.check(holder, constParameter, RsBundle.message("min.const.generics"))
     checkConstGenericsDefaults(holder, constParameter.expr)
     checkConstArguments(holder, listOfNotNull(constParameter.expr))
 
@@ -1592,7 +1592,7 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
     // Currently, associated type projections can't be used as a const parameter type, so `rawType` is fine here
     val ty = typeReference?.rawType ?: return
     if (ty !is TyInteger && ty !is TyBool && ty !is TyChar) {
-        ADT_CONST_PARAMS.check(holder, typeReference, "adt const params")
+        ADT_CONST_PARAMS.check(holder, typeReference, RsBundle.message("adt.const.params"))
     }
 
     val lookup = ImplLookup.relativeTo(constParameter)
@@ -1606,7 +1606,7 @@ private fun checkConstGenerics(holder: RsAnnotationHolder, constParameter: RsCon
 
 private fun checkConstGenericsDefaults(holder: RsAnnotationHolder, default: RsExpr?) {
     if (default == null) return
-    CONST_GENERICS_DEFAULTS.check(holder, default, "const generics defaults")
+    CONST_GENERICS_DEFAULTS.check(holder, default, RsBundle.message("const.generics.defaults"))
     when (default.ancestorStrict<RsGenericDeclaration>()) {
         is RsStructItem,
         is RsEnumItem,
