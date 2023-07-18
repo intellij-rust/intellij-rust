@@ -656,7 +656,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkPatRange(holder: RsAnnotationHolder, range: RsPatRange) {
         if (range.isExclusive && range.end != null) {
-            EXCLUSIVE_RANGE_PATTERN.check(holder, range, RsBundle.message("exclusive.range.patterns"))
+            EXCLUSIVE_RANGE_PATTERN.check(holder, range, RsBundle.message("exclusive.range.patterns"), listOf(ReplaceWithInclusiveRangeFix(range)))
         }
 
         if (range.start == null && range.end != null) {

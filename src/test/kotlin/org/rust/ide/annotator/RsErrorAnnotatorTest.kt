@@ -4593,4 +4593,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn foo<T, E>(f: T) where T: FnOnce() -> E {}
     """)
+
+    @MockRustcVersion("1.68.0")
+    fun `test replace exclusive range pattern with inclusive`() = checkFixByTextWithoutHighlighting("Replace with `1..=2`", """
+        fn foo(x: i32) {
+            match x {
+                /*caret*/1..2 => println!("a")
+            }
+        }
+    """, """
+        fn foo(x: i32) {
+            match x {
+                /*caret*/1..=2 => println!("a")
+            }
+        }
+    """)
 }
