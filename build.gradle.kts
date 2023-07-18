@@ -121,6 +121,7 @@ allprojects {
         buildSearchableOptions { enabled = false }
 
         test {
+            systemProperty("java.awt.headless", "true")
             testLogging {
                 showStandardStreams = prop("showStandardStreams").toBoolean()
                 afterSuite(
