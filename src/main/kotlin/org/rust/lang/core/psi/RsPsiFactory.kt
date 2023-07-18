@@ -419,6 +419,9 @@ class RsPsiFactory(
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
+    fun createDotDotEq(): PsiElement =
+        createFromText<RsRangeExpr>("fn main() { for i in 1..=2 {}}")!!.dotdoteq!!
+
     fun createColonColon(): PsiElement =
         tryCreatePath("::x")!!.coloncolon!!
 
