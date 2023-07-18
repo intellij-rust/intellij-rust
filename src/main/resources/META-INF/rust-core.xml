@@ -637,6 +637,11 @@
 
         <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsLiteralOutOfRangeInspection"
+                         key="inspection.rs.literal.out.of.range.display.name"/>
+
+        <localInspection language="Rust" groupKey="rust"
+                         enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsAttrWithoutParenthesesInspection"
                          key="inspection.rs.attr.without.parentheses.display.name"/>
 
