@@ -64,6 +64,21 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
+    fun `test unused must_use with marked trait returned from function`() = checkWarnings("""
+        struct Foo();
+
+        #[must_use]
+        pub trait Trait {}
+        impl Trait for Foo {}
+
+        fn bar() -> impl Trait {
+            Foo()
+        }
+        fn main() {
+            /*weak_warning descr="Unused impl Trait that must be used"*/bar()/*weak_warning**/;
+        }
+    """)
+
     fun `test unused must_use with method call`() = checkWarnings("""
         struct S;
 
@@ -184,6 +199,90 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
 
         fn main() {
             foo().expect("abc");
+        }
+    """, checkWeakWarn = true)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test fixing adding await for impl Future`() = checkFixByText("Add `.await`", """
+        fn foo() -> impl std::future::Future {
+            async {}
+        }
+        async fn test() {
+            /*weak_warning descr="Unused impl Future that must be used"*//*caret*/foo()/*weak_warning**/;
+        }
+    """, """
+        fn foo() -> impl std::future::Future {
+            async {}
+        }
+        async fn test() {
+            foo().await;
+        }
+    """, checkWeakWarn = true)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test fixing adding await for Box dyn Future`() = checkFixByText("Add `.await`", """
+        fn foo() -> Box<dyn std::future::Future<Output=()> + Unpin> {
+            todo!()
+        }
+        async fn test() {
+            /*weak_warning descr="Unused dyn Future that must be used"*//*caret*/foo()/*weak_warning**/;
+        }
+    """, """
+        fn foo() -> Box<dyn std::future::Future<Output=()> + Unpin> {
+            todo!()
+        }
+        async fn test() {
+            foo().await;
+        }
+    """, checkWeakWarn = true)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test fixing adding await for struct implementing Future`() = checkFixByText("Add `.await`", """
+        use std::future::Future;
+        use std::pin::Pin;
+        use std::task::{Context, Poll};
+
+        #[must_use]
+        struct Foo();
+        impl Future for Foo {
+            type Output = ();
+            fn poll(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Self::Output> { todo!() }
+        }
+
+        fn foo() -> Foo { Foo() }
+        async fn test() {
+            /*weak_warning descr="Unused Foo that must be used"*//*caret*/foo()/*weak_warning**/;
+        }
+    """, """
+        use std::future::Future;
+        use std::pin::Pin;
+        use std::task::{Context, Poll};
+
+        #[must_use]
+        struct Foo();
+        impl Future for Foo {
+            type Output = ();
+            fn poll(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Self::Output> { todo!() }
+        }
+
+        fn foo() -> Foo { Foo() }
+        async fn test() {
+            foo().await;
+        }
+    """, checkWeakWarn = true)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no fix add await for not impl Future`() = checkFixIsUnavailable("Add `.await`", """
+        struct Foo();
+
+        #[must_use]
+        pub trait Trait {}
+        impl Trait for Foo {}
+
+        fn foo() -> impl Trait { Foo() }
+
+        async fn test() {
+            /*weak_warning descr="Unused impl Trait that must be used"*//*caret*/foo()/*weak_warning**/;
         }
     """, checkWeakWarn = true)
 }
