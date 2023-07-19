@@ -105,6 +105,22 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         completionChar: Char = '\n'
     ) = completionFixture.checkCompletion(lookupString, before, after, completionChar)
 
+    fun checkCompletionWithLiveTemplate(
+        lookupString: String,
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String
+    ) {
+        checkByTextWithLiveTemplate(before.trimIndent(), after.trimIndent(), toType) {
+            val items = myFixture.completeBasic()!!
+            val lookupItem = items.find {
+                it.presentation.itemText == lookupString
+            } ?: error("Lookup string $lookupString not found")
+            myFixture.lookup.currentItem = lookupItem
+            myFixture.type('\n')
+        }
+    }
+
     protected fun checkNotContainsCompletion(
         variant: String,
         @Language("Rust") code: String,
