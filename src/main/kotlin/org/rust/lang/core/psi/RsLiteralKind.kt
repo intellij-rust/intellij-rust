@@ -72,7 +72,11 @@ sealed class RsLiteralKind(val node: ASTNode) {
         override val offsets: LiteralOffsets by lazy { offsetsForNumber(node) }
     }
 
-    class String(node: ASTNode, val isByte: kotlin.Boolean) : RsLiteralKind(node), RsLiteralWithSuffix, RsTextLiteral {
+    class String(
+        node: ASTNode,
+        val isByte: kotlin.Boolean,
+        val isCStr: kotlin.Boolean
+    ) : RsLiteralKind(node), RsLiteralWithSuffix, RsTextLiteral {
         override val offsets: LiteralOffsets by lazy { offsetsForText(node) }
 
         override val validSuffixes: List<kotlin.String> get() = emptyList()
@@ -110,8 +114,9 @@ sealed class RsLiteralKind(val node: ASTNode) {
             INTEGER_LITERAL -> Integer(node)
             FLOAT_LITERAL -> Float(node)
 
-            STRING_LITERAL, RAW_STRING_LITERAL -> String(node, isByte = false)
-            BYTE_STRING_LITERAL, RAW_BYTE_STRING_LITERAL -> String(node, isByte = true)
+            STRING_LITERAL, RAW_STRING_LITERAL -> String(node, isByte = false, isCStr = false)
+            BYTE_STRING_LITERAL, RAW_BYTE_STRING_LITERAL -> String(node, isByte = true, isCStr = false)
+            CSTRING_LITERAL, RAW_CSTRING_LITERAL -> String(node, isByte = false, isCStr = true)
 
             CHAR_LITERAL -> Char(node, isByte = false)
             BYTE_LITERAL -> Char(node, isByte = true)
@@ -152,7 +157,7 @@ fun offsetsForNumber(node: ASTNode): LiteralOffsets {
 
 fun offsetsForText(node: ASTNode): LiteralOffsets {
     when (node.elementType) {
-        RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL ->
+        RAW_STRING_LITERAL, RAW_BYTE_STRING_LITERAL, RAW_CSTRING_LITERAL ->
             return offsetsForRawText(node)
     }
 

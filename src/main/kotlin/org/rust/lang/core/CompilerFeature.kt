@@ -254,6 +254,7 @@ class CompilerFeature(
         val WASM_ABI: CompilerFeature get() = get("wasm_abi")
         val HALF_OPEN_RANGE_PATTERNS: CompilerFeature get() = get("half_open_range_patterns")
         val CONST_CLOSURES: CompilerFeature get() = get("const_closures")
+        val C_STR_LITERAL: CompilerFeature get() = get("c_str_literals")
     }
 }
 

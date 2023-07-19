@@ -2131,7 +2131,7 @@ class RsUnaryExprStub(
 sealed class RsStubLiteralKind(val kindOrdinal: Int) {
     class Boolean(val value: kotlin.Boolean) : RsStubLiteralKind(0)
     class Char(val value: kotlin.String?, val isByte: kotlin.Boolean) : RsStubLiteralKind(1)
-    class String(val value: kotlin.String?, val isByte: kotlin.Boolean) : RsStubLiteralKind(2)
+    class String(val value: kotlin.String?, val isByte: kotlin.Boolean, val isCStr: kotlin.Boolean) : RsStubLiteralKind(2)
     class Integer(val value: Long?, val ty: TyInteger?) : RsStubLiteralKind(3)
     class Float(val value: Double?, val ty: TyFloat?) : RsStubLiteralKind(4)
 
@@ -2141,7 +2141,7 @@ sealed class RsStubLiteralKind(val kindOrdinal: Int) {
                 return when (readByte().toInt()) {
                     0 -> Boolean(readBoolean())
                     1 -> Char(readUTFFastAsNullable(), readBoolean())
-                    2 -> String(readUTFFastAsNullable(), readBoolean())
+                    2 -> String(readUTFFastAsNullable(), readBoolean(), readBoolean())
                     3 -> Integer(readLongAsNullable(), TyInteger.VALUES.getOrNull(readByte().toInt()))
                     4 -> Float(readDoubleAsNullable(), TyFloat.VALUES.getOrNull(readByte().toInt()))
                     else -> null
@@ -2166,6 +2166,7 @@ private fun RsStubLiteralKind?.serialize(dataStream: StubOutputStream) {
         is RsStubLiteralKind.String -> {
             dataStream.writeUTFFastAsNullable(value)
             dataStream.writeBoolean(isByte)
+            dataStream.writeBoolean(isCStr)
         }
         is RsStubLiteralKind.Integer -> {
             dataStream.writeLongAsNullable(value)

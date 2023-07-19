@@ -33,7 +33,7 @@ val RsLitExpr.stubKind: RsStubLiteralKind?
         return when (val kind = kind) {
             is RsLiteralKind.Boolean -> RsStubLiteralKind.Boolean(kind.value)
             is RsLiteralKind.Char -> RsStubLiteralKind.Char(kind.value, kind.isByte)
-            is RsLiteralKind.String -> RsStubLiteralKind.String(kind.value, kind.isByte)
+            is RsLiteralKind.String -> RsStubLiteralKind.String(kind.value, kind.isByte, kind.isCStr)
             is RsLiteralKind.Integer -> RsStubLiteralKind.Integer(kind.value, TyInteger.fromSuffixedLiteral(integerLiteral!!))
             is RsLiteralKind.Float -> RsStubLiteralKind.Float(kind.value, TyFloat.fromSuffixedLiteral(floatLiteral!!))
             else -> null

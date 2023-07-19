@@ -531,8 +531,9 @@ open class RsPsiRenderer(
                 sb.append("'")
             }
             is RsStubLiteralKind.String -> {
-                if (kind.isByte) {
-                    sb.append("b")
+                when {
+                    kind.isByte -> sb.append("b")
+                    kind.isCStr -> sb.append("c")
                 }
                 sb.append('"')
                 sb.append(kind.value.orEmpty().escapeRust())

@@ -38,6 +38,7 @@ import org.rust.lang.core.CompilerFeature.Companion.CONST_FN_TRAIT_BOUND
 import org.rust.lang.core.CompilerFeature.Companion.CONST_GENERICS_DEFAULTS
 import org.rust.lang.core.CompilerFeature.Companion.CONST_TRAIT_IMPL
 import org.rust.lang.core.CompilerFeature.Companion.CRATE_IN_PATHS
+import org.rust.lang.core.CompilerFeature.Companion.C_STR_LITERAL
 import org.rust.lang.core.CompilerFeature.Companion.DECL_MACRO
 import org.rust.lang.core.CompilerFeature.Companion.EXCLUSIVE_RANGE_PATTERN
 import org.rust.lang.core.CompilerFeature.Companion.EXTERN_CRATE_SELF
@@ -161,6 +162,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, rsHolder)
             override fun visitFieldLookup(o: RsFieldLookup) = checkFieldLookup(rsHolder, o)
             override fun visitDefaultParameterValue(o: RsDefaultParameterValue) = collectDiagnostics(rsHolder, o)
+            override fun visitLitExpr(o: RsLitExpr) = checkLitExpr(rsHolder, o)
         }
 
         element.accept(visitor)
@@ -1410,6 +1412,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         if (range.end == null) {
             RsDiagnostic.InclusiveRangeWithNoEndError(op).addToHolder(holder)
+        }
+    }
+
+    private fun checkLitExpr(holder: RsAnnotationHolder, expr: RsLitExpr) {
+        val kind = expr.kind
+        if (kind is RsLiteralKind.String && kind.isCStr) {
+            C_STR_LITERAL.check(holder, expr, RsBundle.message("c.str.literals"))
         }
     }
 

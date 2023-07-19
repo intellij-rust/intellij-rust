@@ -4608,4 +4608,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
     """)
+
+    @MockRustcVersion("1.71.0")
+    fun `test c str literal E0658 1`() = checkErrors("""
+        fn main() {
+            <error descr="`c\"..\"` literals is experimental [E0658]">c"foo"</error>;
+            <error descr="`c\"..\"` literals is experimental [E0658]">cr#"foo"#</error>;
+        }
+    """)
+
+    @MockRustcVersion("1.71.0-nightly")
+    fun `test c str literal E0658 2`() = checkErrors("""
+        #![feature(c_str_literals)]
+        fn main() {
+            c"foo";
+            cr#"foo"#;
+        }
+    """)
 }

@@ -300,12 +300,17 @@ class RsTypeInferenceWalker(
             is RsStubLiteralKind.Char -> if (stubKind.isByte) TyInteger.U8.INSTANCE else TyChar.INSTANCE
             is RsStubLiteralKind.String -> {
                 // TODO infer the actual lifetime
-                if (stubKind.isByte) {
-                    val size = stubKind.value?.length?.toLong()
-                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize.INSTANCE).toConst() } ?: CtUnknown
-                    TyReference(TyArray(TyInteger.U8.INSTANCE, const), IMMUTABLE, ReStatic)
-                } else {
-                    TyReference(TyStr.INSTANCE, IMMUTABLE, ReStatic)
+                when {
+                    stubKind.isByte -> {
+                        val size = stubKind.value?.length?.toLong()
+                        val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize.INSTANCE).toConst() } ?: CtUnknown
+                        TyReference(TyArray(TyInteger.U8.INSTANCE, const), IMMUTABLE, ReStatic)
+                    }
+                    stubKind.isCStr -> {
+                        val cstrTy = expr.knownItems.CStr.asTy()
+                        TyReference(cstrTy, IMMUTABLE, ReStatic)
+                    }
+                    else -> TyReference(TyStr.INSTANCE, IMMUTABLE, ReStatic)
                 }
             }
             is RsStubLiteralKind.Integer -> {

@@ -133,6 +133,7 @@ class RsEscapesLexer private constructor(
             BYTE_LITERAL -> RsEscapesLexer(BYTE_LITERAL, extendedByte = true)
             CHAR_LITERAL -> RsEscapesLexer(CHAR_LITERAL, unicode = true)
             BYTE_STRING_LITERAL -> RsEscapesLexer(BYTE_STRING_LITERAL, eol = true, extendedByte = true)
+            CSTRING_LITERAL -> RsEscapesLexer(CSTRING_LITERAL, unicode = true, eol = true, extendedByte = true)
             STRING_LITERAL -> RsEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
             else -> throw IllegalArgumentException("unsupported literal type: $tokenType")
         }
@@ -153,7 +154,8 @@ class RsEscapesLexer private constructor(
             BYTE_LITERAL,
             CHAR_LITERAL,
             STRING_LITERAL,
-            BYTE_STRING_LITERAL
+            BYTE_STRING_LITERAL,
+            CSTRING_LITERAL
         )
     }
 }

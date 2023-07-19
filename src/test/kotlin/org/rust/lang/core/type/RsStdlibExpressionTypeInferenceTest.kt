@@ -1012,6 +1012,22 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ !
     """)
 
+    fun `test cstr`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = c"foo";
+            a;
+        } //^ &CStr
+    """)
+
+    fun `test raw cstr`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = cr#"foo"#;
+            a;
+        } //^ &CStr
+    """)
+
     fun `test custom macros with stdlib names`() {
         // name -> argument count
         val macros = mapOf(
