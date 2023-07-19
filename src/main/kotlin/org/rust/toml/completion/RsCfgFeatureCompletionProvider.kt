@@ -14,7 +14,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.RsPsiPattern.insideAnyCfgFlagValue
 import org.rust.lang.core.completion.RsCompletionProvider
 import org.rust.lang.core.completion.getElementOfType
 import org.rust.lang.core.psi.RS_ALL_STRING_LITERALS
@@ -47,7 +47,7 @@ object RsCfgFeatureCompletionProvider : RsCompletionProvider() {
     }
 
     override val elementPattern: ElementPattern<out PsiElement>
-        get() = RsPsiPattern.insideAnyCfgFeature
+        get() = insideAnyCfgFlagValue("feature")
 }
 
 private fun rustLookupElementForFeature(feature: TomlKeySegment): LookupElementBuilder {
@@ -56,7 +56,7 @@ private fun rustLookupElementForFeature(feature: TomlKeySegment): LookupElementB
         .withInsertHandler(RustStringLiteralInsertionHandler())
 }
 
-private class RustStringLiteralInsertionHandler : InsertHandler<LookupElement> {
+class RustStringLiteralInsertionHandler : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val leaf = context.getElementOfType<PsiElement>() ?: return
         val hasQuotes = leaf.parent is RsLitExpr && leaf.elementType in RS_ALL_STRING_LITERALS

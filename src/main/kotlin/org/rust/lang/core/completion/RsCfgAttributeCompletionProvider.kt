@@ -39,7 +39,8 @@ object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
         "target_os",
         "target_pointer_width",
         "target_vendor",
-        "feature"
+        "feature",
+        "panic"
     )
 
     private val OPERATORS: List<String> = listOf(

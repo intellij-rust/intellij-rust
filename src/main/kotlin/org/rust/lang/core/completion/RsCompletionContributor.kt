@@ -37,6 +37,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsPartialMacroArgumentCompletionProvider)
         extend(CompletionType.BASIC, RsFullMacroArgumentCompletionProvider)
         extend(CompletionType.BASIC, RsCfgAttributeCompletionProvider)
+        extend(CompletionType.BASIC, RsCfgPanicCompletionProvider)
         extend(CompletionType.BASIC, RsAwaitCompletionProvider)
         extend(CompletionType.BASIC, RsStructPatRestCompletionProvider)
         extend(CompletionType.BASIC, RsClippyLintCompletionProvider)
