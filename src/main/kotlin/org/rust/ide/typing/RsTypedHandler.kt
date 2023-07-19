@@ -89,6 +89,13 @@ class RsTypedHandler : TypedHandlerDelegate() {
             }
         }
 
+        if (charTyped == '%') {
+            AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC) { f ->
+                f.findElementAt(offset)?.elementType == STRING_LITERAL
+            }
+        }
+
+
         return Result.CONTINUE
     }
 }

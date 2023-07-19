@@ -53,6 +53,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsExternAbiCompletionProvider)
         extend(CompletionType.BASIC, RsStaticLifetimeCompletionProvider)
         extend(CompletionType.BASIC, RsBuildScriptCargoInstructionCompletionProvider)
+        extend(CompletionType.BASIC, RsChronoFormatCompletionProvider)
     }
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {
