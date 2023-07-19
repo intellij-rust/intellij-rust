@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
@@ -370,9 +369,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
                 //- lib.rs
                 fn foo(x: Ba/*caret*/) {}
             """) {
-                val presentation = LookupElementPresentation()
-                renderElement(presentation)
-
+                val presentation = presentation
                 "${presentation.itemText}${presentation.tailText}"
             }
         }

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.util.containers.MultiMap
@@ -172,9 +171,7 @@ class RsLookupElementTest : RsTestBase() {
             SimpleScopeEntry("foo", myFixture.file as RsFile, TYPES),
             RsCompletionContext()
         )
-        val presentation = LookupElementPresentation()
-
-        lookup.renderElement(presentation)
+        val presentation = lookup.presentation
         assertNotNull(presentation.icon)
         assertEquals("foo", presentation.itemText)
     }
@@ -406,8 +403,7 @@ class RsLookupElementTest : RsTestBase() {
         isBold: Boolean,
         isStrikeout: Boolean
     ) {
-        val presentation = LookupElementPresentation()
-        lookup.renderElement(presentation)
+        val presentation = lookup.presentation
 
         assertNotNull("Item icon should be not null", presentation.icon)
         assertEquals("Tail text mismatch", tailText, presentation.tailText)

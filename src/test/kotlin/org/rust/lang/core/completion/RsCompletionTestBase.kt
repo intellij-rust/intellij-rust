@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
@@ -157,3 +158,6 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         RIGHT
     }
 }
+
+val LookupElement.presentation: LookupElementPresentation
+    get() = LookupElementPresentation().also { renderElement(it) }
