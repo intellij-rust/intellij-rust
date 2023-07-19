@@ -1443,8 +1443,8 @@
 
         <!-- Toolchain flavors -->
 
-        <toolchainFlavor id="rust.rustupToolchainFlavor"
-                         implementation="org.rust.cargo.toolchain.flavors.RustupToolchainFlavor"
+        <toolchainFlavor id="rust.cargoToolchainFlavor"
+                         implementation="org.rust.cargo.toolchain.flavors.CargoToolchainFlavor"
                          order="first"/>
 
         <toolchainFlavor id="rust.sysPathToolchainFlavor"
