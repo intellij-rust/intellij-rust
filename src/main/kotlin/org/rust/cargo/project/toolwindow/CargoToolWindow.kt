@@ -19,7 +19,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
@@ -138,7 +138,8 @@ class CargoToolWindow(
 
         fun initializeToolWindow(project: Project) {
             try {
-                val manager = ToolWindowManager.getInstance(project) as? ToolWindowManagerEx ?: return
+                @Suppress("UnstableApiUsage")
+                val manager = ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl ?: return
                 val bean = ToolWindowEP.EP_NAME.extensionList.find { it.id == ID }
                 if (bean != null) {
                     @Suppress("DEPRECATION", "UnstableApiUsage")
