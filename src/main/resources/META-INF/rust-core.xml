@@ -721,6 +721,11 @@
                          key="inspection.rs.compile.error.macro.display.name"/>
 
         <localInspection language="Rust" groupKey="rust"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsThreadRngGenInspection"
+                         key="inspection.rs.thread.rng.gen.can.be.replaced.with.random"/>
+
+        <localInspection language="Rust" groupKey="rust"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsAsyncMainFunctionInspection"
                          key="inspection.rs.async.main.function.display.name"/>
