@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.PathKind
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.ownerBySyntaxOnly
-import org.rust.lang.core.resolve.RsCachedTypeAlias
 import org.rust.lang.core.stubs.RsAliasStub
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTypeAliasStub
@@ -81,8 +80,8 @@ class RsAliasIndex : FileBasedIndexExtension<TyFingerprint, List<String>>() {
         fun findPotentialAliases(
             project: Project,
             tyf: TyFingerprint,
-        ): List<RsCachedTypeAlias> {
-            val result = hashMapOf<String, RsCachedTypeAlias>()
+        ): List<String> {
+            val result = hashSetOf<String>()
             FileBasedIndex.getInstance().processValues(
                 KEY,
                 tyf,
@@ -92,16 +91,14 @@ class RsAliasIndex : FileBasedIndexExtension<TyFingerprint, List<String>>() {
                     if (psi != null) {
                         val crates = psi.crates
                         if (crates.isNotEmpty()) {
-                            for (name in value) {
-                                result.getOrPut(name) { RsCachedTypeAlias(name) }.containingCrates += crates
-                            }
+                            result += value
                         }
                     }
                     true
                 },
                 RsWithMacrosProjectScope(project)
             )
-            return result.values.toList()
+            return result.toList()
         }
 
         private fun getStubTree(inputData: FileContent): StubTree? {
