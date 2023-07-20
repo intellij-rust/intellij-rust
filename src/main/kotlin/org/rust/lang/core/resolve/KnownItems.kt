@@ -17,6 +17,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.rustStructureModificationTracker
@@ -97,6 +98,7 @@ class KnownItems(
     val Hash: RsTraitItem? get() = findItem("core::hash::Hash")
     val Default: RsTraitItem? get() = findItem("core::default::Default")
     val Display: RsTraitItem? get() = findItem("core::fmt::Display")
+    val Formatter: RsStructItem? get() = findItem("core::fmt::Formatter")
     val ToOwned: RsTraitItem? get() = findItem("alloc::borrow::ToOwned")
     val ToString: RsTraitItem? get() = findItem("alloc::string::ToString")
     val Try: RsTraitItem? get() = findItem("core::ops::try_trait::Try") ?: findItem("core::ops::try::Try")

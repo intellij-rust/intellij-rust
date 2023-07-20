@@ -16,16 +16,15 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.PackageOrigin.WORKSPACE
 import org.rust.ide.colors.RsColor
+import org.rust.ide.fixes.DeriveDebugAndChangeFormatToDebugFix
 import org.rust.ide.fixes.DeriveTraitsFix
+import org.rust.ide.fixes.ImplementDisplayFix
 import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.presentation.render
 import org.rust.lang.core.CompilerFeature.Companion.FORMAT_ARGS_CAPTURE
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.startOffset
-import org.rust.lang.core.psi.ext.withSubst
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
@@ -386,12 +385,12 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
     val expr = argument.expr
     if (!IGNORED_FORMAT_TYPES.any { expr.type.containsTyOfClass(it::class.java) } &&
         !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
-        val fix = createParameterTraitMismatchFix(parameter, expr, argument)
+        val fixes = createParameterTraitMismatchFixes(parameter, expr, argument)
         val error = RsBundle.message(
             "inspection.message.doesn.t.implement.required.by", expr.type.render(), requiredTrait.name
             ?: "", parameter.matchInfo.text
         )
-        val diagnostic = RsDiagnostic.TraitIsNotImplemented(argument, error, fix)
+        val diagnostic = RsDiagnostic.TraitIsNotImplemented(argument, error, fixes)
         return ErrorAnnotation(
             argument.textRange,
             error,
@@ -402,41 +401,58 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
     return null
 }
 
-private fun createParameterTraitMismatchFix(
+private fun createParameterTraitMismatchFixes(
     parameter: FormatParameter.Value,
     expr: RsExpr,
     argument: RsFormatMacroArg
-): LocalQuickFix? {
+): List<LocalQuickFix> {
     return when (parameter.type) {
         FormatTraitType.Display -> {
-            val debugTrait = expr.knownItems.Debug ?: return null
+            val debugTrait = expr.knownItems.Debug ?: return emptyList()
             if (!expr.implLookup.canSelectWithDeref(TraitRef(expr.type, debugTrait.withSubst()))) {
-                return null
+                return createParameterTraitMismatchFixesForDisplayWithNoTraits(
+                    expr = expr,
+                    parameter = parameter,
+                )
             }
-            SubstituteTextFix.replace(
-                RsBundle.message("intention.name.change.format.parameter.to"),
-                argument.containingFile,
-                parameter.range,
-                "{:?}"
+            listOf(
+                SubstituteTextFix.replace(
+                    RsBundle.message("intention.name.change.format.parameter.to"),
+                    argument.containingFile,
+                    parameter.range,
+                    "{:?}"
+                )
             )
         }
         FormatTraitType.Debug -> {
-            tailrec fun Ty.baseType(): RsElement? {
-                return when (this) {
-                    is TyAdt -> item
-                    is TyReference -> referenced.baseType()
-                    is TyArray -> base.baseType()
-                    is TySlice -> elementType.baseType()
-                    else -> null
-                }
-            }
-
-            val item = expr.type.baseType() as? RsStructOrEnumItemElement ?: return null
-            if (item.containingCrate.origin != WORKSPACE) return null
-            DeriveTraitsFix(item, "Debug")
+            val item = expr.type.baseType() ?: return emptyList()
+            if (item.containingCrate.origin != WORKSPACE) return emptyList()
+            listOf(DeriveTraitsFix(item, "Debug"))
         }
+        else -> emptyList()
+    }
+}
+
+tailrec fun Ty.baseType(): RsStructOrEnumItemElement? {
+    return when (this) {
+        is TyAdt -> item
+        is TyReference -> referenced.baseType()
+        is TyArray -> base.baseType()
+        is TySlice -> elementType.baseType()
         else -> null
     }
+}
+
+private fun createParameterTraitMismatchFixesForDisplayWithNoTraits(
+    expr: RsExpr,
+    parameter: FormatParameter.Value,
+): List<LocalQuickFix> {
+    val adt = expr.type.baseType() ?: return emptyList()
+    if (expr.containingCrate.origin != WORKSPACE) return emptyList()
+    return listOf(
+        DeriveDebugAndChangeFormatToDebugFix(expr, parameter),
+        ImplementDisplayFix(adt)
+    )
 }
 
 // i32 is allowed because of integers without a specific type

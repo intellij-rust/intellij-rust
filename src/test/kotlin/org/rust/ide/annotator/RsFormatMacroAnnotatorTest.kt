@@ -710,4 +710,119 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("/*FORMAT_PARAMETER*/{}/*FORMAT_PARAMETER**/", /*error descr="`Foo` doesn't implement `Display` (required by {}) [E0277]"*/foo/*error**/);
         }
     """)
+
+    fun `test implement Display`() = checkFixByTextWithoutHighlighting("Implement `Display` trait for `S2`", """
+        struct S2 { a: i32, b: u8, }
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct/*caret*/);
+        }
+    """, """
+        use std::fmt::{Display, Formatter};
+
+        struct S2 { a: i32, b: u8, }
+
+        impl Display for S2 {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                <selection><caret>todo!()</selection>
+            }
+        }
+
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct);
+        }
+    """, preview = null)
+
+    fun `test implement Display with Display structs in scope`() = checkFixByTextWithoutHighlighting(
+        "Implement `Display` trait for `S2`", """
+        struct Display;
+        struct S2 { a: i32, b: u8, }
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct/*caret*/);
+        }
+    """, """
+        use std::fmt::Formatter;
+
+        struct Display;
+        struct S2 { a: i32, b: u8, }
+
+        impl std::fmt::Display for S2 {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                <selection><caret>todo!()</selection>
+            }
+        }
+
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct);
+        }
+    """, preview = null)
+
+    fun `test implement Display with Display & Formatter structs in scope`() = checkFixByTextWithoutHighlighting(
+        "Implement `Display` trait for `S2`", """
+        trait Display {}
+        struct Formatter<'a>;
+        struct S2 { a: i32, b: u8, }
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct/*caret*/);
+        }
+    """, """
+        trait Display {}
+        struct Formatter<'a>;
+        struct S2 { a: i32, b: u8, }
+
+        impl std::fmt::Display for S2 {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                <selection><caret>todo!()</selection>
+            }
+        }
+
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct);
+        }
+    """, preview = null)
+
+    fun `test implement Display with Display imported`() = checkFixByTextWithoutHighlighting(
+        "Implement `Display` trait for `S2`", """
+        use std::fmt::Display;
+        struct S2 { a: i32, b: u8, }
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct/*caret*/);
+        }
+    """, """
+        use std::fmt::{Display, Formatter};
+        struct S2 { a: i32, b: u8, }
+
+        impl Display for S2 {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                <selection><caret>todo!()</selection>
+            }
+        }
+
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct);
+        }
+    """, preview = null)
+
+    fun `test derive Debug and format display to debug`() = checkFixByTextWithoutHighlighting(
+        "Derive `Debug` for `S2` and replace `{}` with `{:?}`", """
+        struct S2 { a: i32, b: u8, }
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{}", my_struct/*caret*/);
+        }
+    """, """
+        #[derive(Debug)]
+        struct S2 { a: i32, b: u8, }
+        fn main() {
+            let my_struct = S2 { a: 5, b: 5 };
+            println!("{:?}", my_struct/*caret*/);
+        }
+    """)
 }

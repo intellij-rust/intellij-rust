@@ -1042,13 +1042,13 @@ sealed class RsDiagnostic(
     class TraitIsNotImplemented(
         element: RsElement,
         @InspectionMessage private val description: String,
-        private val fix: LocalQuickFix?,
+        private val fixes: List<LocalQuickFix>,
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0277,
             description,
-            fixes = listOfFixes(fix)
+            fixes = listOfFixes(*fixes.toTypedArray())
         )
     }
 
