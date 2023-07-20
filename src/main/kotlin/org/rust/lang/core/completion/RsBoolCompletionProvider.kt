@@ -16,13 +16,15 @@ import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.types.expectedType
 import org.rust.lang.core.types.ty.TyBool
+import org.rust.lang.core.types.ty.TyUnknown
 
 object RsBoolCompletionProvider : RsCompletionProvider() {
 
     override val elementPattern: ElementPattern<PsiElement> get() = RsPsiPattern.simplePathPattern
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        if (parameters.position.safeGetOriginalOrSelf().ancestorOrSelf<RsPathExpr>()?.expectedType is TyBool) {
+        val expectedType = parameters.position.safeGetOriginalOrSelf().ancestorOrSelf<RsPathExpr>()?.expectedType
+        if (expectedType is TyBool || expectedType is TyUnknown) {
             for (value in listOf("true", "false")) {
                 result.addElement(LookupElementBuilder.create(value).bold().toKeywordElement())
             }
