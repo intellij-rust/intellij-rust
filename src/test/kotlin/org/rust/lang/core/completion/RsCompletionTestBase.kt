@@ -69,6 +69,14 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         @Language("Rust") after: String
     ) = completionFixture.doSingleCompletionByFileTree(before, after)
 
+    protected fun doSingleCompletionWithLiveTemplate(
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String
+    ) = checkByTextWithLiveTemplate(before, after, toType) {
+        executeSoloCompletion()
+    }
+
     protected fun checkContainsCompletion(
         variant: String,
         @Language("Rust") code: String,

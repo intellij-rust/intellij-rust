@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.impl.MacroCallNode
 import com.intellij.codeInsight.template.macro.CompleteMacro
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
@@ -21,6 +22,7 @@ import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
+import org.rust.ide.template.postfix.fillMatchArms
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.*
 import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
@@ -139,6 +141,11 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             .runInline {
                 val element2 = elementPointer.element ?: return@runInline
                 context.editor.moveCaretToOffset(element2, element2.endOffset - " }".length)
+                if (element2 is RsMatchExpr && !DumbService.isDumb(element2.project)) {
+                    runWriteAction {
+                        fillMatchArms(element2, context.editor)
+                    }
+                }
             }
     }
 
