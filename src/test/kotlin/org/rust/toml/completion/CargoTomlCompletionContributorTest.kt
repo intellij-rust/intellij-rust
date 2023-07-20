@@ -55,7 +55,7 @@ class CargoTomlCompletionContributorTest : CargoTomlCompletionTestBase() {
             completions,
             listOf(
                 "AGPL-3",
-                "Apache-2",
+                "Apache-2.0",
                 "BSD-2",
                 "BSD-3",
                 "BSL-1",
