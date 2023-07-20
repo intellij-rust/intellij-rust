@@ -16,11 +16,14 @@ import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionStubsProvider
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.PathKind
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.ownerBySyntaxOnly
 import org.rust.lang.core.resolve.RsCachedTypeAlias
+import org.rust.lang.core.stubs.RsAliasStub
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTypeAliasStub
+import org.rust.lang.core.stubs.RsUseSpeckStub
 import org.rust.lang.core.types.TyFingerprint
 import org.rust.openapiext.toPsiFile
 
@@ -32,14 +35,31 @@ class RsAliasIndex : FileBasedIndexExtension<TyFingerprint, List<String>>() {
             val stubTree = getStubTree(inputData) ?: return emptyMap()
             val map = hashMapOf<TyFingerprint, MutableList<String>>()
             for (stub in stubTree.plainList) {
-                if (stub is RsTypeAliasStub) {
-                    val psi = stub.psi
-                    if (psi.ownerBySyntaxOnly !is RsAbstractableOwner.Impl) {
-                        val aliasedName = stub.name ?: continue
-                        val typeRef = psi.typeReference ?: continue
-                        for (tyf in TyFingerprint.create(typeRef, emptyList())) {
-                            map.getOrPut(tyf) { mutableListOf() } += aliasedName
+                when (stub) {
+                    is RsTypeAliasStub -> {
+                        val psi = stub.psi
+                        if (psi.ownerBySyntaxOnly !is RsAbstractableOwner.Impl) {
+                            val aliasedName = stub.name ?: continue
+                            val typeRef = psi.typeReference ?: continue
+                            for (tyf in TyFingerprint.create(typeRef, emptyList())) {
+                                map.getOrPut(tyf) { mutableListOf() } += aliasedName
+                            }
                         }
+                    }
+
+                    is RsAliasStub -> {
+                        val aliasedName = stub.name ?: continue
+
+                        // `use foo::bar as baz`
+                        // `       //~~~ this name`:
+                        val parentUseSpeckName = (stub.parentStub as? RsUseSpeckStub)
+                            ?.takeIf { !it.isStarImport }
+                            ?.path
+                            ?.takeIf { it.kind == PathKind.IDENTIFIER }
+                            ?.referenceName
+                            ?: continue
+
+                        map.getOrPut(TyFingerprint(parentUseSpeckName)) { mutableListOf() } += aliasedName
                     }
                 }
             }
