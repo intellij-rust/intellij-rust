@@ -27,14 +27,34 @@ import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
+import org.rust.lang.core.resolve2.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
 import org.rust.stdext.enumSetOf
 import java.util.*
+
+fun processItemDeclarationsInMod(
+    scope: RsMod,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor,
+    withPrivateImports: Boolean
+): Boolean {
+    val ipm = if (withPrivateImports) {
+        ItemProcessingMode.WITH_PRIVATE_IMPORTS
+    } else {
+        WITHOUT_PRIVATE_IMPORTS
+    }
+    return processItemDeclarations(scope, ns, processor, ipm)
+}
+
+enum class ItemProcessingMode(val withExternCrates: Boolean) {
+    WITHOUT_PRIVATE_IMPORTS(false),
+    WITH_PRIVATE_IMPORTS(false),
+    WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true),
+}
 
 fun processItemDeclarations(
     scope: RsItemsOwner,

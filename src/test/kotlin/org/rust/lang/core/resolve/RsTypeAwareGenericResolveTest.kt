@@ -1571,6 +1571,40 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }           //^
     """)
 
+    fun `test a enum variant path qualified with an associated type 1`() = checkByCode("""
+        trait Trait {
+            type Item;
+            fn foo();
+        }
+        enum E {
+            Foo(),
+        } //X
+        struct S;
+        impl Trait for S {
+            type Item = E;
+            fn foo() {
+                let b = Self::Item::Foo();
+            }                     //^
+        }
+    """)
+
+    fun `test a enum variant path qualified with an associated type 2`() = checkByCode("""
+        trait Trait {
+            type Item;
+            fn foo();
+        }
+        enum E {
+            Foo(),
+        } //X
+        struct S;
+        impl Trait for S {
+            type Item = E;
+            fn foo() {
+                let b = <Self::Item>::Foo();
+            }                       //^
+        }
+    """)
+
     fun `test impl for a type with an associated type`() = checkByCode("""
         struct S;
         trait T { type Item; }

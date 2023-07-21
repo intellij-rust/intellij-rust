@@ -370,7 +370,7 @@ fun processPathResolveVariants(ctx: PathResolutionContext, pathKind: RsPathResol
             }
             val crateRoot = ctx.crateRoot
             if (crateRoot != null) {
-                processItemOrEnumVariantDeclarations(crateRoot, pathKind.ns, processor, withPrivateImports = { true })
+                processItemDeclarationsInMod(crateRoot, pathKind.ns, processor, withPrivateImports = true)
             } else {
                 false
             }
@@ -510,19 +510,26 @@ private fun processQualifiedPathResolveVariants1(
     // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
     // avoid this, we exclude `MACROS` from passed namespaces
     val result1 = processWithShadowingAndUpdateScope(prevScope, ns - MACROS, processor) {
-        processItemOrEnumVariantDeclarations(
-            base,
-            ns - MACROS,
-            it,
-            withPrivateImports = { withPrivateImports(qualifier, base) }
-        )
+        if (parent is RsUseSpeck && base is RsEnumItem) {
+            if (processEnumVariants(it, base)) return true
+        }
+        if (base is RsMod) {
+            processItemDeclarationsInMod(
+                base,
+                ns - MACROS,
+                it,
+                withPrivateImports = withPrivateImports(qualifier, base)
+            )
+        } else {
+            false
+        }
     }
     if (result1) return true
 
     if (base is RsTraitItem && parent !is RsUseSpeck && !qualifier.hasCself) {
         if (processTraitRelativePath(BoundElement(base, subst), ns, processor)) return true
     } else if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
-        val baseTy = if (qualifier.hasCself) {
+        val (baseTy, _) = ctx.implLookup.ctx.normalizeAssociatedTypesIn(if (qualifier.hasCself) {
             when (base) {
                 // impl S { fn foo() { Self::bar() } }
                 is RsImplItem -> base.typeReference?.rawType ?: TyUnknown
@@ -541,7 +548,7 @@ private fun processQualifiedPathResolveVariants1(
                 subst
             }
             base.declaredType.substitute(realSubst)
-        }
+        })
 
         // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
         // to only members of the current impl or implemented trait or its parent traits
@@ -551,6 +558,8 @@ private fun processQualifiedPathResolveVariants1(
         } else {
             null
         }
+
+        if (processEnumVariantsWithShadowing(baseTy, prevScope, ns, processor)) return true
 
         val result2 = processWithShadowing(prevScope, ns, processor) {
             if (restrictedTraits != null) {
@@ -564,6 +573,29 @@ private fun processQualifiedPathResolveVariants1(
     return false
 }
 
+private fun processEnumVariantsWithShadowing(
+    baseTy: Ty,
+    prevScope: HashMap<String, Set<Namespace>>,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor
+): Boolean {
+    return if (baseTy is TyAdt && baseTy.item is RsEnumItem) {
+        processWithShadowingAndUpdateScope(prevScope, ns, processor) {
+            processEnumVariants(it, baseTy.item, baseTy.typeParameterValues)
+        }
+    } else {
+        false
+    }
+}
+
+private fun processEnumVariants(
+    processor: RsResolveProcessor,
+    item: RsEnumItem,
+    subst: Substitution = emptySubstitution
+): Boolean {
+    return processAllWithSubst(item.variants, subst, ENUM_VARIANT_NS, processor)
+}
+
 /** `<T as Trait>::Item` or `<T>::Item` */
 private fun processExplicitTypeQualifiedPathResolveVariants(
     ctx: PathResolutionContext,
@@ -575,11 +607,16 @@ private fun processExplicitTypeQualifiedPathResolveVariants(
         // TODO this is a hack to fix completion test `test associated type in explicit UFCS form`.
         // Looks like we should use getOriginalOrSelf during resolve
         ?.let { BoundElement(CompletionUtil.getOriginalOrSelf(it.element), it.subst) }
-    val baseTy = typeQual.typeReference.rawType
+    val rawBaseTy = typeQual.typeReference.rawType
     return if (trait != null) {
-        processTypeAsTraitUFCSQualifiedPathResolveVariants(ns, baseTy, listOf(trait), processor)
+        processTypeAsTraitUFCSQualifiedPathResolveVariants(ns, rawBaseTy, listOf(trait), processor)
     } else {
-        processTypeQualifiedPathResolveVariants(ctx, processor, ns, baseTy)
+        val (baseTy, _) = ctx.implLookup.ctx.normalizeAssociatedTypesIn(rawBaseTy, 0)
+        val prevScope = hashMapOf<String, Set<Namespace>>()
+        if (processEnumVariantsWithShadowing(baseTy, prevScope, ns, processor)) return true
+        processWithShadowing(prevScope, ns, processor) {
+            processTypeQualifiedPathResolveVariants(ctx, it, ns, baseTy)
+        }
     }
 }
 
@@ -616,7 +653,6 @@ private fun processTypeQualifiedPathResolveVariants(
     baseTy: Ty,
 ): Boolean {
     val lookup = ctx.implLookup
-    val (normBaseTy, _) = lookup.ctx.normalizeAssociatedTypesIn(baseTy, 0)
     val shadowingProcessor = processor.wrapWithFilter<AssocItemScopeEntry> { e ->
         if (e.element is RsTypeAlias && baseTy is TyTypeParameter && e.source is TraitImplSource.ExplicitImpl) {
             NameResolutionTestmarks.SkipAssocTypeFromImpl.hit()
@@ -625,12 +661,12 @@ private fun processTypeQualifiedPathResolveVariants(
             true
         }
     }
-    val selfSubst = if (normBaseTy !is TyTraitObject) {
-        mapOf(TyTypeParameter.self() to normBaseTy).toTypeSubst()
+    val selfSubst = if (baseTy !is TyTraitObject) {
+        mapOf(TyTypeParameter.self() to baseTy).toTypeSubst()
     } else {
         emptySubstitution
     }
-    if (processAssociatedItemsWithSelfSubst(lookup, ctx.context, normBaseTy, ns, selfSubst, shadowingProcessor)) return true
+    if (processAssociatedItemsWithSelfSubst(lookup, ctx.context, baseTy, ns, selfSubst, shadowingProcessor)) return true
     return false
 }
 
