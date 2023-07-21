@@ -7,7 +7,7 @@ package org.rust.ide.inspections.fixes
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.ide.inspections.*
+import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsReplaceCastWithSuffixInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)// for arithmetic type inference
@@ -20,7 +20,7 @@ class ReplaceCastWithSuffixTest : RsInspectionsTestBase(RsReplaceCastWithSuffixI
         fn foo() {
             let a = 1i32;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test negative integer cast`() = checkFixByText("Replace with `-1i32`", """
         fn foo() {
@@ -30,7 +30,7 @@ class ReplaceCastWithSuffixTest : RsInspectionsTestBase(RsReplaceCastWithSuffixI
         fn foo() {
             let a = -1i32;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test float cast`() = checkFixByText("Replace with `1.0f64`", """
         fn foo() {
@@ -40,7 +40,7 @@ class ReplaceCastWithSuffixTest : RsInspectionsTestBase(RsReplaceCastWithSuffixI
         fn foo() {
             let a = 1.0f64;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test negative float cast`() = checkFixByText("Replace with `-1.0f32`", """
         fn foo() {
@@ -50,7 +50,7 @@ class ReplaceCastWithSuffixTest : RsInspectionsTestBase(RsReplaceCastWithSuffixI
         fn foo() {
             let a = -1.0f32;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test isize cast`() = checkFixByText("Replace with `1isize`", """
         fn foo() {
@@ -60,7 +60,7 @@ class ReplaceCastWithSuffixTest : RsInspectionsTestBase(RsReplaceCastWithSuffixI
         fn foo() {
             let a = 1isize;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test hex cast`() = checkFixByText("Replace with `0xffi32`", """
         fn foo() {
@@ -70,5 +70,5 @@ class ReplaceCastWithSuffixTest : RsInspectionsTestBase(RsReplaceCastWithSuffixI
         fn foo() {
             let a = 0xffi32;
         }
-    """)
+    """, checkWeakWarn = true)
 }

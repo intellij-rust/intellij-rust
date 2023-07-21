@@ -23,7 +23,7 @@ class RsDoubleMustUseInspectionTest : RsInspectionsTestBase(RsDoubleMustUseInspe
         fn foo() -> S { S }
 
         fn main() {}
-    """)
+    """, checkWeakWarn = true)
 
     fun `test double must_use with inner attr`() = checkFixByText("Remove `#[must_use]` from the function", """
         #[must_use]
@@ -44,7 +44,7 @@ class RsDoubleMustUseInspectionTest : RsInspectionsTestBase(RsDoubleMustUseInspe
         }
 
         fn main() {}
-    """)
+    """, checkWeakWarn = true)
 
     fun `test double must_use with normalizable associated type`() = checkFixByText("Remove `#[must_use]` from the function", """
         struct Struct;
@@ -69,5 +69,5 @@ class RsDoubleMustUseInspectionTest : RsInspectionsTestBase(RsDoubleMustUseInspe
         fn foo() -> <Struct as Trait>::Item { S }
 
         fn main() {}
-    """)
+    """, checkWeakWarn = true)
 }

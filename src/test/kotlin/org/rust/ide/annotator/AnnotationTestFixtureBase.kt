@@ -117,7 +117,10 @@ abstract class AnnotationTestFixtureBase(
         before,
         after,
         configure = this::configureByText,
-        checkBefore = { checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false) },
+        checkBefore = {
+            checkWarningFlags(before, checkWarn, checkWeakWarn)
+            checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
+        },
         checkAfter = this::checkByText,
         preview = preview,
     )
@@ -130,7 +133,10 @@ abstract class AnnotationTestFixtureBase(
         checkWeakWarn: Boolean = false
     ) = checkFix(fixName, before, before,
         configure = this::configureByText,
-        checkBefore = { checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false) },
+        checkBefore = {
+            checkWarningFlags(before, checkWarn, checkWeakWarn)
+            checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
+        },
         checkAfter = { },
         preview = SamePreviewAsResult,
     )
@@ -215,8 +221,20 @@ abstract class AnnotationTestFixtureBase(
         ignoreExtraHighlighting: Boolean,
         configure: (T) -> Unit,
     ) {
+        if (content is String) {
+            checkWarningFlags(content, checkWarn, checkWeakWarn)
+        }
         configure(content)
         checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
+    }
+
+    private fun checkWarningFlags(content: String, checkWarn: Boolean, checkWeakWarn: Boolean) {
+        if ("</warning>" in content || "/*warning**/" in content) {
+            check(checkWarn) { "Use `checkWarn = true`" }
+        }
+        if ("</weak_warning>" in content || "/*weak_warning**/" in content) {
+            check(checkWeakWarn) { "Use `checkWeakWarn = true`" }
+        }
     }
 
     protected open fun checkFix(
