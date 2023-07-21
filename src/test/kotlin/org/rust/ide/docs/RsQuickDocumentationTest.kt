@@ -7,9 +7,7 @@ package org.rust.ide.docs
 
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsPathType
@@ -1369,6 +1367,65 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                              //^
         }
     """, null)
+
+    fun `test documentation for macro expansion`() = doTest("""
+        /// # Description
+        /// This macro sums a vararg of numbers
+        macro_rules! sum {
+            () => { 0 }
+            ($ x:expr $ (, $ y:expr)*) => {
+                $ x + sum!($ ($ y),*)
+            };
+        }
+
+        fn main() {
+            sum!(1, 2, 3);
+             //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>sum</b></pre></div>
+        <div class='content'><h2>Description</h2><p>This macro sums a vararg of numbers</p></div>
+        <div class='content'><h2><em>Macro expansion</em></h2><p><span style="color:#0000ff;">1&#32;</span><span style="">+&#32;</span><span style="color:#0000ff;">2&#32;</span><span style="">+&#32;</span><span style="color:#0000ff;">3&#32;</span><span style="">+&#32;</span><span style="color:#0000ff;">0</span></p></div>
+    """)
+
+    fun `test documentation for unexpanded macro expansion`() = doTest("""
+        /// # Description
+        /// This macro sums a vararg of numbers
+        macro_rules! malformed {
+            (x) => { x };
+        }
+
+        fn main() {
+            malformed!();
+             //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>malformed</b></pre></div>
+        <div class='content'><h2>Description</h2><p>This macro sums a vararg of numbers</p></div>
+        <div class='content'><h2><em>Macro expansion</em></h2><p class='grayed'><em>Expansion is unavailable in quick documentation. Please use the intention action</em></p></div>
+    """)
+
+    fun `test documentation for big macro`() = doTest("""
+        /// # Description
+        /// Result of this macro exceeds given limit
+        macro_rules! big {
+            () => {
+                "${(0..RsDocumentationProvider.macroExpansionLimitInBytes).joinToString("") { "0" }}"
+            };
+        }
+
+        fn main() {
+            big!();
+            //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>big</b></pre></div>
+        <div class='content'><h2>Description</h2><p>Result of this macro exceeds given limit</p></div>
+        <div class='content'><h2><em>Macro expansion</em></h2><p class='grayed'><em>Expansion is unavailable in quick documentation. Please use the intention action</em></p></div>
+    """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?)
         = doTest(code, expected, block = RsDocumentationProvider::generateDoc)

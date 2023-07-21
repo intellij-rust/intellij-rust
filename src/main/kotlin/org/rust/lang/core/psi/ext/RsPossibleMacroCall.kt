@@ -481,39 +481,114 @@ val RsPossibleMacroCall.contextToSetForExpansion: PsiElement?
 val RS_MACRO_CALL_EXPANSION_RESULT: Key<CachedValue<RsResult<MacroExpansion, GetMacroExpansionError>>> =
     Key("org.rust.lang.core.psi.ext.RS_MACRO_CALL_EXPANSION_RESULT")
 
+/**
+ * @return `null` only if [sizeLimit] is exceeded
+ */
 fun RsPossibleMacroCall.expandMacrosRecursively(
     depthLimit: Int = Int.MAX_VALUE,
     replaceDollarCrate: Boolean = true,
+    sizeLimit: Int = Int.MAX_VALUE,
     expander: (RsPossibleMacroCall) -> MacroExpansion? = RsPossibleMacroCall::expansion
-): String {
-    if (depthLimit == 0) return textIfNotExpanded()
+): String? {
+    val builder = StringBuilder()
+    val status = expandMacrosRecursively(depthLimit, replaceDollarCrate, sizeLimit, builder, expander)
+    return if (status == ExpansionStatus.SizeLimitExceeded) null else builder.toString()
+}
 
-    fun toExpandedText(element: PsiElement): String =
+private fun RsPossibleMacroCall.expandMacrosRecursively(
+    depthLimit: Int,
+    replaceDollarCrate: Boolean,
+    sizeLimit: Int,
+    builder: StringBuilder,
+    expander: (RsPossibleMacroCall) -> MacroExpansion? = RsPossibleMacroCall::expansion
+): ExpansionStatus {
+    if (depthLimit == 0) {
+        builder.append(textIfNotExpanded())
+        return ExpansionStatus.NotExpanded
+    }
+
+    // true means sizeLimit not exceeded
+    fun toExpandedText(element: PsiElement): Boolean =
         when (element) {
-            is RsMacroCall -> element.expandMacrosRecursively(depthLimit - 1, replaceDollarCrate)
+            is RsMacroCall -> {
+                val status = element.expandMacrosRecursively(
+                    depthLimit - 1,
+                    replaceDollarCrate,
+                    sizeLimit,
+                    builder,
+                )
+                status != ExpansionStatus.SizeLimitExceeded
+            }
             is RsElement -> if (replaceDollarCrate && element is RsPath && element.referenceName == MACRO_DOLLAR_CRATE_IDENTIFIER
                 && element.qualifier == null && element.typeQual == null && !element.hasColonColon) {
                 // Replace `$crate` to a crate name. Note that the name can be incorrect because of crate renames
                 // and the fact that `$crate` can come from a transitive dependency
-                "::" + (element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName.orEmpty())
+                builder.appendWithSizeCheck("::", sizeLimit)
+                    && builder.appendWithSizeCheck(
+                    element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName.orEmpty(),
+                        sizeLimit,
+                    )
             } else {
                 val attrMacro = (element as? RsAttrProcMacroOwner)?.procMacroAttribute?.attr
-                @Suppress("IfThenToElvis")
                 if (attrMacro != null) {
-                    attrMacro.expandMacrosRecursively(depthLimit - 1, replaceDollarCrate)
+                    val status = attrMacro.expandMacrosRecursively(depthLimit - 1, replaceDollarCrate, sizeLimit, builder)
+                    status != ExpansionStatus.SizeLimitExceeded
                 } else {
-                    element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
+                    element
+                        .childrenWithLeaves
+                        .iterator()
+                        .joinToStringWithSizeCheck(builder, " ", sizeLimit) {
+                            toExpandedText(it)
+                        }
                 }
             }
-            else -> element.text
+            else -> builder.appendWithSizeCheck(element.text, sizeLimit)
         }
 
-    val expansionElements = expander(this)?.elements
-    @Suppress("IfThenToElvis")
-    return if (expansionElements != null) {
-        expansionElements.joinToString(" ") { toExpandedText(it) }
+    val elements = expander(this)?.elements?.iterator()
+    if (elements == null) {
+        builder.append(textIfNotExpanded())
+        return ExpansionStatus.NotExpanded
+    }
+    return if (elements.joinToStringWithSizeCheck(builder, " ", sizeLimit) { toExpandedText(it) }) {
+        ExpansionStatus.Expanded
     } else {
-        textIfNotExpanded()
+        ExpansionStatus.SizeLimitExceeded
+    }
+}
+
+private enum class ExpansionStatus {
+    Expanded, NotExpanded, SizeLimitExceeded
+}
+
+private inline fun <T> Iterator<T>.joinToStringWithSizeCheck(
+    builder: StringBuilder,
+    separator: String,
+    sizeLimit: Int,
+    transformWithSizeCheck: (T) -> Boolean // should put in [builder] with size check of [sizeLimit]
+): Boolean {
+    var success = true
+    while (success && hasNext()) {
+        val next = next()
+        success = if (transformWithSizeCheck(next)) {
+            if (this.hasNext()) {
+                builder.appendWithSizeCheck(separator, sizeLimit)
+            } else {
+                true
+            }
+        } else {
+            false
+        }
+    }
+    return success
+}
+
+private fun StringBuilder.appendWithSizeCheck(str: String, limit: Int): Boolean {
+    return if (this.length + str.length <= limit) {
+        append(str)
+        true
+    } else {
+        false
     }
 }
 
