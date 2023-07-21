@@ -170,6 +170,10 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
         )
     }
 
+    fun registerPredicateObligations(obligations: List<Obligation>) {
+        obligations.forEach(::registerPredicateObligation)
+    }
+
     fun selectWherePossible() {
         @Suppress("ControlFlowWithEmptyBody")
         while (!obligations.processObligations(this::processPredicate).stalled);

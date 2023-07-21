@@ -2289,6 +2289,248 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ X
     """)
 
+    fun `test deref method call with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Lazy<T, F, A, B>(T, F, A, B);
+        struct Foo;
+        trait Bound<T, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<S<A, B>, A, B> for Foo {}
+
+        impl<T, A, B, F> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T, A, B, F> Deref for Lazy<T, F, A, B>
+            where
+                F: Bound<T, A, B>,
+                A: Bound2<B>
+        {
+            type Target = T;
+        }
+
+        struct S<A, B>(A, B);
+        impl<A, B> S<A, B> {
+            fn bar(&self) -> (A, B) { todo!() }
+        }
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let (a, b) = l.bar();
+            let _: Bar = a;
+            b;
+        } //^ Baz
+    """)
+
+    fun `test deref field with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Lazy<T, F, A, B>(T, F, A, B);
+        struct Foo;
+        trait Bound<T, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<S<A, B>, A, B> for Foo {}
+
+        impl<T, A, B, F> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T, A, B, F> Deref for Lazy<T, F, A, B>
+            where
+                F: Bound<T, A, B>,
+                A: Bound2<B>
+        {
+            type Target = T;
+        }
+
+        struct S<A, B> { i: (A, B) }
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let a = &l.i.0;
+            let b = &l.i.1;
+            let _: &Bar = a;
+            b;
+        } //^ &Baz
+    """)
+
+    fun `test deref tuple field with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        struct Lazy<T, F, A, B>{t: T, f: F, a: A, b: B }
+        struct Foo;
+        trait Bound<T, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<(A, B), A, B> for Foo {}
+
+        impl<T, A, B, F> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T, A, B, F> Deref for Lazy<T, F, A, B>
+            where
+                F: Bound<T, A, B>,
+                A: Bound2<B>
+        {
+            type Target = T;
+        }
+
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let a = l.0;
+            let b = l.1;
+            let _: Bar = a;
+            b;
+        } //^ Baz
+    """)
+
+    fun `test explicit deref with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Lazy<T, F, A, B>(T, F, A, B);
+        struct Foo;
+        trait Bound<T, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<S<A, B>, A, B> for Foo {}
+
+        impl<T, A, B, F> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T, A, B, F> Deref for Lazy<T, F, A, B>
+            where
+                F: Bound<T, A, B>,
+                A: Bound2<B>
+        {
+            type Target = T;
+        }
+
+        struct S<A, B>(A, B);
+
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let s = &(*l);
+            func(s);
+            &s.1;
+        } //^ &Baz
+
+        fn func<B>(s: &S<Bar, B>) {}
+    """)
+
+    fun `test deref coercion with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        struct Lazy<T, F, A, B>(T, F, A, B);
+        struct Foo;
+        trait Bound<T, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<S<A, B>, A, B> for Foo {}
+
+        impl<T, F, A, B> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T, F, A, B> Deref for Lazy<T, F, A, B> where A: Bound2<B>, F: Bound<T, A, B> {
+            type Target = T;
+        }
+
+        struct S<A, B>(A, B);
+
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let s: &S<Bar, _> = &l;
+            s.1;
+        }   //^ Baz
+    """)
+
+    fun `test deref index access with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        #[lang = "index"]
+        trait Index<Idx> { type Output; }
+
+        struct Lazy<T, F, A, B>(T, F, A, B);
+        struct Foo;
+        trait Bound<T, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<S<A, B>, A, B> for Foo {}
+
+        impl<T, F, A, B> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T, F, A, B> Deref for Lazy<T, F, A, B> where A: Bound2<B>, F: Bound<T, A, B> {
+            type Target = T;
+        }
+
+        impl<A, B> Index<i32> for S<A, B> {
+            type Output = (A, B);
+        }
+
+        struct S<A, B>(A, B);
+
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let (a, b) = l[0];
+            let _: Bar = a;
+            b;
+        } //^ Baz
+    """)
+
+    fun `test deref call expr with trait bounds`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+
+        #[lang = "fn_once"]
+        trait FnOnce<Args> { type Output; }
+
+        struct Lazy<T: ?Sized, F, A, B>(Box<T>, F, A, B);
+        struct Foo;
+        trait Bound<T: ?Sized, A, B> {}
+        trait Bound2<T> {}
+        impl<A, B> Bound<dyn FnOnce() -> (A, B), A, B> for Foo {}
+
+        impl<T: ?Sized, F, A, B> Lazy<T, F, A, B> {
+            fn new(_: F) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        impl<T: ?Sized, F, A, B> Deref for Lazy<T, F, A, B> where A: Bound2<B>, F: Bound<T, A, B> {
+            type Target = T;
+        }
+        struct Bar;
+        struct Baz;
+        impl Bound2<Baz> for Bar {}
+
+        fn foo() {
+            let l = Lazy::new(Foo);
+            let (a, b) = l();
+            let _: Bar = a;
+            b;
+        } //^ Baz
+    """)
+
     @CheckTestmarkHit(TypeInferenceMarks.WinnowParamCandidateWins::class)
     fun `test assoc type bound does not conflict with type bound`() = testExpr("""
         struct X;

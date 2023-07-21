@@ -54,13 +54,8 @@ class RsTypeInferenceWalker(
     private val fulfill get() = ctx.fulfill
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration()?.typeReference?.rawType ?: TyUnknown
 
-    private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
-        if (!ty.needsInfer) return ty
-        val tyRes = ctx.resolveTypeVarsIfPossible(ty)
-        if (!tyRes.needsInfer) return tyRes
-        selectObligationsWherePossible()
-        return ctx.resolveTypeVarsIfPossible(tyRes)
-    }
+    private fun resolveTypeVarsWithObligations(ty: Ty): Ty =
+        ctx.resolveTypeVarsWithObligations(ty)
 
     private fun selectObligationsWherePossible() {
         fulfill.selectWherePossible()
@@ -254,6 +249,7 @@ class RsTypeInferenceWalker(
         return when (val result = ctx.tryCoerce(inferred, expected)) {
             is Ok -> {
                 ctx.applyAdjustments(element, result.ok.adjustments)
+                fulfill.registerPredicateObligations(result.ok.obligations)
                 true
             }
 
@@ -642,6 +638,7 @@ class RsTypeInferenceWalker(
         val derefTy = coercionSequence.mapNotNull {
             lookup.asTyFunction(it)
         }.lastOrNull()
+        fulfill.registerPredicateObligations(coercionSequence.obligations())
         ctx.applyAdjustments(calleeExpr, coercionSequence.steps().toAdjustments(items))
 
         if (baseTy != TyUnknown && derefTy == null) {
@@ -702,6 +699,8 @@ class RsTypeInferenceWalker(
             return methodType.retType
         }
 
+        fulfill.registerPredicateObligations(callee.obligations)
+
         val adjustments: MutableList<Adjustment> = callee.derefSteps.toAdjustments(items).toMutableList()
         val lastDerefTy = adjustments.lastOrNull()?.target ?: receiver
         if (callee.autorefOrPtrAdjustment is Autoref) {
@@ -721,7 +720,6 @@ class RsTypeInferenceWalker(
         inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
 
         var newSubst = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
-
         newSubst = ctx.instantiateBounds(callee.element, callee.formalSelfTy, newSubst)
 
         val typeParameters = callee.element.typeParameters.map { TyTypeParameter.named(it) }
@@ -808,8 +806,9 @@ class RsTypeInferenceWalker(
                 val autorefOrPtrAdjustment = lazy(LazyThreadSafetyMode.NONE) {
                     borrow?.let { Autoref(it, autoderefSteps.value.lastOrNull()?.getKind(items) == ArrayToSlice) }
                 }
+                val autoderefObligations = lazy(LazyThreadSafetyMode.NONE) { autoderef.obligations() }
                 return list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
-                    .map { MethodPick.from(it, ty, autoderefSteps.value, autorefOrPtrAdjustment.value) }
+                    .map { MethodPick.from(it, ty, autoderefSteps.value, autorefOrPtrAdjustment.value, autoderefObligations.value) }
             }
 
             // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
@@ -848,7 +847,8 @@ class RsTypeInferenceWalker(
                         TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait),
                         first.derefSteps,
                         first.autorefOrPtrAdjustment,
-                        first.isValid
+                        first.isValid,
+                        emptyList()
                     )
                 }
             }
@@ -925,6 +925,7 @@ class RsTypeInferenceWalker(
             val autoderef = lookup.coercionSequence(receiver)
             for (type in autoderef) {
                 if (type is TyTuple) {
+                    fulfill.registerPredicateObligations(autoderef.obligations())
                     ctx.applyAdjustments(fieldLookup.parentDotExpr.expr, autoderef.steps().toAdjustments(items))
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
@@ -932,6 +933,7 @@ class RsTypeInferenceWalker(
             }
             return TyUnknown
         }
+        fulfill.registerPredicateObligations(field.obligations)
         ctx.applyAdjustments(fieldLookup.parentDotExpr.expr, field.derefSteps.toAdjustments(items))
 
         val fieldElement = field.element
@@ -1040,7 +1042,11 @@ class RsTypeInferenceWalker(
             ctx.applyAdjustment(operandExpr, Adjustment.BorrowReference(TyReference(operandTy, IMMUTABLE)))
             ctx.writeOverloadedOperator(expr)
         }
-        return overloadedDeref ?: TyUnknown
+        if (overloadedDeref != null) {
+            fulfill.registerPredicateObligations(overloadedDeref.obligations)
+            return overloadedDeref.value
+        }
+        return TyUnknown
     }
 
     private fun inferRefType(expr: RsExpr, expected: Expectation, mutable: Mutability, kind: BorrowKind): Ty {
@@ -1252,6 +1258,8 @@ class RsTypeInferenceWalker(
             ?.register()
             ?.takeIf { it !is TyUnknown }
             ?: return TyUnknown
+
+        fulfill.registerPredicateObligations(autoderef.obligations())
 
         val steps = autoderef.steps()
         val lastStep = steps.lastOrNull()
