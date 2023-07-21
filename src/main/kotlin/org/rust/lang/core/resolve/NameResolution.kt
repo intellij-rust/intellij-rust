@@ -113,9 +113,11 @@ fun processFieldExprResolveVariants(
     for (ty in autoderef) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
         val processor = originalProcessor.wrapWithMapper { it: ScopeEntry ->
-            FieldResolveVariant(it.name, it.element, ty, autoderef.steps())
+            FieldResolveVariant(it.name, it.element, ty, autoderef.steps(), autoderef.obligations())
         }
-        if (processFieldDeclarations(ty.item, processor)) return true
+        if (processFieldDeclarations(ty.item, processor)) {
+            return true
+        }
     }
 
     return false

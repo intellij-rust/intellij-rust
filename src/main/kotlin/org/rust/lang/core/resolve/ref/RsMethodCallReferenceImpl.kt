@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.RsFieldDecl
 import org.rust.lang.core.psi.ext.isMethod
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.infer.Autoderef
+import org.rust.lang.core.types.infer.Obligation
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
 
@@ -82,7 +83,8 @@ data class FieldResolveVariant(
     override val name: String,
     override val element: RsElement,
     override val selfTy: Ty,
-    val derefSteps: List<Autoderef.AutoderefStep>
+    val derefSteps: List<Autoderef.AutoderefStep>,
+    val obligations: List<Obligation>,
 ) : DotExprResolveVariant {
     override val derefCount: Int get() = derefSteps.size
 }

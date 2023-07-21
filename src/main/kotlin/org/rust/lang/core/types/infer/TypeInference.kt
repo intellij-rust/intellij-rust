@@ -917,9 +917,9 @@ class RsInferenceContext(
                 if (!isTrivialReborrow) {
                     val adjustments = autoderef.steps().toAdjustments(items) +
                         listOf(Adjustment.BorrowReference(derefTyRef))
-                    return Ok(CoerceOk(adjustments))
+                    return Ok(CoerceOk(adjustments, obligations = autoderef.obligations()))
                 }
-                return Ok(CoerceOk())
+                return Ok(CoerceOk(obligations = autoderef.obligations()))
             }
         }
 
@@ -951,6 +951,14 @@ class RsInferenceContext(
     }
 
     private val shallowResolver: ShallowResolver = ShallowResolver()
+
+    fun resolveTypeVarsWithObligations(ty: Ty): Ty {
+        if (!ty.needsInfer) return ty
+        val tyRes = resolveTypeVarsIfPossible(ty)
+        if (!tyRes.needsInfer) return tyRes
+        fulfill.selectWherePossible()
+        return resolveTypeVarsIfPossible(tyRes)
+    }
 
     fun <T : TypeFoldable<T>> resolveTypeVarsIfPossible(value: T): T = value.foldWith(opportunisticVarResolver)
 
@@ -1520,7 +1528,8 @@ data class MethodPick(
     val source: TraitImplSource,
     val derefSteps: List<Autoderef.AutoderefStep>,
     val autorefOrPtrAdjustment: AutorefOrPtrAdjustment?,
-    val isValid: Boolean
+    val isValid: Boolean,
+    val obligations: List<Obligation>,
 ) {
     fun toMethodResolveVariant(): MethodResolveVariant =
         MethodResolveVariant(element.name!!, element, formalSelfTy, derefCount, source)
@@ -1537,11 +1546,12 @@ data class MethodPick(
             m: MethodResolveVariant,
             methodSelfTy: Ty,
             derefSteps: List<Autoderef.AutoderefStep>,
-            autorefOrPtrAdjustment: AutorefOrPtrAdjustment?
-        ) = MethodPick(m.element, m.selfTy, methodSelfTy, m.derefCount, m.source, derefSteps, autorefOrPtrAdjustment, true)
+            autorefOrPtrAdjustment: AutorefOrPtrAdjustment?,
+            obligations: List<Obligation>
+        ) = MethodPick(m.element, m.selfTy, methodSelfTy, m.derefCount, m.source, derefSteps, autorefOrPtrAdjustment, true, obligations)
 
         fun from(m: MethodResolveVariant) =
-            MethodPick(m.element, m.selfTy, TyUnknown, m.derefCount, m.source, emptyList(), null, false)
+            MethodPick(m.element, m.selfTy, TyUnknown, m.derefCount, m.source, emptyList(), null, false, emptyList())
     }
 }
 

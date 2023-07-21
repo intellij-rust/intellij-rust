@@ -1148,10 +1148,10 @@ class ImplLookup(
 
     fun coercionSequence(baseTy: Ty): Autoderef = Autoderef(this, ctx, baseTy)
 
-    fun deref(ty: Ty): Ty? = when (ty) {
-        is TyReference -> ty.referenced
-        is TyPointer -> ty.referenced
-        else -> findDerefTarget(ty)?.value // TODO don't ignore obligations
+    fun deref(ty: Ty): TyWithObligations<Ty>? = when (ty) {
+        is TyReference -> TyWithObligations(ty.referenced)
+        is TyPointer -> TyWithObligations(ty.referenced)
+        else -> findDerefTarget(ty)
     }
 
     private fun findDerefTarget(ty: Ty): TyWithObligations<Ty>? {
