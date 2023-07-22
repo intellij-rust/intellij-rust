@@ -654,7 +654,7 @@ fun collectVariantsForEnumCompletion(
                     super.handleInsert(enumVariant, variantName, context, item)
 
                     // escape enum name if needed
-                    if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(enumName) && enumName !in CAN_NOT_BE_ESCAPED)
+                    if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(enumName) && enumName.canBeEscaped)
                         context.document.insertString(enumStartOffset, RS_RAW_PREFIX)
 
                     if (candidate != null && RsCodeInsightSettings.getInstance().importOutOfScopeItems) {

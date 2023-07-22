@@ -439,6 +439,7 @@ private class CompletionVariantsCollector(
 
     override fun process(entry: ScopeEntry): Boolean {
         addEnumVariantsIfNeeded(entry)
+        addAssociatedItemsIfNeeded(entry)
 
         result.addElement(createLookupElement(
             scopeEntry = entry,
@@ -466,6 +467,27 @@ private class CompletionVariantsCollector(
             }
             result.addAllElements(filtered)
         }
+    }
+
+    private fun addAssociatedItemsIfNeeded(entry: ScopeEntry) {
+        if (entry.name != "Self") return
+        val entryTrait = when (val traitOrImpl = entry.element as? RsTraitOrImpl) {
+            is RsTraitItem -> traitOrImpl as? RsTraitItem ?: return
+            is RsImplItem -> traitOrImpl.traitRef?.path?.reference?.resolve() as? RsTraitItem ?: return
+            else -> return
+        }
+
+        val associatedTypes = entryTrait
+            .associatedTypesTransitively
+            .mapNotNull { type ->
+                val name = type.name ?: return@mapNotNull null
+                val typeAlias = type.superItem ?: type
+                createLookupElement(
+                    SimpleScopeEntry("Self::$name", typeAlias, TYPES),
+                    context,
+                )
+            }
+        result.addAllElements(associatedTypes)
     }
 }
 
