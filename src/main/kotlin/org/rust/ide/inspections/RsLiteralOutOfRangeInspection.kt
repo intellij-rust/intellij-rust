@@ -10,7 +10,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.fixes.ConvertTypeReferenceFix
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
@@ -21,19 +20,19 @@ class RsLiteralOutOfRangeInspection: RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsWithMacrosInspectionVisitor() {
             override fun visitLitExpr(expr: RsLitExpr) {
-                checkValueOutOfRange(expr.type, expr)
-            }
-
-            private fun checkValueOutOfRange(expectedTy: Ty, expr: RsLitExpr) {
+                val expectedTy = expr.type
                 if (expectedTy !is TyInteger
                     || expectedTy is TyInteger.U128
                     || expectedTy is TyInteger.I128
+                    || expectedTy is TyInteger.I32
                     || expectedTy is TyInteger.U64
                     || expectedTy is TyInteger.I64
                     || expectedTy is TyInteger.USize) return // Not supported, (should we even support them?)
 
                 val literal = expr.kind as? RsLiteralKind.Integer ?: return
-                val numericValue = literal.value ?: return
+
+                val isNegative = (expr.context as? RsUnaryExpr)?.minus != null
+                val numericValue = literal.value?.let { value -> if (isNegative) -value else value  } ?: return
                 if (numericValue !in expectedTy.validValuesRange) {
                     val fix = findQuickFix(expr, expectedTy, numericValue)
                     RsDiagnostic.LiteralOutOfRange(expr, numericValue.toString(), expectedTy.render(), fix).addToHolder(holder)

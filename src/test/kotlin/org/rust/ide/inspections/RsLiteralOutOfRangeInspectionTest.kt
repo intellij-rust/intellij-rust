@@ -20,6 +20,13 @@ class RsLiteralOutOfRangeInspectionTest: RsInspectionsTestBase(RsLiteralOutOfRan
         }
     """)
 
+    fun `test declaration good i8`() = checkByText(
+        """
+        fn main() {
+            let x: i8 = -128;
+        }
+    """)
+
     fun `test declaration fix type`() = checkFixByText("Change type of `x` to `u16`",
         """
         fn main() {
@@ -49,10 +56,10 @@ class RsLiteralOutOfRangeInspectionTest: RsInspectionsTestBase(RsLiteralOutOfRan
         }
     """)
 
-    fun `test declaration good u16`() = checkByText(
+    fun `test declaration good i16`() = checkByText(
         """
         fn main() {
-            let x: u16 = 65_535;
+            let x: i16 = -32_768;
         }
     """)
 
@@ -67,6 +74,13 @@ class RsLiteralOutOfRangeInspectionTest: RsInspectionsTestBase(RsLiteralOutOfRan
         """
         fn main() {
             let x: u32 = 4_294_967_295;
+        }
+    """)
+
+    fun `test declaration good i32`() = checkByText(
+        """
+        fn main() {
+            let x: i16 = -32_768;
         }
     """)
 
