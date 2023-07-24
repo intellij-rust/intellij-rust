@@ -8,12 +8,15 @@ package org.rust.debugger.statistics
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.XSourcePosition
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.toPsiFile
 import org.rust.stdext.enumSetOf
 import java.util.*
 import java.util.function.Predicate
@@ -25,7 +28,7 @@ class RsDebuggerUsageCollector : CounterUsagesCollector() {
     }
 
     companion object {
-        private val GROUP = EventLogGroup("rust.debug.evaluate.expression", 4)
+        private val GROUP = EventLogGroup("rust.debug.evaluate.expression", 5)
 
         private val SUCCESS = EventFields.Boolean("success")
         private val DEBUGGER_KIND = EventFields.Enum<DebuggerKind>("debugger_kind")
@@ -40,8 +43,16 @@ class RsDebuggerUsageCollector : CounterUsagesCollector() {
             }
         }
 
-        fun collectUsedElements(expr: XExpression, context: RsFile): EnumSet<ExpressionKind> {
-            val project = context.project
+        fun collectUsedElements(
+            project: Project,
+            expr: XExpression,
+            position: XSourcePosition
+        ): EnumSet<ExpressionKind> {
+            val psiFile = position.file.toPsiFile(project) as? RsFile ?: return enumSetOf()
+            val context = psiFile.findElementAt(position.offset)
+                ?.contextOrSelf<RsElement>()
+                ?: return enumSetOf()
+
             val codeFragment = RsExpressionCodeFragment(project, expr.expression, context)
             val features = enumSetOf<ExpressionKind>()
             for (element in SyntaxTraverser.psiTraverser(codeFragment)) {
