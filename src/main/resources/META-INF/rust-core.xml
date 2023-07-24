@@ -1351,6 +1351,7 @@
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsConvertJsonToStructUsagesCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCodeVisionUsageCollector"/>
         <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.CargoErrorCodesCollector"/>
+        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsExternalLinterUsagesCollector"/>
 
         <!-- Registry keys -->
 

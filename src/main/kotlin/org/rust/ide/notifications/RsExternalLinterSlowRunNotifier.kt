@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.WindowManager
 import org.rust.RsBundle
 import org.rust.cargo.project.settings.externalLinterSettings
+import org.rust.ide.statistics.RsExternalLinterUsagesCollector
 import org.rust.ide.status.RsExternalLinterWidget
 import java.util.*
 import javax.swing.event.HyperlinkEvent
@@ -23,6 +24,7 @@ import javax.swing.event.HyperlinkEvent
 class RsExternalLinterSlowRunNotifier(val project: Project) {
     private val maxDuration: Int get() = LINTER_MAX_DURATION.asInteger()
     private val prevDurations: Queue<Long> = ArrayDeque()
+    private var maxMinPrevDuration: Long = 0
 
     fun reportDuration(duration: Long) {
         prevDurations.add(duration)
@@ -30,18 +32,26 @@ class RsExternalLinterSlowRunNotifier(val project: Project) {
             prevDurations.remove()
         }
 
-        if (PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) return
+        if (prevDurations.size == MAX_QUEUE_SIZE) {
+            val minPrevDuration = prevDurations.minOrNull() ?: 0
 
-        val minPrevDuration = prevDurations.minOrNull() ?: 0
-        if (prevDurations.size == MAX_QUEUE_SIZE && minPrevDuration > maxDuration) {
-            val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return
-            val widget = statusBar.getWidget(RsExternalLinterWidget.ID) as? RsExternalLinterWidget ?: return
-            val content = RsBundle.message("notification.content.low.performance.due.to.rust.external.linter.nbsp.nbsp.nbsp.nbsp", HtmlChunk.br(), HtmlChunk.link("disable", RsBundle.message("disable")), HtmlChunk.link("dont-show-again", RsBundle.message("don.t.show.again")))
-            widget.showBalloon(content, MessageType.WARNING, project) { e ->
-                if (e?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                    when (e.description) {
-                        "disable" -> project.externalLinterSettings.modify { it.runOnTheFly = false }
-                        "dont-show-again" -> PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_KEY, true, false)
+            if (maxMinPrevDuration < minPrevDuration) {
+                maxMinPrevDuration = minPrevDuration
+                RsExternalLinterUsagesCollector.logOnTheFlyExecutionTime(maxMinPrevDuration)
+            }
+
+            if (PropertiesComponent.getInstance().getBoolean(DO_NOT_SHOW_KEY, false)) return
+
+            if (minPrevDuration > maxDuration) {
+                val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return
+                val widget = statusBar.getWidget(RsExternalLinterWidget.ID) as? RsExternalLinterWidget ?: return
+                val content = RsBundle.message("notification.content.low.performance.due.to.rust.external.linter.nbsp.nbsp.nbsp.nbsp", HtmlChunk.br(), HtmlChunk.link("disable", RsBundle.message("disable")), HtmlChunk.link("dont-show-again", RsBundle.message("don.t.show.again")))
+                widget.showBalloon(content, MessageType.WARNING, project) { e ->
+                    if (e?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                        when (e.description) {
+                            "disable" -> project.externalLinterSettings.modify { it.runOnTheFly = false }
+                            "dont-show-again" -> PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_KEY, true, false)
+                        }
                     }
                 }
             }
