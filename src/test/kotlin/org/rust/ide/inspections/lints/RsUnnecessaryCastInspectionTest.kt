@@ -287,13 +287,13 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = 1i32;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test no fix if cast in necessary`() = checkFixIsUnavailable("Remove `as i64`", """
         fn foo() {
             let a = 1i32 as /*caret*/i64;
         }
-    """)
+    """, checkWeakWarn = true)
 
 
     fun `test remove variable cast`() = checkFixByText("Remove `as i32`", """
@@ -306,7 +306,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
             let b = 1i32;
             let a = b;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test remove field access cast`() = checkFixByText("Remove `as i64`", """
         struct S {
@@ -324,7 +324,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = S { i: 1 }.i;
         }
-    """)
+    """, checkWeakWarn = true)
 
 
     fun `test remove reference cast`() = checkFixByText("Remove `as &S`", """
@@ -341,7 +341,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = &S{};
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test remove function call cast`() = checkFixByText("Remove `as i32`", """
         fn returns_i32() -> i32 { 0 }
@@ -353,7 +353,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = returns_i32();
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test remove cast of complex expr`() = checkFixByText("Remove `as i32`", """
         fn f() -> i32 { 0 }
@@ -365,7 +365,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = (2 + 3 - f());
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test remove cast inside complex expr`() = checkFixByText("Remove `as i32`", """
         fn foo() {
@@ -375,7 +375,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = 1 - 2i32 + 3;
         }
-    """)
+    """, checkWeakWarn = true)
 
 
     fun `test remove cast with weird formatting`() = checkFixByText("Remove `as i32`", """
@@ -387,7 +387,7 @@ class RsUnnecessaryCastInspectionTest : RsInspectionsTestBase(RsUnnecessaryCastI
         fn foo() {
             let a = 1i32;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test necessary fn casts`() = checkWarnings("""
         fn main() {

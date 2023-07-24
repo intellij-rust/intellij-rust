@@ -130,7 +130,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
         }
         fn foo2(test: i32) {
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test remove only unused mut`() = checkFixByText("Remove `mut`", """
         fn main() {
@@ -144,7 +144,7 @@ class RsUnusedMutInspectionTest : RsInspectionsTestBase(RsUnusedMutInspection::c
             f = 20;
             let f = 10;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test function`() = checkWarnings("""
         fn main() {

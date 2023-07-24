@@ -11,7 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspection::class) {
-    fun `test unused must_use with simple function call`() = checkByText("""
+    fun `test unused must_use with simple function call`() = checkWarnings("""
         #[must_use]
         fn foo() -> bool { false }
 
@@ -20,7 +20,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
-    fun `test unused must_use with simple function call and inner attribute`() = checkByText("""
+    fun `test unused must_use with simple function call and inner attribute`() = checkWarnings("""
         fn foo() -> bool {
             #![must_use]
             false
@@ -31,7 +31,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
-    fun `test unused must_use with custom struct`() = checkByText("""
+    fun `test unused must_use with custom struct`() = checkWarnings("""
         #[must_use]
         struct S;
 
@@ -40,7 +40,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
-    fun `test unused must_use with method call though nested struct literal`() = checkByText("""
+    fun `test unused must_use with method call though nested struct literal`() = checkWarnings("""
         struct S;
 
         impl S {
@@ -53,7 +53,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
-    fun `test unused must_use with marked struct returned from function`() = checkByText("""
+    fun `test unused must_use with marked struct returned from function`() = checkWarnings("""
         #[must_use]
         struct S;
 
@@ -64,7 +64,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
-    fun `test unused must_use with method call`() = checkByText("""
+    fun `test unused must_use with method call`() = checkWarnings("""
         struct S;
 
         impl S {
@@ -79,7 +79,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         }
     """)
 
-    fun `test unused must_use block disabled by cfg`() = checkByText("""
+    fun `test unused must_use block disabled by cfg`() = checkWarnings("""
         #[must_use]
         struct S;
 
@@ -87,14 +87,15 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
             #[cfg(undeclared_feature)]
             { S }
 
-            <weak_warning descr="Unused S that must be used">#[cfg(not(undeclared_feature))]
-            { S }</weak_warning>
+            #[cfg(not(undeclared_feature))]
+            <weak_warning descr="Unused S that must be used">{ S }</weak_warning>
 
             { S }
         }
     """)
 
-    fun `test no warning on reverse cfg disabled blocks`() = checkByText("""
+    @SkipTestWrapping  // TODO Fix
+    fun `test no warning on reverse cfg disabled blocks`() = checkWarnings("""
         #[must_use]
         struct S;
 
@@ -121,7 +122,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn main() {
             let _ = foo();
         }
-    """)
+    """, checkWeakWarn = true)
 
     @SkipTestWrapping // TODO test live templates
     fun `test fixing by adding assigning to _ with template`() = checkFixByTextWithLiveTemplate("Add `let _ =`","""
@@ -138,7 +139,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn main() {
             let a = foo();
         }
-    """)
+    """, checkWeakWarn = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test fixing unused result by adding unwrap`() = checkFixByText("Add `.unwrap()`","""
@@ -153,7 +154,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn main() {
             foo().unwrap();
         }
-    """)
+    """, checkWeakWarn = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test fixing unused result by adding expect`() = checkFixByText("Add `.expect(\"\")`","""
@@ -168,7 +169,7 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn main() {
             foo().expect("TODO: panic message");
         }
-    """)
+    """, checkWeakWarn = true)
 
     @SkipTestWrapping // TODO test live templates
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -184,5 +185,5 @@ class RsUnusedMustUseInspectionTest : RsInspectionsTestBase(RsUnusedMustUseInspe
         fn main() {
             foo().expect("abc");
         }
-    """)
+    """, checkWeakWarn = true)
 }
