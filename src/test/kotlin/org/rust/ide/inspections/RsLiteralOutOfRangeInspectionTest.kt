@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.junit.Test
+
 class RsLiteralOutOfRangeInspectionTest: RsInspectionsTestBase(RsLiteralOutOfRangeInspection::class) {
 
     fun `test declaration max u8`() = checkByText("""
@@ -70,6 +72,14 @@ class RsLiteralOutOfRangeInspectionTest: RsInspectionsTestBase(RsLiteralOutOfRan
         }
     """)
 
+    @Test(expected = Throwable::class) // Please remove once const evaluation is fixed
+    fun `test declaration max i32`() = checkByText(
+        """
+        fn main() {
+            let x: u32 = /*error descr="The literal `2147483648` does not fit into the type `i32`"*/2_147_483_648/*error**/;
+        }
+    """)
+
     fun `test declaration good u32`() = checkByText(
         """
         fn main() {
@@ -80,7 +90,37 @@ class RsLiteralOutOfRangeInspectionTest: RsInspectionsTestBase(RsLiteralOutOfRan
     fun `test declaration good i32`() = checkByText(
         """
         fn main() {
-            let x: i16 = -32_768;
+            let x: i32 = -2_147_483_648;
+        }
+    """)
+
+    @Test(expected = Throwable::class) // Please remove once const evaluation is fixed
+    fun `test declaration max i64`() = checkByText(
+        """
+        fn main() {
+            let x: i64 = /*error descr="The literal `9223372036854775808` does not fit into the type `i64`"*/9_223_372_036_854_775_808/*error**/;
+        }
+    """)
+
+    fun `test declaration good i64`() = checkByText(
+        """
+        fn main() {
+            let x: i64 = 9_223_372_036_854_775_807;
+        }
+    """)
+
+    @Test(expected = Throwable::class) // Please remove once const evaluation is fixed
+    fun `test declaration max u64`() = checkByText(
+        """
+        fn main() {
+            let x: u64 = /*error descr="The literal `18446744073709551616` does not fit into the type `u64`"*/18_446_744_073_709_551_616/*error**/;
+        }
+    """)
+
+    fun `test declaration good u64`() = checkByText(
+        """
+        fn main() {
+            let x: u64 = 18_446_744_073_709_551_615;
         }
     """)
 
