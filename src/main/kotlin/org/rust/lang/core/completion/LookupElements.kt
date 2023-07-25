@@ -301,14 +301,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         when (element) {
             is RsMod -> {
                 when (scopeName) {
-                    "self",
-                    "super" -> {
-                        val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
-                        if (!(context.isInUseGroup || inSelfParam)) {
-                            context.addSuffix("::")
-                        }
-                    }
-                    "crate" -> context.addSuffix("::")
+                    "self", "super", "crate" -> context.addSuffix("::")
                 }
             }
 

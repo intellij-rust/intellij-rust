@@ -156,7 +156,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         mod foo { }
 
-        use self::foo::{self/*caret*/};
+        use self::foo::{self::/*caret*/};
     """)
 
     fun `test use glob global`() = doSingleCompletion("""
@@ -307,7 +307,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete self method`() = doSingleCompletion("""
+    fun `test complete self method`() = doFirstCompletion("""
         struct S;
         impl S { fn foo(&se/*caret*/) {}}
     """, """
