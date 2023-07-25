@@ -401,6 +401,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("needless_raw_string_hashes", false),
     Lint("needless_raw_strings", false),
     Lint("needless_return", false),
+    Lint("needless_return_with_question_mark", false),
     Lint("needless_splitn", false),
     Lint("needless_update", false),
     Lint("neg_cmp_op_on_partial_ord", false),
