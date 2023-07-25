@@ -1618,4 +1618,55 @@ class RsCompletionTest : RsCompletionTestBase() {
     fun `test no fn main inside other function 3`() = checkNoCompletion("""
         fn func() /*caret*/{}
     """)
+
+    fun `test match completion 1`() = doSingleCompletionWithLiveTemplate("""
+        enum E { A, B }
+        fn main() {
+            let x = E::A;
+            mat/*caret*/
+        }
+    """, "x\t", """
+        enum E { A, B }
+        fn main() {
+            let x = E::A;
+            match x {
+                E::A => {/*caret*/}
+                E::B => {}
+            }
+        }
+    """)
+
+    fun `test match completion 2`() = doSingleCompletionWithLiveTemplate("""
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            mat/*caret*/
+        }
+    """, "x\ty\t", """
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            match x {
+                E::A => {/*caret*/}
+                E::B(y) => {}
+            }
+        }
+    """)
+
+    fun `test match completion 3`() = doSingleCompletionWithLiveTemplate("""
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            let a = mat/*caret*/
+        }
+    """, "x\ty\t", """
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            let a = match x {
+                E::A => {/*caret*/}
+                E::B(y) => {}
+            };
+        }
+    """)
 }

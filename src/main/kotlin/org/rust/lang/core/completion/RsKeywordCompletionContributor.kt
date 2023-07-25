@@ -8,6 +8,9 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.impl.MacroCallNode
+import com.intellij.codeInsight.template.macro.CompleteMacro
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
@@ -19,6 +22,8 @@ import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
+import org.rust.ide.template.postfix.fillMatchArms
+import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.*
 import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
@@ -28,6 +33,8 @@ import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.createSmartPointer
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Completes Rust keywords
@@ -100,21 +107,45 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         super.fillCompletionVariants(parameters, RsCompletionContributor.withRustSorter(parameters, result))
     }
 
-    private fun conditionLookupElement(lookupString: String): LookupElementBuilder {
+    private fun conditionLookupElement(keyword: String): LookupElementBuilder {
         return LookupElementBuilder
-            .create(lookupString)
+            .create(keyword)
             .bold()
             .withTailText(" {...}")
             .withInsertHandler { context, _ ->
-                val isLetExpr = context.file.findElementAt(context.tailOffset - 1)
-                    ?.ancestorStrict<RsLetDecl>()
-                    ?.let { it.expr?.text == lookupString } == true
-                val hasSemicolon = context.nextCharIs(';')
+                conditionLookupElementHandleInsert(context, keyword)
+            }
+    }
 
-                var tail = "  { }"
-                if (isLetExpr && !hasSemicolon) tail += ';'
-                context.document.insertString(context.selectionEndOffset, tail)
-                EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+    private fun conditionLookupElementHandleInsert(context: InsertionContext, keyword: String) {
+        val element0: RsExpr = when (keyword) {
+            "if", "else if" -> context.getElementOfType<RsIfExpr>()
+            "match" -> context.getElementOfType<RsMatchExpr>()
+            else -> null
+        } ?: return
+        val elementPointer = element0.createSmartPointer()
+
+        val semicolon = if (element0.parent is RsLetDecl && !context.nextCharIs(';')) ";" else ""
+        // `f` is condition expr which will be replaced by template builder
+        context.document.insertString(context.selectionEndOffset, " f {  }$semicolon")
+        PsiDocumentManager.getInstance(context.project).commitDocument(context.document)
+
+        val element1 = elementPointer.element ?: return
+        val expr = when (element1) {
+            is RsIfExpr -> element1.condition?.expr
+            is RsMatchExpr -> element1.expr
+            else -> null
+        } ?: return
+        context.editor.newTemplateBuilder(element1)
+            .replaceElement(expr, MacroCallNode(CompleteMacro()))
+            .runInline {
+                val element2 = elementPointer.element ?: return@runInline
+                context.editor.moveCaretToOffset(element2, element2.endOffset - " }".length)
+                if (element2 is RsMatchExpr && !DumbService.isDumb(element2.project)) {
+                    runWriteAction {
+                        fillMatchArms(element2, context.editor)
+                    }
+                }
             }
     }
 

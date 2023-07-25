@@ -526,13 +526,13 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test else if`() = checkCompletion("else if", """
+    fun `test else if`() = checkCompletionWithLiveTemplate("else if", """
         fn main() {
             if true { } /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn main() {
-            if true { } else if /*caret*/ { }
+            if true { } else if foo { /*caret*/ }
         }
     """)
 
@@ -695,43 +695,43 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         impl<T> Foo<T> for Bar where /*caret*/
     """)
 
-    fun `test if or match in start of statement`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in start of statement`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            /*lookup*/ /*caret*/ { }
+            /*lookup*/ foo { /*caret*/ }
         }
     """)
 
-    fun `test if or match in let statement`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in let statement`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            let x = /*lookup*/ /*caret*/ { };
+            let x = /*lookup*/ foo { /*caret*/ };
         }
     """)
 
-    fun `test if or match in let statement with semicolon`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in let statement with semicolon`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/;
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            let x = /*lookup*/ /*caret*/ { };
+            let x = /*lookup*/ foo { /*caret*/ };
         }
     """)
 
-    fun `test if or match in expression`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in expression`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             let x = 1 + /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            let x = 1 + /*lookup*/ /*caret*/ { }
+            let x = 1 + /*lookup*/ foo { /*caret*/ }
         }
     """)
 
@@ -1226,6 +1226,17 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     ) {
         for (lookupString in lookupStrings) {
             checkCompletion(lookupString, before, after.replace("/*lookup*/", lookupString))
+        }
+    }
+
+    private fun checkCompletionWithLiveTemplate(
+        lookupStrings: List<String>,
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String
+    ) {
+        for (lookupString in lookupStrings) {
+            checkCompletionWithLiveTemplate(lookupString, before, toType, after.replace("/*lookup*/", lookupString))
         }
     }
 
