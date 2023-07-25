@@ -846,6 +846,14 @@ class ImplLookup(
             // that they are resolved correctly
             .filter { it.isKnownDerivable }
             .filter { it == ref.trait.element }
+            .filter {
+                if (it == items.PartialEq || it == items.PartialOrd) {
+                    val actualBoundTrait = ref.trait.element.withSubst(ref.selfTy)
+                    ctx.probe { ctx.combineTraitRefs(ref, TraitRef(ref.selfTy, actualBoundTrait)) }
+                } else {
+                    true
+                }
+            }
             .mapTo(candidates.list) { ImplCandidate.DerivedTrait(it) }
     }
 
@@ -997,6 +1005,10 @@ class ImplLookup(
         // For `#[derive(Clone)] struct S<T>(T);` add `T: Clone` obligation
         val obligations = selfTy.typeArguments.map {
             Obligation(recursionDepth + 1, Predicate.Trait(TraitRef(it, BoundElement(candidate.item))))
+        }
+        if (ref.trait.element == items.PartialEq || ref.trait.element == items.PartialOrd) {
+            val actualBoundTrait = ref.trait.element.withSubst(selfTy)
+            ctx.combineTraitRefs(ref, TraitRef(ref.selfTy, actualBoundTrait))
         }
         return Selection(candidate.item, obligations)
     }
