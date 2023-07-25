@@ -12,6 +12,12 @@ class RsVisRestrictionCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test complete vis restriction with in keyword`() = checkNotContainsCompletion(listOf("in "), """
+        pub mod foo {
+            pub(in /*caret*/) struct S;
+        }
+    """)
+
     fun `test complete in keyword`() = doFirstCompletion("""
         pub mod foo {
             pub(i/*caret*/) struct S;
@@ -29,6 +35,26 @@ class RsVisRestrictionCompletionTest : RsCompletionTestBase() {
     """, """
         pub mod foo {
             pub(crate/*caret*/) struct S;
+        }
+    """)
+
+    fun `test complete self without colon`() = doFirstCompletion("""
+        pub mod foo {
+            pub(in sel/*caret*/) struct S;
+        }
+    """, """
+        pub mod foo {
+            pub(in self/*caret*/) struct S;
+        }
+    """)
+
+    fun `test complete super without colon`() = doFirstCompletion("""
+        pub mod foo {
+            pub(in sup/*caret*/) struct S;
+        }
+    """, """
+        pub mod foo {
+            pub(in super/*caret*/) struct S;
         }
     """)
 
