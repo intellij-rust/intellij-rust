@@ -1455,6 +1455,31 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl<T: Eq> Eq for Box<T> {}
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no E0277 with PartialEq derives and PartialEq impls with generics`() = checkErrors("""
+        #[derive(PartialEq)]
+        struct House;
+
+        #[derive(PartialEq)]
+        struct Village;
+
+        impl PartialEq<Village> for House {
+            fn eq(&self, other: &Village) -> bool { todo!() }
+        }
+
+        impl PartialEq<House> for Village {
+            fn eq(&self, other: &House) -> bool { todo!() }
+        }
+
+        impl PartialOrd<Village> for House {
+            fn partial_cmp(&self, other: &Village) -> Option<std::cmp::Ordering> { todo!() }
+        }
+
+        impl PartialOrd<House> for Village {
+            fn partial_cmp(&self, other: &House) -> Option<std::cmp::Ordering> { todo!() }
+        }
+    """)
+
     // Issue // https://github.com/intellij-rust/intellij-rust/issues/8786
     fun `test no E0277 when Self-related associated type is mentioned in the parent trait`() = checkErrors("""
         struct S;

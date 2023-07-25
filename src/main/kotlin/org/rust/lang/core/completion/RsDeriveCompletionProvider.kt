@@ -54,7 +54,12 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
         /** Filter unavailable and already derived */
         fun Sequence<KnownDerivableTrait>.filterDerivables() = filter {
             val trait = it.findTrait(owner.knownItems)
-            trait != null && !lookup.canSelect(TraitRef(ownerType, trait.withDefaultSubst()))
+            val boundTrait = if (it == KnownDerivableTrait.PartialOrd || it == KnownDerivableTrait.PartialEq) {
+                trait?.withSubst(ownerType)
+            } else {
+                trait?.withDefaultSubst()
+            }
+            boundTrait != null && !lookup.canSelect(TraitRef(ownerType, boundTrait))
         }
 
         KnownDerivableTrait.values().asSequence()
