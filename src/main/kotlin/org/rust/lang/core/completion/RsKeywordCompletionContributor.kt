@@ -29,6 +29,7 @@ import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseTraitOrImplDeclaration
 import org.rust.lang.core.RsPsiPattern.declarationPattern
+import org.rust.lang.core.RsPsiPattern.simplePathPattern
 import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -45,9 +46,9 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
         extend(CompletionType.BASIC, declarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "async", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, afterVisDeclarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "async", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
             RsKeywordCompletionProvider("crate", "fn"))
         extend(CompletionType.BASIC, unsafeDeclarationPattern(),
@@ -62,9 +63,15 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("where"))
         extend(CompletionType.BASIC, constParameterBeginningPattern(),
             RsKeywordCompletionProvider("const"))
+        extend(CompletionType.BASIC, inherentImplDeclarationPattern(),
+            RsKeywordCompletionProvider("async"))
+        extend(CompletionType.BASIC, structLiteralPathPattern(),
+            RsKeywordCompletionProvider("async"))
         extend(CompletionType.BASIC, traitOrImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
         extend(CompletionType.BASIC, unsafeTraitOrImplDeclarationPattern(),
+            RsKeywordCompletionProvider("fn"))
+        extend(CompletionType.BASIC, asyncDeclarationPattern(),
             RsKeywordCompletionProvider("fn"))
         extend(CompletionType.BASIC, afterVisInherentImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
@@ -93,6 +100,12 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 for (keyword in CONDITION_KEYWORDS) {
                     result.addElement(conditionLookupElement(keyword).toKeywordElement())
                 }
+            }
+        })
+
+        extend(CompletionType.BASIC, pathExpressionPattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+                result.addElement(lambdaLookupElement("async").toKeywordElement())
             }
         })
 
@@ -146,6 +159,24 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                         fillMatchArms(element2, context.editor)
                     }
                 }
+            }
+    }
+
+    private fun lambdaLookupElement(lookupString: String): LookupElementBuilder {
+        return LookupElementBuilder
+            .create(lookupString)
+            .bold()
+            .withTailText(" {...}")
+            .withInsertHandler { context, _ ->
+                val isLetExpr = context.file.findElementAt(context.tailOffset - 1)
+                    ?.ancestorStrict<RsLetDecl>()
+                    ?.let { it.expr?.text == lookupString } == true
+                val hasSemicolon = context.nextCharIs(';')
+
+                var tail = " {  }"
+                if (isLetExpr && !hasSemicolon) tail += ';'
+                context.document.insertString(context.selectionEndOffset, tail)
+                EditorModificationUtil.moveCaretRelatively(context.editor, 3)
             }
     }
 
@@ -278,6 +309,17 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern())
     }
+
+    private fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(statementBeginningPattern())
+    }
+
+    private fun structLiteralPathPattern(): PsiElementPattern.Capture<PsiElement> {
+        return simplePathPattern.withSuperParent(2, psiElement<RsStructLiteral>())
+    }
+
+    private fun asyncDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
+        baseDeclarationPattern().or(baseInherentImplDeclarationPattern()).and(statementBeginningPattern("async"))
 
     private fun unsafeTraitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern("unsafe"))

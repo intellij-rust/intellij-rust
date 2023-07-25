@@ -136,7 +136,7 @@ object RsPsiPattern {
 
     val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()
 
-    val simplePathPattern: ElementPattern<PsiElement>
+    val simplePathPattern: PsiElementPattern.Capture<PsiElement>
         get() {
             val simplePath = psiElement<RsPath>()
                 .with(object : PatternCondition<RsPath>("SimplePath") {
