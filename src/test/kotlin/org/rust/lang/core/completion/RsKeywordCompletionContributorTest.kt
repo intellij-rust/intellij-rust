@@ -1154,6 +1154,112 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test async completion in file`() = checkCompletion("async", """
+        pub as/*caret*/
+    ""","""
+        pub async /*caret*/
+    """)
+
+    fun `test async completion in module`() = checkCompletion("async", """
+        mod foo {
+          as/*caret*/
+        }
+    """, """
+        mod foo {
+          async /*caret*/
+        }
+    """)
+
+    fun `test async completion in function`() = checkCompletion("async", """
+        fn main() {
+          as/*caret*/
+        }
+    """, """
+        fn main() {
+          async /*caret*/
+        }
+    """)
+
+    fun `test async completion in inherent impl`() = checkCompletion("async", """
+        struct S;
+        impl S {
+            fn main() {
+              /*caret*/
+            }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn main() {
+              async /*caret*/
+            }
+        }
+    """)
+
+    fun `test no async completion in trait`() = checkNotContainsCompletion("async", """
+        trait T {
+            asy/*caret*/
+        }
+    """)
+
+    fun `test fn completion after async in file`() = checkCompletion("fn", """
+        async /*caret*/
+    """, """
+        async fn /*caret*/
+    """)
+
+    fun `test fn completion after async in inherent impl`() = checkCompletion("fn", """
+        struct S;
+        impl S {
+            async /*caret*/
+        }
+    """, """
+        struct S;
+        impl S {
+            async fn /*caret*/
+        }
+    """)
+
+    fun `test async completion in block`() = checkCompletion("async", """
+        fn main () {
+            a/*caret*/{}
+        }
+    """, """
+        fn main () {
+            async {}
+        }
+    """)
+
+    fun `test async completion in closure as path`() = checkCompletion("async", """
+        fn main () {
+            let x = a/*caret*/
+        }
+    """, """
+        fn main () {
+            let x = async { /*caret*/ };
+        }
+    """)
+
+    fun `test async completion in closure as path in function call`() = checkCompletion("async", """
+        fn main () {
+            foo(as/*caret*/)
+        }
+    """, """
+        fn main () {
+            foo(async { /*caret*/ })
+        }
+    """)
+
+    fun `test async completion in closure with existing braces`() = checkCompletion("async", """
+        fn main () {
+            foo(as/*caret*/{})
+        }
+    """, """
+        fn main () {
+            foo(async /*caret*/{})
+        }
+    """)
+
 
     fun `test as completion after returning value`() = checkCompletion("as", """
         fn foo() -> i64 {
