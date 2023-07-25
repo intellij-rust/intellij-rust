@@ -214,6 +214,7 @@ data class RsLookupElementProperties(
         // Top Priority
         PUB,
         PUB_CRATE,
+        // PUB_SUPER, // Add to RsVisibilityCompletionProvider when possible to change this.
         PUB_PARENS,
         LAMBDA_EXPR,
         ELSE_BRANCH,

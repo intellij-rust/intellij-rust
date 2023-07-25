@@ -98,7 +98,7 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
 
     override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
         val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
-        return element.getLookupElementBuilder(scopeEntry.name, subst)
+        return element.getLookupElementBuilder(context, scopeEntry.name, subst)
     }
 
     companion object {
@@ -193,14 +193,14 @@ fun LookupElementBuilder.toRsLookupElement(properties: RsLookupElementProperties
 fun LookupElementBuilder.toKeywordElement(keywordKind: KeywordKind = KeywordKind.KEYWORD): LookupElement =
     toRsLookupElement(RsLookupElementProperties(keywordKind = keywordKind))
 
-private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitution): LookupElementBuilder {
+private fun RsElement.getLookupElementBuilder(context: RsCompletionContext, scopeName: String, subst: Substitution): LookupElementBuilder {
     val isProcMacroDef = this is RsFunction && isProcMacroDef
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
         .withStrikeoutness(this is RsDocAndAttributeOwner && queryAttributes.deprecatedAttribute != null)
 
     return when (this) {
-        is RsMod -> if (scopeName == "self" || scopeName == "super" || scopeName == "crate") {
+        is RsMod -> if (context.context?.parent !is RsUseSpeck && (scopeName == "self" || scopeName == "super" || scopeName == "crate")) {
             base.withTailText("::")
         } else {
             base
@@ -301,7 +301,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         when (element) {
             is RsMod -> {
                 when (scopeName) {
-                    "self", "super", "crate" -> context.addSuffix("::")
+                    "self", "super", "crate" -> if (!context.isInUseGroup) context.addSuffix("::")
                 }
             }
 

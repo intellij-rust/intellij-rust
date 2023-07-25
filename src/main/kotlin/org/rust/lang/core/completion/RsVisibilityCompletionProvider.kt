@@ -22,7 +22,8 @@ class RsVisibilityCompletionProvider : CompletionProvider<CompletionParameters>(
     ) {
         val items = listOf(
             "pub" to KeywordKind.PUB,
-            "pub(crate)" to KeywordKind.PUB_CRATE
+            "pub(crate)" to KeywordKind.PUB_CRATE,
+            "pub(super)" to KeywordKind.PUB_CRATE,
         )
         for ((name, priority) in items) {
             result.addElement(
