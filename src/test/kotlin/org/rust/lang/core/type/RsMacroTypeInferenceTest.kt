@@ -6,6 +6,8 @@
 package org.rust.lang.core.type
 
 import org.rust.CheckTestmarkHit
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.macros.MacroExpansionManager
 
 class RsMacroTypeInferenceTest : RsTypificationTestBase() {
@@ -148,5 +150,21 @@ class RsMacroTypeInferenceTest : RsTypificationTestBase() {
             let a = error!();
             a;
         } //^ Data
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure from macro`() = testExpr("""
+        macro_rules! closure {
+            [$ p:pat => $ tup:expr] => {
+                |$ p| $ tup
+            };
+        }
+
+        fn foo() {
+            let a = vec![(1i32, 2i32)].into_iter().map(
+                closure![(a, b) => (a, b)]
+            ).next().unwrap();
+            a;
+        } //^ (i32, i32)
     """)
 }
