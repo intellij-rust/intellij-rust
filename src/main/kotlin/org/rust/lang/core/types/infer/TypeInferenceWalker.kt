@@ -1284,7 +1284,7 @@ class RsTypeInferenceWalker(
         val origin = definition?.containingCrate?.origin
         if (origin != null && origin != PackageOrigin.STDLIB) {
             inferChildExprsRecursively(macroCall)
-            return inferMacroAsExpr(macroCall)
+            return inferMacroAsExpr(macroCall, expected)
         }
 
         val name = macroCall.macroName
@@ -1325,7 +1325,7 @@ class RsTypeInferenceWalker(
         inferChildExprsRecursively(macroCall)
         return when {
             macroCall.assertMacroArgument != null -> TyUnit.INSTANCE
-            macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall)
+            macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall, expected)
             macroCall.includeMacroArgument != null -> inferIncludeMacro(macroCall)
             name == "env" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr.INSTANCE, IMMUTABLE))
@@ -1335,7 +1335,7 @@ class RsTypeInferenceWalker(
             name == "stringify" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "module_path" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "cfg" -> TyBool.INSTANCE
-            else -> inferMacroAsExpr(macroCall)
+            else -> inferMacroAsExpr(macroCall, expected)
         }
     }
 
@@ -1347,11 +1347,12 @@ class RsTypeInferenceWalker(
         }
     }
 
-    private fun inferMacroAsExpr(macroCall: RsMacroCall): Ty
-        = (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
+    private fun inferMacroAsExpr(macroCall: RsMacroCall, expected: Expectation = NoExpectation): Ty {
+        return (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType(expected) ?: TyUnknown
+    }
 
-    private fun inferFormatMacro(macroCall: RsMacroCall): Ty {
-        val inferredTy = inferMacroAsExpr(macroCall)
+    private fun inferFormatMacro(macroCall: RsMacroCall, expected: Expectation): Ty {
+        val inferredTy = inferMacroAsExpr(macroCall, expected)
         val name = macroCall.macroName
         return when {
             "print" in name -> TyUnit.INSTANCE
