@@ -1086,4 +1086,16 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             foo! {}
         }
     """)
+
+    fun `test expansion in pattern context`() = checkByCode("""
+        macro_rules! var {
+            ($ i:ident) => { $ i };
+        }
+
+        fn foo() {
+            let var!(a) = 1;
+                   //X
+            a;
+        } //^
+    """)
 }
