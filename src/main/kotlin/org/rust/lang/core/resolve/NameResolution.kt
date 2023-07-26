@@ -21,7 +21,6 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -1517,12 +1516,22 @@ private fun processLexicalDeclarations(
             alreadyProcessedNames.add(e.name) // Process element if it is not in the set
         }
 
-        return PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java).any { binding ->
-            val name = binding.name ?: return@any false
-            patternProcessor.lazy(name, VALUES) {
-                binding.takeIf { (it.parent is RsPatField || !it.isReferenceToConstant) && hygieneFilter(it) }
-            }
-        }
+        return !processElementsWithMacros(pattern) { binding ->
+           if (binding !is RsPatBinding) {
+               return@processElementsWithMacros TreeStatus.VISIT_CHILDREN
+           }
+
+           val name = binding.name ?: return@processElementsWithMacros TreeStatus.SKIP_CHILDREN
+           val result = patternProcessor.lazy(name, VALUES) {
+               binding.takeIf { (binding.parent is RsPatField || !binding.isReferenceToConstant) && hygieneFilter(binding) }
+           }
+
+           if (result) {
+               TreeStatus.ABORT
+           } else {
+               TreeStatus.SKIP_CHILDREN
+           }
+       }
     }
 
     fun processLetExprs(
