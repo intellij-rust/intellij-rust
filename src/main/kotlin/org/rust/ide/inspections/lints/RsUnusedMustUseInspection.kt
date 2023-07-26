@@ -18,6 +18,7 @@ import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.KnownProcMacroKind.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.expandedStmtsAndTailExpr
 import org.rust.lang.core.psi.ext.findFirstMetaItem
@@ -85,8 +86,14 @@ private class InspectionResult(@InspectionMessage val description: String, val f
 
 private fun inspectAndProposeFixes(expr: RsExpr): InspectionResult? {
     val fixes = mutableListOf<LocalQuickFix>()
+    val function = when (expr) {
+        is RsDotExpr -> expr.methodCall?.getFunctionCallContext()?.function
+        is RsCallExpr -> expr.getFunctionCallContext()?.function
+        else -> null
+    }
+    if (isAsyncHardcodedProcMacro(function)) return null
     val description = checkTypeMustUse(expr.type, expr, fixes)
-        ?: checkFuncMustUse(expr)
+        ?: checkFuncMustUse(function)
         ?: return null
     if (expr.returnsStdResult()) {
         fixes += FixAddExpect(expr)
@@ -96,14 +103,18 @@ private fun inspectAndProposeFixes(expr: RsExpr): InspectionResult? {
     return InspectionResult(description, fixes)
 }
 
-private fun checkFuncMustUse(expr: RsExpr): @Nls String? {
-    val func = when (expr) {
-        is RsDotExpr -> expr.methodCall?.getFunctionCallContext()?.function
-        is RsCallExpr -> expr.getFunctionCallContext()?.function
-        else -> null
-    } ?: return null
-    if (!func.hasMustUseAttr()) return null
-    return RsBundle.message("inspection.UnusedMustUse.description.function.attribute", func.name.toString())
+// `#[tokio::main] async fn main() { ... }` actually doesn't return `Future`
+private fun isAsyncHardcodedProcMacro(function: RsFunction?): Boolean {
+    if (function == null) return false
+    val hardcodedProcMacros = ProcMacroAttribute.getHardcodedProcMacroAttributes(function)
+    return hardcodedProcMacros.any {
+        it == ASYNC_MAIN || it == ASYNC_TEST || it == ASYNC_BENCH
+    }
+}
+
+private fun checkFuncMustUse(function: RsFunction?): @Nls String? {
+    if (function == null || !function.hasMustUseAttr()) return null
+    return RsBundle.message("inspection.UnusedMustUse.description.function.attribute", function.name.toString())
 }
 
 private fun checkTypeMustUse(type: Ty, expr: RsExpr, fixes: MutableList<LocalQuickFix>): @Nls String? {
