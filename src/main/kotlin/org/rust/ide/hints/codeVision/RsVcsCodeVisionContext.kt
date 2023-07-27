@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent
 @Suppress("UnstableApiUsage")
 class RsVcsCodeVisionContext : VcsCodeVisionCurlyBracketLanguageContext() {
     override fun isAccepted(element: PsiElement): Boolean {
-        if (!isUnitTestMode && !Registry.`is`("org.rust.code.vision.author", false)) return false
+        if (!isUnitTestMode && !Registry.`is`("org.rust.code.vision.author")) return false
 
         return when (element) {
             is RsFunction,
