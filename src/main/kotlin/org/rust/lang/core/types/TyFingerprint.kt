@@ -21,7 +21,7 @@ import java.io.DataOutput
  *  * fingerprint can be computed without name resolution.
  */
 data class TyFingerprint constructor(
-    private val name: String
+    val name: String
 ) {
     companion object {
 

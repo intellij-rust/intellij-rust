@@ -384,14 +384,9 @@ class ImplLookup(
             val set = mutableSetOf(fingerprint)
             if (processor(fingerprint)) return true
             val aliases = findPotentialAliases(fingerprint)
-            val result = aliases.any {
-                val name = it.name ?: return@any false
+            val result = aliases.any { name ->
                 val aliasFingerprint = TyFingerprint(name)
-                val isAppropriateAlias = run {
-                    val (declaredType, generics, constGenerics) = it.typeAndGenerics
-                    canCombineTypes(selfTy, declaredType, generics, constGenerics)
-                }
-                isAppropriateAlias && set.add(aliasFingerprint) && processor(aliasFingerprint)
+                set.add(aliasFingerprint) && processor(aliasFingerprint)
             }
             if (result) return true
         }
@@ -404,10 +399,8 @@ class ImplLookup(
             .filter { useImplsFromCrate(it.containingCrates) }
             .plus(implsFromNestedMacros[tyf].orEmpty())
 
-    private fun findPotentialAliases(tyf: TyFingerprint) =
+    private fun findPotentialAliases(tyf: TyFingerprint): List<String> =
         indexCache.findPotentialAliases(tyf)
-            .asSequence()
-            .filter { useImplsFromCrate(it.containingCrates) }
 
     private fun useImplsFromCrate(crates: List<Crate>): Boolean =
         crates.any { containingCrate.hasTransitiveDependencyOrSelf(it) }
