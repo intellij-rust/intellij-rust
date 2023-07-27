@@ -7,11 +7,7 @@ package org.rust.toml.resolve
 
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
-import org.rust.lang.core.psi.ext.childrenOfType
-import org.rust.toml.getValueWithKey
-import org.rust.toml.isDependencyListHeader
-import org.rust.toml.isFeatureListHeader
-import org.rust.toml.isSpecificDependencyTableHeader
+import org.rust.toml.*
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
@@ -25,7 +21,7 @@ fun TomlFile.resolveFeature(featureName: String, depOnly: Boolean = false): Arra
 
 fun TomlFile.allFeatures(depOnly: Boolean = false): Sequence<TomlKeySegment> {
     val explicitFeatures = hashSetOf<String>()
-    return childrenOfType<TomlTable>()
+    return tableList
         .asSequence()
         .flatMap { table ->
             val header = table.header

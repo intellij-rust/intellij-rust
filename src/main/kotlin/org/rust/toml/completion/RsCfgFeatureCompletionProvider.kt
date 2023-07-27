@@ -23,7 +23,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.elementType
-import org.rust.toml.getPackageTomlFile
+import org.rust.toml.getPackageCargoTomlFile
 import org.rust.toml.resolve.allFeatures
 import org.toml.lang.psi.TomlKeySegment
 
@@ -39,7 +39,7 @@ import org.toml.lang.psi.TomlKeySegment
 object RsCfgFeatureCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val pkg = parameters.position.ancestorOrSelf<RsElement>()?.containingCargoPackage ?: return
-        val pkgToml = pkg.getPackageTomlFile(parameters.originalFile.project) ?: return
+        val pkgToml = pkg.getPackageCargoTomlFile(parameters.originalFile.project) ?: return
 
         for (feature in pkgToml.allFeatures()) {
             result.addElement(rustLookupElementForFeature(feature))

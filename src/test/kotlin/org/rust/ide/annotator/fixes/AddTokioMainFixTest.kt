@@ -19,10 +19,8 @@ import org.rust.ide.inspections.RsAsyncMainFunctionInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 import java.nio.file.Paths
 
-@ProjectDescriptor(WithTokioDependencyRustProjectDescriptor::class)
 class AddTokioMainFixTest : RsInspectionsTestBase(RsAsyncMainFunctionInspection::class) {
     fun `test fix add tokio main`() = checkFixByFileTree("Add `#[tokio::main]`", """
-        $TOKIO_CRATE_MOCK
     //- main.rs
         /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
     """, """
@@ -32,7 +30,6 @@ class AddTokioMainFixTest : RsInspectionsTestBase(RsAsyncMainFunctionInspection:
     """)
 
     fun `test fix add tokio with keyword`() = checkFixByFileTree("Add `#[tokio::main]`", """
-        $TOKIO_CRATE_MOCK
     //- main.rs
         pub /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
     """, """
@@ -43,7 +40,6 @@ class AddTokioMainFixTest : RsInspectionsTestBase(RsAsyncMainFunctionInspection:
 
     @MockRustcVersion("1.0.0-nightly")
     fun `test fix add tokio with start`() = checkFixByFileTree("Add `#[tokio::main]`", """
-        $TOKIO_CRATE_MOCK
     //- main.rs
         #![feature(start)]
 
@@ -57,12 +53,264 @@ class AddTokioMainFixTest : RsInspectionsTestBase(RsAsyncMainFunctionInspection:
         #[start]
         async fn start() {}
     """)
+
+    fun `test fix add tokio dependency`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+        [dependencies]
+        tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+    """)
+
+    fun `test fix add tokio dependency with empty dependencies`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+    """)
+
+    fun `test fix add tokio dependency with other dependencies`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        rand = "1.0.0"
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        rand = "1.0.0"
+        tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+    """)
+
+    fun `test fix add tokio features if dep exist`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = "1.2.9"
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["rt", "rt-multi-thread", "macros"] }
+    """)
+
+    fun `test fix add missing tokio features`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["rt", "rt-multi-thread"] }
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["rt", "rt-multi-thread", "macros"] }
+    """)
+
+    fun `test fix add missing tokio features preserves old order`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["fs", "rt-multi-thread", "rt"] }
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["fs", "rt-multi-thread", "rt", "macros"] }
+    """)
+
+    fun `test fix add missing tokio features with inline value`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies.tokio]
+        version = "1.0.0"
+        features = ["fs", "rt"]
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies.tokio]
+        version = "1.0.0"
+        features = ["fs", "rt", "rt-multi-thread", "macros"]
+    """)
+
+    fun `test fix add missing tokio features with inline value with name`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies.xxx]
+        name = "tokio"
+        version = "1.0.0"
+        features = ["fs", "rt"]
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies.xxx]
+        name = "tokio"
+        version = "1.0.0"
+        features = ["fs", "rt", "rt-multi-thread", "macros"]
+    """)
+
+    fun `test fix add missing tokio features with named dependency`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        xxx = { name = "tokio", version = "1.2.9", features = ["fs"] }
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        xxx = { name = "tokio", version = "1.2.9", features = ["fs", "rt", "rt-multi-thread", "macros"] }
+    """)
+
+    fun `test fix add missing tokio features with named dependencies`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { name = "serde", version = "0.0.0" }
+        serde = { name = "tokio", version = "1.2.9" }
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { name = "serde", version = "0.0.0" }
+        serde = { name = "tokio", version = "1.2.9", features = ["rt", "rt-multi-thread", "macros"] }
+    """)
 }
 
-@ProjectDescriptor(WithTokioDependencyRustProjectDescriptor::class)
 class AddTokioMainFix2Test : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     fun `test await inside non-async function`() = checkFixByFileTree("Add `#[tokio::main]`", """
-        $TOKIO_CRATE_MOCK
     //- main.rs
         fn main() {
             x./*error descr="`await` is only allowed inside `async` functions and blocks [E0728]"*/await/*caret*//*error**/;
@@ -74,35 +322,4 @@ class AddTokioMainFix2Test : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             x.await;
         }
     """)
-}
-
-private const val TOKIO_CRATE_MOCK = """
-    //- tokio/lib.rs
-        pub mod tokio {
-            pub struct Error;
-        }
-
-        pub fun main() {}
-"""
-internal object WithTokioDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
-    override fun createTestCargoWorkspace(project: Project, contentRoot: String): CargoWorkspace {
-        val tokio = externalPackage("$contentRoot/tokio", "lib.rs", "tokio")
-        val testPackage = testCargoPackage(contentRoot)
-        val packages = listOf(testPackage, tokio)
-        return CargoWorkspace.deserialize(
-            Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(
-                packages,
-                mapOf(testPackage.id to setOf(dep(tokio.id))),
-                emptyMap(),
-                contentRoot
-            ),
-        )
-    }
-
-    private fun dep(id: PackageId): CargoWorkspaceData.Dependency = CargoWorkspaceData.Dependency(
-        id = id,
-        name = null,
-        depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Normal))
-    )
 }

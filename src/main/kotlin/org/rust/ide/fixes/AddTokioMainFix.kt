@@ -6,50 +6,41 @@
 package org.rust.ide.fixes
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.toolchain.tools.cargo
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.document
+import org.rust.toml.addCargoDependency
+import org.rust.toml.getPackageCargoTomlFile
 
 class AddTokioMainFix(function: RsFunction) : RsQuickFixBase<RsFunction>(function) {
-    private val hasTokio = function.findDependencyCrateRoot("tokio") != null
-    override fun getFamilyName() = RsBundle.message("intention.name.add.tokio.main")
-    override fun getText(): String {
-        return if (hasTokio) {
-            RsBundle.message("intention.name.add.tokio.main")
-        } else {
-            RsBundle.message("intention.name.install.tokio.and.add.main")
-        }
+    override fun getFamilyName(): String = RsBundle.message("intention.name.add.tokio.main")
+    override fun getText(): String = RsBundle.message("intention.name.add.tokio.main")
 
-    }
     override fun invoke(project: Project, editor: Editor?, element: RsFunction) {
         if (!element.isAsync) {
             val anchor = element.unsafe ?: element.externAbi ?: element.fn
             element.addBefore(RsPsiFactory(project).createAsyncKeyword(), anchor)
         }
+
         val anchor = element.outerAttrList.firstOrNull() ?: element.firstKeyword
         element.addOuterAttribute(Attribute("tokio::main"), anchor)
 
-        if (!element.isIntentionPreviewElement && !hasTokio) {
-            installTokio(project)
+        if (!element.isIntentionPreviewElement) {
+            element.containingCrate.addCargoDependency("tokio", "1.0.0", REQUIRED_TOKIO_FEATURES)
+            element.containingCrate.cargoTarget?.pkg?.getPackageCargoTomlFile(project)?.document?.let {
+                FileDocumentManager.getInstance().saveDocument(it)
+            }
+
+            project.cargoProjects.refreshAllProjects()
         }
     }
-    private fun installTokio(project: Project) {
-        val cargo = project.toolchain?.cargo() ?: return
-        object : Task.Backgroundable(project, RsBundle.message("progress.title.adding.dependency", "tokio")) {
-            override fun shouldStartInBackground(): Boolean = true
-            override fun run(indicator: ProgressIndicator) {
-                cargo.addDependency(project, "tokio", listOf("full"))
-            }
-            override fun onSuccess() {
-                project.cargoProjects.refreshAllProjects()
-            }
-        }.queue()
+
+    companion object {
+        private val REQUIRED_TOKIO_FEATURES = listOf("rt", "rt-multi-thread", "macros")
     }
 }
