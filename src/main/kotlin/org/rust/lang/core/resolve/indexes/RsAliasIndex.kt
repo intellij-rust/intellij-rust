@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve.indexes
 
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.stubs.StubTreeBuilder
@@ -75,6 +76,14 @@ class RsAliasIndex : FileBasedIndexExtension<TyFingerprint, List<String>>() {
     override fun getInputFilter(): FileBasedIndex.InputFilter = DefaultFileTypeSpecificInputFilter(RsFileType)
 
     override fun dependsOnFileContent(): Boolean = true
+
+    /**
+     * Hacky adjust the file limit for Rust file.
+     * Coupled with [org.rust.lang.core.psi.RsFileViewProviderFactory]
+     */
+    override fun getFileTypesWithSizeLimitNotApplicable(): Collection<FileType> {
+        return listOf(RsFileType)
+    }
 
     companion object {
         fun findPotentialAliases(
