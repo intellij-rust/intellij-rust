@@ -18,12 +18,17 @@ class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
 
     fun `test struct`() = doTest("""
         /*<# block [John Smith +2] #>*/
-        struct S;
+        struct S {
+            field: i32,
+        }
     """)
 
     fun `test enum`() = doTest("""
         /*<# block [John Smith +2] #>*/
-        enum E { V1 }
+        enum E {
+            V1,
+            V2
+        }
     """)
 
     fun `test impl`() = doTest("""
@@ -31,17 +36,38 @@ class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
         struct S;
 
         /*<# block [John Smith +2] #>*/
-        impl S {}
+        impl S {
+        /*<# block [John Smith +2] #>*/
+            fn foo() {}
+        /*<# block [John Smith +2] #>*/
+            fn bar(&self) {}
+        /*<# block [John Smith +2] #>*/
+            const C: i32 = 1;
+        }
     """)
 
     fun `test trait`() = doTest("""
         /*<# block [John Smith +2] #>*/
-        trait Trait {}
+        trait Trait {
+        /*<# block [John Smith +2] #>*/
+            fn foo();
+        /*<# block [John Smith +2] #>*/
+            fn bar(&self);
+        /*<# block [John Smith +2] #>*/
+            const C: i32;
+        /*<# block [John Smith +2] #>*/
+            type T;
+        }
     """)
 
-    fun `test mod`() = doTest("""
+    fun `test inline mod`() = doTest("""
         /*<# block [John Smith +2] #>*/
         mod foo {}
+    """)
+
+    fun `test mod declaration`() = doTest("""
+        /*<# block [John Smith +2] #>*/
+        mod foo;
     """)
 
     fun `test macro`() = doTest("""
@@ -52,6 +78,18 @@ class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
     fun `test macro 2`() = doTest("""
         /*<# block [John Smith +2] #>*/
         macro foo() {}
+    """)
+
+    fun `test static`() = doTest("""
+        /*<# block [John Smith +2] #>*/
+        static S: i32 = 1;
+        /*<# block [John Smith +2] #>*/
+        static mut M: i32 = 1;
+    """)
+
+    fun `test const`() = doTest("""
+        /*<# block [John Smith +2] #>*/
+        const S: i32 = 1;
     """)
 
     private fun doTest(@Language("Rust") text: String) {
