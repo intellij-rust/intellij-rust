@@ -43,6 +43,7 @@
 
         <!-- PSI managing -->
 
+        <lang.fileViewProviderFactory language="Rust" implementationClass="org.rust.lang.core.psi.RsFileViewProviderFactory"/>
         <projectService serviceInterface="org.rust.lang.core.psi.RsPsiManager"
                         serviceImplementation="org.rust.lang.core.psi.RsPsiManagerImpl"/>
 
