@@ -8,6 +8,7 @@ package org.rust.ide.hints.codeVision
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.ReferencesCodeVisionProvider
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -15,34 +16,48 @@ import com.intellij.psi.search.PsiSearchHelper
 import org.rust.RsBundle
 import org.rust.ide.statistics.RsCodeVisionUsageCollector.Companion.logUsagesClicked
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.psi.ext.searchReferences
-import org.rust.openapiext.isUnitTestMode
+import org.rust.lang.core.psi.ext.*
 
 class RsReferenceCodeVisionProvider : ReferencesCodeVisionProvider() {
     override fun acceptsFile(file: PsiFile): Boolean = file is RsFile
 
     override fun acceptsElement(element: PsiElement): Boolean {
-        if (!isUnitTestMode && !Registry.`is`("org.rust.code.vision.usage", false)) return false
+        if (!CODE_VISION_USAGE_KEY.asBoolean()) return false
 
         return when (element) {
-            is RsFunction,
-            is RsStructOrEnumItemElement,
-            is RsEnumVariant,
+            // Searching references for an associated item (e.g. for a method) may require
+            // to infer types in many functions which can be arbitrary slow
+            is RsAbstractable -> if (element.ownerBySyntaxOnly.isImplOrTrait) {
+                CODE_VISION_USAGE_SLOW_KEY.asBoolean()
+            } else {
+                true
+            }
+
+            // Searching references for a field may require
+            // to infer types in many functions which can be arbitrary slow
             is RsNamedFieldDecl,
+                // Searching references for an enum variant may require `ImplLookup` instantiation
+                // and a type normalization which can be slow in some cases
+            is RsEnumVariant,
+                // `RsMacro` and `RsMacro2` need a proper `getUseScope()` implementation
+            is RsMacroDefinitionBase -> CODE_VISION_USAGE_SLOW_KEY.asBoolean()
+
+            is RsStructOrEnumItemElement,
             is RsTraitItem,
-            is RsTypeAlias,
-            is RsConstant,
-            is RsMacroDefinitionBase,
-            is RsModItem -> true
+            is RsTraitAlias,
+            is RsModItem,
+            is RsModDeclItem -> true
+
             else -> false
         }
     }
 
     override fun getHint(element: PsiElement, file: PsiFile): String? {
-        val namedElement = element as? RsNamedElement ?: return null
+        val namedElement: RsNamedElement = when (element) {
+            is RsModDeclItem -> element.reference.resolve() as? RsFile ?: return null
+            is RsNamedElement -> element
+            else -> return null
+        }
         val name = namedElement.name ?: return null
 
         val searchHelper = PsiSearchHelper.getInstance(namedElement.project)
@@ -55,7 +70,13 @@ class RsReferenceCodeVisionProvider : ReferencesCodeVisionProvider() {
             }
         }
 
-        val usageCount = namedElement.searchReferences(useScope).count()
+        var usageCount = namedElement.searchReferences(useScope).count()
+
+        if (element is RsModDeclItem && usageCount > 0) {
+            // `mod foo;` is itself a usage of the mod, so let's subtract it
+            usageCount--
+        }
+
         if (usageCount == 0) return null
 
         return RsBundle.message("rust.code.vision.usage.hint", usageCount)
@@ -73,3 +94,6 @@ class RsReferenceCodeVisionProvider : ReferencesCodeVisionProvider() {
         const val ID = "rust.references"
     }
 }
+
+private val CODE_VISION_USAGE_KEY: RegistryValue = Registry.get("org.rust.code.vision.usage")
+private val CODE_VISION_USAGE_SLOW_KEY: RegistryValue = Registry.get("org.rust.code.vision.usage.slow")

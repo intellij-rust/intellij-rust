@@ -1385,8 +1385,11 @@
                      defaultValue="true"
                      description="Enable version control author Code Vision hints for Rust" />
         <registryKey key="org.rust.code.vision.usage"
-                     defaultValue="false"
+                     defaultValue="true"
                      description="Enable reference usage Code Vision hints for Rust" />
+        <registryKey key="org.rust.code.vision.usage.slow"
+                     defaultValue="false"
+                     description="Enable reference usage Code Vision hints for Rust elements which can work slowly" />
         <registryKey key="org.rust.code.vision.implementation"
                      defaultValue="false"
                      description="Enable implementation Code Vision hints for rust"/>
