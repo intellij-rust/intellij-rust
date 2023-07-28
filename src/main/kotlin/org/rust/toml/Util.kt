@@ -19,10 +19,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.notifications.showBalloonWithoutProject
 import org.rust.lang.core.completion.getElementOfType
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.findCargoPackage
-import org.rust.lang.core.psi.ext.isAncestorOf
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.toPsiFile
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
@@ -136,7 +133,7 @@ fun getClosestKeyValueAncestor(position: PsiElement): TomlKeyValue? {
     }
 }
 
-fun CargoWorkspace.Package.getPackageTomlFile(project: Project): TomlFile? {
+fun CargoWorkspace.Package.getPackageCargoTomlFile(project: Project): TomlFile? {
     return contentRoot?.findChild(CargoConstants.MANIFEST_FILE)
         ?.toPsiFile(project)
         as? TomlFile
@@ -144,7 +141,7 @@ fun CargoWorkspace.Package.getPackageTomlFile(project: Project): TomlFile? {
 
 fun PsiElement.findCargoPackageForCargoToml(): CargoWorkspace.Package? {
     val containingFile = containingFile.originalFile
-    return containingFile.findCargoPackage()?.takeIf { it.getPackageTomlFile(containingFile.project) == containingFile }
+    return containingFile.findCargoPackage()?.takeIf { it.getPackageCargoTomlFile(containingFile.project) == containingFile }
 }
 
 private fun CargoWorkspace.Package.findDependencyByPackageName(pkgName: String): CargoWorkspace.Package? =
@@ -153,7 +150,7 @@ private fun CargoWorkspace.Package.findDependencyByPackageName(pkgName: String):
 fun findDependencyTomlFile(element: TomlElement, depName: String): TomlFile? =
     element.findCargoPackageForCargoToml()
         ?.findDependencyByPackageName(depName)
-        ?.getPackageTomlFile(element.project)
+        ?.getPackageCargoTomlFile(element.project)
 
 /**
  * Consider `Cargo.toml`:
@@ -185,8 +182,76 @@ val TomlValue.containingDependencyKey: TomlKeySegment?
         }
     }
 
+val TomlKey.stringValue: String
+    get() {
+        return segments.map { it.name }.joinToString(".")
+    }
+
 val TomlValue.stringValue: String?
     get() {
         val kind = (this as? TomlLiteral)?.kind
         return (kind as? TomlLiteralKind.String)?.value
     }
+
+val TomlFile.tableList: List<TomlTable> get() = childrenOfType<TomlTable>()
+
+
+fun TomlFile.findDependencyElement(dependencyName: String): TomlElement? {
+    // Check for cases like:
+    //     [dependencies.foo]
+    //     version = "1.0.0"
+    val existingInlinedDependency = tableList.find { table ->
+        table.header.key?.stringValue == "dependencies.$dependencyName"
+    }
+    if (existingInlinedDependency != null) {
+        return existingInlinedDependency
+    }
+
+    // Check for cases like:
+    //     [dependencies.xxx]
+    //     name = "foo"
+    //     version = "1.0.0"
+    val existingInlinedDependencyWithName = tableList.find { table ->
+        val headerSegments = table.header.key?.segments ?: return@find false
+        headerSegments.size > 1
+            && headerSegments.firstOrNull()?.name == "dependencies"
+            && table.entries.any {
+                entry -> entry.key.stringValue == "name" && entry.value?.stringValue == dependencyName
+            }
+    }
+    if (existingInlinedDependencyWithName != null) {
+        return existingInlinedDependencyWithName
+    }
+
+    val dependenciesTable = tableList.find {
+        it.header.key?.segments?.singleOrNull()?.name == "dependencies"
+    } ?: return null
+
+    // Check for cases like:
+    //     [dependencies]
+    //     foo = "1.0.0"
+    // or
+    //     [dependencies]
+    //     foo = { version = "1.0.0" }
+    val existingEntry = dependenciesTable.entries.find { entry ->
+        entry.key.stringValue == dependencyName
+            && (entry.value as? TomlInlineTable)?.entries?.find { it.key.stringValue == "name" } == null
+    }
+    if (existingEntry != null) {
+        return existingEntry.value
+    }
+
+    // Check for cases like:
+    //     [dependencies]
+    //     xxx = { name = "foo", version = "1.0.0" }
+    val existingEntryWithName = dependenciesTable.entries.find { entry ->
+        (entry.value as? TomlInlineTable)?.entries?.any {
+            it.key.stringValue == "name" && it.value?.stringValue == dependencyName
+        } == true
+    }
+    if (existingEntryWithName != null) {
+        return existingEntryWithName.value
+    }
+    return null
+}
+

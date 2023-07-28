@@ -14,7 +14,7 @@ import com.intellij.util.ProcessingContext
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.toml.StringLiteralInsertionHandler
 import org.rust.toml.findCargoPackageForCargoToml
-import org.rust.toml.getPackageTomlFile
+import org.rust.toml.getPackageCargoTomlFile
 import org.rust.toml.resolve.allFeatures
 import org.toml.lang.psi.TomlFile
 import org.toml.lang.psi.impl.TomlKeyValueImpl
@@ -45,7 +45,7 @@ class CargoTomlFeatureDependencyCompletionProvider : CompletionProvider<Completi
         for (dep in pkg.dependencies) {
             if (dep.pkg.origin == PackageOrigin.STDLIB) continue
             // TODO avoid AST loading?
-            for (feature in dep.pkg.getPackageTomlFile(tomlFile.project)?.allFeatures().orEmpty()) {
+            for (feature in dep.pkg.getPackageCargoTomlFile(tomlFile.project)?.allFeatures().orEmpty()) {
                 result.addElement(
                     LookupElementBuilder
                         .createWithSmartPointer("${dep.pkg.name}/${feature.text}", feature)
