@@ -44,6 +44,22 @@ import org.rust.openapiext.moveCaretToOffset
  */
 class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
+    private val afterUseItemWithoutGroupingWithoutWildcard = psiElement<PsiElement>()
+        .withPrevSiblingSkipping(RsPsiPattern.whitespace,
+            psiElement<RsUseItem>().with(object: PatternCondition<RsUseItem>("afterUseItemWithoutGroupingWithoutWildcard") {
+                override fun accepts(t: RsUseItem, context: ProcessingContext?) = t.useSpeck?.let {
+                    it.mul == null && it.useGroup == null
+                } ?: true
+            }))
+
+    private val insideUseGroupAfterIdentifierWithoutWildcard = psiElement<PsiElement>().withAncestor(2,
+        psiElement<PsiElement>()
+            .withPrevSiblingSkipping(RsPsiPattern.whitespace or psiElement<PsiErrorElement>(),
+                psiElement<RsUseSpeck>().with(object: PatternCondition<RsUseSpeck>("insideUseGroupAfterIdentifierWithoutWildcard") {
+                    override fun accepts(t: RsUseSpeck, context: ProcessingContext?) = t.mul == null
+                })))
+
+
     init {
         extend(CompletionType.BASIC, declarationPattern(),
             RsKeywordCompletionProvider("const", "async", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
@@ -218,7 +234,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun asPattern() = afterExpr().andNot(psiElement().with("isMacroCall") { psi ->
         psi.contexts.any { it is RsMacroCall }
-    })
+    }) or afterUseItemWithoutGroupingWithoutWildcard or insideUseGroupAfterIdentifierWithoutWildcard
 
     private fun afterLetDecl(): PsiElementPattern.Capture<PsiElement> {
         val withSemicolon = psiElement().withLastChildSkipping(RsPsiPattern.whitespace, psiElement(SEMICOLON))
