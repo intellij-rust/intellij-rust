@@ -385,4 +385,18 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
             let _: <error descr="Unnecessary qualification">bar::/*caret*/</error>S;
         }
     """)
+
+    fun `test deny 'unused' does not make the unused_qualifications a hard error`() = checkWarnings("""
+        #![deny(unused)]
+
+        mod bar {
+            pub struct S;
+        }
+
+        use bar::S;
+
+        fn foo() {
+            let _: <warning descr="Unnecessary qualification">bar::/*caret*/</warning>S;
+        }
+    """)
 }
