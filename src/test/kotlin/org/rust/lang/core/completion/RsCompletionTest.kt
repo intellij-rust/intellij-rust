@@ -489,6 +489,70 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test associated type completion without Self`() = doSingleCompletion("""
+        trait Foo {
+            type Bar;
+            fn foo(bar: Ba/*caret*/);
+        }
+    """, """
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Bar/*caret*/);
+        }
+    """)
+
+    fun `test associated type completion without Self as type argument`() = doSingleCompletion("""
+        struct O<T>;
+        trait Foo {
+            type Bar;
+            fn foo(bar: O<Ba/*caret*/>);
+        }
+    """, """
+        struct O<T>;
+        trait Foo {
+            type Bar;
+            fn foo(bar: O<Self::Bar/*caret*/>);
+        }
+    """)
+
+    fun `test associated type completion without Self in impl`() = doSingleCompletion("""
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Bar);
+        }
+        struct Struct;
+        impl Foo for Struct {
+            type Bar = ();
+            fn foo(bar: Ba/*caret*/) { todo!() }
+        }
+    """, """
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Bar);
+        }
+        struct Struct;
+        impl Foo for Struct {
+            type Bar = ();
+            fn foo(bar: Self::Bar/*caret*/) { todo!() }
+        }
+    """)
+
+    fun `test associated type completion without Self in from parent trait`() = doSingleCompletion("""
+        trait Foo {
+            type Bar;
+        }
+        trait Qux : Foo {
+            fn baz() -> Ba/*caret*/;
+        }
+    """, """
+        trait Foo {
+            type Bar;
+        }
+        trait Qux : Foo {
+            fn baz() -> Self::Bar/*caret*/;
+        }
+    """)
+
     fun `test complete enum variants 1`() = doFirstCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {

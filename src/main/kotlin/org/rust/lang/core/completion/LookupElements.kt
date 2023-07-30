@@ -282,7 +282,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
         val shouldEscapeName = element is RsNameIdentifierOwner
             && !RsNamesValidator.isIdentifier(scopeName)
-            && scopeName !in CAN_NOT_BE_ESCAPED
+            && scopeName.canBeEscaped
             /** Hack for [RsCommonCompletionProvider.addIteratorMethods] */
             && !scopeName.startsWith("iter().")
         if (shouldEscapeName) {

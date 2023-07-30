@@ -704,7 +704,7 @@
                          key="inspection.rs.unused.import.display.name"/>
 
         <localInspection language="Rust" groupPath="Rust" groupKey="lints"
-                         enabledByDefault="true" level="WARNING"
+                         enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryQualificationsInspection"
                          key="inspection.rs.unnecessary.qualifications.display.name"/>
 

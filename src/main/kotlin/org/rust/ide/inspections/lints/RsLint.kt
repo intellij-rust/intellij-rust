@@ -32,7 +32,7 @@ sealed class RsLint(
     object UnreachableCode : RsLint("unreachable_code")
     object BareTraitObjects : RsLint("bare_trait_objects", listOf("rust_2018_idioms"))
     object NonShorthandFieldPatterns : RsLint("non_shorthand_field_patterns")
-    object UnusedQualifications : RsLint("unused_qualifications", listOf("unused"))
+    object UnusedQualifications : RsLint("unused_qualifications")
     object UnusedMustUse : RsLint("unused_must_use", listOf("unused"))
     object RedundantSemicolons : RsLint("redundant_semicolons", listOf("unused"))
     object UnusedLabels : RsLint("unused_labels", listOf("unused"))
