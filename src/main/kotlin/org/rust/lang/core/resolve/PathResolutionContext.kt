@@ -19,6 +19,7 @@ import kotlin.LazyThreadSafetyMode.NONE
 class PathResolutionContext(
     val context: RsElement,
     val isCompletion: Boolean,
+    val processAssocItems: Boolean,
     private val givenImplLookup: ImplLookup?,
 ) {
     val crateRoot: RsMod? = context.crateRoot

@@ -327,8 +327,14 @@ fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
     } as? RsFile
 }
 
-fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
-    val ctx = PathResolutionContext(path, isCompletion, lookup)
+fun processPathResolveVariants(
+    lookup: ImplLookup?,
+    path: RsPath,
+    isCompletion: Boolean,
+    processAssocItems: Boolean,
+    processor: RsResolveProcessor,
+): Boolean {
+    val ctx = PathResolutionContext(path, isCompletion, processAssocItems, lookup)
     val pathKind = ctx.classifyPath(path)
     return processPathResolveVariants(ctx, pathKind, processor)
 }
@@ -559,6 +565,8 @@ private fun processQualifiedPathResolveVariants1(
         }
 
         if (processEnumVariantsWithShadowing(baseTy, prevScope, ns, processor)) return true
+
+        if (!ctx.processAssocItems) return false
 
         val result2 = processWithShadowing(prevScope, ns, processor) {
             if (restrictedTraits != null) {

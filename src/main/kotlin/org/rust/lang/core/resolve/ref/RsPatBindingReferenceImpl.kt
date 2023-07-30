@@ -24,8 +24,7 @@ class RsPatBindingReferenceImpl(
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         if (element !is RsElement || !element.isConstantLike && element !is RsNamedFieldDecl) return false
-        val target = resolve()
-        return element.manager.areElementsEquivalent(target, element)
+        return super.isReferenceTo(element)
     }
 
     override fun handleElementRename(newName: String): PsiElement {

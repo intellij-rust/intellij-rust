@@ -5,6 +5,7 @@
 
 package org.rust.ide.hints.codeVision
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 import org.intellij.lang.annotations.Language
 
@@ -143,6 +144,7 @@ class RsReferenceCodeVisionTest : CodeVisionTestCase() {
     """)
 
     private fun doTest(@Language("Rust") text: String) {
+        Registry.get("org.rust.code.vision.usage.slow").setValue(true, testRootDisposable)
         testProviders(text.trimIndent(), "main.rs", RsReferenceCodeVisionProvider().groupId)
     }
 }
