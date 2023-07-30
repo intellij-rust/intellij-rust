@@ -159,9 +159,16 @@ class RsMultiResolveTest : RsResolveTestBase() {
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val element = findElementInEditor<RsReferenceElement>()
-        val ref = element.reference ?: error("Failed to get reference for `${element.text}`")
-        check(ref.multiResolve().size == 2) {
-            "Expected 2 variants, got ${ref.multiResolve()}"
+        val reference = element.reference ?: error("Failed to get reference for `${element.text}`")
+        val multiResolved = reference.multiResolve()
+        check(multiResolved.size == 2) {
+            "Expected 2 variants, got $multiResolved"
+        }
+
+        for (resolved in multiResolved) {
+            check(reference.isReferenceTo(resolved)) {
+                "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
+            }
         }
     }
 }

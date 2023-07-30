@@ -154,7 +154,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 processPathResolveVariants(
                     lookup,
                     element,
-                    true,
+                    isCompletion = true,
+                    processAssocItems = true,
                     filtered
                 )
             }
