@@ -131,7 +131,9 @@ interface CargoProject : UserDataHolderEx {
     sealed class UpdateStatus(private val priority: Int) {
         object UpToDate : UpdateStatus(0)
         object NeedsUpdate : UpdateStatus(1)
-        class UpdateFailed(@Suppress("UnstableApiUsage") @Tooltip val reason: String) : UpdateStatus(2)
+        class UpdateFailed(@Suppress("UnstableApiUsage") @Tooltip val reason: String) : UpdateStatus(2) {
+            override fun toString(): String = reason
+        }
 
         fun merge(status: UpdateStatus): UpdateStatus = if (priority >= status.priority) this else status
     }

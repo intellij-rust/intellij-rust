@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * https://doc.rust-lang.org/cargo/reference/config.html
  */
 data class CargoConfig(
-    val buildTarget: String?,
+    val buildTargets: List<String>,
     val env: Map<String, EnvValue>,
 
 ) {
@@ -27,6 +27,6 @@ data class CargoConfig(
     )
 
     companion object {
-        val DEFAULT = CargoConfig(null, emptyMap())
+        val DEFAULT = CargoConfig(emptyList(), emptyMap())
     }
 }
