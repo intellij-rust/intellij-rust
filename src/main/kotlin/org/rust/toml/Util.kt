@@ -255,3 +255,16 @@ fun TomlFile.findDependencyElement(dependencyName: String): TomlElement? {
     return null
 }
 
+fun TomlFile.findDependencyFeatures(dependencyName: String): List<String> {
+    return when (val dependencyElement = findDependencyElement(dependencyName)) {
+        is TomlKeyValueOwner -> {
+            dependencyElement.entries.find { it.key.stringValue == "features" }?.let { entry ->
+                (entry.value as? TomlArray)?.elements
+                    ?.mapNotNull { value -> value.stringValue }
+                    ?: emptyList()
+            } ?: emptyList()
+        }
+        else -> emptyList()
+    }
+}
+

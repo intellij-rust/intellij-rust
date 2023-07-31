@@ -15,7 +15,8 @@ import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.document
 import org.rust.toml.addCargoDependency
-import org.rust.toml.getPackageCargoTomlFile
+import org.rust.toml.findDependencyFeatures
+import org.rust.toml.tomlFile
 
 class AddTokioMainFix(function: RsFunction) : RsQuickFixBase<RsFunction>(function) {
     override fun getFamilyName(): String = RsBundle.message("intention.name.add.tokio.main")
@@ -31,8 +32,14 @@ class AddTokioMainFix(function: RsFunction) : RsQuickFixBase<RsFunction>(functio
         element.addOuterAttribute(Attribute("tokio::main"), anchor)
 
         if (!element.isIntentionPreviewElement) {
-            element.containingCrate.addCargoDependency("tokio", "1.0.0", REQUIRED_TOKIO_FEATURES)
-            element.containingCrate.cargoTarget?.pkg?.getPackageCargoTomlFile(project)?.document?.let {
+            val tomlFile = element.containingCrate.tomlFile ?: return
+            val requiredFeatures = if (tomlFile.findDependencyFeatures("tokio").contains("full")) {
+                emptyList()
+            } else {
+                REQUIRED_TOKIO_FEATURES
+            }
+            element.containingCrate.addCargoDependency("tokio", "1.0.0", requiredFeatures)
+            tomlFile.document?.let {
                 FileDocumentManager.getInstance().saveDocument(it)
             }
 
