@@ -734,6 +734,31 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
     """, preview = null)
 
+    fun `test implement Display with generics`() = checkFixByTextWithoutHighlighting("Implement `Display` trait for `S`", """
+        trait Iterator {}
+        trait Clone {}
+        struct S<Iter: Iterator, C> where C: Clone { iter: Iter, c: C }
+        fn foo<A: Iterator, B: Clone>(s: S<A, B>) {
+            println!("{}", s/*caret*/)
+        }
+    """, """
+        use std::fmt::{Display, Formatter};
+
+        trait Iterator {}
+        trait Clone {}
+        struct S<Iter: Iterator, C> where C: Clone { iter: Iter, c: C }
+
+        impl<Iter: Iterator, C> Display for S<Iter, C> where C: Clone {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                <selection><caret>todo!()</selection>
+            }
+        }
+
+        fn foo<A: Iterator, B: Clone>(s: S<A, B>) {
+            println!("{}", s)
+        }
+    """, preview = null)
+
     fun `test implement Display with Display structs in scope`() = checkFixByTextWithoutHighlighting(
         "Implement `Display` trait for `S2`", """
         struct Display;
