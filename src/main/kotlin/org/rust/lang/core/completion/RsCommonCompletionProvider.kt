@@ -52,7 +52,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val processedPathElements = MultiMap<String, RsElement>()
 
         val parent = element.context
-        if (parent is RsVisRestriction && element is RsPath && (parent.`in` == null || element == element.basePath())) {
+        if (parent is RsVisRestriction && element is RsPath && parent.`in` == null) {
             return
         }
 

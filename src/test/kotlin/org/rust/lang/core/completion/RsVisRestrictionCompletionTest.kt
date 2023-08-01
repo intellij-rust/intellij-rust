@@ -58,6 +58,16 @@ class RsVisRestrictionCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test complete super without colon after self`() = checkCompletion("super", """
+        pub mod foo {
+            pub(in self::sup/*caret*/) struct S;
+        }
+    """, """
+        pub mod foo {
+            pub(in self::super/*caret*/) struct S;
+        }
+    """)
+
     fun `test do not complete general paths in vis restriction path without in`() = checkNoCompletion("""
         pub mod foo {
             pub(crate::f/*caret*/) struct S;
