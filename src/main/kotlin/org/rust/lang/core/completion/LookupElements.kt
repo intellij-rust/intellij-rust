@@ -200,7 +200,7 @@ private fun RsElement.getLookupElementBuilder(context: RsCompletionContext, scop
         .withStrikeoutness(this is RsDocAndAttributeOwner && queryAttributes.deprecatedAttribute != null)
 
     return when (this) {
-        is RsMod -> if (context.context?.parent !is RsUseSpeck && (scopeName == "self" || scopeName == "super" || scopeName == "crate")) {
+        is RsMod -> if (shouldAppendDoubleColonToMod(context.context, scopeName)) {
             base.withTailText("::")
         } else {
             base
@@ -300,8 +300,8 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
         when (element) {
             is RsMod -> {
-                when (scopeName) {
-                    "self", "super", "crate" -> if (!context.isInUseGroup) context.addSuffix("::")
+                if (shouldAppendDoubleColonToMod(context.getElementOfType<RsPath>(), scopeName)) {
+                    context.addSuffix("::")
                 }
             }
 
@@ -440,6 +440,12 @@ private fun InsertionContext.doNotAddOpenParenCompletionChar() {
 
 inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, T::class.java, strict)
+
+private fun shouldAppendDoubleColonToMod(element: PsiElement?, scopeName: String): Boolean {
+    return (scopeName == "crate" || scopeName  == "self" || scopeName == "super")
+        && element?.parent?.parent !is RsUseGroup
+        && element?.parent !is RsVisRestriction
+}
 
 private val InsertionContext.isInUseGroup: Boolean
     get() = getElementOfType<RsUseGroup>() != null
