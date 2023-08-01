@@ -825,4 +825,24 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("{:?}", my_struct/*caret*/);
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no derive Debug for external dependency`() = checkFixIsUnavailable("Derive `Debug` for `Vec` and replace `{}` with `{:?}`", """
+        struct S2 { a: i32, b: u8, }
+
+        fn main() {
+            let v = vec![S2 { a: 0, b: 0 }];
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", /*error descr="`Vec<S2>` doesn't implement `Display` (required by {}) [E0277]"*/v/*error**//*caret*/);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no implement Display for external dependency`() = checkFixIsUnavailable("Implement `Display` trait for `Vec`", """
+        struct S2 { a: i32, b: u8, }
+
+        fn main() {
+            let v = vec![S2 { a: 0, b: 0 }];
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", /*error descr="`Vec<S2>` doesn't implement `Display` (required by {}) [E0277]"*/v/*error**//*caret*/);
+        }
+    """)
 }

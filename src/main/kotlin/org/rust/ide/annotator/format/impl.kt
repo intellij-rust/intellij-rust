@@ -448,7 +448,7 @@ private fun createParameterTraitMismatchFixesForDisplayWithNoTraits(
     parameter: FormatParameter.Value,
 ): List<LocalQuickFix> {
     val adt = expr.type.baseType() ?: return emptyList()
-    if (expr.containingCrate.origin != WORKSPACE) return emptyList()
+    if (adt.containingCrate.origin != WORKSPACE) return emptyList()
     return listOf(
         DeriveDebugAndChangeFormatToDebugFix(expr, parameter),
         ImplementDisplayFix(adt)
