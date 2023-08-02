@@ -188,7 +188,8 @@ class CargoSyncTask(
                     )
                 } catch (e: NoSuchElementException) {
                     return@runWithChildProgress TaskResult.Err(
-                        RsBundle.message(context.error(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"), e.message.orEmpty()))
+//                        RsBundle.message(context.error(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"), e.message.orEmpty()))
+                          RsBundle.message(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"))
                     )
                 }
             }
@@ -488,19 +489,19 @@ private fun Rustup.fetchStdlib(
             bspService.getStdLibPath()
         } catch (e: NoSuchElementException) {
 //todo tg   return TaskResult.Err(e.message ?: "Failed to get standard library")
-            return TaskResult.Err(RsBundle.message("corrupted.standard.library.0", download.value.presentableUrl))
+            return TaskResult.Err(RsBundle.message("corrupted.standard.library"))
         }
         return if (stdlib != null) {
             val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context), useBsp = true)
             if (lib == null) {
 //todo tg       TaskResult.Err("Corrupted standard library: ${stdlib.presentableUrl}")
-                TaskResult.Err(RsBundle.message("corrupted.standard.library.0", download.value.presentableUrl))
+                TaskResult.Err(RsBundle.message("corrupted.standard.library"))
             } else {
                 TaskResult.Ok(lib)
             }
         } else {
 //todo tg   TaskResult.Err("Failed to fetch standard library from BSP server")
-            TaskResult.Err(RsBundle.message("corrupted.standard.library.0", download.value.presentableUrl))
+            TaskResult.Err(RsBundle.message("corrupted.standard.library"))
         }
     }
     return when (val download = UnitTestRustcCacheService.cached(rustcInfo?.version) { downloadStdlib() }) {
