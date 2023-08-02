@@ -442,6 +442,44 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
         """)
     }
 
+    @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS)
+    fun `test build script evaluation`() {
+        val project = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    fn main() {}
+                """)
+            }
+            rust("build.rs", """
+                const RUSTC_BOOTSTRAP: Option<&str> = option_env!("RUSTC_BOOTSTRAP");
+
+                fn main() {
+                    if let Some(value) = RUSTC_BOOTSTRAP {
+                        if value == "1" {
+                            panic!("Unexpected `RUSTC_BOOTSTRAP=1` env during compilation")
+                        }
+                    }
+                }
+            """)
+        }
+        checkSyncViewTree("""
+            -
+             -finished
+              -Sync ${project.root.name} project
+               Getting toolchain version
+               -Updating workspace info
+                -Build scripts evaluation
+                 Compiling hello v0.1.0
+               Getting Rust stdlib
+        """)
+    }
 
     private fun attachCargoProject(cargoProjectRoot: VirtualFile) {
         myFixture.launchAction("Cargo.AttachCargoProject", PlatformDataKeys.VIRTUAL_FILE to cargoProjectRoot)

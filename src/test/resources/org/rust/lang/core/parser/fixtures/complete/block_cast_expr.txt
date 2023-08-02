@@ -21,7 +21,7 @@ FILE
             PsiWhiteSpace(' ')
             PsiElement(})('}')
       PsiWhiteSpace(' ')
-      PsiErrorElement:';', <operator> or '}' expected, got 'as'
+      PsiErrorElement:'+', '-', ';', <operator> or '}' expected, got 'as'
         PsiElement(as)('as')
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)

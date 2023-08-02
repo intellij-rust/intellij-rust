@@ -5,11 +5,9 @@
 
 package org.rust.lang.core.type
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeParamBounds
 import org.rust.lang.core.psi.ext.withSubst
@@ -17,7 +15,6 @@ import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.*
 
-@ExpandMacros(MacroExpansionScope.ALL, "std")
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsPrimitiveTypeImplsTest : RsTestBase() {
     fun `test Sized types`() = doTest(TyInteger.VALUES + TyFloat.VALUES + TyBool.INSTANCE + TyChar.INSTANCE + TyUnit.INSTANCE, "Sized")

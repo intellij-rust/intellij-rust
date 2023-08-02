@@ -8,23 +8,29 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class ConvertUFCSToMethodCallIntention : RsElementBaseIntentionAction<ConvertUFCSToMethodCallIntention.Context>() {
-    override fun getText() = "Convert to method call"
+    override fun getText() = RsBundle.message("intention.name.convert.to.method.call")
     override fun getFamilyName() = text
 
-    data class Context(val callExpr: RsCallExpr, val function: RsFunction)
+    data class Context(
+        val callExpr: RsCallExpr,
+        val function: RsFunction
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        val call = element.ancestorStrict<RsCallExpr>(RsValueArgumentList::class.java) ?: return null
-        val path = (call.expr as? RsPathExpr)?.path ?: return null
+        val callExpr = element.ancestorStrict<RsCallExpr>(stopAt = RsValueArgumentList::class.java) ?: return null
+        val path = (callExpr.expr as? RsPathExpr)?.path ?: return null
         val function = path.reference?.resolve() as? RsFunction ?: return null
         if (!function.isMethod) return null
-        if (call.valueArgumentList.exprList.isEmpty()) return null
+        if (callExpr.valueArgumentList.exprList.isEmpty()) return null
+        if (!PsiModificationUtil.canReplace(callExpr)) return null
 
-        return Context(call, function)
+        return Context(callExpr, function)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {

@@ -5,7 +5,10 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInspection.SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
@@ -18,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiFile
@@ -28,6 +32,8 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.impl.*
@@ -35,7 +41,9 @@ import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
-import org.rust.ide.annotator.fixes.ApplySuggestionFix
+import org.rust.ide.fixes.ApplySuggestionFix
+import org.rust.ide.inspections.lints.RsLint
+import org.rust.ide.inspections.lints.RsSuppressQuickFix.Companion.createSuppressFixes
 import org.rust.ide.status.RsExternalLinterWidget
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
@@ -107,7 +115,7 @@ object RsExternalLinterUtils {
         }
 
         val future = CompletableFuture<RsExternalLinterResult?>()
-        val task = object : Task.Backgroundable(project, "Analyzing project with ${args.linter.title}...", true) {
+        val task = object : Task.Backgroundable(project, RsBundle.message("progress.title.analyzing.project.with", args.linter.title), true) {
 
             override fun run(indicator: ProgressIndicator) {
                 widget?.inProgress = true
@@ -171,7 +179,7 @@ fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
     return disposable
 }
 
-fun AnnotationHolder.createAnnotationsForFile(
+fun MutableList<HighlightInfo>.addHighlightsForFile(
     file: RsFile,
     annotationResult: RsExternalLinterResult,
     minApplicability: Applicability
@@ -188,21 +196,39 @@ fun AnnotationHolder.createAnnotationsForFile(
         .distinct()
     for (message in filteredMessages) {
         // We can't control what messages cargo generates, so we can't test them well.
-        // Let's use special message for tests to distinguish annotation from external linter
-        val annotationMessage = if (isUnitTestMode) TEST_MESSAGE else message.message
-        val annotationBuilder = newAnnotation(message.severity, annotationMessage)
-            .tooltip(message.htmlTooltip)
+        // Let's use the special message for tests to distinguish annotation from external linter
+        val highlightBuilder = HighlightInfo.newHighlightInfo(convertSeverity(message.severity))
+            .severity(message.severity)
+            .description(if (isUnitTestMode) TEST_MESSAGE else message.message)
+            .escapedToolTip(message.htmlTooltip)
             .range(message.textRange)
-            .problemGroup { annotationMessage }
             .needsUpdateOnTyping(true)
 
         message.quickFixes
             .singleOrNull { it.applicability <= minApplicability }
-            ?.let { f -> annotationBuilder.withFix(f) }
+            ?.let { fix ->
+                val element = fix.startElement ?: fix.endElement
+                val lint = message.lint
+                val actions =  if (element != null && lint != null) createSuppressFixes(element, lint) else emptyArray()
+                val options = convertBatchToSuppressIntentionActions(actions).toList()
+                val displayName = RsBundle.message("rust.external.linter")
+                val key = HighlightDisplayKey.findOrRegister(RUST_EXTERNAL_LINTER_ID, displayName)
+                highlightBuilder.registerFix(fix, options, displayName, fix.textRange, key)
+            }
 
-        annotationBuilder.create()
+        highlightBuilder.create()?.let(::add)
     }
 }
+
+private fun convertSeverity(severity: HighlightSeverity): HighlightInfoType = when (severity) {
+    HighlightSeverity.ERROR -> HighlightInfoType.ERROR
+    HighlightSeverity.WARNING -> HighlightInfoType.WARNING
+    HighlightSeverity.WEAK_WARNING -> HighlightInfoType.WEAK_WARNING
+    HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING -> HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER
+    else -> HighlightInfoType.INFORMATION
+}
+
+private const val RUST_EXTERNAL_LINTER_ID: String = "RsExternalLinterOptions"
 
 class RsExternalLinterResult(commandOutput: List<String>, val executionTime: Long) {
     val messages: List<CargoTopMessage> = commandOutput.asSequence()
@@ -219,8 +245,9 @@ class RsExternalLinterResult(commandOutput: List<String>, val executionTime: Lon
 private data class RsExternalLinterFilteredMessage(
     val severity: HighlightSeverity,
     val textRange: TextRange,
-    val message: String,
-    val htmlTooltip: String,
+    @Nls val message: String,
+    @Nls val htmlTooltip: String,
+    val lint: RsLint.ExternalLinterLint?,
     val quickFixes: List<ApplySuggestionFix>
 ) {
     companion object {
@@ -249,7 +276,7 @@ private data class RsExternalLinterFilteredMessage(
 
             val textRange = span.toTextRange(document) ?: return null
 
-            val tooltip = buildString {
+            @NlsSafe val tooltip = buildString {
                 append(formatMessage(StringEscapeUtils.escapeHtml(message.message)).escapeUrls())
                 val code = message.code.formatAsLink()
                 if (code != null) {
@@ -275,6 +302,7 @@ private data class RsExternalLinterFilteredMessage(
                 textRange,
                 message.message.capitalized(),
                 tooltip,
+                message.code?.code?.let { RsLint.ExternalLinterLint(it) },
                 message.collectQuickFixes(file, document)
             )
         }
@@ -317,7 +345,8 @@ private fun createQuickFix(file: PsiFile, document: Document, span: RustcSpan?, 
         span.suggested_replacement,
         span.suggestion_applicability,
         startElement,
-        endElement
+        endElement,
+        textRange
     )
 }
 

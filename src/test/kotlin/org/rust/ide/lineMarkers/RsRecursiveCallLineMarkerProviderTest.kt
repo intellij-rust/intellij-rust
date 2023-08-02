@@ -5,6 +5,11 @@
 
 package org.rust.ide.lineMarkers
 
+import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
+import org.rust.WithProcMacroRustProjectDescriptor
+import org.rust.ide.experiments.RsExperiments
+
 /**
  * Tests for Rust Recursive Call Line Marker Provider
  */
@@ -58,4 +63,17 @@ class RsRecursiveCallLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
             increment(increment(1))     // - Recursive call
         }
     """)
+
+    // TODO support attribute macros in `RsRecursiveCallLineMarkerProvider`
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test function under a proc macro attribute`() = expect<Throwable> {
+    doTestByText("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        fn foo() {
+            foo();      // - Recursive call
+        }
+    """)
+    }
 }

@@ -71,7 +71,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
     ) = doTest {
         checkAutoImportWithMultipleChoice(expectedElements, choice = null) {
             configureByText(before)
-            annotationFixture.applyQuickFix(AutoImportFix.NAME, preview = null)
+            annotationFixture.applyQuickFix(AutoImportFix.NAME, preview = null).checkPreview()
         }
     }
 

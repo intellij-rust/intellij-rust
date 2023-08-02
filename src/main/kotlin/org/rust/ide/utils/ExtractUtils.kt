@@ -6,7 +6,6 @@
 package org.rust.ide.utils
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -138,7 +137,7 @@ data class GenericConstraints(
             val constParameters = mutableSetOf<RsConstParameter>()
             val whereClauses = mutableListOf<RsWhereClause>()
 
-            var genericDecl: RsGenericDeclaration? = (context as? RsGenericDeclaration) ?: context.parentOfType()
+            var genericDecl: RsGenericDeclaration? = (context as? RsGenericDeclaration) ?: context.contextStrict()
             while (genericDecl != null) {
                 typeParameters += genericDecl.typeParameters
                 lifetimes += genericDecl.lifetimeParameters
@@ -147,7 +146,7 @@ data class GenericConstraints(
 
                 if (genericDecl is RsAbstractable && genericDecl.owner.javaClass !in TRANSITIVE_GENERIC_OWNERS) break
 
-                genericDecl = genericDecl.parentOfType()
+                genericDecl = genericDecl.contextStrict()
             }
 
             return GenericConstraints(lifetimes.toList(), typeParameters.toList(), constParameters.toList(), whereClauses)

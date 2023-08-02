@@ -5,13 +5,13 @@
 
 package org.rust.ide.inspections.typecheck
 
-import org.rust.ExpandMacros
+import org.junit.ComparisonFailure
+import org.junit.Test
 import org.rust.MockRustcVersion
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test type mismatch E0308 primitive`() = checkByText("""
@@ -245,7 +245,6 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
 
     /** Issue [2713](https://github.com/intellij-rust/intellij-rust/issues/2713) */
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test issue 2713`() = checkByText("""
         fn main() { u64::from(0u8); }
     """)
@@ -443,5 +442,190 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
         fn foo(_: &[u8]) {}
         fn bar<T>(t: T) -> T { t }
+    """)
+
+    fun `test different closure`() = checkErrors("""
+        fn main() {
+            let mut a = |x: i32| x;
+            a = /*error*/|x: i32| x/*error**/;
+        }
+    """)
+
+    fun `test closure to function pointer`() = checkErrors("""
+        fn main() {
+            let a: fn(i32) -> i32 = |x: i32| x;
+        }
+    """)
+
+    fun `test closure to unsafe function pointer`() = checkErrors("""
+        fn main() {
+            let a: unsafe fn(i32) -> i32 = |x: i32| x;
+        }
+    """)
+
+
+    fun `test closure to function def`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let mut a = foo;
+            a = /*error*/|| {}/*error**/;
+        }
+    """)
+
+    fun `test function def to function pointer`() = checkErrors("""
+        fn main() {
+            let a: fn() = foo;
+        }
+        fn foo() {}
+    """)
+
+    fun `test unsafe function def to normal function pointer`() = checkErrors("""
+        fn main() {
+            let a: fn() = /*error descr="mismatched types [E0308]expected `fn()`, found `unsafe fn() {foo}`"*/foo/*error**/;
+        }
+        unsafe fn foo() {}
+    """)
+
+
+    fun `test function def to unsafe function pointer`() = checkErrors("""
+        fn main() {
+            let a: unsafe fn() = foo;
+        }
+        fn foo() {}
+    """)
+
+    fun `test different function`() = checkErrors("""
+        fn main() {
+            let mut a = foo;
+            a = /*error*/bar/*error**/;
+        }
+        fn foo() {}
+        fn bar() {}
+    """)
+
+    fun `test function to closure`() = checkErrors("""
+        fn main() {
+            let a = foo;
+            let mut b = || {};
+            b = /*error*/a/*error**/;
+        }
+        fn foo() {}
+    """)
+
+    fun `test normal function pointer to unsafe function pointer`() = checkErrors("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: unsafe fn() = a;
+        }
+    """)
+
+    fun `test function pointer mismatch`() = checkErrors(
+        """
+        fn main() {
+            let a: fn() = /*error descr="mismatched types [E0308]expected `fn()`, found `fn(i32) {f_a}`"*/f_a/*error**/;
+            let b: fn() = /*error descr="mismatched types [E0308]expected `fn()`, found `fn() -> i64 {f_b}`"*/f_b/*error**/;
+            let c: fn(i8) = /*error descr="mismatched types [E0308]expected `fn(i8)`, found `fn() {f_c}`"*/f_c/*error**/;
+            let d: fn(i8) = /*error descr="mismatched types [E0308]expected `fn(i8)`, found `fn(i32) {f_a}`"*/f_a/*error**/;
+        }
+        fn f_a(b: i32) {}
+        fn f_b() -> i64 { 1i64 }
+        fn f_c() {}
+    """)
+
+    // FIXME: make this test pass by checking for captures in the closure
+    @Test(expected = ComparisonFailure::class)
+    fun `test capturing closure`() = checkErrors("""
+        fn main() {
+            let x = 1;
+            let a = || x;
+            let b: fn() -> i32 = /*error*/a/*error**/;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test intrinsics don't coerce to function pointer`() = checkErrors("""
+        #![feature(core_intrinsics)]
+
+        use std::intrinsics::breakpoint;
+
+        fn main() {
+            let a: unsafe fn() = /*error*/breakpoint/*error**/;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test unsafe target_feature function coerces to unsafe function pointer`() = checkErrors("""
+        #[target_feature(enable = "avx2")]
+        unsafe fn foo_avx2() {}
+
+        fn main() {
+            let a: unsafe fn() = foo_avx2;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test normal target_feature function doesn't coerce to normal function pointer`() = checkErrors("""
+        #[target_feature(enable = "avx2")]
+        fn foo_avx2() {}
+
+        fn main() {
+            let a: fn() = /*error*/foo_avx2/*error**/;
+        }
+    """)
+
+    fun `test enum variant to function pointer coercion`() = checkErrors("""
+        enum X {
+            A,
+            B(i32),
+            C(u8, i64)
+        }
+        fn main() {
+            let a: fn() -> X = /*error descr="mismatched types [E0308]expected `fn() -> X`, found `X`"*/X::A/*error**/;
+            let b: fn(i32) -> X = X::B;
+            let c: fn(u8, i64) -> X = X::C;
+
+            let d: fn(i32) -> X = /*error descr="mismatched types [E0308]expected `fn(i32) -> X`, found `X`"*/X::A/*error**/;
+            let e: fn() -> X = /*error descr="mismatched types [E0308]expected `fn() -> X`, found `fn(i32) -> X {B}`"*/X::B/*error**/;
+            let f: fn(i64) -> X = /*error descr="mismatched types [E0308]expected `fn(i64) -> X`, found `fn(u8, i64) -> X {C}`"*/X::C/*error**/;
+        }
+    """)
+
+    fun `test struct constructor to function pointer coercion`() = checkErrors("""
+        struct A;
+        struct B(i32);
+        struct C(u8, i64);
+        fn main() {
+            let a: fn() -> A = /*error descr="mismatched types [E0308]expected `fn() -> A`, found `A`"*/A/*error**/;
+            let b: fn(i32) -> B = B;
+            let c: fn(u8, i64) -> C = C;
+
+            let d: fn(i32) -> A = /*error descr="mismatched types [E0308]expected `fn(i32) -> A`, found `A`"*/A/*error**/;
+            let e: fn() -> B = /*error descr="mismatched types [E0308]expected `fn() -> B`, found `fn(i32) -> B {B}`"*/B/*error**/;
+            let f: fn(i64) -> C = /*error descr="mismatched types [E0308]expected `fn(i64) -> C`, found `fn(u8, i64) -> C {C}`"*/C/*error**/;
+        }
+    """)
+
+    fun `test impl item to function pointer coercion`() = checkErrors("""
+        struct S(i32);
+
+        impl S {
+            fn new() {
+                let a: fn(i32) -> S = Self;
+                let b: fn() -> S = /*error descr="mismatched types [E0308]expected `fn() -> S`, found `fn(i32) -> S {S}`"*/Self/*error**/;
+            }
+        }
+    """)
+
+    fun `test self constructor substitution`() = checkErrors("""
+        struct S<const N: usize>([u8; N]);
+        trait From<T> {
+            fn from(value: T) -> Self;
+        }
+        impl<const N: usize> From<[u8; N]> for S<N> {
+            fn from(value: [u8; N]) -> Self {
+                Self(value)
+            }
+        }
     """)
 }

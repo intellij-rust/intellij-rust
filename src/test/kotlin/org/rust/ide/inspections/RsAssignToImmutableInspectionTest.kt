@@ -5,10 +5,8 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmutableInspection::class) {
 
@@ -62,7 +60,6 @@ class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmuta
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test E0594 assign to field of immutable binding while iterating`() = checkByText("""
         struct Foo { a: i32 }
         fn main() {

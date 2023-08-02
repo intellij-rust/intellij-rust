@@ -9,7 +9,6 @@ import org.junit.ComparisonFailure
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspection::class) {
     fun `test unused import`() = checkByText("""
@@ -467,7 +466,6 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test usage inside derive proc macro expansion`() = checkByText("""
@@ -481,7 +479,6 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test usage inside attribute proc macro expansion`() = checkByText("""
@@ -494,7 +491,6 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test usage inside attribute proc macro expansion 2`() = checkByText("""
@@ -1078,6 +1074,19 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
             fn test() {
                 let x = inner;
             }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test custom column macro`() = checkByFileTree("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! column { () => {} }
+    //- main.rs
+        /*caret*/
+        use test_package::column;
+        fn main() {
+            column!();
         }
     """)
 }

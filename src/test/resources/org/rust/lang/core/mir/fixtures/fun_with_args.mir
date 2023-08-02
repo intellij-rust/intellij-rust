@@ -1,0 +1,12 @@
+fn foo(_1: i32, _2: &i32, _3: i32, _4: &mut i32) -> () {
+    debug n => _1;                       // in scope 0 at src/main.rs:1:8: 1:9
+    debug n_ref => _2;                   // in scope 0 at src/main.rs:1:16: 1:21
+    debug n_mut => _3;                   // in scope 0 at src/main.rs:1:29: 1:38
+    debug n_mut_ref_mut => _4;           // in scope 0 at src/main.rs:1:45: 1:62
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:74: 1:74
+
+    bb0: {
+        _0 = const ();                   // scope 0 at src/main.rs:1:74: 1:76
+        return;                          // scope 0 at src/main.rs:1:76: 1:76
+    }
+}

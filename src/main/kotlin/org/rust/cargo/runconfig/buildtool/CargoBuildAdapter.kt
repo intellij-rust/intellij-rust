@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.createFilters
@@ -37,19 +38,19 @@ class CargoBuildAdapter(
         val processHandler = checkNotNull(context.processHandler) { "Process handler can't be null" }
         context.environment.notifyProcessStarted(processHandler)
 
-        val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "Build")
+        val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, RsBundle.message("build"))
         val activateToolWindow = context.environment.isActivateToolWindowBeforeRun
         buildContentDescriptor.isActivateToolWindowWhenAdded = activateToolWindow
         buildContentDescriptor.isActivateToolWindowWhenFailed = activateToolWindow
         buildContentDescriptor.isNavigateToError = context.project.rustSettings.autoShowErrorsInEditor
 
-        val descriptor = DefaultBuildDescriptor(context.buildId, "Run Cargo Command", context.workingDirectory.toString(), context.started)
+        val descriptor = DefaultBuildDescriptor(context.buildId, RsBundle.message("build.event.title.run.cargo.command"), context.workingDirectory.toString(), context.started)
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(createRerunAction(processHandler, context.environment))
             .withRestartAction(createStopAction(processHandler))
             .apply { createFilters(context.cargoProject).forEach { withExecutionFilter(it) } }
 
-        val buildStarted = StartBuildEventImpl(descriptor, "${context.taskName} running...")
+        val buildStarted = StartBuildEventImpl(descriptor, RsBundle.message("build.event.message.running", context.taskName))
         buildProgressListener.onEvent(context.buildId, buildStarted)
     }
 
@@ -69,7 +70,7 @@ class CargoBuildAdapter(
             context.buildId,
             null,
             System.currentTimeMillis(),
-            "${context.taskName} $status",
+            RsBundle.message("build.event.message.", context.taskName, status),
             result
         )
         buildProgressListener.onEvent(context.buildId, buildFinished)
@@ -109,7 +110,7 @@ class CargoBuildAdapter(
 
             override fun update(event: AnActionEvent) {
                 val presentation = event.presentation
-                presentation.text = "Rerun '${StringUtil.escapeMnemonics(environment.runProfile.name)}'"
+                presentation.text = RsBundle.message("action.rerun.text", StringUtil.escapeMnemonics(environment.runProfile.name))
                 presentation.icon = if (processHandler.isProcessTerminated) AllIcons.Actions.Compile else AllIcons.Actions.Restart
                 presentation.isEnabled = isEnabled
             }

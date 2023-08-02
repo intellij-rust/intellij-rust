@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import org.jdom.Element
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -51,7 +52,7 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
         CargoCommandConfigurationType.getInstance().factory
     )
     val configuration = runnerAndConfigurationSettings.configuration as CargoCommandConfiguration
-    configuration.setFromCmd(cargoCommandLine.copy(emulateTerminal = configuration.emulateTerminal))
+    configuration.setFromCmd(cargoCommandLine)
     return runnerAndConfigurationSettings
 }
 
@@ -59,7 +60,7 @@ val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpt
 
 fun Project.buildProject() {
     checkIsDispatchThread()
-    val arguments = buildList<String> {
+    val arguments = buildList {
         val settings = rustSettings
         add("--all")
         if (settings.compileAllTargets) {
@@ -76,6 +77,18 @@ fun Project.buildProject() {
 
     for (cargoProject in cargoProjects.allProjects) {
         CargoCommandLine.forProject(cargoProject, "build", arguments).run(cargoProject, saveConfiguration = false)
+    }
+}
+
+fun Project.cleanProject() {
+    checkIsDispatchThread()
+
+    // Initialize run content manager
+    RunContentManager.getInstance(this)
+
+    for (cargoProject in cargoProjects.allProjects) {
+        CargoCommandLine.forProject(cargoProject, "clean", emulateTerminal = false)
+            .run(cargoProject, saveConfiguration = false)
     }
 }
 
@@ -127,18 +140,17 @@ sealed class BuildResult {
     data class Binaries(val paths: List<String>) : BuildResult()
     sealed class ToolchainError(@Suppress("UnstableApiUsage") @DialogMessage val message: String) : BuildResult() {
         // TODO: move into bundle
-        object UnsupportedMSVC : ToolchainError("MSVC toolchain is not supported. Please use GNU toolchain.")
-        object UnsupportedGNU : ToolchainError("GNU toolchain is not supported. Please use MSVC toolchain.")
-        object UnsupportedWSL : ToolchainError("WSL toolchain is not supported.")
-        object MSVCWithRustGNU : ToolchainError("MSVC debugger cannot be used with GNU Rust toolchain.")
-        object GNUWithRustMSVC : ToolchainError("GNU debugger cannot be used with MSVC Rust toolchain.")
+        object UnsupportedMSVC : ToolchainError(RsBundle.message("dialog.message.msvc.toolchain.not.supported.please.use.gnu.toolchain"))
+        object UnsupportedGNU : ToolchainError(RsBundle.message("dialog.message.gnu.toolchain.not.supported.please.use.msvc.toolchain"))
+        object UnsupportedWSL : ToolchainError(RsBundle.message("dialog.message.wsl.toolchain.not.supported"))
+        object MSVCWithRustGNU : ToolchainError(RsBundle.message("dialog.message.msvc.debugger.cannot.be.used.with.gnu.rust.toolchain"))
+        object GNUWithRustMSVC : ToolchainError(RsBundle.message("dialog.message.gnu.debugger.cannot.be.used.with.msvc.rust.toolchain"))
         object WSLWithNonWSL : ToolchainError(
-            "<html>The local debugger cannot be used with WSL.<br>" +
-                "Use the <a href='https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html'>instructions</a> to configure WSL toolchain.</html>"
+            RsBundle.message("dialog.message.html.local.debugger.cannot.be.used.with.wsl.br.use.href.https.www.jetbrains.com.help.clion.how.to.use.wsl.development.environment.in.product.html.instructions.to.configure.wsl.toolchain.html")
         )
-        object NonWSLWithWSL : ToolchainError("WSL debugger cannot be used with non-WSL Rust toolchain.")
+        object NonWSLWithWSL : ToolchainError(RsBundle.message("dialog.message.wsl.debugger.cannot.be.used.with.non.wsl.rust.toolchain"))
 
-        class Other(message: String) : ToolchainError(message)
+        class Other(@DialogMessage message: String) : ToolchainError(message)
     }
 }
 

@@ -8,19 +8,20 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.findOuterAttr
 import org.rust.lang.core.psi.ext.isTest
 
 class ToggleIgnoreTestIntention: RsElementBaseIntentionAction<ToggleIgnoreTestIntention.Context>() {
-
-    data class Context(
-        val element: RsFunction
-    )
-
-    override fun getText() = "Toggle ignore for tests"
+    override fun getText() = RsBundle.message("intention.name.toggle.ignore.for.tests")
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+
+    data class Context(val element: RsFunction)
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val function = element.parent as? RsFunction ?: return null

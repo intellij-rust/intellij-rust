@@ -18,7 +18,7 @@ import org.rust.stdext.RsResult.Ok
 import org.rust.stdext.unwrapOrElse
 
 enum class MacroExpansionContext {
-    EXPR, PAT, TYPE, STMT, ITEM
+    EXPR, PAT, TYPE, STMT, META_ITEM_VALUE, ITEM
 }
 
 val RsMacroCall.expansionContext: MacroExpansionContext
@@ -27,6 +27,7 @@ val RsMacroCall.expansionContext: MacroExpansionContext
         is RsBlock -> MacroExpansionContext.STMT
         is RsPatMacro -> MacroExpansionContext.PAT
         is RsMacroType -> MacroExpansionContext.TYPE
+        is RsMetaItem -> MacroExpansionContext.META_ITEM_VALUE
         else -> MacroExpansionContext.ITEM
     }
 
@@ -62,6 +63,11 @@ sealed class MacroExpansion(val file: RsFile) {
             get() = listOf(type)
     }
 
+    class MetaItemValue(file: RsFile, val value: RsExpandedElement) : MacroExpansion(file) {
+        override val elements: List<RsExpandedElement>
+            get() = listOf(value)
+    }
+
     /** Can contains items, macros and macro calls */
     class Items(file: RsFile, override val elements: List<RsExpandedElement>) : MacroExpansion(file)
 
@@ -87,6 +93,7 @@ fun MacroExpansionContext.prepareExpandedTextForParsing(
     MacroExpansionContext.PAT -> "fn f($expandedText:())"
     MacroExpansionContext.TYPE -> "type T=$expandedText;"
     MacroExpansionContext.STMT -> "fn f(){$expandedText}"
+    MacroExpansionContext.META_ITEM_VALUE -> "#[a=$expandedText]fn f(){}"
     MacroExpansionContext.ITEM -> expandedText
 }
 
@@ -96,6 +103,7 @@ val MacroExpansionContext.expansionFileStartOffset: Int
         MacroExpansionContext.PAT -> 5
         MacroExpansionContext.TYPE -> 7
         MacroExpansionContext.STMT -> 7
+        MacroExpansionContext.META_ITEM_VALUE -> 4
         MacroExpansionContext.ITEM -> 0
     }
 
@@ -118,6 +126,12 @@ fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: R
             val block = expandedFile.stubDescendantOfTypeOrStrict<RsBlock>() ?: return null
             val itemsAndStatements = block.stubChildrenOfType<RsExpandedElement>()
             MacroExpansion.Stmts(expandedFile, itemsAndStatements)
+        }
+        MacroExpansionContext.META_ITEM_VALUE -> {
+            val attr = expandedFile.stubDescendantOfTypeOrStrict<RsAttr>() ?: return null
+            val metaItem = attr.metaItem
+            val value = metaItem.litExpr ?: metaItem.childOfType<RsMacroCall>() ?: return null
+            MacroExpansion.MetaItemValue(expandedFile, value)
         }
         MacroExpansionContext.ITEM -> {
             val items = expandedFile.stubChildrenOfType<RsExpandedElement>()
@@ -176,7 +190,7 @@ private fun <T : RsMacroData, E : MacroExpansionError> MacroExpander<T, E>.expan
     val mixHash = def.mixHash(callDataWithHash) ?: return Err(MacroCallSyntaxError)
     val (stub, expansionResult) = MacroExpansionSharedCache.getInstance()
         .createExpansionStub(call.project, this, def.data, callData, mixHash)
-        .unwrapOrElse { return Err(MacroCallSyntaxError) }
+        .unwrapOrElse { return Err(ExpansionError(it)) }
     val expandedText = expansionResult.text
 
     val factory = RsPsiFactory(call.project, markGenerated = false, eventSystemEnabled = stub != null)

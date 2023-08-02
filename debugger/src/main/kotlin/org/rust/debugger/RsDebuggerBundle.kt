@@ -15,6 +15,8 @@ const val BUNDLE = "messages.RsDebuggerBundle"
 object RsDebuggerBundle : DynamicBundle(BUNDLE) {
     @Nls
     fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)
+
+    @Suppress("unused")
     fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): Supplier<@Nls String> =
         getLazyMessage(key, *params)
 }

@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections.fixes
 
-
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsAssignToImmutableInspection

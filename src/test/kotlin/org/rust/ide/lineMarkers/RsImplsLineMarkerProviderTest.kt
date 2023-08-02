@@ -8,6 +8,10 @@ package org.rust.ide.lineMarkers
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
+import org.rust.WithProcMacroRustProjectDescriptor
+import org.rust.ide.experiments.RsExperiments
 
 class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
@@ -70,6 +74,17 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         "Bar for FooBar",
         "Foo for FooBar"
     )
+
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test struct an trait under a proc macro attribute`() = doTestByText("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        trait Foo {}  // - Has implementations
+        #[attr_as_is]
+        struct Bar {} // - Has implementations
+        impl Foo for Bar {}
+    """)
 
     private fun doPopupTest(@Language("Rust") code: String, vararg expectedItems: String) {
         InlineFile(code)

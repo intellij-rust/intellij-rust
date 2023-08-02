@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsFieldNamingInspection
 
@@ -27,6 +28,7 @@ class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspectio
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test enum variant fields fix`() = checkFixByText("Rename to `field_foo`", """
         enum EnumToFix {
             Test {
@@ -62,6 +64,7 @@ class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspectio
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test struct fields fix`() = checkFixByText("Rename to `is_deleted`", """
         struct Foo {
             <warning descr="Field `IsDeleted` should have a snake case name such as `is_deleted`">IsDelete<caret>d</warning>: bool

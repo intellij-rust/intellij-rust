@@ -1,0 +1,74 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:2:11: 2:11
+    let _1: E;                           // in scope 0 at src/main.rs:3:9: 3:10
+    let _2: i32;                         // in scope 0 at src/main.rs:4:5: 7:6
+    let mut _3: isize;                   // in scope 0 at src/main.rs:5:9: 5:23
+    let mut _6: i32;                     // in scope 0 at src/main.rs:5:29: 5:30
+    let mut _7: i32;                     // in scope 0 at src/main.rs:5:33: 5:34
+    let mut _8: (i32, bool);             // in scope 0 at src/main.rs:5:29: 5:34
+    scope 1 {
+        debug e => _1;                   // in scope 1 at src/main.rs:3:9: 3:10
+        let _4: i32;                     // in scope 1 at src/main.rs:5:14: 5:15
+        let _5: i32;                     // in scope 1 at src/main.rs:5:21: 5:22
+        scope 2 {
+            debug a => _4;               // in scope 2 at src/main.rs:5:14: 5:15
+            debug b => _5;               // in scope 2 at src/main.rs:5:21: 5:22
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:3:9: 3:10
+        _1 = E::A(const 1_i32, const 2_i32, const 3_i32, const 4_i32); // scope 0 at src/main.rs:3:13: 3:29
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:3:9: 3:10
+        StorageLive(_2);                 // scope 1 at src/main.rs:4:5: 7:6
+        FakeRead(ForMatchedPlace(None), _1); // scope 1 at src/main.rs:4:11: 4:12
+        _3 = discriminant(_1);           // scope 1 at src/main.rs:4:11: 4:12
+        switchInt(move _3) -> [0: bb1, 1: bb2, otherwise: bb3]; // scope 1 at src/main.rs:4:5: 4:10
+    }
+
+    bb1: {
+        falseEdge -> [real: bb4, imaginary: bb2]; // scope 1 at src/main.rs:5:9: 5:23
+    }
+
+    bb2: {
+        _2 = const 2_i32;                // scope 1 at src/main.rs:6:19: 6:20
+        goto -> bb6;                     // scope 1 at src/main.rs:6:19: 6:20
+    }
+
+    bb3: {
+        unreachable;                     // scope 1 at src/main.rs:4:11: 4:12
+    }
+
+    bb4: {
+        StorageLive(_4);                 // scope 1 at src/main.rs:5:14: 5:15
+        _4 = ((_1 as A).0: i32);         // scope 1 at src/main.rs:5:14: 5:15
+        StorageLive(_5);                 // scope 1 at src/main.rs:5:21: 5:22
+        _5 = ((_1 as A).3: i32);         // scope 1 at src/main.rs:5:21: 5:22
+        StorageLive(_6);                 // scope 2 at src/main.rs:5:29: 5:30
+        _6 = _4;                         // scope 2 at src/main.rs:5:29: 5:30
+        StorageLive(_7);                 // scope 2 at src/main.rs:5:33: 5:34
+        _7 = _5;                         // scope 2 at src/main.rs:5:33: 5:34
+        _8 = CheckedAdd(_6, _7);         // scope 2 at src/main.rs:5:29: 5:34
+        assert(!move (_8.1: bool), "attempt to compute `{} + {}`, which would overflow", move _6, move _7) -> [success: bb5, unwind: bb7]; // scope 2 at src/main.rs:5:29: 5:34
+    }
+
+    bb5: {
+        _2 = move (_8.0: i32);           // scope 2 at src/main.rs:5:29: 5:34
+        StorageDead(_7);                 // scope 2 at src/main.rs:5:33: 5:34
+        StorageDead(_6);                 // scope 2 at src/main.rs:5:33: 5:34
+        StorageDead(_5);                 // scope 1 at src/main.rs:5:35: 5:36
+        StorageDead(_4);                 // scope 1 at src/main.rs:5:35: 5:36
+        goto -> bb6;                     // scope 1 at src/main.rs:5:35: 5:36
+    }
+
+    bb6: {
+        StorageDead(_2);                 // scope 1 at src/main.rs:7:6: 7:7
+        _0 = const ();                   // scope 0 at src/main.rs:2:11: 8:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:8:1: 8:2
+        return;                          // scope 0 at src/main.rs:8:2: 8:2
+    }
+
+    bb7 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:2:1: 8:2
+    }
+}

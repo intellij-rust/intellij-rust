@@ -309,17 +309,25 @@ class RsMemoryCategorizationTest : RsTestBase() {
     """)
 
     fun `test overloadable operator with borrow adjustment`() = testExpr("""
+        struct S;
+        impl std::ops::AddAssign<S> for S {
+            fn add_assign(&mut self, rhs: S) {}
+        }
         fn main() {
-            let mut x = 0;
-            x += 1;
+            let mut x = S;
+            x += S;
           //^ Rvalue, Declared
         }
     """)
 
     fun `test overloadable operator with inconsistent borrow adjustment`() = testExpr("""
+        struct S;
+        impl std::ops::AddAssign<S> for S {
+            fn add_assign(&mut self, rhs: S) {}
+        }
         fn main() {
-            let x = 0;
-            x += 1;
+            let x = S;
+            x += S;
           //^ Local, Immutable
         }
     """)

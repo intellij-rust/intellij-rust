@@ -14,9 +14,12 @@ import com.jetbrains.clones.configuration.DuplicateInspectionConfiguration
 import com.jetbrains.clones.configuration.DuplicateLanguageState
 import com.jetbrains.clones.index.HashFragmentIndex
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 // Based on [com.jetbrains.clones.DuplicateBaseTest]
+@RunWith(RsJUnit4TestRunner::class)
 class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::class) {
 
     private val scope = RsDuplicateScope()

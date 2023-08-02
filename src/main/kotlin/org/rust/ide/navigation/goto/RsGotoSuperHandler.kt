@@ -6,7 +6,6 @@
 package org.rust.ide.navigation.goto
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -14,6 +13,8 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
+import org.rust.ide.navigation.getPsiElementPopup
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.toPsiFile
@@ -29,7 +30,7 @@ class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
         when (targets.size) {
             0 -> return
             1 -> targets.single().navigate(true)
-            else -> NavigationUtil.getPsiElementPopup(targets.toTypedArray(), "Choose Module Declaration")
+            else -> getPsiElementPopup(targets.toTypedArray(), RsBundle.message("popup.title.choose.module.declaration"))
                 .showInBestPositionFor(editor)
         }
     }

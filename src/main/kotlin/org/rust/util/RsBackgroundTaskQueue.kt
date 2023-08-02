@@ -21,7 +21,6 @@ import org.rust.openapiext.DelayedBackgroundableProcessIndicator
 import org.rust.openapiext.checkIsDispatchThread
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.openapiext.isUnitTestMode
-import org.rust.stdext.exhaustive
 import java.util.function.BiConsumer
 
 /** Inspired by [com.intellij.openapi.progress.BackgroundTaskQueue] */
@@ -170,7 +169,7 @@ class RsBackgroundTaskQueue {
                 }
                 State.Canceled -> Unit
                 State.CanceledContinued -> Unit
-            }.exhaustive
+            }
         }
 
         private sealed class State {

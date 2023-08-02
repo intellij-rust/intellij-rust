@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.inlineFunction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.RefactoringBundle
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsInlineDialog
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsUseItem
@@ -37,17 +38,17 @@ class RsInlineFunctionDialog(
     override fun ignoreOccurrence(reference: PsiReference): Boolean =
         reference.element.ancestorStrict<RsUseItem>() == null
 
-    public override fun doAction() {
+    override fun doAction() {
         val inlineThisOnly = allowInlineThisOnly || isInlineThisOnly
         val removeDefinition = myRbInlineAll.isSelected && function.isWritable
         val processor = RsInlineFunctionProcessor(project, function, refElement, inlineThisOnly, removeDefinition)
         invokeRefactoring(processor)
     }
 
-    override fun getBorderTitle(): String = "Inline $callableType"
+    override fun getBorderTitle(): String = RsBundle.message("border.title.inline", callableType)
 
     override fun getNameLabelText(): String =
-        "$callableType ${function.name} ${getOccurrencesText(occurrencesNumber)}"
+        RsBundle.message("label.2", callableType, function.name?:"", getOccurrencesText(occurrencesNumber))
 
     override fun getInlineAllText(): String {
         val text = if (function.isWritable) {
@@ -65,7 +66,7 @@ class RsInlineFunctionDialog(
         // `occurrencesNumber` can be negative if calculating it takes too long
         val mightHaveMultipleOccurrences = occurrencesNumber < 0 || occurrencesNumber > 1
         return if (function.isWritable && (mightHaveMultipleOccurrences || !myInvokedOnReference)) {
-            "Inline all and keep the method"
+            RsBundle.message("radio.inline.all.keep.method")
         } else {
             null
         }

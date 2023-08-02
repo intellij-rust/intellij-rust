@@ -8,8 +8,11 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Flatten imports 1 depth
@@ -29,8 +32,10 @@ import org.rust.lang.core.psi.ext.*
  * ```
  */
 class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseStatementsIntention.Context>() {
-    override fun getText() = "Flatten use statements"
+    override fun getText() = RsBundle.message("intention.name.flatten.use.statements")
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     interface Context {
         val useSpecks: List<RsUseSpeck>
@@ -83,7 +88,8 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
             paths.last().rightSiblings.find { it.text == "\n" }?.delete()
         }
 
-        editor.caretModel.moveToOffset((paths.firstOrNull()?.startOffset ?: 0) + ctx.cursorOffset)
+        val firstPath = paths.firstOrNull() ?: return
+        editor.moveCaretToOffset(firstPath, firstPath.startOffset + ctx.cursorOffset)
     }
 
     private fun makeSeparatedPath(basePath: String, useSpecks: List<RsUseSpeck>): List<String> = useSpecks.flatMap {

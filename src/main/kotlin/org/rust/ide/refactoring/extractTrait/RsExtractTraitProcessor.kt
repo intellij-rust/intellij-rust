@@ -13,6 +13,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.rust.RsBundle
 import org.rust.ide.utils.GenericConstraints
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
@@ -60,7 +61,7 @@ class RsExtractTraitProcessor(
 
     private val psiFactory = RsPsiFactory(traitOrImpl.project)
 
-    override fun getCommandName(): String = "Extract Trait"
+    override fun getCommandName(): String = RsBundle.message("command.name.extract.trait")
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor =
         BaseUsageViewDescriptor(traitOrImpl, *usages.mapNotNull { it.element }.toTypedArray())

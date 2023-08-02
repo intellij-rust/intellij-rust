@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.RsVisibilityOwner
 
 class MakePrivateIntention : ChangeVisibilityIntention() {
-    override val visibility: String = "private"
+    override val visibility: String get() = "private"
     override fun isApplicable(element: RsVisibilityOwner): Boolean = element.visibility != RsVisibility.Private
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {

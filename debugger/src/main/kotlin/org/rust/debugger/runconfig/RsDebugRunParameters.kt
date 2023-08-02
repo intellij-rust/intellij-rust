@@ -19,7 +19,8 @@ class RsDebugRunParameters(
     val project: Project,
     private val cmd: GeneralCommandLine,
     val cargoProject: CargoProject?,
-    private val isElevated: Boolean
+    private val isElevated: Boolean,
+    val emulateTerminal: Boolean
 ) : RunParameters() {
 
     override fun getInstaller(): Installer = TrivialInstaller(cmd)
@@ -27,8 +28,8 @@ class RsDebugRunParameters(
 
     override fun getDebuggerDriverConfiguration(): DebuggerDriverConfiguration {
         for (provider in RsDebuggerDriverConfigurationProvider.EP_NAME.extensionList) {
-            return provider.getDebuggerDriverConfiguration(project, isElevated) ?: continue
+            return provider.getDebuggerDriverConfiguration(project, isElevated, emulateTerminal) ?: continue
         }
-        return RsLLDBDriverConfiguration(isElevated)
+        return RsLLDBDriverConfiguration(isElevated, emulateTerminal)
     }
 }

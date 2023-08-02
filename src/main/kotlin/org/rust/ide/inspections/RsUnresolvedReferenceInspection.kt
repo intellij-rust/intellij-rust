@@ -8,8 +8,10 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.openapi.util.registry.Registry
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.inspections.fixes.QualifyPathFix
+import org.rust.ide.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
@@ -23,10 +25,10 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
     var ignoreWithoutQuickFix: Boolean = true
 
-    override fun getDisplayName() = "Unresolved reference"
+    override fun getDisplayName() = RsBundle.message("inspection.message.unresolved.reference2")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
 
             override fun visitPath(path: RsPath) {
                 val (isPathUnresolved, context) = processPath(path) ?: return
@@ -44,7 +46,8 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 }
             }
 
-            override fun visitExternCrateItem(externCrate: RsExternCrateItem) {
+            @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+            override fun visitExternCrateItem2(externCrate: RsExternCrateItem) {
                 if (externCrate.reference.multiResolve().isEmpty() &&
                     externCrate.containingCrate.origin == PackageOrigin.WORKSPACE) {
                     RsDiagnostic.CrateNotFoundError(externCrate.referenceNameElement, externCrate.referenceName)
@@ -58,12 +61,15 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         context: AutoImportFix.Context?
     ) {
         val candidates = context?.candidates
-        if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return
+        val showError = !candidates.isNullOrEmpty()
+            || !element.isTypeDependentPath && Registry.`is`("org.rust.insp.unresolved.reference.type.independent")
+            || !ignoreWithoutQuickFix
+        if (!showError) return
 
         if (element.shouldIgnoreUnresolvedReference()) return
 
         val referenceName = element.referenceName
-        val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
+        val description = if (referenceName == null) RsBundle.message("inspection.message.unresolved.reference2") else RsBundle.message("inspection.message.unresolved.reference", referenceName)
         val fixes = createQuickFixes(candidates, element, context)
 
         val highlightedElement = element.referenceNameElement ?: element
@@ -75,8 +81,42 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         )
     }
 
+    /**
+     * Returns `true` if name resolution of `this` element is somehow dependent on type information,
+     * e.g. on type inference of the presence of `impl`s.
+     */
+    @Suppress("RedundantIf")
+    private val RsReferenceElement.isTypeDependentPath: Boolean
+        get() {
+            // If `this` is not a path, then it is a method call, so it is type-dependent
+            if (this !is RsPath) return true
+
+            // Type-qualified path like `<Foo as Bar>::baz` is definitely type-dependent
+            if (typeQual != null) return true
+
+            // Now, the path without a qualifier (`foo` or `::foo`) is definitely NOT type-dependent
+            val qualifier = path ?: return false
+
+            // If the qualifier is unresolved, then the path *could* be type-dependent
+            val resolvedQualifier = qualifier.reference?.resolve() ?: return true
+
+            // The path is NOT type-dependent if its qualifier resolves to a module
+            if (resolvedQualifier is RsMod) return false
+
+            // A special heuristics for enums: a path like `Result::Ok` is considered NOT type-dependent despite
+            // the fact that actually it can be type-dependent if `Ok` is an associated function name. We just
+            // consider this as a very rare case due to Rust naming conventions
+            if (resolvedQualifier is RsEnumItem && referenceName?.firstOrNull()?.isUpperCase() == true) {
+                return false
+            }
+
+            // The path is considered type-dependent in other cases.
+            // For instance, the path `Foo::bar` is type-dependent if `Foo` is a `struct`.
+            return true
+        }
+
     override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
-        addCheckbox("Ignore unresolved references without quick fix", "ignoreWithoutQuickFix")
+        addCheckbox(RsBundle.message("checkbox.ignore.unresolved.references.with.possibly.high.false.positive.rate"), "ignoreWithoutQuickFix")
     }
 
     companion object {
@@ -124,7 +164,7 @@ private fun createQuickFixes(
     if (context == null) return emptyList()
 
     val fixes = mutableListOf<LocalQuickFix>()
-    if (candidates != null && candidates.isNotEmpty()) {
+    if (!candidates.isNullOrEmpty()) {
         fixes.add(AutoImportFix(element, context))
 
         if (element is RsPath && context.type == AutoImportFix.Type.GENERAL_PATH && candidates.size == 1) {

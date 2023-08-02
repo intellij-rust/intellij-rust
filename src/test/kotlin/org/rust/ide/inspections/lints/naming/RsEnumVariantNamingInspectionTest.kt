@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsEnumVariantNamingInspection
 
@@ -23,6 +24,7 @@ class RsEnumVariantNamingInspectionTest : RsInspectionsTestBase(RsEnumVariantNam
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test enum variants fix`() = checkFixByText("Rename to `VarBar`", """
         enum ToFix {
             <warning descr="Enum variant `var_bar` should have a camel case name such as `VarBar`">var_b<caret>ar</warning>

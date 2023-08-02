@@ -7,6 +7,7 @@ package org.rust.ide.module
 
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
+import org.rust.RsBundle
 import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
@@ -15,9 +16,9 @@ class RsModuleType : ModuleType<RsModuleBuilder>(ID) {
 
     override fun createModuleBuilder(): RsModuleBuilder = RsModuleBuilder()
 
-    override fun getDescription(): String = "Rust module"
+    override fun getDescription(): String = RsBundle.message("rust.module")
 
-    override fun getName(): String = "Rust"
+    override fun getName(): String = RsBundle.message("rust")
 
     companion object {
         const val ID = "RUST_MODULE"

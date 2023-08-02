@@ -9,6 +9,7 @@ import com.intellij.execution.Executor
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.getAppropriateCargoProject
@@ -39,10 +40,10 @@ class WasmPackRunAnythingProvider : RsRunAnythingProvider() {
     override fun getIcon(value: String): Icon = RsIcons.WASM_PACK
 
     @Suppress("DialogTitleCapitalization")
-    override fun getCompletionGroupTitle(): String = "wasm-pack commands"
+    override fun getCompletionGroupTitle(): String = RsBundle.message("wasm.pack.commands")
 
     @Suppress("DialogTitleCapitalization")
-    override fun getHelpGroupTitle(): String = "wasm-pack"
+    override fun getHelpGroupTitle(): String = RsBundle.message("wasm.pack")
 
     override fun getHelpCommandPlaceholder(): String = "wasm-pack <subcommand> <args...>"
 
@@ -50,7 +51,7 @@ class WasmPackRunAnythingProvider : RsRunAnythingProvider() {
 
     override fun getHelpIcon(): Icon = RsIcons.WASM_PACK
 
-    override fun getHelpDescription(): String = "Runs wasm-pack command"
+    override fun getHelpDescription(): String = RsBundle.message("runs.wasm.pack.command")
 
     companion object {
         const val HELP_COMMAND = "wasm-pack"

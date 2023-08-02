@@ -5,8 +5,10 @@
 
 package org.rust.cargo.util
 
+import com.intellij.openapi.util.NlsContexts
+
 @Suppress("unused")
 sealed class DownloadResult<out T> {
     class Ok<T>(val value: T) : DownloadResult<T>()
-    class Err(val error: String) : DownloadResult<Nothing>()
+    class Err(@NlsContexts.NotificationContent val error: String) : DownloadResult<Nothing>()
 }

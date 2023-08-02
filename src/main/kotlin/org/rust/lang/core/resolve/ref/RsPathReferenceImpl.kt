@@ -5,23 +5,33 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.stubs.RsPathStub
-import org.rust.lang.core.types.*
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.RsPsiSubstitution
 import org.rust.lang.core.types.RsPsiSubstitution.*
-import org.rust.lang.core.types.infer.*
+import org.rust.lang.core.types.infer.ResolvedPath
+import org.rust.lang.core.types.infer.TyLowering
+import org.rust.lang.core.types.infer.hasTyInfer
+import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.rawType
 import org.rust.lang.core.types.ty.TyProjection
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.doc.psi.RsDocPathLinkParent
 import org.rust.lang.utils.evaluation.PathExprResolver
+import org.rust.openapiext.forEachChild
 import org.rust.openapiext.testAssert
 import org.rust.stdext.buildMap
 import org.rust.stdext.intersects
@@ -35,48 +45,111 @@ class RsPathReferenceImpl(
         if (target is RsFieldDecl) return false
 
         val path = this.element
-        if (target is RsNamedElement && !path.allowedNamespaces().intersects(target.namespaces)) return false
+        val pathParent = path.parent
 
-        if (target is RsAbstractable) {
-            val owner = target.owner
-
-            if (target is RsTypeAlias && owner.isImplOrTrait && path.parent is RsAssocTypeBinding) {
-                return super.isReferenceTo(target)
+        if (target is RsMod) {
+            val canReferToMod = pathParent is RsPath || pathParent is RsUseSpeck || pathParent is RsVisRestriction
+                || pathParent is RsDocPathLinkParent || pathParent is RsPathCodeFragment
+            return if (canReferToMod) {
+                isReferenceToNonAssocItem(target)
+            } else {
+                false
             }
+        }
 
-            if (owner.isImplOrTrait && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
-                return false
-            }
+        if (target is RsNamedElement && !path.allowedNamespaces(parent = pathParent).intersects(target.namespaces)) {
+            return false
+        }
 
-            // If `path.parent` is expression, then `path.reference.resolve()` will invoke type inference for the
-            // function containing `path`, which can be very heavy. Trying to avoid it
-            if (target !is RsTypeAlias && path.parent is RsPathExpr) {
+        val targetAbstractableOwner = (target as? RsAbstractable)?.owner
+
+        // If `path.parent` is expression, then `path.reference.resolve()` will invoke type inference for the
+        // function containing `path`, which can be very heavy. Trying to avoid it
+        return if (pathParent is RsPathExpr) {
+            if (targetAbstractableOwner != null && targetAbstractableOwner.isImplOrTrait) {
+                if (target is RsTypeAlias) return false
+                if (path.path == null && path.typeQual == null) return false
+
                 val resolvedRaw = resolvePathRaw(path)
                 val mgr = target.manager
-                when (owner) {
+
+                when (targetAbstractableOwner) {
                     RsAbstractableOwner.Free, RsAbstractableOwner.Foreign ->
-                        return resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
-                    is RsAbstractableOwner.Impl -> if (owner.isInherent) {
-                        return resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
+                        resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
+                    is RsAbstractableOwner.Impl -> if (targetAbstractableOwner.isInherent) {
+                        resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
                     } else {
-                        if (resolvedRaw.size == 1 && mgr.areElementsEquivalent(resolvedRaw.single().element, target)) return true
+                        if (resolvedRaw.size == 1 && mgr.areElementsEquivalent(resolvedRaw.single().element, target)) {
+                            return true
+                        }
                         val superItem = target.superItem ?: return false
                         val canBeReferenceTo = resolvedRaw.any {
                             mgr.areElementsEquivalent(it.element, target) ||
                                 mgr.areElementsEquivalent(it.element, superItem)
                         }
-                        if (!canBeReferenceTo) return false
+                        if (canBeReferenceTo) {
+                            isReferenceToAssocItem(target)
+                        } else {
+                            false
+                        }
                     }
                     is RsAbstractableOwner.Trait -> {
                         val canBeReferenceTo = resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
-                        if (!canBeReferenceTo) return false
+                        if (canBeReferenceTo) {
+                            isReferenceToAssocItem(target)
+                        } else {
+                            false
+                        }
                     }
                 }
+            } else {
+                isReferenceToNonAssocItem(target)
+            }
+        } else {
+            if (targetAbstractableOwner != null && targetAbstractableOwner.isImplOrTrait) {
+                if (target is RsTypeAlias && pathParent is RsAssocTypeBinding) {
+                    return isReferenceToAssocItem(target)
+                }
+
+                if (pathParent is RsUseSpeck || path.path == null && path.typeQual == null) {
+                    return false
+                }
+
+                isReferenceToAssocItem(target)
+            } else {
+                isReferenceToNonAssocItem(target)
             }
         }
-        val resolved = resolve()
-        return target.manager.areElementsEquivalent(resolved, target)
     }
+
+    private fun isReferenceToAssocItem(target: PsiElement): Boolean {
+        val resolved = rawMultiResolve()
+        return resolved.any { target.manager.areElementsEquivalent(it.element, target) }
+    }
+
+    private fun isReferenceToNonAssocItem(target: PsiElement): Boolean {
+        val canBeReferenceTo = if (target is RsEnumVariant) {
+            // `<Foo as Bar>::Value` can't refer to a enum variant
+            element.typeQual?.traitRef == null
+        } else {
+            !element.isAssociatedItemOrEnumVariantPath
+        }
+        return if (canBeReferenceTo) {
+            val mgr = target.manager
+            resolvePathRaw(element, resolveAssocItems = false).any { mgr.areElementsEquivalent(it.element, target) }
+        } else {
+            false
+        }
+    }
+
+    private val RsPath.isAssociatedItemOrEnumVariantPath: Boolean
+        get() {
+            if (typeQual != null) return true
+
+            val qualifier = path ?: return false
+            val resolvedQualifier = qualifier.reference?.resolve() ?: return false
+            return resolvedQualifier !is RsMod
+        }
 
     override fun advancedResolve(): BoundElement<RsElement>? {
         val resultFromTypeInference = rawMultiResolveUsingInferenceCache()
@@ -178,7 +251,7 @@ class RsPathReferenceImpl(
             testAssert { root.parent !is RsPathExpr } // Goes through type inference cache
             val allPaths = collectNestedPathsFromRoot(root)
             if (allPaths.isEmpty()) return emptyList<RsPathResolveResult<RsElement>>()
-            val ctx = PathResolutionContext(root, isCompletion = false, null)
+            val ctx = PathResolutionContext(root, isCompletion = false, processAssocItems = true, null)
             if (allPaths.size == 1) {
                 val singlePath = allPaths.single()
                 return resolvePath(ctx, singlePath, ctx.classifyPath(singlePath))
@@ -216,7 +289,7 @@ class RsPathReferenceImpl(
             // Optimization: traversing a stub is much faster than PSI traversing
             val stub = path.greenStub
             return if (stub != null) {
-                getRootCachingElementStub(stub)
+                getRootCachingElementStub(stub)?.psi as RsElement?
             } else {
                 getRootCachingElementPsi(path)
             }
@@ -244,7 +317,7 @@ class RsPathReferenceImpl(
             return root
         }
 
-        private fun getRootCachingElementStub(path: RsPathStub): RsElement? {
+        private fun getRootCachingElementStub(path: RsPathStub): StubElement<*>? {
             var root: StubElement<*>? = null
             var element: StubElement<*> = path
             var elementType: IElementType = PATH
@@ -263,7 +336,7 @@ class RsPathReferenceImpl(
                 element = parent
                 elementType = parentType
             }
-            return root?.psi as RsElement?
+            return root
         }
 
         private fun isStepToParentAllowed(child: IElementType?, parent: IElementType): Boolean {
@@ -290,9 +363,60 @@ class RsPathReferenceImpl(
          */
         @VisibleForTesting
         fun collectNestedPathsFromRoot(root: RsElement): List<RsPath> {
-            return root.stubDescendantsOfTypeOrSelf<RsPath>().filter {
-                getRootCachingElement(it) == root
+            val stub = (root as? StubBasedPsiElementBase<*>)?.greenStub
+            return if (stub != null) {
+                collectNestedPathsFromRootStub(stub)
+            } else {
+                collectNestedPathsFromRootPsi(root)
             }
+        }
+
+        private fun collectNestedPathsFromRootPsi(root: RsElement): List<RsPath> {
+            testAssert { root.elementType in ALLOWED_CACHING_ROOTS }
+
+            val result = SmartList<RsPath>()
+            val queue = mutableListOf(root)
+
+            while (queue.isNotEmpty()) {
+                val nextElement = queue.removeLast()
+                if (nextElement is RsPath) {
+                    testAssert { getRootCachingElementPsi(nextElement) == root }
+                    result.add(nextElement)
+                }
+
+                val nextElementType = nextElement.elementType
+                nextElement.forEachChild { child ->
+                    if (child is RsElement && isStepToParentAllowed(child.elementType, nextElementType)) {
+                        queue += child
+                    }
+                }
+            }
+
+            return result
+        }
+
+        private fun collectNestedPathsFromRootStub(root: StubElement<*>): List<RsPath> {
+            testAssert { root.stubType in ALLOWED_CACHING_ROOTS }
+
+            val result = SmartList<RsPath>()
+            val queue = mutableListOf(root)
+
+            while (queue.isNotEmpty()) {
+                val nextStub = queue.removeLast()
+                if (nextStub is RsPathStub) {
+                    testAssert { getRootCachingElementStub(nextStub) == root }
+                    result.add(nextStub.psi)
+                }
+
+                val nextStubType = nextStub.stubType
+                for (child in nextStub.childrenStubs) {
+                    if (isStepToParentAllowed(child.stubType, nextStubType)) {
+                        queue += child
+                    }
+                }
+            }
+
+            return result
         }
 
         private fun resolveNeighborPathsInternal(path: RsPath): Any? {
@@ -313,9 +437,9 @@ class RsPathReferenceImpl(
     }
 }
 
-fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
+fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null, resolveAssocItems: Boolean = true): List<ScopeEntry> {
     return collectResolveVariantsAsScopeEntries(path.referenceName) {
-        processPathResolveVariants(lookup, path, false, it)
+        processPathResolveVariants(lookup, path, isCompletion = false, resolveAssocItems, it)
     }
 }
 
@@ -341,8 +465,7 @@ private fun filterResolveResults(
             1 -> result
             else -> {
                 val types = result.filter {
-                    val element = it.element as? RsNamedElement ?: return@filter false
-                    Namespace.Types in element.namespaces
+                    Namespace.Types in it.namespaces
                 }
                 types.ifEmpty { result }
             }
@@ -419,8 +542,8 @@ fun pathPsiSubst(
         }
     }
 
-    val typeSubst = hashMapOf<RsTypeParameter, Value<TypeValue, TypeDefault>>()
-    val constSubst = hashMapOf<RsConstParameter, Value<RsElement, RsExpr>>()
+    val typeSubst = linkedMapOf<RsTypeParameter, Value<TypeValue, TypeDefault>>()
+    val constSubst = linkedMapOf<RsConstParameter, Value<RsElement, RsExpr>>()
 
     for ((k, v) in typeOrConstSubst) {
         when (k) {

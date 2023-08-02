@@ -762,4 +762,30 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
             };
         }
     """)
+
+    fun `test pattern struct normalization`() = testExpr("""
+        trait Bound { type Item; }
+        struct S<T: Bound> { f: T::Item }
+        struct Inner;
+        impl Bound for Inner { type Item = X; }
+        struct X;
+
+        fn foo(a: S<Inner>) {
+            let S { f: b } = a;
+            b;
+        } //^ X
+    """)
+
+    fun `test pattern tuple struct normalization`() = testExpr("""
+        trait Bound { type Item; }
+        struct S<T: Bound>(T::Item);
+        struct Inner;
+        impl Bound for Inner { type Item = X; }
+        struct X;
+
+        fn foo(a: S<Inner>) {
+            let S(b) = a;
+            b;
+        } //^ X
+    """)
 }

@@ -39,11 +39,10 @@ class RsLookupElement(
  */
 data class RsLookupElementProperties(
     /**
-     * `true` if the lookup element is created by [RsImplTraitMemberCompletionProvider].
-     * This kind of completion suggests an entire trait member when typing in a trait impl.
-     * See tests in `RsImplTraitMemberCompletionProviderTest`.
+     * `true` if the lookup element is created by [RsImplTraitMemberCompletionProvider] or [RsFnMainCompletionProvider].
+     * This kind of completion suggests an entire item (e.g. trait member).
      */
-    val isImplMemberFullLineCompletion: Boolean = false,
+    val isFullLineCompletion: Boolean = false,
 
     /**
      * [KeywordKind.NOT_A_KEYWORD] if the lookup element is *not* a keyword.
@@ -238,6 +237,7 @@ data class RsLookupElementProperties(
         DEFAULT,
         MACRO,
         DEPRECATED,
+        FROM_UNRESOLVED_IMPORT,
         // Least priority
     }
 }

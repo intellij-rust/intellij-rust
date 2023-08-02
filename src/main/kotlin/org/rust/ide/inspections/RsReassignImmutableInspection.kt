@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ide.annotator.fixes.AddMutableFix
+import org.rust.ide.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
@@ -17,7 +17,7 @@ import org.rust.lang.utils.addToHolder
 class RsReassignImmutableInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 val left = expr.left.takeIf { it.isImmutable } ?: return
 

@@ -556,6 +556,275 @@ class RsAdjustmentTest : RsTestBase() {
         } //^ borrow(&mut [i32; 3]), unsize(&mut [i32])
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer`() = testExpr("""
+        fn main() {
+            let a: fn() = || {};
+                        //^ closureFnPointer(fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer with param`() = testExpr("""
+        fn main() {
+            let a: fn(i32) = |b: i32| {};
+                           //^ closureFnPointer(fn(i32))
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer with return value`() = testExpr("""
+        fn main() {
+            let a: fn() -> i32 = || { 0i32 };
+                               //^ closureFnPointer(fn() -> i32)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to function pointer with param and return value`() = testExpr("""
+        fn main() {
+            let a: fn(i32) -> i64 = |b: i32| { 0i64 };
+                                  //^ closureFnPointer(fn(i32) -> i64)
+        }
+
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test closure to unsafe function pointer`() = testExpr("""
+        fn main() {
+            let a: unsafe fn() = || {};
+                               //^ closureFnPointer(unsafe fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce closure to another closure`() = testExpr("""
+        fn main() {
+            let mut a = || {};
+            a = || {};
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce closure to function def`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let mut a = foo;
+            a = || {};
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test function def to function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+                        //^ reifyFnPointer(fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test enum variant to function pointer`() = testExpr("""
+        enum X {
+            A(i32)
+        }
+        fn main() {
+            let a: fn(i32) -> X = X::A;
+                                //^ reifyFnPointer(fn(i32) -> X)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test struct constructor to function pointer`() = testExpr("""
+        struct S(i32);
+
+        fn main() {
+            let a: fn(i32) -> S = S;
+                                //^ reifyFnPointer(fn(i32) -> S)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test function def to unsafe function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: unsafe fn() = foo;
+                               //^ reifyFnPointer(fn()), unsafeFnPointer(unsafe fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce function to another function`() = testExpr("""
+        fn foo() {}
+        fn bar() {}
+        fn main() {
+            let mut a = foo;
+            a = bar;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dont coerce function to closure`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let mut a = || {};
+            a = foo;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test function pointer to unsafe function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: unsafe fn() = a;
+                               //^ unsafeFnPointer(unsafe fn())
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no coercion needed for function pointer to function pointer`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let b: fn() = a;
+                        //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test don't coerce function pointer to function def`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let mut b = foo;
+            b = a;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test don't coerce function pointer to closure`() = testExpr("""
+        fn foo() {}
+        fn main() {
+            let a: fn() = foo;
+            let mut b = || {};
+            b = a;
+              //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic binop 1`() = testExpr("""
+        fn main() {
+            let a = 2 + 2;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic binop 2`() = testExpr("""
+        fn main() {
+            let a = 2 + 2;
+        }             //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in comparison binop 1`() = testExpr("""
+        fn main() {
+            let a = 2 < 2;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in comparison binop 2`() = testExpr("""
+        fn main() {
+            let a = 2 < 2;
+        }             //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in logical binop 1`() = testExpr("""
+        fn main() {
+            let a = true || false;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in logical binop 2`() = testExpr("""
+        fn main() {
+            let a = true || false;
+        }                 //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic assignment binop 1`() = testExpr("""
+        fn main() {
+            let mut a = 1;
+            a += 2;
+        } //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test built-in arithmetic assignment binop 2`() = testExpr("""
+        fn main() {
+            let mut a = 1;
+            a += 2;
+        }      //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic binop 1`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a + a;
+        }         //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic binop 2`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a + a;
+        }             //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded comparison binop 1`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a < a;
+        }         //^ borrow(&Wrapping<i32>)
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded comparison binop 2`() = testExpr("""
+        fn main() {
+            let a = std::num::Wrapping(1);
+            let b = a < a;
+        }             //^ borrow(&Wrapping<i32>)
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic assignment binop 1`() = testExpr("""
+        fn main() {
+            let mut a = std::num::Wrapping(1);
+            a += std::num::Wrapping(2);
+        } //^ borrow(&mut Wrapping<i32>)
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test overloaded arithmetic assignment binop 2`() = testExpr("""
+        fn main() {
+            let mut a = std::num::Wrapping(1);
+            let b = std::num::Wrapping(2);
+            a += b;
+        }      //^
+    """)
+
     private fun testExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedAdjustments) = findElementAndDataInEditor<RsExpr>()
@@ -589,9 +858,12 @@ class RsAdjustmentTest : RsTestBase() {
                     }
                 }
                 is Adjustment.BorrowReference -> "borrow(${it.target})"
-                is Adjustment.BorrowPointer -> "borrow(${it.target})"
+                is Adjustment.BorrowPointer -> "borrow(${it.target})" // FIXME: should be different from BorrowReference
                 is Adjustment.MutToConstPointer -> "mutToConstPtr(${it.target})"
                 is Adjustment.Unsize -> "unsize(${it.target})"
+                is Adjustment.ClosureFnPointer -> "closureFnPointer(${it.target})"
+                is Adjustment.ReifyFnPointer -> "reifyFnPointer(${it.target})"
+                is Adjustment.UnsafeFnPointer -> "unsafeFnPointer(${it.target})"
             }
         }
         assertEquals(expectedAdjustments.replace("), ", ")\n"), adjustmentsStr)

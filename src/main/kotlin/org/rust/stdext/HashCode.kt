@@ -81,8 +81,6 @@ import java.security.DigestOutputStream
     }
 }
 
-fun HashCode.getLeading64bits(): Long = toByteArray().getLeading64bits()
-
 @Throws(IOException::class)
 fun DataOutput.writeHashCode(hash: HashCode) =
     write(hash.toByteArray())

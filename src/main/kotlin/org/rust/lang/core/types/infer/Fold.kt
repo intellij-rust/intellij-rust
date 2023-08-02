@@ -12,7 +12,6 @@ import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_CT_INFER_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_CT_PARAMETER_VISITOR
-import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_CT_UNEVALUATED_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_RE_EARLY_BOUND_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_INFER_VISITOR
 import org.rust.lang.core.types.infer.HasTypeFlagVisitor.Companion.HAS_TY_PLACEHOLDER_VISITOR
@@ -176,6 +175,17 @@ fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteOrUnknown(subst: Substitutio
         }
     }).tryEvaluate()
 
+fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteAndNormalizeOrUnknown(
+    subst: Substitution,
+    ctx: RsInferenceContext,
+    recursionDepth: Int = 0
+): T {
+    val substituted = substituteOrUnknown(subst)
+    val (bound, obligations) = ctx.normalizeAssociatedTypesIn(substituted, recursionDepth)
+    obligations.forEach(ctx.fulfill::registerPredicateObligation)
+    return bound
+}
+
 fun <T> TypeFoldable<T>.containsTyOfClass(classes: List<Class<*>>): Boolean =
     visitWith(object : TypeVisitor {
         override fun visitTy(ty: Ty): Boolean =
@@ -235,7 +245,6 @@ private data class HasTypeFlagVisitor(val mask: TypeFlags) : TypeVisitor {
         val HAS_RE_EARLY_BOUND_VISITOR = HasTypeFlagVisitor(HAS_RE_EARLY_BOUND_MASK)
         val HAS_CT_INFER_VISITOR = HasTypeFlagVisitor(HAS_CT_INFER_MASK)
         val HAS_CT_PARAMETER_VISITOR = HasTypeFlagVisitor(HAS_CT_PARAMETER_MASK)
-        val HAS_CT_UNEVALUATED_VISITOR = HasTypeFlagVisitor(HAS_CT_UNEVALUATED_MASK)
         val HAS_TY_PLACEHOLDER_VISITOR = HasTypeFlagVisitor(HAS_TY_PLACEHOLDER_MASK)
 
         val NEEDS_INFER = HasTypeFlagVisitor(HAS_TY_INFER_MASK or HAS_CT_INFER_MASK)
@@ -270,9 +279,6 @@ val TypeFoldable<*>.hasReEarlyBounds
 
 val TypeFoldable<*>.hasCtInfer
     get(): Boolean = visitWith(HAS_CT_INFER_VISITOR)
-
-val TypeFoldable<*>.hasCtUnevaluated
-    get(): Boolean = visitWith(HAS_CT_UNEVALUATED_VISITOR)
 
 val TypeFoldable<*>.hasCtConstParameters
     get(): Boolean = visitWith(HAS_CT_PARAMETER_VISITOR)

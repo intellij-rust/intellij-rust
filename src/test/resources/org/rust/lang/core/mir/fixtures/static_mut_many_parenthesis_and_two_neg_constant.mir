@@ -1,0 +1,18 @@
+static mut BAZ: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:17: 1:20
+    let mut _1: bool;                    // in scope 0 at src/main.rs:1:23: 1:38
+
+    bb0: {
+        _1 = Eq(const -1_i32, const i32::MIN); // scope 0 at src/main.rs:1:23: 1:38
+        assert(!move _1, "attempt to negate `{}`, which would overflow", const -1_i32) -> [success: bb1, unwind: bb2]; // scope 0 at src/main.rs:1:23: 1:38
+    }
+
+    bb1: {
+        _0 = Neg(const -1_i32);          // scope 0 at src/main.rs:1:23: 1:38
+        return;                          // scope 0 at src/main.rs:1:1: 1:39
+    }
+
+    bb2 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:39
+    }
+}

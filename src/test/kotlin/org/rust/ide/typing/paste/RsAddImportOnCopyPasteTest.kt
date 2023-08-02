@@ -430,7 +430,7 @@ class RsAddImportOnCopyPasteTest : RsTestBase() {
         }
     """)
 
-    fun `test do not import private item`() = doCopyPasteTest("""
+    fun `test qualify private item`() = doCopyPasteTest("""
         //- lib.rs
         mod a {
             pub struct S;
@@ -455,7 +455,7 @@ class RsAddImportOnCopyPasteTest : RsTestBase() {
             fn foo2() -> S { S }
         }
 
-        fn foo2() -> S { S }
+        fn foo2() -> crate::b::S { crate::b::S }
     """)
 
     fun `test copy paste same location`() = doCopyPasteTest("""
@@ -607,6 +607,98 @@ class RsAddImportOnCopyPasteTest : RsTestBase() {
             use crate::foo::S;
 
             fn fun(_: S) {}
+        }
+    """)
+
+    fun `test qualify import if same name already exists in scope`() = doCopyPasteTest("""
+        //- lib.rs
+        mod foo {
+            pub struct S;
+
+            <selection>fn fun(_: S) {}</selection>
+        }
+
+        mod bar {
+            struct S;
+            /*caret*/
+        }
+    """, """
+        //- lib.rs
+        mod foo {
+            pub struct S;
+
+            fn fun(_: S) {}
+        }
+
+        mod bar {
+            struct S;
+            fn fun(_: crate::foo::S) {}
+        }
+    """)
+
+    fun `test import module`() = doCopyPasteTest("""
+        //- lib.rs
+        mod foo {
+            pub mod bar {
+                pub struct S;
+            }
+
+            <selection>fn fun(_: bar::S) {}</selection>
+        }
+
+        mod baz {
+            /*caret*/
+        }
+    """, """
+        //- lib.rs
+        mod foo {
+            pub mod bar {
+                pub struct S;
+            }
+
+            fn fun(_: bar::S) {}
+        }
+
+        mod baz {
+            use crate::foo::bar;
+
+            fn fun(_: bar::S) {}
+        }
+    """)
+
+    fun `test qualify path with original re-export`() = doCopyPasteTest("""
+        //- lib.rs
+        mod option {
+            pub use inner::*;
+            mod inner {
+                pub struct Option {}
+            }
+        }
+
+        mod mod1 {
+            use crate::option::Option;
+            <selection>fn func(_: Option) {}</selection>
+        }
+        mod mod2 {
+            struct Option {}
+            /*caret*/
+        }
+    """, """
+        //- lib.rs
+        mod option {
+            pub use inner::*;
+            mod inner {
+                pub struct Option {}
+            }
+        }
+
+        mod mod1 {
+            use crate::option::Option;
+            fn func(_: Option) {}
+        }
+        mod mod2 {
+            struct Option {}
+            fn func(_: crate::option::Option) {}
         }
     """)
 

@@ -22,9 +22,8 @@
               value="#[test]&#10;fn $NAME$() {&#10;    $END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
-            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_EXPRESSION" value="false"/>
             <option name="RUST_ITEM" value="false"/>
-            <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_MOD" value="true"/>
         </context>
     </template>
@@ -34,9 +33,8 @@
               value="#[bench]&#10;fn $NAME$(b: &amp;mut test::Bencher) {&#10;    b.iter(||);$END$&#10;}">
         <variable name="NAME" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
-            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_EXPRESSION" value="false"/>
             <option name="RUST_ITEM" value="false"/>
-            <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_MOD" value="true"/>
         </context>
     </template>
@@ -45,9 +43,8 @@
     <template name="tmod" description="test module" toReformat="false" toShortenFQNames="true"
               value="#[cfg(test)]&#10;mod tests {&#10;    use super::*;&#10;    &#10;    $END$&#10;}">
         <context>
-            <option name="RUST_STATEMENT" value="false"/>
+            <option name="RUST_EXPRESSION" value="false"/>
             <option name="RUST_ITEM" value="false"/>
-            <option name="RUST_STATEMENT" value="false"/>
             <option name="RUST_MOD" value="true"/>
         </context>
     </template>

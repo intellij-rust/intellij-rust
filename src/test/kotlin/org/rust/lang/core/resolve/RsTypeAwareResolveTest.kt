@@ -830,7 +830,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }              //^
     """)
 
-    fun `test impl for alias`() = checkByCode("""
+    fun `test impl for type alias`() = checkByCode("""
         struct X;
         type Y = X;
         impl Y { fn foo(&self) {} }
@@ -838,6 +838,42 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         fn main() {
             X.foo();
         }   //^
+    """)
+
+    fun `test impl for use alias`() = checkByCode("""
+        mod foo {
+            pub struct X;
+        }
+        use foo::X as Y;
+        impl Y { fn foo(&self) {} }
+                  //X
+        fn main() {
+            foo::X.foo();
+        }        //^
+    """)
+
+    fun `test impl for chain of type aliases`() = checkByCode("""
+        struct X;
+        type Y = X;
+        type Z = Y;
+        impl Z { fn foo(&self) {} }
+                  //X
+        fn main() {
+            X.foo();
+        }   //^
+    """)
+
+    fun `test impl for chain of type use aliases`() = checkByCode("""
+        mod foo {
+            pub struct X;
+        }
+        use foo::X as Y;
+        use Y as Z;
+        impl Z { fn foo(&self) {} }
+                  //X
+        fn main() {
+            foo::X.foo();
+        }        //^
     """)
 
     fun `test impl for alias with multiple aliases with the same name`() = checkByCode("""

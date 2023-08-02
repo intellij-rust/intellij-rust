@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsArgumentNamingInspection
 
@@ -21,6 +22,7 @@ class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInsp
         fn fn_par(ParFoo: u32) {}
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test function arguments fix`() = checkFixByText("Rename to `arg_baz`", """
         fn test (<warning descr="Argument `Arg__Baz_` should have a snake case name such as `arg_baz`">Arg__<caret>Baz_</warning>: u32) {
             println!("{}", Arg__Baz_);
@@ -49,6 +51,7 @@ class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInsp
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test method arguments fix`() = checkFixByText("Rename to `m_arg`", """
         struct Foo;
         impl Foo {

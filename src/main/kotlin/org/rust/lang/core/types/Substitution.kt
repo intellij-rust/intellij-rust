@@ -18,7 +18,6 @@ import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.stdext.newHashMapWithExpectedSize
 import org.rust.stdext.zipValues
 
@@ -48,9 +47,6 @@ open class Substitution(
 
     operator fun get(key: CtConstParameter): Const? = constSubst[key]
     operator fun get(psi: RsConstParameter): Const? = constSubst[CtConstParameter(psi)]
-
-    fun typeByName(name: String): Ty =
-        typeSubst.entries.find { it.key.toString() == name }?.value ?: TyUnknown
 
     fun typeParameterByName(name: String): TyTypeParameter? =
         typeSubst.keys.find { it.toString() == name }
@@ -114,6 +110,7 @@ private object EmptySubstitution : Substitution()
 val emptySubstitution: Substitution = EmptySubstitution
 
 fun Map<TyTypeParameter, Ty>.toTypeSubst(): Substitution = Substitution(typeSubst = this)
+fun Map<CtConstParameter, Const>.toConstSubst(): Substitution = Substitution(constSubst = this)
 
 private fun <K, V> mergeMaps(map1: Map<K, V>, map2: Map<K, V>): Map<K, V> =
     when {

@@ -6,8 +6,6 @@
 package org.rust.cargo.runconfig.test
 
 import com.intellij.psi.PsiElement
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsMod

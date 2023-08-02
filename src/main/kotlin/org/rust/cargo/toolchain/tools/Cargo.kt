@@ -21,6 +21,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,25 +31,30 @@ import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.bsp.service.BspConnectionService
+import org.rust.RsBundle
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoPackage
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoTargets
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.toolchain.RsToolchainBase
+import org.rust.cargo.toolchain.RsToolchainBase.Companion.ORIGINAL_RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_WRAPPER
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildMessages
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
@@ -75,12 +81,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
 fun RsToolchainBase.cargo(): Cargo = Cargo(this)
-
-// BACKCOMPAT: 2022.2. Added not to break binary compatibility with EduTools plugin
-@Suppress("DEPRECATION")
-fun RsToolchain.cargo(): Cargo = (this as RsToolchainBase).cargo()
 
 fun RsToolchainBase.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
     val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)
@@ -105,9 +106,16 @@ class Cargo(
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
-            fun from(line: String): BinaryCrate {
-                val name = line.substringBefore(' ')
-                val rawVersion = line.substringAfter(' ').removePrefix("v").removeSuffix(":")
+            // Examples:
+            // - cargo-expand v1.0.16
+            // - evcxr_repl v0.14.0-alpha.11
+            // - wasm-pack v0.10.3 (/home/josh/dev/wasm-pack)
+            private val VERSION_LINE: Regex = """(?<name>[\w-]+) v(?<version>\d+\.\d+\.\d+(-[\w.]+)?).*""".toRegex()
+
+            fun from(line: String): BinaryCrate? {
+                val result = VERSION_LINE.matchEntire(line) ?: return null
+                val name = result.groups["name"]?.value ?: return null
+                val rawVersion = result.groups["version"]?.value ?: return null
                 return BinaryCrate(name, SemVer.parseFromText(rawVersion))
             }
         }
@@ -118,13 +126,24 @@ class Cargo(
             .execute(toolchain.executionTimeoutInMilliseconds)
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
-            ?.map { BinaryCrate.from(it) }
+            ?.mapNotNull { BinaryCrate.from(it) }
             .orEmpty()
 
     fun installBinaryCrate(project: Project, crateName: String) {
         val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
         val commandLine = CargoCommandLine.forProject(cargoProject, "install", listOf("--force", crateName))
         commandLine.run(cargoProject, "Install $crateName", saveConfiguration = false)
+    }
+
+    fun addDependency(project: Project, crateName: String, features: List<String> = emptyList()) {
+        val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
+        val args = mutableListOf(crateName)
+        if (features.isNotEmpty()) {
+            args.add("--features")
+            args.add(features.joinToString(","))
+        }
+        val commandLine = CargoCommandLine.forProject(cargoProject, "add", args)
+        commandLine.run(cargoProject, "Add dependency $crateName", saveConfiguration = false)
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
@@ -147,28 +166,26 @@ class Cargo(
     fun fullProjectDescription(
         owner: Project,
         projectDirectory: Path,
-        buildTarget: String? = null,
+        buildTargets: List<String> = emptyList(),
         rustcVersion: RustcVersion?,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
-
         //TODO: replace fetchBuildScriptsInfo with something more bsp specific
-
         val useBSP: Boolean = owner.service<BspConnectionService>().hasBspServer()
         if (useBSP) {
             return try {
                 //TODO make returned status depend on bsp outcome
-                Ok(ProjectDescription(fetchViaBSP(owner, projectDirectory, buildTarget), OK))
+                Ok(ProjectDescription(fetchViaBSP(owner, projectDirectory, buildTargets), OK))
             } catch (e: JacksonException) {
                 Err(RsDeserializationException(e))
             }
         }
 
-        val rawData =
-            fetchMetadata(owner, projectDirectory, buildTarget, listener = listenerProvider(CargoCallType.METADATA))
-                .unwrapOrElse { return Err(it) }
+        val rawData = fetchMetadata(owner, projectDirectory, buildTargets, listener = listenerProvider(CargoCallType.METADATA))
+            .unwrapOrElse { return Err(it) }
+
         val buildScriptsInfo = if (isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) {
-                val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
+            val listener = listenerProvider(CargoCallType.BUILD_SCRIPT_CHECK)
             fetchBuildScriptsInfo(owner, projectDirectory, rustcVersion, listener)
         } else {
             BuildMessages.DEFAULT
@@ -184,18 +201,25 @@ class Cargo(
     fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
-        buildTarget: String?,
+        buildTargets: List<String>,
         toolchainOverride: String? = null,
-        listener: ProcessListener? = null
+        environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
+        listener: ProcessListener?,
     ): RsResult<CargoMetadata.Project, RsProcessExecutionOrDeserializationException> {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        if (buildTarget != null) {
+        for (it in buildTargets) {
+            // only include dependencies from the target platforms
             additionalArgs.add("--filter-platform")
-            additionalArgs.add(buildTarget)
+            additionalArgs.add(it)
         }
 
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs, toolchain = toolchainOverride)
-            .execute(owner, listener = listener)
+        val json = CargoCommandLine(
+            command = "metadata",
+            projectDirectory,
+            additionalArgs,
+            toolchain = toolchainOverride,
+            environmentVariables = environmentVariables
+        ).execute(owner, listener = listener)
             .unwrapOrElse { return Err(it) }
             .stdout
             .dropWhile { it != '{' }
@@ -224,6 +248,7 @@ class Cargo(
         projectDirectory: Path,
         dstPath: Path,
         toolchainOverride: String? = null,
+        environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
         listener: ProcessListener? = null
     ): RsProcessResult<Unit> {
         val additionalArgs = listOf("--respect-source-config", dstPath.toString())
@@ -231,7 +256,8 @@ class Cargo(
             "vendor",
             projectDirectory,
             additionalArgs,
-            toolchain = toolchainOverride
+            toolchain = toolchainOverride,
+            environmentVariables = environmentVariables,
         )
         commandLine.execute(owner, listener = listener).unwrapOrElse { return Err(it) }
         return Ok(Unit)
@@ -275,8 +301,6 @@ class Cargo(
             return Err(RsDeserializationException(e))
         }
 
-        val buildTargetNode = tree.at("/build/target")
-        var buildTarget = if (buildTargetNode.isMissingNode) null else buildTargetNode.asText()
         val env = tree.at("/env").fields().asSequence().toList().mapNotNull { field ->
             // Value can be either string or object with additional `forced` and `relative` params.
             // https://doc.rust-lang.org/cargo/reference/config.html#env
@@ -295,13 +319,24 @@ class Cargo(
             }
         }.toMap()
 
-        // If build target ends with `.json`, it's a custom toolchain.
-        // To make it work in all cases (for example, fetching stdlib metadata for the same build target),
-        // we save the corresponding path as absolute one not to depend on working directory
-        if (buildTarget != null && buildTarget.endsWith(".json")) {
-            buildTarget = projectDirectory.resolve(buildTarget).toAbsolutePath().systemIndependentPath
+        val buildTargets = getBuildTargets(tree).map {
+            // If a build target ends with `.json`, it's a custom toolchain.
+            // To make it work in all cases (for example, fetching stdlib metadata for the same build target),
+            // we save the corresponding path as absolute one not to depend on working directory
+            if (it.endsWith(".json")) {
+                projectDirectory.resolve(it).toAbsolutePath().systemIndependentPath
+            } else {
+                it
+            }
         }
-        return Ok(CargoConfig(buildTarget, env))
+        return Ok(CargoConfig(buildTargets, env))
+    }
+
+    private fun getBuildTargets(tree: JsonNode): List<String> {
+        val buildTargetNode = tree.at("/build/target")
+        if (buildTargetNode.isTextual) return listOf(buildTargetNode.asText())
+        if (buildTargetNode.isArray) return buildTargetNode.map { it.asText() }
+        return emptyList()
     }
 
     private fun fetchBuildScriptsInfo(
@@ -319,7 +354,17 @@ class Cargo(
         val envMap = mutableMapOf<String, String>()
         if (useKeepGoing) {
             additionalArgs += listOf("-Z", "unstable-options", "--keep-going")
+            val originalRustcBootstrapValue = System.getenv(RUSTC_BOOTSTRAP)
             envMap += RUSTC_BOOTSTRAP to "1"
+            // Actually, we need to pass `RUSTC_BOOTSTRAP=1` environment variable here only for `cargo`
+            // and don't want to propagate it to `rustc` call because it may produce different results.
+            // So we use `INTELLIJ_ORIGINAL_RUSTC_BOOTSTRAP` environment variable to keep original value
+            // of `RUSTC_BOOTSTRAP` and restore it (if needed) for `rustc` call in native-helper binary
+            //
+            // See https://github.com/intellij-rust/intellij-rust/issues/9700
+            if (originalRustcBootstrapValue != null) {
+                envMap += ORIGINAL_RUSTC_BOOTSTRAP to originalRustcBootstrapValue
+            }
         }
         val nativeHelper = RsPathManager.nativeHelper(toolchain is RsWslToolchain)
         if (nativeHelper != null && USE_BUILD_SCRIPT_WRAPPER.asBoolean()) {
@@ -407,8 +452,7 @@ class Cargo(
         CargoCommandLine("init", path, args).execute(project, owner).unwrapOrElse { return Err(it) }
         fullyRefreshDirectory(directory)
 
-        val manifest =
-            checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
+        val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val fileName = if (createBinary) MAIN_RS_FILE else LIB_RS_FILE
         val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
         return Ok(GeneratedFilesHolder(manifest, sourceFiles))
@@ -419,7 +463,8 @@ class Cargo(
         owner: Disposable,
         directory: VirtualFile,
         name: String,
-        templateUrl: String
+        templateUrl: String,
+        vcs: String? = null
     ): RsProcessResult<GeneratedFilesHolder> {
         val path = directory.pathAsPath
         val args = mutableListOf(
@@ -429,13 +474,16 @@ class Cargo(
             "--force" // enforce cargo-generate not to do underscores to hyphens name conversion
         )
 
+        vcs?.let {
+            args.addAll(listOf("--vcs", vcs))
+        }
+
         CargoCommandLine("generate", path, args)
             .execute(project, owner)
             .unwrapOrElse { return Err(it) }
         fullyRefreshDirectory(directory)
 
-        val manifest =
-            checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
+        val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val sourceFiles = listOf("main", "lib").mapNotNull { directory.findFileByRelativePath("src/${it}.rs") }
         return Ok(GeneratedFilesHolder(manifest, sourceFiles))
     }
@@ -466,9 +514,15 @@ class Cargo(
                     }
                     addAll(ParametersListUtil.parse(args.extraArguments))
                 }
-                CargoCommandLine.forTarget(args.target, checkCommand, arguments, usePackageOption = false)
+                CargoCommandLine.forTarget(
+                    args.target,
+                    checkCommand,
+                    arguments,
+                    args.channel,
+                    EnvironmentVariablesData.create(args.envs, true),
+                    usePackageOption = false
+                )
             }
-
             is CargoCheckArgs.FullWorkspace -> {
                 val arguments = buildList<String> {
                     add("--message-format=json")
@@ -478,7 +532,13 @@ class Cargo(
                     }
                     addAll(ParametersListUtil.parse(args.extraArguments))
                 }
-                CargoCommandLine(checkCommand, args.cargoProjectDirectory, arguments)
+                CargoCommandLine(
+                    checkCommand,
+                    args.cargoProjectDirectory,
+                    arguments,
+                    channel = args.channel,
+                    environmentVariables = EnvironmentVariablesData.create(args.envs, true)
+                )
             }
         }
 
@@ -491,13 +551,9 @@ class Cargo(
     fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine): GeneralCommandLine =
         toGeneralCommandLine(project, commandLine, colors = false)
 
-    private fun toGeneralCommandLine(
-        project: Project,
-        commandLine: CargoCommandLine,
-        colors: Boolean
-    ): GeneralCommandLine =
+    private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
         with(commandLine.patchArgs(project, colors)) {
-            val parameters = buildList<String> {
+            val parameters = buildList {
                 when {
                     channel != RustChannel.DEFAULT -> add("+$channel")
                     toolchain != null -> add("+$toolchain")
@@ -523,7 +579,7 @@ class Cargo(
                 emulateTerminal,
                 // TODO: always pass `withSudo` when `com.intellij.execution.process.ElevationService` supports error stream redirection
                 // https://github.com/intellij-rust/intellij-rust/issues/7320
-                if (project.isBuildToolWindowAvailable) withSudo else false,
+                if (isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) withSudo else false,
                 http = http
             ).withEnvironment("RUSTC", rustcExecutable)
         }
@@ -537,10 +593,7 @@ class Cargo(
         return toGeneralCommandLine(project, copy(emulateTerminal = false)).execute(owner, stdIn, listener = listener)
     }
 
-    fun installCargoGenerate(
-        owner: Disposable,
-        listener: ProcessListener
-    ): RsResult<Unit, RsProcessExecutionException.Start> {
+    fun installCargoGenerate(owner: Disposable, listener: ProcessListener): RsResult<Unit, RsProcessExecutionException.Start> {
         return createBaseCommandLine("install", "cargo-generate")
             .execute(owner, listener = listener)
             .ignoreExitCode()
@@ -586,20 +639,7 @@ class Cargo(
         const val WRAPPER_NAME: String = "xargo"
 
         private val FEATURES_ACCEPTING_COMMANDS: List<String> = listOf(
-            "bench",
-            "build",
-            "check",
-            "doc",
-            "fix",
-            "run",
-            "rustc",
-            "rustdoc",
-            "test",
-            "metadata",
-            "tree",
-            "install",
-            "package",
-            "publish"
+            "bench", "build", "check", "doc", "fix", "run", "rustc", "rustdoc", "test", "metadata", "tree", "install", "package", "publish"
         )
 
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
@@ -614,7 +654,7 @@ class Cargo(
             val (pre, post) = splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
-            if (command == "test") {
+            if (command in listOf("test", "bench")) {
                 if (allFeatures && !pre.contains("--all-features")) {
                     pre.add("--all-features")
                 }
@@ -655,49 +695,49 @@ class Cargo(
         }
 
         fun checkNeedInstallGrcov(project: Project): Boolean {
-            val crateName = "grcov"
+            val crateName = RsBundle.message("notification.content.grcov")
             val minVersion = "0.7.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least4", crateName, minVersion),
                 minVersion
             )
         }
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
-            val crateName = "cargo-expand"
+            val crateName = RsBundle.message("notification.content.cargo.expand")
             val minVersion = "1.0.0".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least3", crateName, minVersion),
                 minVersion
             )
         }
 
         fun checkNeedInstallEvcxr(project: Project): Boolean {
             val crateName = "evcxr_repl"
-            val minVersion = "0.10.0".parseSemVer()
+            val minVersion = "0.14.2".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least2", crateName, minVersion),
                 minVersion
             )
         }
 
         fun checkNeedInstallWasmPack(project: Project): Boolean {
-            val crateName = "wasm-pack"
+            val crateName = RsBundle.message("notification.content.wasm.pack")
             val minVersion = "0.9.1".parseSemVer()
             return checkNeedInstallBinaryCrate(
                 project,
                 crateName,
                 NotificationType.ERROR,
-                "Need at least $crateName $minVersion",
+                RsBundle.message("notification.content.need.at.least", crateName, minVersion),
                 minVersion
             )
         }
@@ -706,20 +746,20 @@ class Cargo(
             project: Project,
             crateName: String,
             notificationType: NotificationType,
-            message: String? = null,
+            @NlsContexts.NotificationContent message: String? = null,
             minVersion: SemVer? = null
         ): Boolean {
             val cargo = project.toolchain?.cargo() ?: return false
             val isNotInstalled = { cargo.checkBinaryCrateIsNotInstalled(crateName, minVersion) }
             val needInstall = if (isDispatchThread) {
-                project.computeWithCancelableProgress("Checking if $crateName is installed...", isNotInstalled)
+                project.computeWithCancelableProgress(RsBundle.message("progress.title.checking.if.installed", crateName), isNotInstalled)
             } else {
                 isNotInstalled()
             }
 
             if (needInstall) {
                 project.showBalloon(
-                    "<code>$crateName</code> is not installed",
+                    RsBundle.message("notification.title.code.code.not.installed", crateName),
                     message ?: "",
                     notificationType,
                     InstallBinaryCrateAction(crateName)
@@ -736,39 +776,49 @@ sealed class CargoCheckArgs {
     abstract val linter: ExternalLinter
     abstract val cargoProjectDirectory: Path
     abstract val extraArguments: String
+    abstract val channel: RustChannel
+    abstract val envs: Map<String, String>
 
     data class SpecificTarget(
         override val linter: ExternalLinter,
         override val cargoProjectDirectory: Path,
         val target: CargoWorkspace.Target,
-        override val extraArguments: String
+        override val extraArguments: String,
+        override val channel: RustChannel,
+        override val envs: Map<String, String>
     ) : CargoCheckArgs()
 
     data class FullWorkspace(
         override val linter: ExternalLinter,
         override val cargoProjectDirectory: Path,
         val allTargets: Boolean,
-        override val extraArguments: String
+        override val extraArguments: String,
+        override val channel: RustChannel,
+        override val envs: Map<String, String>
     ) : CargoCheckArgs()
 
     companion object {
         fun forTarget(project: Project, target: CargoWorkspace.Target): CargoCheckArgs {
-            val settings = project.rustSettings
+            val settings = project.externalLinterSettings
             return SpecificTarget(
-                settings.externalLinter,
+                settings.tool,
                 target.pkg.workspace.contentRoot,
                 target,
-                settings.externalLinterArguments
+                settings.additionalArguments,
+                settings.channel,
+                settings.envs
             )
         }
 
         fun forCargoProject(cargoProject: CargoProject): CargoCheckArgs {
-            val settings = cargoProject.project.rustSettings
+            val settings = cargoProject.project.externalLinterSettings
             return FullWorkspace(
-                settings.externalLinter,
+                settings.tool,
                 cargoProject.workingDirectory,
-                settings.compileAllTargets,
-                settings.externalLinterArguments
+                cargoProject.project.rustSettings.compileAllTargets,
+                settings.additionalArguments,
+                settings.channel,
+                settings.envs
             )
         }
     }

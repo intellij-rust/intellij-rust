@@ -5,5 +5,4 @@
 
 package org.rust.ide.inspections.typecheck
 
-
 class ConvertToRefTyFixTest : ConvertToTyUsingTraitMethodFixTestBase(false, "AsRef", "as_ref")

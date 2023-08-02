@@ -14,7 +14,6 @@ import com.intellij.psi.StubBasedPsiElement
 import org.jetbrains.annotations.VisibleForTesting
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
@@ -28,12 +27,34 @@ import org.rust.lang.core.macros.errors.ResolveMacroWithoutPsiError
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
+import org.rust.lang.core.resolve2.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.RsResult
+import org.rust.stdext.enumSetOf
+import java.util.*
+
+fun processItemDeclarationsInMod(
+    scope: RsMod,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor,
+    withPrivateImports: Boolean
+): Boolean {
+    val ipm = if (withPrivateImports) {
+        ItemProcessingMode.WITH_PRIVATE_IMPORTS
+    } else {
+        WITHOUT_PRIVATE_IMPORTS
+    }
+    return processItemDeclarations(scope, ns, processor, ipm)
+}
+
+enum class ItemProcessingMode(val withExternCrates: Boolean) {
+    WITHOUT_PRIVATE_IMPORTS(false),
+    WITH_PRIVATE_IMPORTS(false),
+    WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true),
+}
 
 fun processItemDeclarations(
     scope: RsItemsOwner,
@@ -53,10 +74,8 @@ fun processItemDeclarationsUsingModInfo(
     ipm: ItemProcessingMode
 ): Boolean {
     val (_, defMap, modData) = info
+    val elements = hashMapOf<RsNamedElement, Pair<EnumSet<Namespace>, VisibilityFilter>>()
     for ((name, perNs) in modData.visibleItems.entriesWithNames(processor.names)) {
-        // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
-        // Also we need to distinguish unit struct and e.g. mod and function with same name in one module
-        val elements = hashSetOf<RsNamedElement>()
         for ((visItems, namespace) in perNs.getVisItemsByNamespace()) {
             if (namespace !in ns) continue
             for (visItem in visItems) {
@@ -64,11 +83,17 @@ fun processItemDeclarationsUsingModInfo(
                 if (namespace == Namespace.Types && visItem.visibility.isInvisible && name in defMap.externPrelude) continue
                 val visibilityFilter = visItem.visibility.createFilter()
                 for (element in visItem.toPsi(info, namespace)) {
-                    if (!elements.add(element)) continue
-                    if (processor.process(name, element, visibilityFilter)) return true
+                    elements.getOrPut(element) { enumSetOf<Namespace>() to visibilityFilter }
+                        .first
+                        .add(namespace)
                 }
             }
         }
+        for ((element, namespaceAndFilter) in elements) {
+            val (namespaces, visibilityFilter) = namespaceAndFilter
+            if (processor.process(name, element, namespaces, visibilityFilter)) return true
+        }
+        elements.clear()
     }
 
     if (processor.names == null && Namespace.Types in ns) {
@@ -76,7 +101,7 @@ fun processItemDeclarationsUsingModInfo(
             val trait = VisItem(traitPath, traitVisibility)
             val visibilityFilter = traitVisibility.createFilter()
             for (traitPsi in trait.toPsi(info, Namespace.Types)) {
-                if (processor.process("_", traitPsi, visibilityFilter)) return true
+                if (processor.process("_", traitPsi, TYPES, visibilityFilter)) return true
             }
         }
     }
@@ -87,7 +112,7 @@ fun processItemDeclarationsUsingModInfo(
             if (existingItemInScope != null && existingItemInScope.types.any { !it.visibility.isInvisible }) continue
 
             val externCrateRoot = externCrateDefMap.rootAsRsMod(info.project) ?: continue
-            processor.process(name, externCrateRoot) && return true
+            processor.process(name, TYPES, externCrateRoot) && return true
         }
     }
 
@@ -135,11 +160,13 @@ private fun ModData.processMacros(
             val visItem = VisItem(macroInfo.path, Visibility.Public)
             val macroContainingScope = visItem.containingMod.toScope(info).singleOrNull() ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingScope, info) ?: continue
-            if (processor.process(name, macro)) return true
+            if (processor.process(name, MACROS, macro)) return true
         }
 
-        info.defMap.prelude?.let { prelude ->
-            if (prelude.processScopedMacros(processor, info)) return true
+        if (!isHanging) {
+            info.defMap.prelude?.let { prelude ->
+                if (prelude.processScopedMacros(processor, info)) return true
+            }
         }
     }
 
@@ -156,7 +183,7 @@ private fun ModData.processScopedMacros(
             if (!filter(name)) continue
             val macro = visItem.scopedMacroToPsi(info) ?: continue
             val visibilityFilter = visItem.visibility.createFilter()
-            if (processor.process(name, macro, visibilityFilter)) return true
+            if (processor.process(name, macro, MACROS, visibilityFilter)) return true
         }
     }
     return false
@@ -262,16 +289,23 @@ fun RsModInfo.getMacroIndex(element: PsiElement, elementCrate: Crate): MacroInde
     if (element is RsMetaItem) {
         val owner = element.owner as? RsAttrProcMacroOwner ?: return null
         val ownerIndex = getMacroIndex(owner, elementCrate) ?: return null
-        val attr = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
+        val attrs = ProcMacroAttribute.getProcMacroAttributeWithoutResolve(
             owner,
             explicitCrate = crate,
             withDerives = true
         )
-        return when (attr) {
-            is ProcMacroAttribute.Derive -> ownerIndex.append(attr.derives.indexOf(element))
-            is ProcMacroAttribute.Attr -> ownerIndex
-            is ProcMacroAttribute.None -> return null
+        for (attr in attrs) {
+            when (attr) {
+                is ProcMacroAttribute.Derive -> {
+                    val indexIfDerive = attr.derives.indexOf(element)
+                    return if (indexIfDerive != -1) ownerIndex.append(indexIfDerive) else null
+                }
+                is ProcMacroAttribute.Attr -> if (attr.attr == element) {
+                    return ownerIndex
+                }
+            }
         }
+        return null
     }
 
     for ((current, parent) in element.ancestorPairs) {

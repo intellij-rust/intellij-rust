@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pass
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.RefactoringBundle
@@ -51,7 +52,7 @@ fun showOccurrencesChooser(
     }
 }
 
-fun showErrorMessageForExtractParameter(project: Project, editor: Editor, message: String) {
+fun showErrorMessageForExtractParameter(project: Project, editor: Editor, @NlsContexts.DialogMessage message: String) {
     val title = RefactoringBundle.message("introduce.parameter.title")
     val helpId = "refactoring.extractParameter"
     CommonRefactoringUtil.showErrorHint(project, editor, message, title, helpId)

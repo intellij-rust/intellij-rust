@@ -1,0 +1,39 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:2:11: 2:11
+    let mut _1: S;                       // in scope 0 at src/main.rs:3:9: 3:14
+    let mut _3: &mut S;                  // in scope 0 at src/main.rs:4:17: 4:23
+    let mut _4: &mut S;                  // in scope 0 at src/main.rs:4:17: 4:23
+    scope 1 {
+        debug a => _1;                   // in scope 1 at src/main.rs:3:9: 3:14
+        let _2: ();                      // in scope 1 at src/main.rs:4:9: 4:10
+        scope 2 {
+            debug b => _2;               // in scope 2 at src/main.rs:4:9: 4:10
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:3:9: 3:14
+        _1 = S;                          // scope 0 at src/main.rs:3:17: 3:18
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:3:9: 3:14
+        StorageLive(_2);                 // scope 1 at src/main.rs:4:9: 4:10
+        StorageLive(_3);                 // scope 1 at src/main.rs:4:17: 4:23
+        StorageLive(_4);                 // scope 1 at src/main.rs:4:17: 4:23
+        _4 = &mut _1;                    // scope 1 at src/main.rs:4:17: 4:23
+        _3 = &mut (*_4);                 // scope 1 at src/main.rs:4:17: 4:23
+        _2 = foo(move _3) -> [return: bb1, unwind: bb2]; // scope 1 at src/main.rs:4:13: 4:24
+    }
+
+    bb1: {
+        StorageDead(_3);                 // scope 1 at src/main.rs:4:23: 4:24
+        FakeRead(ForLet(None), _2);      // scope 1 at src/main.rs:4:9: 4:10
+        StorageDead(_4);                 // scope 1 at src/main.rs:4:24: 4:25
+        _0 = const ();                   // scope 0 at src/main.rs:2:11: 5:2
+        StorageDead(_2);                 // scope 1 at src/main.rs:5:1: 5:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:5:1: 5:2
+        return;                          // scope 0 at src/main.rs:5:2: 5:2
+    }
+
+    bb2 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:2:1: 5:2
+    }
+}

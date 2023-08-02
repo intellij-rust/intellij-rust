@@ -16,6 +16,9 @@ import org.rust.lang.core.dfa.borrowck.BorrowCheckContext
 import org.rust.lang.core.dfa.borrowck.BorrowCheckResult
 import org.rust.lang.core.dfa.liveness.Liveness
 import org.rust.lang.core.dfa.liveness.LivenessContext
+import org.rust.lang.core.mir.borrowck.MirBorrowCheckResult
+import org.rust.lang.core.mir.borrowck.doMirBorrowCheck
+import org.rust.lang.core.mir.mirBody
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -123,6 +126,9 @@ val RsPatField.type: Ty
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
 
+val RsExpr.adjustedType: Ty
+    get() = adjustments.lastOrNull()?.target ?: type
+
 val RsStructLiteralField.type: Ty
     get() = (if (isShorthand) resolveToBinding()?.type else expr?.type) ?: TyUnknown
 
@@ -182,6 +188,16 @@ val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
         val bccx = BorrowCheckContext.buildFor(this)
         val borrowCheckResult = bccx?.check()
         createCachedResult(borrowCheckResult)
+    }
+
+private val MIR_BORROW_CHECKER_KEY: Key<CachedValue<MirBorrowCheckResult>> = Key.create("MIR_BORROW_CHECKER_KEY")
+
+val RsInferenceContextOwner.mirBorrowCheckResult: MirBorrowCheckResult?
+    get() = CachedValuesManager.getCachedValue(this, MIR_BORROW_CHECKER_KEY) {
+        if (!existsAfterExpansion) return@getCachedValue createCachedResult(null)
+        val mirBody = mirBody ?: return@getCachedValue createCachedResult(null)
+        val result = doMirBorrowCheck(mirBody)
+        createCachedResult(result)
     }
 
 fun RsNamedElement?.asTy(): Ty =

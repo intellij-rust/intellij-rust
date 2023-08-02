@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.colors.RsColor
 
 class RsUnsafeExpressionHighlightingAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
@@ -86,6 +87,7 @@ class RsUnsafeExpressionHighlightingAnnotatorTest : RsAnnotatorTestBase(RsUnsafe
     """)
 
     @BatchMode
+    @SkipTestWrapping
     fun `test no highlighting in batch mode`() = checkHighlighting("""
         struct S;
         impl S {

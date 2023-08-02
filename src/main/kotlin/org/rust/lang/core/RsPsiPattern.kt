@@ -136,7 +136,7 @@ object RsPsiPattern {
 
     val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()
 
-    val simplePathPattern: ElementPattern<PsiElement>
+    val simplePathPattern: PsiElementPattern.Capture<PsiElement>
         get() {
             val simplePath = psiElement<RsPath>()
                 .with(object : PatternCondition<RsPath>("SimplePath") {
@@ -359,10 +359,19 @@ val PsiElement.prevVisibleOrNewLine: PsiElement?
  * instead of [PsiElement.getChildren].
  */
 fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPrevSiblingSkipping(
-    skip: ElementPattern<out T>,
+    skip: ElementPattern<out PsiElement>,
     pattern: ElementPattern<out T>
 ): Self = with("withPrevSiblingSkipping") { e ->
     val sibling = e.leftSiblings.dropWhile { skip.accepts(it) }
+        .firstOrNull() ?: return@with false
+    pattern.accepts(sibling)
+}
+
+fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPrevLeafSkipping(
+    skip: ElementPattern<out PsiElement>,
+    pattern: ElementPattern<out T>
+): Self = with("withPrevSiblingSkipping") { e ->
+    val sibling = e.leftLeaves.dropWhile { skip.accepts(it) }
         .firstOrNull() ?: return@with false
     pattern.accepts(sibling)
 }

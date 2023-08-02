@@ -11,11 +11,13 @@ import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
+import org.rust.stdext.mapToSet
 
 class RsTraitImplementationInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitImplItem(impl: RsImplItem) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitImplItem2(impl: RsImplItem) {
             val traitRef = impl.traitRef ?: return
             val trait = traitRef.resolveToTrait() ?: return
             val traitName = trait.name ?: return
@@ -30,20 +32,27 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
                     .addToHolder(holder)
             }
 
-            for (member in implInfo.nonExistentInTrait) {
+            val traitMembersNames = implInfo.declared.mapToSet { it.name!! }
+            for ((key, implMember) in implInfo.implementedByNameAndType) {
                 // ignore members expanded from macros
-                if (member.containingFile != impl.containingFile) continue
+                if (implMember.containingFile != impl.containingFile) continue
 
-                RsDiagnostic.UnknownMemberInTraitError(member.nameIdentifier!!, member, traitName)
-                    .addToHolder(holder)
-            }
+                val memberName = key.first
+                if (memberName in traitMembersNames) {
+                    val traitMember = implInfo.declaredByNameAndType[key]
 
-            for ((imp, dec) in implInfo.implementationToDeclaration) {
-                // ignore members expanded from macros
-                if (imp.containingFile != impl.containingFile) continue
+                    if (implMember is RsFunction && traitMember is RsFunction) {
+                        checkTraitFnImplParams(holder, implMember, traitMember, traitName)
+                    }
 
-                if (imp is RsFunction && dec is RsFunction) {
-                    checkTraitFnImplParams(holder, imp, dec, traitName)
+                    if (traitMember == null) {
+                        val nameIdentifier = implMember.nameIdentifier ?: continue
+                        RsDiagnostic.MismatchMemberInTraitImplError(nameIdentifier, implMember, traitName)
+                            .addToHolder(holder)
+                    }
+                } else {
+                    RsDiagnostic.UnknownMemberInTraitError(implMember.nameIdentifier!!, implMember, traitName)
+                        .addToHolder(holder)
                 }
             }
         }
@@ -57,11 +66,12 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
     ) {
         val params = fn.valueParameterList ?: return
         val selfArg = fn.selfParameter
+        val superSelfParameter = superFn.selfParameter
 
         if (selfArg != null && superFn.selfParameter == null) {
-            RsDiagnostic.DeclMissingFromTraitError(selfArg, fn, selfArg).addToHolder(holder)
-        } else if (selfArg == null && superFn.selfParameter != null) {
-            RsDiagnostic.DeclMissingFromImplError(params, fn, superFn.selfParameter).addToHolder(holder)
+            RsDiagnostic.DeclMissingFromTraitError(selfArg, fn, superFn, selfArg).addToHolder(holder)
+        } else if (selfArg == null && superSelfParameter != null) {
+            RsDiagnostic.DeclMissingFromImplError(params, fn, superFn, superSelfParameter).addToHolder(holder)
         }
 
         val paramsCount = fn.valueParameters.size

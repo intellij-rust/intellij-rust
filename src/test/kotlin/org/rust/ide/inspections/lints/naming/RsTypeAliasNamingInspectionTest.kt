@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsTypeAliasNamingInspection
 
@@ -19,6 +20,7 @@ class RsTypeAliasNamingInspectionTest : RsInspectionsTestBase(RsTypeAliasNamingI
         type type_foo = u32;
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test type aliases fix`() = checkFixByText("Rename to `ULong`", """
         type <warning descr="Type `u_long` should have a camel case name such as `ULong`">u_<caret>long</warning> = u64;
         const ZERO: u_long = 0;

@@ -41,6 +41,7 @@ import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psiElement
+import org.rust.lang.core.with
 
 object RsAttributeCompletionProvider : RsCompletionProvider() {
 
@@ -82,10 +83,12 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
     }
 
     override val elementPattern: ElementPattern<PsiElement>
-        get() {
-            return psiElement(RsElementTypes.IDENTIFIER)
-                .withParent(psiElement<RsPath>().withParent(rootMetaItem))
-        }
+        get() = psiElement(RsElementTypes.IDENTIFIER)
+            .withParent(
+                psiElement<RsPath>()
+                    .with("Unqualified") { it: RsPath -> !it.hasColonColon }
+                    .withParent(rootMetaItem)
+            )
 
     private fun createLookupElement(name: String): LookupElement =
         if (name.endsWith("()")) {

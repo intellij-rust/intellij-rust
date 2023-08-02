@@ -1,0 +1,108 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+    let mut _1: i32;                     // in scope 0 at src/main.rs:1:22: 1:63
+    let mut _2: i32;                     // in scope 0 at src/main.rs:1:27: 1:62
+    let mut _3: i32;                     // in scope 0 at src/main.rs:1:28: 1:39
+    let mut _4: i32;                     // in scope 0 at src/main.rs:1:32: 1:39
+    let mut _5: bool;                    // in scope 0 at src/main.rs:1:32: 1:39
+    let mut _6: bool;                    // in scope 0 at src/main.rs:1:32: 1:39
+    let mut _7: bool;                    // in scope 0 at src/main.rs:1:32: 1:39
+    let mut _8: bool;                    // in scope 0 at src/main.rs:1:32: 1:39
+    let mut _9: (i32, bool);             // in scope 0 at src/main.rs:1:28: 1:39
+    let mut _10: i32;                    // in scope 0 at src/main.rs:1:42: 1:61
+    let mut _11: i32;                    // in scope 0 at src/main.rs:1:42: 1:57
+    let mut _12: i32;                    // in scope 0 at src/main.rs:1:42: 1:52
+    let mut _13: (i32, bool);            // in scope 0 at src/main.rs:1:42: 1:52
+    let mut _14: (i32, bool);            // in scope 0 at src/main.rs:1:42: 1:57
+    let mut _15: bool;                   // in scope 0 at src/main.rs:1:42: 1:61
+    let mut _16: bool;                   // in scope 0 at src/main.rs:1:42: 1:61
+    let mut _17: bool;                   // in scope 0 at src/main.rs:1:42: 1:61
+    let mut _18: bool;                   // in scope 0 at src/main.rs:1:42: 1:61
+    let mut _19: (i32, bool);            // in scope 0 at src/main.rs:1:27: 1:62
+    let mut _20: (i32, bool);            // in scope 0 at src/main.rs:1:22: 1:63
+    let mut _21: (i32, bool);            // in scope 0 at src/main.rs:1:18: 1:63
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:1:22: 1:63
+        StorageLive(_2);                 // scope 0 at src/main.rs:1:27: 1:62
+        StorageLive(_3);                 // scope 0 at src/main.rs:1:28: 1:39
+        StorageLive(_4);                 // scope 0 at src/main.rs:1:32: 1:39
+        _5 = Eq(const 3_i32, const 0_i32); // scope 0 at src/main.rs:1:32: 1:39
+        assert(!move _5, "attempt to calculate the remainder of `{}` with a divisor of zero", const 7_i32) -> [success: bb1, unwind: bb11]; // scope 0 at src/main.rs:1:32: 1:39
+    }
+
+    bb1: {
+        _6 = Eq(const 3_i32, const -1_i32); // scope 0 at src/main.rs:1:32: 1:39
+        _7 = Eq(const 7_i32, const i32::MIN); // scope 0 at src/main.rs:1:32: 1:39
+        _8 = BitAnd(move _6, move _7);   // scope 0 at src/main.rs:1:32: 1:39
+        assert(!move _8, "attempt to compute the remainder of `{} % {}`, which would overflow", const 7_i32, const 3_i32) -> [success: bb2, unwind: bb11]; // scope 0 at src/main.rs:1:32: 1:39
+    }
+
+    bb2: {
+        _4 = Rem(const 7_i32, const 3_i32); // scope 0 at src/main.rs:1:32: 1:39
+        _9 = CheckedSub(const 1_i32, _4); // scope 0 at src/main.rs:1:28: 1:39
+        assert(!move (_9.1: bool), "attempt to compute `{} - {}`, which would overflow", const 1_i32, move _4) -> [success: bb3, unwind: bb11]; // scope 0 at src/main.rs:1:28: 1:39
+    }
+
+    bb3: {
+        _3 = move (_9.0: i32);           // scope 0 at src/main.rs:1:28: 1:39
+        StorageDead(_4);                 // scope 0 at src/main.rs:1:38: 1:39
+        StorageLive(_10);                // scope 0 at src/main.rs:1:42: 1:61
+        StorageLive(_11);                // scope 0 at src/main.rs:1:42: 1:57
+        StorageLive(_12);                // scope 0 at src/main.rs:1:42: 1:52
+        _13 = CheckedSub(const 4_i32, const -6_i32); // scope 0 at src/main.rs:1:42: 1:52
+        assert(!move (_13.1: bool), "attempt to compute `{} - {}`, which would overflow", const 4_i32, const -6_i32) -> [success: bb4, unwind: bb11]; // scope 0 at src/main.rs:1:42: 1:52
+    }
+
+    bb4: {
+        _12 = move (_13.0: i32);         // scope 0 at src/main.rs:1:42: 1:52
+        _14 = CheckedMul(_12, const 17_i32); // scope 0 at src/main.rs:1:42: 1:57
+        assert(!move (_14.1: bool), "attempt to compute `{} * {}`, which would overflow", move _12, const 17_i32) -> [success: bb5, unwind: bb11]; // scope 0 at src/main.rs:1:42: 1:57
+    }
+
+    bb5: {
+        _11 = move (_14.0: i32);         // scope 0 at src/main.rs:1:42: 1:57
+        StorageDead(_12);                // scope 0 at src/main.rs:1:56: 1:57
+        _15 = Eq(const 3_i32, const 0_i32); // scope 0 at src/main.rs:1:42: 1:61
+        assert(!move _15, "attempt to divide `{}` by zero", _11) -> [success: bb6, unwind: bb11]; // scope 0 at src/main.rs:1:42: 1:61
+    }
+
+    bb6: {
+        _16 = Eq(const 3_i32, const -1_i32); // scope 0 at src/main.rs:1:42: 1:61
+        _17 = Eq(_11, const i32::MIN);   // scope 0 at src/main.rs:1:42: 1:61
+        _18 = BitAnd(move _16, move _17); // scope 0 at src/main.rs:1:42: 1:61
+        assert(!move _18, "attempt to compute `{} / {}`, which would overflow", _11, const 3_i32) -> [success: bb7, unwind: bb11]; // scope 0 at src/main.rs:1:42: 1:61
+    }
+
+    bb7: {
+        _10 = Div(move _11, const 3_i32); // scope 0 at src/main.rs:1:42: 1:61
+        StorageDead(_11);                // scope 0 at src/main.rs:1:60: 1:61
+        _19 = CheckedAdd(_3, _10);       // scope 0 at src/main.rs:1:27: 1:62
+        assert(!move (_19.1: bool), "attempt to compute `{} + {}`, which would overflow", move _3, move _10) -> [success: bb8, unwind: bb11]; // scope 0 at src/main.rs:1:27: 1:62
+    }
+
+    bb8: {
+        _2 = move (_19.0: i32);          // scope 0 at src/main.rs:1:27: 1:62
+        StorageDead(_10);                // scope 0 at src/main.rs:1:61: 1:62
+        StorageDead(_3);                 // scope 0 at src/main.rs:1:61: 1:62
+        _20 = CheckedAdd(const 1_i32, _2); // scope 0 at src/main.rs:1:22: 1:63
+        assert(!move (_20.1: bool), "attempt to compute `{} + {}`, which would overflow", const 1_i32, move _2) -> [success: bb9, unwind: bb11]; // scope 0 at src/main.rs:1:22: 1:63
+    }
+
+    bb9: {
+        _1 = move (_20.0: i32);          // scope 0 at src/main.rs:1:22: 1:63
+        StorageDead(_2);                 // scope 0 at src/main.rs:1:62: 1:63
+        _21 = CheckedSub(const 1_i32, _1); // scope 0 at src/main.rs:1:18: 1:63
+        assert(!move (_21.1: bool), "attempt to compute `{} - {}`, which would overflow", const 1_i32, move _1) -> [success: bb10, unwind: bb11]; // scope 0 at src/main.rs:1:18: 1:63
+    }
+
+    bb10: {
+        _0 = move (_21.0: i32);          // scope 0 at src/main.rs:1:18: 1:63
+        StorageDead(_1);                 // scope 0 at src/main.rs:1:62: 1:63
+        return;                          // scope 0 at src/main.rs:1:1: 1:64
+    }
+
+    bb11 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:64
+    }
+}

@@ -58,6 +58,7 @@ class RsEvcxrTest : RsWithToolchainTestBase() {
     private fun createProcess(): Process {
         val workingDirectory = cargoProjectDirectory.pathAsPath.toFile()
         val commandLine = rustupFixture.toolchain!!.evcxr()!!.createCommandLine(workingDirectory)
+        commandLine.withRedirectErrorStream(true)
         return commandLine.createProcess()
     }
 

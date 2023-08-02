@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsImplItem
 
 /**
@@ -19,7 +20,7 @@ class ImplementMembersFix(
     implBody: RsImplItem
 ) : LocalQuickFixAndIntentionActionOnPsiElement(implBody) {
 
-    override fun getText(): String = "Implement members"
+    override fun getText(): String = RsBundle.message("intention.name.implement.members")
 
     override fun getFamilyName(): String = text
 

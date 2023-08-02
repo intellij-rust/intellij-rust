@@ -14,6 +14,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.ILazyParseableElementTypeBase
 import com.intellij.util.LocalTimeCounter
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
@@ -22,8 +23,8 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.doc.psi.RsDocComment
 import org.rust.stdext.repeatBenchmark
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsParsingPerfTest : RsTestBase() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
 
     fun `test stdlib source`() {
         val sources = rustSrcDir()
@@ -101,5 +102,5 @@ class RsParsingPerfTest : RsTestBase() {
         )
     }
 
-    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
+    private fun rustSrcDir(): VirtualFile = WithStdlibRustProjectDescriptor.stdlib!!
 }

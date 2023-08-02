@@ -506,7 +506,6 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     }
 
     fun exists(path: String): Boolean = convert(path) != null
-    fun isFile(path: String): Boolean = convert(path) is FSFile
 
     open class FSException(path: String) : RuntimeException(path)
     class FSItemNotFoundException(path: String) : FSException(path)

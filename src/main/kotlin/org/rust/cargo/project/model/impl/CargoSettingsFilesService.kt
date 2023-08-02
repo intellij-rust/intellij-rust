@@ -8,7 +8,6 @@ package org.rust.cargo.project.model.impl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
@@ -117,8 +116,8 @@ class CargoSettingsFilesService(private val project: Project) {
 
             for (targetDirName in IMPLICIT_TARGET_DIRS) {
                 val dir = root.findFileByRelativePath(targetDirName) ?: continue
-                for (file in VfsUtil.collectChildrenRecursively(dir)) {
-                    if (file.fileType == RsFileType) {
+                for (file in dir.children) {
+                    if (!file.isDirectory && file.fileType == RsFileType) {
                         out += file
                     }
                 }

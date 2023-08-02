@@ -200,8 +200,6 @@ object RsMoveUtil {
         return true
     }
 
-    val RsElement.containingModOrSelf: RsMod get() = (this as? RsMod) ?: containingMod
-
     /**
      * @return `super` instead of `this` for [RsFile]
      *

@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
@@ -370,9 +369,7 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
                 //- lib.rs
                 fn foo(x: Ba/*caret*/) {}
             """) {
-                val presentation = LookupElementPresentation()
-                renderElement(presentation)
-
+                val presentation = presentation
                 "${presentation.itemText}${presentation.tailText}"
             }
         }
@@ -572,6 +569,56 @@ class RsOutOfScopeItemsCompletionTest : RsCompletionTestBase() {
         pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
     //- lib.rs
         macro_/*caret*/
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no completion of method from transitive dependency`() = checkNoCompletionByFileTree("""
+    //- trans-lib/lib.rs
+        pub trait Trait {
+            fn method(&self) {}
+        }
+        impl<T> Trait for T {}
+    //- dep-lib/lib.rs
+    //- lib.rs
+        struct Foo {}
+        fn func(foo: &Foo) {
+            foo.me/*caret*/
+        }
+    """)
+
+    fun `test no completion of method from private trait`() = doTestNoCompletion("""
+        mod mod1 {
+            mod mod2 {
+                pub trait Trait {
+                    fn method(&self) {}
+                }
+                impl<T> Trait for T {}
+            }
+        }
+        struct Foo {}
+        fn func(foo: &Foo) {
+            foo.me/*caret*/
+        }
+    """)
+
+    fun `test complete method from local trait`() = doTestByText("""
+        struct Foo {}
+        fn func(foo: &Foo) {
+            trait Trait {
+                fn method(&self) {}
+            }
+            impl<T> Trait for T {}
+            foo.me/*caret*/
+        }
+    """, """
+        struct Foo {}
+        fn func(foo: &Foo) {
+            trait Trait {
+                fn method(&self) {}
+            }
+            impl<T> Trait for T {}
+            foo.method()/*caret*/
+        }
     """)
 
     private fun doTestByText(

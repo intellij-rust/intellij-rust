@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import com.intellij.lang.refactoring.NamesValidator
 import com.intellij.openapi.project.Project
+import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_KEYWORDS
 import org.rust.lang.core.lexer.getRustLexerTokenType
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
@@ -21,8 +22,21 @@ class RsNamesValidator : NamesValidator {
     companion object {
         val RESERVED_LIFETIME_NAMES: Set<String> = setOf("'static", "'_")
 
+        val RESERVED_KEYWORDS: Set<String> = setOf(
+            "abstract",
+            "become",
+            "do",
+            "final",
+            "override",
+            "priv",
+            "typeof",
+            "unsized",
+            "virtual"
+        )
+
         fun isIdentifier(name: String): Boolean = when (name.getRustLexerTokenType()) {
-            IDENTIFIER, QUOTE_IDENTIFIER -> true
+            IDENTIFIER -> name !in RESERVED_KEYWORDS
+            QUOTE_IDENTIFIER -> true
             else -> false
         }
 
@@ -30,4 +44,5 @@ class RsNamesValidator : NamesValidator {
     }
 }
 
-fun isValidRustVariableIdentifier(name: String): Boolean = name.getRustLexerTokenType() == IDENTIFIER
+fun isValidRustVariableIdentifier(name: String): Boolean =
+    name.getRustLexerTokenType() == IDENTIFIER && name !in RESERVED_KEYWORDS

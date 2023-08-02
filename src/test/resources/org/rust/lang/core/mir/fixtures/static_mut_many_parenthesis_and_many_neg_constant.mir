@@ -1,0 +1,28 @@
+static mut BAZ: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:17: 1:20
+    let mut _1: i32;                     // in scope 0 at src/main.rs:1:26: 1:37
+    let mut _2: bool;                    // in scope 0 at src/main.rs:1:26: 1:37
+    let mut _3: bool;                    // in scope 0 at src/main.rs:1:23: 1:39
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:1:26: 1:37
+        _2 = Eq(const -1_i32, const i32::MIN); // scope 0 at src/main.rs:1:26: 1:37
+        assert(!move _2, "attempt to negate `{}`, which would overflow", const -1_i32) -> [success: bb1, unwind: bb3]; // scope 0 at src/main.rs:1:26: 1:37
+    }
+
+    bb1: {
+        _1 = Neg(const -1_i32);          // scope 0 at src/main.rs:1:26: 1:37
+        _3 = Eq(_1, const i32::MIN);     // scope 0 at src/main.rs:1:23: 1:39
+        assert(!move _3, "attempt to negate `{}`, which would overflow", _1) -> [success: bb2, unwind: bb3]; // scope 0 at src/main.rs:1:23: 1:39
+    }
+
+    bb2: {
+        _0 = Neg(move _1);               // scope 0 at src/main.rs:1:23: 1:39
+        StorageDead(_1);                 // scope 0 at src/main.rs:1:38: 1:39
+        return;                          // scope 0 at src/main.rs:1:1: 1:40
+    }
+
+    bb3 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:40
+    }
+}

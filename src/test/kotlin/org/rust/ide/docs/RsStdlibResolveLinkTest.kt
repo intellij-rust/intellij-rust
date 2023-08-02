@@ -13,9 +13,6 @@ import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.ext.RsNamedElement
 
-// BACKCOMPAT: Rust 1.46
-//  Since Rust 1.47 layout of stdlib was changed.
-//  In general, `lib%lib_name%` was replaced with `%lib_name%/src`
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveLinkTest : RsTestBase() {
     fun `test with import`() = doTest("Hash", "...hash/mod.rs", """
@@ -30,15 +27,15 @@ class RsStdlibResolveLinkTest : RsTestBase() {
           //^
     """)
 
-    fun `test crate fqn link`() = doTest("std/index.html", "...libstd/lib.rs|...std/src/lib.rs")
-    fun `test mod fqn link`() = doTest("std/io/index.html", "...libstd/io/mod.rs|...std/src/io/mod.rs")
-    fun `test fqn link with reexport`() = doTest("std/cmp/trait.Eq.html", "...libcore/cmp.rs|...core/src/cmp.rs")
-    fun `test mod fqn link with reexport`() = doTest("std/marker/index.html", "...libcore/marker.rs|...core/src/marker.rs")
-    fun `test method fqn link with reexport`() = doTest("std/result/enum.Result.html#method.unwrap", "...libcore/result.rs|...core/src/result.rs")
-    fun `test macro fqn link`() = doTest("std/macro.println.html", "...libstd/macros.rs|...std/src/macros.rs")
-    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", "...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs")
+    fun `test crate fqn link`() = doTest("std/index.html", "...std/src/lib.rs")
+    fun `test mod fqn link`() = doTest("std/io/index.html", "...std/src/io/mod.rs")
+    fun `test fqn link with reexport`() = doTest("std/cmp/trait.Eq.html", "...core/src/cmp.rs")
+    fun `test mod fqn link with reexport`() = doTest("std/marker/index.html", "...core/src/marker.rs")
+    fun `test method fqn link with reexport`() = doTest("std/result/enum.Result.html#method.unwrap", "...core/src/result.rs")
+    fun `test macro fqn link`() = doTest("std/macro.println.html", "...std/src/macros.rs")
+    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", "...core/src/macros/mod.rs")
 
-    fun `test fqn link in keyword doc`() = doTest("std/future/trait.Future.html", "...libcore/future/future.rs|...core/src/future/future.rs", """
+    fun `test fqn link in keyword doc`() = doTest("std/future/trait.Future.html", "...core/src/future/future.rs", """
         async fn foo() {}
         //^
     """, PsiElement::class.java)

@@ -8,8 +8,10 @@ package org.rust.ide.annotator
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
-import com.intellij.codeInsight.daemon.impl.*
-import com.intellij.lang.annotation.AnnotationSession
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.impl.FileStatusMap
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -29,7 +31,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.impl.Applicability
@@ -44,8 +46,7 @@ class RsExternalLinterPass(
     private val file: PsiFile,
     private val editor: Editor
 ) : TextEditorHighlightingPass(file.project, editor.document), DumbAware {
-    @Suppress("UnstableApiUsage", "DEPRECATION")
-    private val annotationHolder: AnnotationHolderImpl = AnnotationHolderImpl(AnnotationSession(file), false)
+    private val highlights: MutableList<HighlightInfo> = mutableListOf()
     @Volatile
     private var annotationInfo: Lazy<RsExternalLinterResult?>? = null
     private val annotationResult: RsExternalLinterResult? get() = annotationInfo?.value
@@ -53,7 +54,7 @@ class RsExternalLinterPass(
     private var disposable: Disposable = myProject
 
     override fun doCollectInformation(progress: ProgressIndicator) {
-        annotationHolder.clear()
+        highlights.clear()
         if (file !is RsFile || !isAnnotationPassEnabled) return
 
         val cargoTarget = file.containingCargoTarget ?: return
@@ -104,7 +105,7 @@ class RsExternalLinterPass(
                 })
             }
 
-            override fun canEat(update: Update?): Boolean = updateFile == (update as? RsUpdate)?.updateFile
+            override fun canEat(update: Update): Boolean = updateFile == (update as? RsUpdate)?.updateFile
         }
 
         val update = RsUpdate()
@@ -118,10 +119,7 @@ class RsExternalLinterPass(
     private fun doApply(annotationResult: RsExternalLinterResult) {
         if (file !is RsFile || !file.isValid) return
         try {
-            @Suppress("UnstableApiUsage")
-            annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                holder.createAnnotationsForFile(file, annotationResult, Applicability.UNSPECIFIED)
-            }
+            highlights.addHighlightsForFile(file, annotationResult, Applicability.UNSPECIFIED)
         } catch (t: Throwable) {
             if (t is ProcessCanceledException) throw t
             LOG.error(t)
@@ -144,11 +142,8 @@ class RsExternalLinterPass(
         }
     }
 
-    private val highlights: List<HighlightInfo>
-        get() = annotationHolder.map(HighlightInfo::fromAnnotation)
-
     private val isAnnotationPassEnabled: Boolean
-        get() = myProject.rustSettings.runExternalLinterOnTheFly
+        get() = myProject.externalLinterSettings.runOnTheFly
 
     companion object {
         private val LOG: Logger = logger<RsExternalLinterPass>()

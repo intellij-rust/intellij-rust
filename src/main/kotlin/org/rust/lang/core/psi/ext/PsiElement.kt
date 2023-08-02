@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
@@ -20,6 +21,7 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.prevLeaf
 import com.intellij.util.SmartList
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.document
@@ -142,10 +144,7 @@ inline fun <reified T : PsiElement> PsiElement.descendantOfType(predicate: (T) -
     return descendantsOfType<T>().firstOrNull(predicate)
 }
 
-inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(predicate: (T) -> Boolean): Boolean {
-    return descendantOfType(predicate) != null
-}
-
+@Suppress("unused")
 inline fun <reified T : PsiElement> PsiElement.stubDescendantsOfTypeStrict(): Collection<T> =
     getStubDescendantsOfType(this, true, T::class.java)
 
@@ -280,6 +279,9 @@ fun PsiElement?.getNextNonWhitespaceSibling(): PsiElement? =
 fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
     child.ancestors.contains(this)
 
+fun PsiElement.isContextOf(child: PsiElement): Boolean =
+    child.contexts.contains(this)
+
 val PsiElement.startOffset: Int
     get() = textRange.startOffset
 
@@ -333,13 +335,21 @@ fun PsiElement.isKeywordLike(): Boolean {
     }
 }
 
+val PsiElement.isIntentionPreviewElement: Boolean
+    get() {
+        val source = findMacroCallExpandedFrom() ?: this
+        return IntentionPreviewUtils.isPreviewElement(source)
+    }
+
 /**
  * Consider we do some `resolve` in a quick-fix which is called in preview mode.
  * Quick-fix is called on copy of the original file, but `resolve` will return original element.
  * We will have an exception if we try to modify the original element.
  * Thus, we should call this function on `resolve` result to obtain element in the copy of the original file.
  */
-fun <T: PsiElement> T.findPreviewCopyIfNeeded(copyFile: PsiFile): T {
+fun <T: PsiElement> T.findPreviewCopyIfNeeded(): T {
+    val previewEditor = IntentionPreviewUtils.getPreviewEditor() ?: return this
+    val copyFile = PsiDocumentManager.getInstance(project).getPsiFile(previewEditor.document) ?: return this
     if (!copyFile.isIntentionPreviewElement) return this
     return when (containingFile) {
         copyFile -> this

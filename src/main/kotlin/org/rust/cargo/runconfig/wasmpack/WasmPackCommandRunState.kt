@@ -5,24 +5,38 @@
 
 package org.rust.cargo.runconfig.wasmpack
 
-import com.intellij.execution.filters.TextConsoleBuilderImpl
+import com.intellij.execution.configurations.CommandLineState
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.ui.ConsoleView
-import com.intellij.psi.search.ExecutionSearchScopes
-import org.rust.cargo.runconfig.console.CargoConsoleView
+import com.intellij.util.execution.ParametersListUtil
+import org.rust.cargo.runconfig.RsProcessHandler
+import org.rust.cargo.runconfig.console.RsConsoleBuilder
 import org.rust.cargo.toolchain.tools.WasmPack
 import java.io.File
 
 class WasmPackCommandRunState(
     environment: ExecutionEnvironment,
-    runConfiguration: WasmPackCommandConfiguration,
-    wasmPack: WasmPack,
-    workingDirectory: File
-): WasmPackCommandRunStateBase(environment, runConfiguration, wasmPack, workingDirectory) {
+    private val runConfiguration: WasmPackCommandConfiguration,
+    private val wasmPack: WasmPack,
+    private val workingDirectory: File
+) : CommandLineState(environment) {
+
     init {
-        val scope = ExecutionSearchScopes.executionScope(environment.project, runConfiguration)
-        consoleBuilder = object : TextConsoleBuilderImpl(environment.project, scope) {
-            override fun createConsole(): ConsoleView = CargoConsoleView(project, scope, isViewer, true)
-        }
+        consoleBuilder = RsConsoleBuilder(environment.project, runConfiguration)
+    }
+
+    override fun startProcess(): ProcessHandler {
+        val params = ParametersListUtil.parse(runConfiguration.command)
+        val commandLine = wasmPack.createCommandLine(
+            workingDirectory,
+            params.firstOrNull().orEmpty(),
+            params.drop(1),
+            runConfiguration.emulateTerminal
+        )
+
+        val handler = RsProcessHandler(commandLine)
+        ProcessTerminatedListener.attach(handler) // shows exit code upon termination
+        return handler
     }
 }

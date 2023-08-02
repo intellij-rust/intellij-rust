@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class RefExprPostfixTemplateTest : RsPostfixTemplateTest(RefExprPostfixTemplate(RsPostfixTemplateProvider())) {
+class RefExprPostfixTemplateTest : RsPostfixTemplateTest(RefExprPostfixTemplate::class) {
     fun `test expression`() = doTest("""
         fn main() {
             let v = vec![1, 2, 3];

@@ -10,12 +10,13 @@ import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.icons.RsIcons
 
 class WasmPackCommandConfigurationType : ConfigurationTypeBase(
     "WasmPackCommandRunConfiguration",
-    "wasm-pack",
-    "wasm-pack command run configuration",
+    RsBundle.message("wasm.pack"),
+    RsBundle.message("wasm.pack.command.run.configuration"),
     RsIcons.WASM_PACK
 ) {
     init {

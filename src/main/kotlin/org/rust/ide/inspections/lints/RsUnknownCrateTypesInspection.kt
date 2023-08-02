@@ -6,8 +6,10 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
-import org.rust.ide.annotator.fixes.NameSuggestionFix
+import org.rust.RsBundle
+import org.rust.ide.fixes.NameSuggestionFix
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsPsiFactory
@@ -18,7 +20,7 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnknownCrateTypes
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitLitExpr(element: RsLitExpr) {
                 if (!RsPsiPattern.insideCrateTypeAttrValue.accepts(element)) return
 
@@ -28,10 +30,12 @@ class RsUnknownCrateTypesInspection : RsLintInspection() {
                         element, elementValue, KNOWN_CRATE_TYPES, 1
                     ) { RsPsiFactory(element.project).createExpression("\"$it\"") }
 
-                    holder.registerLintProblem(element, "Invalid `crate_type` value", fixes = fixes)
+                    holder.registerLintProblem(element, RsBundle.message("inspection.message.invalid.crate.type.value"), fixes = fixes)
                 }
             }
         }
+
+    override val isSyntaxOnly: Boolean get() = true
 
     companion object {
         val KNOWN_CRATE_TYPES = listOf("bin", "lib", "dylib", "staticlib", "cdylib", "rlib", "proc-macro")

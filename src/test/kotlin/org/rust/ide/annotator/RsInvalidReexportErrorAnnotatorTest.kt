@@ -59,8 +59,8 @@ class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator
 
     fun `test reexport item with duplicated name`() = checkErrors("""
         mod foo {
-            pub struct <error descr="A type named `A` has already been defined in this module [E0428]">A</error> { a: u32 }
-            struct <error descr="A type named `A` has already been defined in this module [E0428]">A</error>;
+            pub struct <error descr="The name `A` is defined multiple times [E0428]">A</error> { a: u32 }
+            struct <error descr="The name `A` is defined multiple times [E0428]">A</error>;
             pub use A as B;
         }
     """)

@@ -8,6 +8,8 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.LogicOp.AND
@@ -16,15 +18,17 @@ import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 
 class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention.Context>() {
-    override fun getFamilyName() = "DeMorgan's law"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.demorgan.s.law")
 
     private fun setTextForElement(element: RsBinaryExpr) {
         text = when (element.operatorType) {
-            AND -> "DeMorgan's law, replace '&&' with '||'"
-            OR -> "DeMorgan's law, replace '||' with '&&'"
+            AND -> RsBundle.message("intention.name.demorgan.s.law.replace.with2")
+            OR -> RsBundle.message("intention.name.demorgan.s.law.replace.with")
             else -> ""
         }
     }
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val binaryExpr: RsBinaryExpr,

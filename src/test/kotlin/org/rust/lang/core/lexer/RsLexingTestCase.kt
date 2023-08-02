@@ -23,6 +23,7 @@ class RsLexingTestCase : RsLexingTestCaseBase() {
     fun `test char literals`() = doTest()
     fun `test string literals`() = doTest()
     fun `test byte literals`() = doTest()
+    fun `test c string literals`() = doTest()
     fun `test invalid escape`() = doTest()
     fun `test doc comment merging`() = doTest()
     fun `test keywords`() = doTest()

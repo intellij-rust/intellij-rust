@@ -56,7 +56,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                platform-version: [ 222, 223 ]
+                platform-version: [ 231, 232 ]
         env:
             ORG_GRADLE_PROJECT_buildNumber: ${{ needs.generate-build-number.outputs.build_number }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
@@ -79,9 +79,10 @@ jobs:
               uses: ./.github/actions/load-native-binaries
 
             - name: Publish rust plugin
-              uses: gradle/gradle-build-action@v1
+              uses: gradle/gradle-build-action@v2
               with:
                   arguments: ":plugin:publishPlugin"
+                  cache-disabled: true
 
     save-commit:
         needs: [ build, fetch-latest-changes ]

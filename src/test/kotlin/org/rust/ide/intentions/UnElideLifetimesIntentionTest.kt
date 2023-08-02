@@ -6,6 +6,7 @@
 package org.rust.ide.intentions
 
 import org.rust.MockAdditionalCfgOptions
+import org.rust.SkipTestWrapping
 
 class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntention::class) {
     fun `test unavailable without references 1`() = doUnavailableTest("""
@@ -59,6 +60,7 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
         fn foo<'a>(p: &/*caret*/'a mut i32) -> &'a i32 { p }
     """)
 
+    @SkipTestWrapping // TODO fix formatter in the case of an attribute macro
     fun `test nested ref`() = doAvailableTest("""
         fn foo(p: &&/*caret*/ i32) -> & i32 { unimplemented!() }
     """, """

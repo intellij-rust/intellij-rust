@@ -19,6 +19,12 @@ class RsTypeNameParserTest {
     )
 
     @Test
+    fun `test parse msvc str$`() = checkParse(
+        "str$",
+        "(typeName (msvcTypeName (msvcStrDollar str$)))"
+    )
+
+    @Test
     fun `test parse msvc never`() = checkParse(
         "never$",
         "(typeName (msvcTypeName (msvcNever never$)))"
@@ -70,6 +76,12 @@ class RsTypeNameParserTest {
     fun `test parse msvc slice`() = checkParse(
         "slice$<Foo>",
         "(typeName (msvcTypeName (msvcSlice slice$ < (typeName (commonTypeName (qualifiedName (qualifiedNameSegment Foo)))) >)))"
+    )
+
+    @Test
+    fun `test parse msvc slice2`() = checkParse(
+        "slice2$<Foo>",
+        "(typeName (msvcTypeName (msvcSlice2 slice2$ < (typeName (commonTypeName (qualifiedName (qualifiedNameSegment Foo)))) >)))"
     )
 
     @Test

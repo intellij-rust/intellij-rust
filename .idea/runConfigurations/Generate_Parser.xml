@@ -4,12 +4,16 @@
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value=":generateRustLexer :generateRustParser :debugger:generateGrammarSource" />
+      <option name="scriptParameters" value="" />
       <option name="taskDescriptions">
         <list />
       </option>
       <option name="taskNames">
-        <list />
+        <list>
+          <option value=":generateLexer" />
+          <option value=":generateParser" />
+          <option value=":debugger:generateGrammarSource" />
+        </list>
       </option>
       <option name="vmOptions" />
     </ExternalSystemSettings>

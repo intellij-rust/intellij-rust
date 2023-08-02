@@ -81,9 +81,10 @@ FILE
     PsiWhiteSpace(' ')
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
-      PsiWhiteSpace('\n    ')
       PsiErrorElement:'#', <item> or <statement> expected, got '+'
-        PsiElement(+)('+')
+        <empty list>
+      PsiWhiteSpace('\n    ')
+      PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
   PsiWhiteSpace('\n\n')
@@ -208,7 +209,7 @@ FILE
         RsPathTypeImpl(PATH_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('i32')
-      PsiErrorElement:'!', ')', '+', ',', '::', <path parameters> or <type argument list> expected, got 'b'
+      PsiErrorElement:'!', ')', '+', ',', '::', <path parameters>, <type argument list> or '=' expected, got 'b'
         <empty list>
       PsiWhiteSpace(' ')
       RsValueParameterImpl(VALUE_PARAMETER)
@@ -353,7 +354,7 @@ FILE
         RsPathTypeImpl(PATH_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('i32')
-      PsiErrorElement:'!', ')', '+', ',', '::', <path parameters> or <type argument list> expected, got '{'
+      PsiErrorElement:'!', ')', '+', ',', '::', <path parameters>, <type argument list> or '=' expected, got '{'
         <empty list>
     PsiWhiteSpace(' ')
     RsBlockImpl(BLOCK)

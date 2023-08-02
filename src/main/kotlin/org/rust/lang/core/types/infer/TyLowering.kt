@@ -133,19 +133,33 @@ class TyLowering private constructor(
             }
 
             is RsFnPointerType -> {
-                val paramTypes = type.valueParameters.map { p -> p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
-                TyFunction(paramTypes, type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown } ?: TyUnit.INSTANCE)
+                val paramTypes = type.valueParameters.map { p ->
+                    p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown
+                }
+                TyFunctionPointer(
+                    FnSig(
+                        paramTypes,
+                        type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
+                            ?: TyUnit.INSTANCE,
+                        Unsafety.fromBoolean(type.isUnsafe)
+                    )
+                )
             }
 
             is RsTraitType -> {
                 var hasSizedUnbound = false
+                var hasUnresolvedBound = false
                 val traitBounds = type.polyboundList.mapNotNull {
                     if (it.hasQ) {
                         hasSizedUnbound = true
                         null
                     } else {
                         val path = it.bound.traitRef?.path ?: return@mapNotNull null
-                        val res = rawMultiResolvePath(path).singleOrNull() ?: return@mapNotNull null
+                        val res = rawMultiResolvePath(path).singleOrNull()
+                        if (res == null) {
+                            hasUnresolvedBound = true
+                            return@mapNotNull null
+                        }
                         instantiatePathGenerics(path, res.element, res.resolvedSubst, PathExprResolver.default, withAssoc = true)
                             .downcast<RsTraitItem>()
                     }
@@ -162,7 +176,7 @@ class TyLowering private constructor(
                 if (traitBounds.isEmpty()) return TyUnknown
                 val lifetimeBounds = type.polyboundList.mapNotNull { it.bound.lifetime }
                 val regionBound = lifetimeBounds.firstOrNull()?.resolve() ?: defaultTraitObjectRegion ?: ReStatic
-                TyTraitObject(traitBounds, regionBound)
+                TyTraitObject(traitBounds, regionBound, hasUnresolvedBound)
             }
 
             is RsMacroType -> {
@@ -195,7 +209,8 @@ class TyLowering private constructor(
         val genericParameters = genericParametersCache.getOrPut(element) { element.getGenericParameters() }
         val psiSubstitution = pathPsiSubst(path, element, givenGenericParameters = genericParameters)
 
-        val typeSubst = psiSubstitution.typeSubst.entries.associate { (param, value) ->
+        val typeSubst = hashMapOf<TyTypeParameter, Ty>()
+        for ((param, value) in psiSubstitution.typeSubst.entries) {
             val paramTy = TyTypeParameter.named(param)
             val valueTy = when (value) {
                 is RsPsiSubstitution.Value.DefaultValue -> {
@@ -207,8 +222,9 @@ class TyLowering private constructor(
                         defaultValueTy.substitute(mapOf(TyTypeParameter.self() to value.value.selfTy).toTypeSubst())
                     } else {
                         defaultValueTy
-                    }
+                    }.substitute(typeSubst.toTypeSubst())
                 }
+
                 is RsPsiSubstitution.Value.OptionalAbsent -> paramTy
                 is RsPsiSubstitution.Value.Present -> when (value.value) {
                     is RsPsiSubstitution.TypeValue.InAngles -> lowerTy(value.value.value, null)
@@ -218,9 +234,10 @@ class TyLowering private constructor(
                         TyUnit.INSTANCE
                     }
                 }
+
                 RsPsiSubstitution.Value.RequiredAbsent -> TyUnknown
             }
-            paramTy to valueTy
+            typeSubst[paramTy] = valueTy
         }
 
         val regionSubst = psiSubstitution.regionSubst.entries.mapNotNull { (psiParam, psiValue) ->
@@ -234,7 +251,8 @@ class TyLowering private constructor(
             param to value
         }.toMap()
 
-        val constSubst = psiSubstitution.constSubst.entries.associate { (psiParam, psiValue) ->
+        val constSubst = hashMapOf<CtConstParameter, Const>()
+        psiSubstitution.constSubst.entries.forEach { (psiParam, psiValue) ->
             val param = CtConstParameter(psiParam)
             val value = when (psiValue) {
                 RsPsiSubstitution.Value.OptionalAbsent -> param
@@ -243,13 +261,14 @@ class TyLowering private constructor(
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                     psiValue.value.toConst(expectedTy, resolver)
                 }
+
                 is RsPsiSubstitution.Value.DefaultValue -> {
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
-                    psiValue.value.toConst(expectedTy, resolver)
+                    psiValue.value.toConst(expectedTy, resolver).substitute(constSubst.toConstSubst())
                 }
             }
 
-            param to value
+            constSubst[param] = value
         }
 
         val newSubst = Substitution(typeSubst, regionSubst, constSubst)
@@ -325,6 +344,6 @@ private fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteWithTraitObjectRegio
             1 -> bounds.single().substitute(subst)
             else -> ReUnknown
         }
-        return TyTraitObject(ty.traits, region)
+        return TyTraitObject(ty.traits, region, ty.hasUnresolvedBound)
     }
 }).tryEvaluate()

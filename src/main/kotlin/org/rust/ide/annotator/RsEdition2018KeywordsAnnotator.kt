@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
@@ -28,7 +29,7 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
         val isEnabledByCfg = element.isEnabledByCfg
         when {
             isAtLeastEdition2018 && isIdentifier && isNameIdentifier(element) ->
-                holder.newAnnotation(HighlightSeverity.ERROR, "`${element.text}` is reserved keyword in Edition 2018").create()
+                holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.reserved.keyword.in.edition", element.text)).create()
 
             isAtLeastEdition2018 && !isIdentifier && isEnabledByCfg -> {
                 if (!holder.isBatchMode) {
@@ -51,7 +52,7 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
             }
 
             !isAtLeastEdition2018 && !isIdentifier ->
-                holder.newAnnotation(HighlightSeverity.ERROR, "This feature is only available in Edition 2018").create()
+                holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.this.feature.only.available.in.edition")).create()
         }
     }
 

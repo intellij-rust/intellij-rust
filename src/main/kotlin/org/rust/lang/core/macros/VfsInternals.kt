@@ -51,19 +51,6 @@ object VfsInternals {
         return HashCode.fromByteArray(digest.digest())
     }
 
-    fun getUpToDateContentHash(file: VirtualFile): ContentHashResult {
-        try {
-            reloadFileIfNeeded(file) // Re-computes the hash code if the file is changed
-        } catch (e: IOException) {
-            // See `MacroExpansionFileSystem.xcontentsToByteArray`
-            return ContentHashResult.Err(e)
-        }
-
-        // `null` means disabled file hashes
-        val hash = getContentHashIfStored(file)
-        return if (hash == null) ContentHashResult.Disabled else ContentHashResult.Ok(hash)
-    }
-
     sealed class ContentHashResult {
         object Disabled : ContentHashResult()
         class Ok(val hash: HashCode) : ContentHashResult()

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.Document
@@ -158,7 +159,7 @@ fun createLookupElement(
     return lookup.toRsLookupElement(properties)
 }
 
-private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
+fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
     when (scopeEntry) {
         is AssocItemScopeEntryBase<*> ->
             instantiateMethodOwnerSubstitution(scopeEntry)
@@ -205,8 +206,17 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
             base
         }
 
-        is RsConstant -> base
-            .withTypeText(typeReference?.getStubOnlyText(subst))
+        is RsConstant -> {
+            val tailText = run {
+                val expr = expr ?: return@run null
+                val expectedTy = typeReference?.normType ?: expr.type
+                val text = expr.getStubOnlyText(subst, expectedTy)
+                if (text == "{}") null else " = $text"
+            }
+            base
+                .withTypeText(typeReference?.getStubOnlyText(subst))
+                .withTailText(tailText)
+        }
         is RsConstParameter -> base
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsFieldDecl -> base
@@ -270,7 +280,12 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
     ) {
         val document = context.document
 
-        if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
+        val shouldEscapeName = element is RsNameIdentifierOwner
+            && !RsNamesValidator.isIdentifier(scopeName)
+            && scopeName.canBeEscaped
+            /** Hack for [RsCommonCompletionProvider.addIteratorMethods] */
+            && !scopeName.startsWith("iter().")
+        if (shouldEscapeName) {
             document.insertString(context.startOffset, RS_RAW_PREFIX)
             context.commitDocument() // Fixed PSI element escape
         }
@@ -286,14 +301,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         when (element) {
             is RsMod -> {
                 when (scopeName) {
-                    "self",
-                    "super" -> {
-                        val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
-                        if (!(context.isInUseGroup || inSelfParam)) {
-                            context.addSuffix("::")
-                        }
-                    }
-                    "crate" -> context.addSuffix("::")
+                    "self", "super", "crate" -> context.addSuffix("::")
                 }
             }
 
@@ -318,6 +326,9 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     }
                     val caretShift = if (element.valueParameters.isEmpty() && (isMethodCall || !element.hasSelfParameters)) 2 else 1
                     EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
+                    if (!context.alreadyHasCallParens && caretShift == 1) {
+                        TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(context.editor)
+                    }
                     if (element.valueParameters.isNotEmpty()) {
                         AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
                     }
@@ -340,6 +351,9 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                         document.insertString(context.selectionEndOffset, text)
                     }
                     EditorModificationUtil.moveCaretRelatively(context.editor, shift)
+                    if (shift != 0) {
+                        TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(context.editor)
+                    }
                 }
             }
 
@@ -355,7 +369,8 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
     private fun appendMacroBraces(context: InsertionContext, document: Document, getBraces: () -> MacroBraces) {
         var caretShift = 2
-        if (!context.nextCharIs('!')) {
+        val addBraces = !context.nextCharIs('!')
+        if (addBraces) {
             val braces = getBraces()
             val text = buildString {
                 append("!")
@@ -369,6 +384,9 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
             document.insertString(context.selectionEndOffset, text)
         }
         EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
+        if (addBraces) {
+            TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(context.editor)
+        }
     }
 }
 
@@ -390,18 +408,24 @@ private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Do
     val path = context.getElementOfType<RsPath>()
     if (path == null || path.parent !is RsTypeReference) return
 
+    var insertedBraces = false
     if (element.isFnLikeTrait) {
         if (!context.alreadyHasCallParens) {
             document.insertString(context.selectionEndOffset, "()")
             context.doNotAddOpenParenCompletionChar()
+            insertedBraces = true
         }
     } else {
         if (!context.alreadyHasAngleBrackets) {
             document.insertString(context.selectionEndOffset, "<>")
+            insertedBraces = true
         }
     }
 
     EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+    if (insertedBraces) {
+        TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(context.editor)
+    }
 }
 
 // When a user types `(` while completion,

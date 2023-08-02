@@ -9,13 +9,18 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.ide.hints.parameter.RsInlayParameterHintsProvider
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsMethodCall
 
 class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsProvider::class) {
     fun `test simple`() = checkByText("""
         fn main() {
             let s/*hint text="[:  i32]"*/ = 42;
+        }
+    """)
+
+    fun `test array`() = checkByText("""
+        fn main() {
+            let s<hint text="[:  [[ [i32 ;  3] ]]]"/> = [1, 2, 3];
         }
     """)
 
@@ -508,7 +513,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator into_iter`() = checkByText("""
         fn main() {
             let xs<hint text="[:  i32]"/> = vec![1, 2, 3]
@@ -519,7 +523,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterator iter`() = checkByText("""
         fn main() {
             let xs<hint text="[:  [& i32]]"/> = vec![1, 2, 3]
@@ -529,7 +532,6 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test inside attribute macro call body`() = checkByText("""
@@ -552,5 +554,120 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
 
         $fnTypes
         fn consume(_: impl Fn(i32)) {}
+    """)
+
+    fun `test inside macro call body`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*} }
+        fn main() {
+            as_is! {
+                let x1/*hint text="[:  i32]"*/ = 0;
+                let mut x2/*hint text="[:  i32]"*/ = 0;
+                let x3/*hint text="[:  i32]"*/ = bar();
+
+                let x4: Option<_/*hint text="[:  i32]"*/> = Option::Some(0);
+                match x4 {
+                    Option::Some(x5/*hint text="[:  i32]"*/) => {},
+                    Option::None => {},
+                }
+
+                consume(|x/*hint text="[:  i32]"*/| {});
+            }
+        }
+        fn bar() -> i32 { 0 }
+        enum Option<T> { Some(T), None }
+
+        $fnTypes
+        fn consume(_: impl Fn(i32)) {}
+    """)
+
+    fun `test inside macro call body (nested block)`() = checkByText("""
+        macro_rules! id { ($ t:block) => { $ t } }
+        fn main() {
+            id! {
+                {
+                    let x/*hint text="[:  i32]"*/ = 1;
+                }
+            }
+        }
+    """)
+
+    fun `test inside macro call body (nested macro call)`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*} }
+        macro_rules! gen {
+            ($($ t:tt)*) => {
+                println!();
+                as_is!($($ t)*);
+            }
+        }
+        fn main() {
+            gen! {
+                let x/*hint text="[:  i32]"*/ = 1;
+            }
+        }
+    """)
+
+    fun `test inside macro call body (only ident)`() = checkByText("""
+        macro_rules! gen { ($ t:ident) => { let $ t = 1; } }
+        fn main() {
+            gen!(X);
+        }
+    """)
+
+    fun `test inside macro call body (no hint if expanded twice 1)`() = checkByText("""
+        macro_rules! gen {
+            ($($ t:tt)*) => {
+                {
+                    fn foo() -> i32 { 0 }
+                    $($ t)*
+                }
+                {
+                    fn foo() -> u32 { 0 }
+                    $($ t)*
+                }
+            }
+        }
+        fn main() {
+            gen! {
+                let x = foo();
+            }
+        }
+    """)
+
+    fun `test inside macro call body (no hint if expanded twice 2)`() = checkByText("""
+        macro_rules! foo {
+            ($ t1:tt $ t2:tt $ t3:tt $ t4:tt $ t5:tt) => {
+                { $ t1$ t2$ t3$ t4$ t5 }
+                { let $ t2 = ""; }
+            };
+        }
+        fn main() {
+            foo! {
+                let x = 1;
+            }
+        }
+    """)
+
+    @WithExperimentalFeatures(PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test attribute macro inside function-like macro`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*} }
+        as_is! {
+            #[test_proc_macros::attr_as_is]
+            fn test() {
+                let x/*hint text="[:  i32]"*/ = 1;
+            }
+        }
+    """)
+
+    @WithExperimentalFeatures(PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test function-like macro inside attribute macro`() = checkByText("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*} }
+        #[test_proc_macros::attr_as_is]
+        fn test() {
+            as_is! {
+                let x/*hint text="[:  i32]"*/ = 1;
+            }
+        }
     """)
 }

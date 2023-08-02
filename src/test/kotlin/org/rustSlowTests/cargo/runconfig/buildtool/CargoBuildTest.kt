@@ -14,10 +14,10 @@ import com.intellij.build.events.*
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.replaceService
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.buildtool.MockProgressIndicator
-import org.rust.cargo.runconfig.buildtool.RsBuildEventsConverter.Companion.RUSTC_MESSAGE_GROUP
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 import org.rustSlowTests.cargo.runconfig.buildtool.TestBuildViewManager.*
 
@@ -185,7 +185,7 @@ abstract class CargoBuildTest : RunConfigurationTestBase() {
         message: String,
         private val kind: MessageEvent.Kind
     ) : MyBuildEvent(id, parentId, message), MessageEvent {
-        override fun getGroup(): String = RUSTC_MESSAGE_GROUP
+        override fun getGroup(): String = RsBundle.message("rust.compiler")
         override fun getKind(): MessageEvent.Kind = kind
         override fun getNavigatable(project: Project): Navigatable? = null
         override fun getResult(): MessageEventResult = MessageEventResult { kind }

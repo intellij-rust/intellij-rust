@@ -1,14 +1,17 @@
 name: preparations for updates
 description: prepare environment for jobs from `auto-updates` workflow
-
+inputs:
+    toolchain:
+        description: 'Rust toolchain'
+        default: 'nightly'
 runs:
     using: composite
     steps:
-        - name: Set up nightly Rust
+        - name: Set up Rust
           uses: actions-rs/toolchain@v1
           with:
               profile: minimal
-              toolchain: nightly
+              toolchain: ${{ inputs.toolchain }}
               components: rust-src, rustfmt, clippy # should be synchronized with `check` workflow
               default: true
 

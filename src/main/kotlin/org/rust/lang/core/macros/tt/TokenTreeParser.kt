@@ -53,7 +53,7 @@ private class TokenTreeParser(
     }
 
     private fun parseSubtree(offset: Int, delimKind: MacroBraces, result: MutableList<TokenTree>) {
-        val delimLeaf = Delimiter(allocDelimId(offset, nextWhitespaceOrCommentText()), delimKind)
+        val delimLeaf = Delimiter(allocDelimId(offset, nextWhitespaceOrCommentText(), delimKind), delimKind)
         val subtreeResult = mutableListOf<TokenTree>()
 
         lexer.advanceLexer()
@@ -150,9 +150,10 @@ private class TokenTreeParser(
         tokenMap += TokenMetadata.Token(textOffset + startOffset, rightTrivia, leaf)
     }
 
-    private fun allocDelimId(openOffset: Int, rightTrivia: CharSequence): Int {
+    private fun allocDelimId(openOffset: Int, rightTrivia: CharSequence, delimKind: MacroBraces): Int {
         val id = nextId()
-        tokenMap += TokenMetadata.Delimiter(TokenMetadata.Delimiter.DelimiterPart(textOffset + openOffset, rightTrivia), null)
+        val open = TokenMetadata.Delimiter.DelimiterPart(textOffset + openOffset, rightTrivia)
+        tokenMap += TokenMetadata.Delimiter(open, null, delimKind)
         return id
     }
 

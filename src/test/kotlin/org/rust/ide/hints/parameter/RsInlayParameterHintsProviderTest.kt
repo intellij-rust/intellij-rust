@@ -8,11 +8,12 @@ package org.rust.ide.hints.parameter
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
-import org.rust.MockAdditionalCfgOptions
-import org.rust.RsTestBase
-import org.rust.fileTreeFromText
+import org.rust.*
+import org.rust.ide.experiments.RsExperiments.PROC_MACROS
 import org.rust.lang.core.psi.RsMethodCall
 
+@WithExperimentalFeatures(PROC_MACROS)
+@ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 class RsInlayParameterHintsProviderTest : RsTestBase() {
     fun `test fn args`() = checkByText("""
         fn foo(arg: u32, arg2: u32) {}
@@ -230,8 +231,15 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         check(inlays.size == 1)
     }
 
-    @Suppress("UnstableApiUsage")
     private fun checkByText(@Language("Rust") code: String, smart: Boolean = true) {
+        check("fn main() {" in code) { "Please use hints inside `fn main` function - needed for testing with attr macros" }
+
+        doTest(code, smart)
+        doTest(code.replace("fn main() {", "#[test_proc_macros::attr_as_is] fn main() {"), smart)
+    }
+
+    @Suppress("UnstableApiUsage")
+    private fun doTest(@Language("Rust") code: String, smart: Boolean) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
 
         RsInlayParameterHints.smartOption.set(smart)

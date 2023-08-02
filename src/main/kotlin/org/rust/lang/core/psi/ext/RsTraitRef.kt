@@ -15,3 +15,6 @@ fun RsTraitRef.resolveToTrait(): RsTraitItem? =
 fun RsTraitRef.resolveToBoundTrait(): BoundElement<RsTraitItem>? =
     path.reference?.advancedResolve()?.downcast()
 
+val RsTraitRef.parenthesized: Boolean
+    get() = path.valueParameterList != null
+

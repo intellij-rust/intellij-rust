@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import org.rust.RsBundle
 import org.rust.ide.notifications.setStatusBarText
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.core.crate.impl.FakeCrate
@@ -26,7 +27,7 @@ class RsRebuildAllDefMapsAction : AnAction() {
             val time = measureTimeMillis {
                 project.forceRebuildDefMapForAllCrates(multithread = false)
             }
-            project.showBalloon("Rebuilt DefMap for all crates in $time ms", NotificationType.INFORMATION)
+            project.showBalloon(RsBundle.message("notification.content.rebuilt.defmap.for.all.crates.in.ms", time), NotificationType.INFORMATION)
         }
     }
 }
@@ -42,7 +43,7 @@ class RsRebuildCurrentDefMapAction : AnAction() {
             val time = measureTimeMillis {
                 project.forceRebuildDefMapForCrate(crateId)
             }
-            project.setStatusBarText("Rebuilt DefMap for $crate in $time ms")
+            project.setStatusBarText(RsBundle.message("status.bar.text.rebuilt.defmap.for.in.ms", crate, time))
         }
     }
 }

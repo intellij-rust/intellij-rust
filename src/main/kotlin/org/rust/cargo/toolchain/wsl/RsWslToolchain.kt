@@ -77,7 +77,8 @@ class RsWslToolchain(
 
         private fun WSLDistribution.getWindowsPathWithFix(wslPath: String): String {
             val systemIndependentPath = FileUtil.toSystemIndependentName(wslPath)
-            val uncRoot = uncRootPath.systemIndependentPath
+            @Suppress("UnstableApiUsage", "UsePropertyAccessSyntax")
+            val uncRoot = getUNCRootPath().systemIndependentPath
             return when {
                 systemIndependentPath.startsWith(uncRoot) || !systemIndependentPath.startsWith("/") -> systemIndependentPath
                 systemIndependentPath.startsWith(mntRoot) -> WSLUtil.getWindowsPath(systemIndependentPath, mntRoot)

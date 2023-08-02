@@ -9,9 +9,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.NlsActions
 import org.rust.cargo.project.configurable.RustfmtConfigurable
 
-class RustfmtEditSettingsAction(text: String) : AnAction(text), DumbAware {
+class RustfmtEditSettingsAction(@NlsActions.ActionText text: String) : AnAction(text), DumbAware {
 
     override fun update(e: AnActionEvent) {
         super.update(e)

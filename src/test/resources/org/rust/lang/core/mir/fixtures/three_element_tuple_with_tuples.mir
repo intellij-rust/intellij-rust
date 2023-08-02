@@ -1,0 +1,28 @@
+const FOO: ((), ((),), (i32, ())) = {
+    let mut _0: ((), ((),), (i32, ()));  // return place in scope 0 at src/main.rs:1:12: 1:35
+    let mut _1: ();                      // in scope 0 at src/main.rs:1:39: 1:41
+    let mut _2: ((),);                   // in scope 0 at src/main.rs:1:43: 1:48
+    let mut _3: ();                      // in scope 0 at src/main.rs:1:44: 1:46
+    let mut _4: (i32, ());               // in scope 0 at src/main.rs:1:50: 1:56
+    let mut _5: ();                      // in scope 0 at src/main.rs:1:53: 1:55
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:1:39: 1:41
+        _1 = ();                         // scope 0 at src/main.rs:1:39: 1:41
+        StorageLive(_2);                 // scope 0 at src/main.rs:1:43: 1:48
+        StorageLive(_3);                 // scope 0 at src/main.rs:1:44: 1:46
+        _3 = ();                         // scope 0 at src/main.rs:1:44: 1:46
+        _2 = (move _3,);                 // scope 0 at src/main.rs:1:43: 1:48
+        StorageDead(_3);                 // scope 0 at src/main.rs:1:47: 1:48
+        StorageLive(_4);                 // scope 0 at src/main.rs:1:50: 1:56
+        StorageLive(_5);                 // scope 0 at src/main.rs:1:53: 1:55
+        _5 = ();                         // scope 0 at src/main.rs:1:53: 1:55
+        _4 = (const 0_i32, move _5);     // scope 0 at src/main.rs:1:50: 1:56
+        StorageDead(_5);                 // scope 0 at src/main.rs:1:55: 1:56
+        _0 = (move _1, move _2, move _4); // scope 0 at src/main.rs:1:38: 1:57
+        StorageDead(_4);                 // scope 0 at src/main.rs:1:56: 1:57
+        StorageDead(_2);                 // scope 0 at src/main.rs:1:56: 1:57
+        StorageDead(_1);                 // scope 0 at src/main.rs:1:56: 1:57
+        return;                          // scope 0 at src/main.rs:1:1: 1:58
+    }
+}

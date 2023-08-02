@@ -9,10 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacroArgument
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 /**
@@ -27,7 +24,7 @@ interface RsExpandedElement : RsElement {
     companion object {
         fun getContextImpl(psi: RsExpandedElement, isIndexAccessForbidden: Boolean = false): PsiElement? {
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
-            val parent = psi.stubParent
+            val parent = psi.parent
             if (parent is RsFile && !isIndexAccessForbidden) {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
@@ -59,6 +56,10 @@ fun RsFile.setRsFileContext(context: RsElement, isInMemoryMacroExpansion: Boolea
     if (contextContainingFile != null) {
         inheritCachedDataFrom(contextContainingFile, isInMemoryMacroExpansion)
     }
+}
+
+fun RsFile.setForcedReducedRangeMap(ranges: RangeMap) {
+    putUserData(RS_FORCED_REDUCED_RANGE_MAP, ranges)
 }
 
 /**
@@ -116,7 +117,13 @@ val PsiElement.isExpandedFromIncludeMacro: Boolean
         return containingFile.isIncludedByIncludeMacro
     }
 
-private data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
+val PsiElement.macroCallExpandedFromSequence: Sequence<RsPossibleMacroCall>
+    get() {
+        val first = findMacroCallExpandedFromNonRecursive() ?: return emptySequence()
+        return generateSequence(first) { it.findMacroCallExpandedFromNonRecursive() }
+    }
+
+data class MacroCallAndOffset(val call: RsPossibleMacroCall, val absoluteOffset: Int)
 
 /**
  * If [this] is inside a **macro expansion**, returns a leaf element inside a macro call from which
@@ -175,37 +182,60 @@ fun PsiElement.findElementExpandedFrom(strict: Boolean = true): PsiElement? {
 }
 
 private fun PsiElement.findElementExpandedFromUnchecked(): PsiElement? {
-    val (anchor, offset) = findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset) ?: return null
+    val (anchor, offset) = findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset, RangeMap.StickTo.RIGHT)
+        ?: return null
     return anchor.containingFile.findElementAt(offset)
         ?.takeIf { it.startOffset == offset }
 }
 
-private fun findMacroCallAndOffsetExpandedFromUnchecked(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
-    val mappedElement = findMacroCallAndOffsetExpandedFromNonRecursive(anchor, startOffset) ?: return null
-    return findMacroCallAndOffsetExpandedFromUnchecked(mappedElement.call, mappedElement.absoluteOffset) ?: mappedElement
+fun findMacroCallAndOffsetExpandedFromUnchecked(
+    anchor: PsiElement,
+    startOffset: Int,
+    stickTo: RangeMap.StickTo,
+): MacroCallAndOffset? {
+    val ranges = anchor.containingFile.getUserData(RS_FORCED_REDUCED_RANGE_MAP)
+    if (ranges != null) {
+        val mappedOffset = ranges.mapOffsetFromExpansionToCallBody(startOffset, stickTo) ?: return null
+        val call = anchor.findMacroCallExpandedFrom() ?: return null
+        return MacroCallAndOffset(call, mappedOffset.fromBodyRelativeOffset(call) ?: return null)
+    }
+    val mappedElement = findMacroCallAndOffsetExpandedFromNonRecursive(anchor, startOffset, stickTo) ?: return null
+    return findMacroCallAndOffsetExpandedFromUnchecked(mappedElement.call, mappedElement.absoluteOffset, stickTo) ?: mappedElement
 }
 
-private fun findMacroCallAndOffsetExpandedFromNonRecursive(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
+private fun findMacroCallAndOffsetExpandedFromNonRecursive(
+    anchor: PsiElement,
+    startOffset: Int,
+    stickTo: RangeMap.StickTo,
+): MacroCallAndOffset? {
     val call = anchor.findMacroCallExpandedFromNonRecursive() ?: return null
-    val mappedOffset = mapOffsetFromExpansionToCallBody(call, startOffset) ?: return null
+    val mappedOffset = mapOffsetFromExpansionToCallBody(call, startOffset, stickTo) ?: return null
     return MacroCallAndOffset(call, mappedOffset)
 }
 
-private fun mapOffsetFromExpansionToCallBody(call: RsPossibleMacroCall, offset: Int): Int? {
-    return mapOffsetFromExpansionToCallBodyRelative(call, offset)
+private fun mapOffsetFromExpansionToCallBody(
+    call: RsPossibleMacroCall,
+    offset: Int,
+    stickTo: RangeMap.StickTo,
+): Int? {
+    return mapOffsetFromExpansionToCallBodyRelative(call, offset, stickTo)
         ?.fromBodyRelativeOffset(call)
 }
 
-private fun mapOffsetFromExpansionToCallBodyRelative(call: RsPossibleMacroCall, offset: Int): Int? {
+private fun mapOffsetFromExpansionToCallBodyRelative(
+    call: RsPossibleMacroCall,
+    offset: Int,
+    stickTo: RangeMap.StickTo,
+): Int? {
     val expansion = call.expansion ?: return null
     val fileOffset = call.expansionContext.expansionFileStartOffset
-    return expansion.ranges.mapOffsetFromExpansionToCallBody(offset - fileOffset)
+    return expansion.ranges.mapOffsetFromExpansionToCallBody(offset - fileOffset, stickTo)
 }
 
 fun PsiElement.cameFromMacroCall(): Boolean {
     val call = findMacroCallExpandedFromNonRecursive() as? RsMacroCall ?: return false
     val startOffset = (this as? RsPath)?.greenStub?.startOffset ?: startOffset
-    return mapOffsetFromExpansionToCallBodyRelative(call, startOffset) != null
+    return mapOffsetFromExpansionToCallBodyRelative(call, startOffset, RangeMap.StickTo.RIGHT) != null
 }
 
 /**
@@ -214,7 +244,7 @@ fun PsiElement.cameFromMacroCall(): Boolean {
  */
 fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsPossibleMacroCall? {
     val startOffset = (this as? RsPath)?.greenStub?.startOffset ?: startOffset
-    return findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset)?.call
+    return findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset, RangeMap.StickTo.RIGHT)?.call
 }
 
 /**
@@ -222,26 +252,26 @@ fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsPossibleMacroCall? {
  * **macro call** body and this macro is successfully expanded, returns
  * a leaf element inside the macro expansion that is expanded from [this] element. Returns a
  * list of elements because an element inside a macro call body can be placed in a macro expansion
- * multiple times. Returns null if [this] element is not inside a macro call body, or the macro
- * expansion failed. Works for both declarative and procedural macros.
+ * multiple times. Returns `null` if [this] element is not inside a macro call body.
+ * Works for both declarative and procedural macros.
  *
  * # Examples
  *
- * Returns an empty list if [this] element is not placed to an expansion:
+ * Returns an *empty list* if the macro expansion failed or [this] element is not placed to an expansion:
  *
  * ```rust
  * macro_rules foo { (bar) => { fn baz(){} } }
  * foo!(bar); // This `bar` is matched with the `bar` in the pattern and is not placed to the expansion
  * ```
  *
- * Returns a single-element list if [this] element is placed into the expansion only once:
+ * Returns a *single-element list* if [this] element is placed into the expansion only once:
  *
  * ```rust
  * macro_rules foo { ($i:ident) => { fn $i(){} } }
  * foo!(bar); // This `bar` is placed to the expansion as a function name
  * ```
  *
- * Returns a list of multiple elements if [this] element is placed into the expansion multiple times:
+ * Returns a *list of multiple elements* if [this] element is placed into the expansion multiple times:
  *
  * ```rust
  * macro_rules foo { ($i:ident) => { fn $i(){} struct $i{} } }
@@ -255,26 +285,36 @@ fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsPossibleMacroCall? {
  * fn bar() {} // Maps each token with a corresponding token in the macro expansion
  * ```
  */
-fun PsiElement.findExpansionElements(): List<PsiElement>? {
-    val mappedElements = findExpansionElementsNonRecursive() ?: return null
+fun PsiElement.findExpansionElements(cache: AttrCache = AttrCache.NoCache): List<PsiElement>? {
+    val mappedElements = findExpansionElementsNonRecursive(cache) ?: return null
     return mappedElements.flatMap { mappedElement ->
-        mappedElement.findExpansionElements() ?: listOf(mappedElement)
+        mappedElement.findExpansionElements()?.takeIf { it.isNotEmpty() } ?: listOf(mappedElement)
     }
 }
 
 fun PsiElement.findExpansionElementOrSelf(): PsiElement =
     findExpansionElements()?.singleOrNull() ?: this
 
-private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
-    val call = ancestors.toList().asReversed().asSequence().mapNotNull {
+private fun PsiElement.findExpansionElementsNonRecursive(cache: AttrCache): List<PsiElement>? {
+    val ancestors = ancestors.toList()
+    val call = ancestors.asReversed().firstNotNullOfOrNull {
         when (it) {
             is RsMacroArgument -> it.ancestorStrict<RsMacroCall>()
-            is RsAttrProcMacroOwner -> it.procMacroAttribute.attr
+            is RsAttrProcMacroOwner -> cache.cachedGetProcMacroAttribute(it)
             else -> null
         }
-    }.firstOrNull() ?: return null
-    val expansion = call.expansion ?: return null
-    val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
+    } ?: return null
+
+    if (call is RsMetaItem) {
+        val path = call.path
+        val isAttributeOnMacro = ancestors.any {
+            it == path || it is RsMetaItem && it.isRootMetaItem() && it.name == "cfg"
+        }
+        if (isAttributeOnMacro) return null
+    }
+
+    val expansion = call.expansion ?: return emptyList()
+    val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return emptyList()
     val expansionFile = expansion.file
     return mappedOffsets.mapNotNull { mappedOffset ->
         expansionFile.findElementAt(mappedOffset)
@@ -318,7 +358,7 @@ fun RsPossibleMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange):
     return mapRangeFromExpansionToCallBody(range).singleOrNull()?.takeIf { it.length == range.length }
 }
 
-private fun RsPossibleMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
+fun RsPossibleMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
     val expansion = expansion ?: return emptyList()
     return mapRangeFromExpansionToCallBody(expansion, this, range)
 }
@@ -351,6 +391,18 @@ private fun mapRangeFromExpansionToCallBody(
     }
 }
 
+fun mapRangeFromExpansionToCallBodyStrict(anchor: PsiElement, range: TextRange): TextRange? {
+    val ranges = anchor.containingFile.getUserData(RS_FORCED_REDUCED_RANGE_MAP)
+    if (ranges != null) {
+        return ranges.mapTextRangeFromExpansionToCallBody(range)
+            .singleOrNull()
+            ?.srcRange
+            ?.takeIf { it.length == range.length }
+    }
+    val call = anchor.findMacroCallExpandedFromNonRecursive() ?: return null
+    return call.mapRangeFromExpansionToCallBodyStrict(range)
+}
+
 /**
  * If receiver element is inside a macro expansion, returns the element inside the macro call
  * we should navigate to (or the macro call itself if there isn't such element inside a macro call).
@@ -363,3 +415,4 @@ fun PsiElement.findNavigationTargetIfMacroExpansion(): PsiElement? {
 }
 
 private val RS_EXPANSION_CONTEXT = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_CONTEXT")
+private val RS_FORCED_REDUCED_RANGE_MAP = Key.create<RangeMap>("org.rust.lang.core.psi.RS_FORCED_REDUCED_RANGE_MAP")

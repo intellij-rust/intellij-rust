@@ -1,13 +1,8 @@
-import groovy.json.JsonSlurper
 import groovy.xml.XmlParser
-import org.apache.tools.ant.taskdefs.condition.Os.*
-import org.gradle.api.JavaVersion.VERSION_11
 import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.grammarkit.tasks.GenerateLexerTask
-import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishPluginTask
@@ -35,9 +30,9 @@ val baseVersion = when (baseIDE) {
 }
 
 val tomlPlugin = "org.toml.lang"
-val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
+val nativeDebugPlugin: String by project
 val graziePlugin = "tanvd.grazi"
-val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
+val psiViewerPlugin: String by project
 val intelliLangPlugin = "org.intellij.intelliLang"
 val copyrightPlugin = "com.intellij.copyright"
 val javaPlugin = "com.intellij.java"
@@ -48,19 +43,24 @@ val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 val compileNativeCodeTaskName = "compileNativeCode"
 
+val grammarKitFakePsiDeps = "grammar-kit-fake-psi-deps"
+
+val basePluginArchiveName = "intellij-rust"
+
 plugins {
     idea
-    kotlin("jvm") version "1.7.22"
-    id("org.jetbrains.intellij") version "1.10.1"
-    id("org.jetbrains.grammarkit") version "2021.2.2"
+    kotlin("jvm") version "1.8.22"
+    id("org.jetbrains.intellij") version "1.13.1"
+    id("org.jetbrains.grammarkit") version "2022.3.1"
     id("net.saliman.properties") version "1.5.2"
-    id("org.gradle.test-retry") version "1.5.0"
+    id("org.gradle.test-retry") version "1.5.3"
 }
 
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
-        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin")
+        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin") +
+            file("$grammarKitFakePsiDeps/src/main/kotlin")
     }
 }
 
@@ -95,21 +95,18 @@ allprojects {
         sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
     }
 
-    val javaVersion = if (platformVersion < 223) VERSION_11 else VERSION_17
-
     configure<JavaPluginExtension> {
-        // BACKCOMPAT: 2022.2. Use VERSION_17
-        sourceCompatibility = VERSION_11
-        targetCompatibility = javaVersion
+        sourceCompatibility = VERSION_17
+        targetCompatibility = VERSION_17
     }
 
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
-                jvmTarget = javaVersion.toString()
-                languageVersion = "1.7"
-                // see https://plugins.jetbrains.com/docs/intellij/kotlin.html#kotlin-standard-library
-                apiVersion = "1.6"
+                jvmTarget = VERSION_17.toString()
+                languageVersion = "1.8"
+                // see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
+                apiVersion = "1.7"
                 freeCompilerArgs = listOf("-Xjvm-default=all")
             }
         }
@@ -125,6 +122,7 @@ allprojects {
         buildSearchableOptions { enabled = false }
 
         test {
+            systemProperty("java.awt.headless", "true")
             testLogging {
                 showStandardStreams = prop("showStandardStreams").toBoolean()
                 afterSuite(
@@ -212,10 +210,19 @@ allprojects {
 
         tasks.withType<Test>().configureEach {
             jvmArgs = listOf("-Xmx2g", "-XX:-OmitStackTraceInFastThrow")
+
             // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
             // because otherwise it can lead to compatibility issues.
             // Also note that IDEA does the same thing at startup, and not only for tests.
             systemProperty("jna.nosys", "true")
+
+            // The factory should be set up automatically in `IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool`,
+            // but when tests are launched by Gradle this may not happen because Gradle can use the pool earlier.
+            // Setting this factory is critical for `ReadMostlyRWLock` performance, so ensure it is properly set
+            systemProperty(
+                "java.util.concurrent.ForkJoinPool.common.threadFactory",
+                "com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory"
+            )
             if (isTeamcity) {
                 // Make teamcity builds green if only muted tests fail
                 // https://youtrack.jetbrains.com/issue/TW-16784
@@ -239,6 +246,9 @@ val Project.dependencyCachePath
         }
         return cachePath.absolutePath
     }
+
+val pluginProjects: List<Project>
+    get() = rootProject.allprojects.filter { it.name != grammarKitFakePsiDeps }
 
 val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
@@ -274,7 +284,6 @@ project(":plugin") {
         implementation(project(":clion"))
         implementation(project(":debugger"))
         implementation(project(":profiler"))
-        implementation(project(":toml"))
         implementation(project(":copyright"))
         implementation(project(":coverage"))
         implementation(project(":intelliLang"))
@@ -288,7 +297,7 @@ project(":plugin") {
     // We need to put all plugin manifest files into single jar to make new plugin model work
     val mergePluginJarTask = task<Jar>("mergePluginJars") {
         duplicatesStrategy = DuplicatesStrategy.FAIL
-        archiveBaseName.set("intellij-rust")
+        archiveBaseName.set(basePluginArchiveName)
 
         exclude("META-INF/MANIFEST.MF")
         exclude("**/classpath.index")
@@ -315,11 +324,32 @@ project(":plugin") {
         }
     }
 
+    // Add plugin sources to the plugin ZIP.
+    // gradle-intellij-plugin will use it as a plugin sources if the plugin is used as a dependency
+    val createSourceJar = task<Jar>("createSourceJar") {
+        dependsOn(":generateLexer")
+        dependsOn(":generateParser")
+        dependsOn(":debugger:generateGrammarSource")
+
+        for (prj in pluginProjects) {
+            from(prj.kotlin.sourceSets.main.get().kotlin) {
+                include("**/*.java")
+                include("**/*.kt")
+            }
+        }
+
+        destinationDirectory.set(layout.buildDirectory.dir("libs"))
+        archiveBaseName.set(basePluginArchiveName)
+        archiveClassifier.set("src")
+    }
+
     tasks {
         buildPlugin {
+            dependsOn(createSourceJar)
+            from(createSourceJar) { into("lib/src") }
             // Set proper name for final plugin zip.
             // Otherwise, base name is the same as gradle module name
-            archiveBaseName.set("intellij-rust")
+            archiveBaseName.set(basePluginArchiveName)
         }
         runIde { enabled = true }
         prepareSandbox {
@@ -344,7 +374,7 @@ project(":plugin") {
             // Copy pretty printers
             from("$rootDir/prettyPrinters") {
                 into("${pluginName.get()}/prettyPrinters")
-                include("*.py")
+                include("**/*.py")
             }
         }
 
@@ -379,14 +409,20 @@ project(":plugin") {
     task<RunIdeTask>("buildEventsScheme") {
         dependsOn(tasks.prepareSandbox)
         args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
-        // BACKCOMPAT: 2022.2. Update value to 223 and this comment
+        // BACKCOMPAT: 2023.1. Update value to 232 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "222")
+        environment("IDEA_BUILD_NUMBER", "231")
     }
 }
 
+project(":$grammarKitFakePsiDeps")
+
 project(":") {
+    intellij {
+        plugins.set(listOf(tomlPlugin))
+    }
+
     sourceSets {
         main {
             if (channel == "nightly" || channel == "dev") {
@@ -400,45 +436,37 @@ project(":") {
     }
 
     dependencies {
-        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.1") {
+        implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.2") {
             exclude(module = "jackson-core")
             exclude(module = "jackson-databind")
             exclude(module = "jackson-annotations")
         }
-        api("io.github.z4kn4fein:semver:1.4.1") {
+        api("io.github.z4kn4fein:semver:1.4.2") {
             excludeKotlinDeps()
         }
-        testImplementation("com.squareup.okhttp3:mockwebserver:4.10.0")
-    }
-
-    val generateRustLexer = task<GenerateLexerTask>("generateRustLexer") {
-        source.set("src/main/grammars/RustLexer.flex")
-        targetDir.set("src/gen/org/rust/lang/core/lexer")
-        targetClass.set("_RustLexer")
-        purgeOldFiles.set(true)
-    }
-
-    // Previously, we had `GenerateLexer` task that generate a lexer for rustdoc highlighting.
-    // Now we don't have this task, but previously generated lexer may have remained on the file system.
-    // We have to remove it in order to prevent a compilation failure
-    val deleteOldRustDocHighlightingLexer = task<Delete>("deleteOldRustDocHighlightingLexer") {
-        delete("src/gen/org/rust/lang/doc")
-    }
-
-    val generateRustParser = task<GenerateParserTask>("generateRustParser") {
-        source.set("src/main/grammars/RustParser.bnf")
-        targetRoot.set("src/gen")
-        pathToParser.set("org/rust/lang/core/parser/RustParser.java")
-        pathToPsiRoot.set("org/rust/lang/core/psi")
-        purgeOldFiles.set(true)
+        implementation("org.eclipse.jgit:org.eclipse.jgit:6.5.0.202303070854-r") {
+            exclude("org.slf4j")
+        }
+        testImplementation("com.squareup.okhttp3:mockwebserver:4.11.0")
     }
 
     tasks {
+        generateLexer {
+            sourceFile.set(file("src/main/grammars/RustLexer.flex"))
+            targetDir.set("src/gen/org/rust/lang/core/lexer")
+            targetClass.set("_RustLexer")
+            purgeOldFiles.set(true)
+        }
+        generateParser {
+            sourceFile.set(file("src/main/grammars/RustParser.bnf"))
+            targetRoot.set("src/gen")
+            pathToParser.set("org/rust/lang/core/parser/RustParser.java")
+            pathToPsiRoot.set("org/rust/lang/core/psi")
+            purgeOldFiles.set(true)
+            classpath(project(":$grammarKitFakePsiDeps").sourceSets.main.get().runtimeClasspath)
+        }
         withType<KotlinCompile> {
-            dependsOn(
-                generateRustLexer, deleteOldRustDocHighlightingLexer,
-                generateRustParser
-            )
+            dependsOn(generateLexer, generateParser)
         }
 
         // In tests `resources` directory is used instead of `sandbox`
@@ -510,8 +538,8 @@ project(":debugger") {
 
     dependencies {
         implementation(project(":"))
-        antlr("org.antlr:antlr4:4.11.1")
-        implementation("org.antlr:antlr4-runtime:4.11.1")
+        antlr("org.antlr:antlr4:4.13.0")
+        implementation("org.antlr:antlr4-runtime:4.13.0")
         testImplementation(project(":", "testOutput"))
     }
     tasks {
@@ -542,26 +570,6 @@ project(":profiler") {
     dependencies {
         implementation(project(":"))
         testImplementation(project(":", "testOutput"))
-    }
-}
-
-project(":toml") {
-    intellij {
-        plugins.set(listOf(tomlPlugin))
-    }
-    dependencies {
-        implementation("org.eclipse.jgit:org.eclipse.jgit:6.4.0.202211300538-r") { exclude("org.slf4j") }
-
-        implementation(project(":"))
-        testImplementation(project(":", "testOutput"))
-    }
-    tasks {
-        // Set custom plugin directory name.
-        // Otherwise, `prepareSandbox`/`prepareTestingSandbox` tasks merge directories
-        // of `toml` plugin and `toml` module because of the same name into single one that's not expected
-        withType<PrepareSandboxTask> {
-            pluginName.set("rust-toml")
-        }
     }
 }
 
@@ -631,63 +639,6 @@ project(":ml-completion") {
     }
 }
 
-task("runPrettyPrintersTests") {
-    doLast {
-        val lldbPath = when {
-            // TODO: Use `lldb` Python module from CLion distribution
-            isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
-            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
-            isFamily(FAMILY_WINDOWS) -> "" // `python36._pth` is used below instead
-            else -> error("Unsupported OS")
-        }
-        val runCommand = "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath"
-        if (isFamily(FAMILY_WINDOWS)) {
-            val lldbBundlePath = "$projectDir\\deps\\${clionVersion.replaceFirst("CL", "clion")}\\bin\\lldb\\win\\x64"
-            // Add path to bundled `lldb` Python module to `._pth` file (which overrides `sys.path`)
-            // TODO: Drop when this is implemented on CLion side
-            "cmd /C echo ../lib/site-packages>> bin/python36._pth".execute(lldbBundlePath)
-            // Create symlink to allow `lldb` Python module perform `import _lldb` inside
-            // TODO: Drop when this is implemented on CLion side
-            "cmd /C mklink $lldbBundlePath\\lib\\site-packages\\lldb\\_lldb.pyd $lldbBundlePath\\bin\\liblldb.dll".execute()
-
-            // Add path to bundled Python 3 to `Settings_windows.toml` (it is not added statically since it requires $projectDir)
-            "cmd /C echo python = \"${lldbBundlePath.replace("\\", "/")}/bin/python.exe\">> Settings_windows.toml".execute("pretty_printers_tests")
-            // Use UTF-8 to properly decode test output in `lldb_batchmode.py`
-            "cmd /C set PYTHONIOENCODING=utf8 & $runCommand".execute("pretty_printers_tests")
-        } else {
-            // TODO: Remove after CLion snapshot builds provide these files with required permissions
-            if (isFamily(FAMILY_UNIX)) {
-                val lldbLinuxBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/bin")
-                lldbLinuxBinDir.resolve("lldb").setExecutable(true)
-                lldbLinuxBinDir.resolve("LLDBFrontend").setExecutable(true)
-                lldbLinuxBinDir.resolve("lldb-argdumper").setExecutable(true)
-                lldbLinuxBinDir.resolve("lldb-server").setExecutable(true)
-            } else if (isFamily(FAMILY_MAC)) {
-                val lldbMacBinDir = File("$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/mac")
-                lldbMacBinDir.resolve("lldb").setExecutable(true)
-                lldbMacBinDir.resolve("LLDBFrontend").setExecutable(true)
-                lldbMacBinDir.resolve("LLDB.framework").resolve("LLDB").setExecutable(true)
-            }
-
-            runCommand.execute("pretty_printers_tests")
-        }
-
-        val gdbBinary = when {
-            isFamily(FAMILY_MAC) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/mac/bin/gdb"
-            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/gdb/linux/bin/gdb"
-            isFamily(FAMILY_WINDOWS) -> {
-                println("GDB pretty-printers tests are not supported yet for Windows")
-                return@doLast
-            }
-            else -> error("Unsupported OS")
-        }
-        // TODO: Remove after CLion snapshot builds provide this file with required permissions
-        File(gdbBinary).setExecutable(true)
-
-        "cargo run --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
-    }
-}
-
 task("updateCargoOptions") {
     doLast {
         val file = File("src/main/kotlin/org/rust/cargo/util/CargoOptions.kt")
@@ -710,51 +661,6 @@ task("updateCargoOptions") {
     }
 }
 
-task("updateLints") {
-    doLast {
-        val lints = JsonSlurper().parseText("python3 fetch_lints.py".execute("scripts", print = false)) as List<Map<String, *>>
-
-        fun Map<String, *>.isGroup(): Boolean = get("group") as Boolean
-        fun Map<String, *>.isRustcLint(): Boolean = get("rustc") as Boolean
-        fun Map<String, *>.getName(): String = get("name") as String
-
-        fun writeLints(path: String, lints: List<Map<String, *>>, variableName: String) {
-            val file = File(path)
-            val items = lints.sortedWith(compareBy({ !it.isGroup() }, { it.getName() })).joinToString(
-                separator = ",\n    "
-            ) {
-                val name = it.getName()
-                val isGroup = it.isGroup()
-                "Lint(\"$name\", $isGroup)"
-            }
-            file.bufferedWriter().use {
-                it.writeln("""
-/*
- * Use of this source code is governed by the MIT license that can be
- * found in the LICENSE file.
- */
-
-package org.rust.lang.core.completion.lint
-
-val $variableName: List<Lint> = listOf(
-    $items
-)
-""".trim())
-            }
-        }
-
-        writeLints(
-            "src/main/kotlin/org/rust/lang/core/completion/lint/RustcLints.kt",
-            lints.filter { it.isRustcLint() },
-            "RUSTC_LINTS"
-        )
-        writeLints(
-            "src/main/kotlin/org/rust/lang/core/completion/lint/ClippyLints.kt",
-            lints.filter { !it.isRustcLint() },
-            "CLIPPY_LINTS"
-        )
-    }
-}
 
 fun Writer.writeCargoOptions(baseUrl: String) {
 

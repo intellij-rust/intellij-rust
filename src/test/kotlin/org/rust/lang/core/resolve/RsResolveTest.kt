@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockRustcVersion
+import org.rust.MockAdditionalCfgOptions
 import org.rust.WithoutExperimentalFeatures
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsImplItem
@@ -1210,90 +1210,6 @@ class RsResolveTest : RsResolveTestBase() {
                       //^ unresolved
     """)
 
-    @MockRustcVersion("1.23.0")
-    fun `test in-band lifetime unresolved`() = checkByCode("""
-        fn foo(
-            x: &'a str,
-            y: &'a str
-               //^ unresolved
-        ) {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetime resolve`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        fn foo(
-            x: &'a str,
-               //X
-            y: &'a str
-               //^
-        ) {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetime single definition`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        fn foo(
-            x: &'a str,
-               //X
-            y: &'a str
-        ) {
-            let z: &'a str = unimplemented!();
-                   //^
-        }
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetime no definition in body`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        fn foo() {
-            let z: &'a str = unimplemented!();
-                   //^ unresolved
-        }
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band and explicit lifetimes`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        fn foo<'b>(
-            x: &'a str,
-            y: &'a str
-               //^ unresolved
-        ) {}
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetime resolve in impl`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        trait T<'a> {}
-        struct S<'a>(&'a str);
-        impl T<'a>
-              //X
-        for S<'a> {}
-             //^
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetime resolve in impl (where)`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        trait T<'a> {}
-        struct S<'a>(&'a str);
-        impl T<'a>
-              //X
-        for S<'a>
-        where 'a: 'static {}
-             //^
-    """)
-
-    @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetime resolve in impl and explicit lifetimes`() = checkByCode("""
-        #![feature(in_band_lifetimes)]
-        trait T<'a> {}
-        struct S<'a>(&'a str);
-        impl <'b> T<'a> for S<'a> {}
-                             //^ unresolved
-    """)
-
     fun `test loop label`() = checkByCode("""
         fn foo() {
             'a: loop {
@@ -1678,6 +1594,22 @@ class RsResolveTest : RsResolveTestBase() {
                     }
                 }
             }
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve from a nested block under cfg attribute`() = checkByCode("""
+        fn main() {
+            {
+                let mut a = 1;
+                      //X
+                #[cfg(intellij_rust)]
+                {
+                    use foo::bar;
+                    a += 1;
+                } //^
+                a
+            };
         }
     """)
 }

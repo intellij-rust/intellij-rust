@@ -5,10 +5,7 @@
 
 package org.rust.cargo.project.model
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
@@ -142,7 +139,7 @@ class AttachCargoProjectActionTest : RsWithToolchainTestBase() {
             put(PlatformDataKeys.VIRTUAL_FILE, contextFile)
             put(AttachCargoProjectAction.MOCK_CHOSEN_FILE_KEY, mockChosenFile)
         }
-        val testEvent = TestActionEvent(context, place)
+        val testEvent = createActionEvent(context, place)
         val action = ActionManager.getInstance().getAction("Cargo.AttachCargoProject")
         action.beforeActionPerformedUpdate(testEvent)
         assertEquals(shouldBeEnabled, testEvent.presentation.isEnabledAndVisible)
@@ -161,10 +158,7 @@ class AttachCargoProjectActionTest : RsWithToolchainTestBase() {
         }
     }
 
-    private class TestActionEvent(
-        dataContext: DataContext,
-        private val testPlace: String
-    ) : com.intellij.testFramework.TestActionEvent(dataContext) {
-        override fun getPlace(): String = testPlace
+    private fun createActionEvent(dataContext: DataContext, testPlace: String): AnActionEvent {
+        return AnActionEvent(null, dataContext, testPlace, Presentation(), ActionManager.getInstance(), 0)
     }
 }

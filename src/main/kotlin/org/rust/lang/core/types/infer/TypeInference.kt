@@ -62,7 +62,10 @@ sealed class Adjustment: TypeFoldable<Adjustment> {
         override val target: TyReference
     ) : Adjustment() {
         val region: Region = target.region
-        val mutability: Mutability = target.mutability
+        val mutability: AutoBorrowMutability = when (target.mutability) {
+            MUTABLE -> AutoBorrowMutability.Mutable(allowTwoPhaseBorrow = false /* TODO */)
+            IMMUTABLE -> AutoBorrowMutability.Immutable
+        }
         override fun superFoldWith(folder: TypeFolder): Adjustment = BorrowReference(target.foldWith(folder) as TyReference)
     }
 
@@ -71,6 +74,30 @@ sealed class Adjustment: TypeFoldable<Adjustment> {
     ) : Adjustment() {
         val mutability: Mutability = target.mutability
         override fun superFoldWith(folder: TypeFolder): Adjustment = BorrowPointer(target.foldWith(folder) as TyPointer)
+    }
+
+    class ClosureFnPointer(
+        override val target: TyFunctionPointer
+    ): Adjustment() {
+        override fun superFoldWith(folder: TypeFolder): Adjustment {
+            return ClosureFnPointer(target.foldWith(folder) as TyFunctionPointer)
+        }
+    }
+
+    class ReifyFnPointer(
+        override val target: TyFunctionPointer
+    ): Adjustment() {
+        override fun superFoldWith(folder: TypeFolder): Adjustment {
+            return ReifyFnPointer(target.foldWith(folder) as TyFunctionPointer)
+        }
+    }
+
+    class UnsafeFnPointer(
+        override val target: TyFunctionPointer
+    ): Adjustment() {
+        override fun superFoldWith(folder: TypeFolder): Adjustment {
+            return UnsafeFnPointer(target.foldWith(folder) as TyFunctionPointer)
+        }
     }
 
     class MutToConstPointer(override val target: TyPointer) : Adjustment() {
@@ -140,7 +167,7 @@ class RsInferenceResult(
     fun getResolvedMethod(call: RsMethodCall): List<MethodResolveVariant> =
         resolvedMethods[call]?.resolveVariants ?: emptyList()
 
-    fun getResolvedMethodType(call: RsMethodCall): TyFunction? =
+    fun getResolvedMethodType(call: RsMethodCall): TyFunctionBase? =
         resolvedMethods[call]?.type
 
     fun getResolvedMethodSubst(call: RsMethodCall): Substitution =
@@ -278,6 +305,15 @@ class RsInferenceContext(
                         }
                         null to element.expr
                     }
+                    is RsDefaultParameterValue -> {
+                        val type = when (val parent = element.parent) {
+                            is RsValueParameter -> parent.typeReference?.rawType
+                            is RsNamedFieldDecl -> parent.typeReference?.rawType
+                            is RsTupleFieldDecl -> parent.typeReference.rawType
+                            else -> null
+                        }
+                        type to element.expr
+                    }
                     else -> error(
                         "Type inference is not implemented for PSI element of type " +
                             "`${element.javaClass}` that implement `RsInferenceContextOwner`"
@@ -301,6 +337,7 @@ class RsInferenceContext(
         patFieldTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
         diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it }
+        fixScalarBuiltinExprs()
         adjustments.replaceAll { _, it -> it.mapToMutableList { fullyResolve(it) } }
 
         performPathsRefinement(lookup)
@@ -321,6 +358,37 @@ class RsInferenceContext(
             overloadedOperators,
             diagnostics
         )
+    }
+
+    /**
+     * From rustc's `fix_index_builtin_expr`:
+     * Hacky hack: During type-checking, we treat *all* operators
+     * as potentially overloaded. But then, during writeback, if
+     * we observe that something like `a+b` is (known to be)
+     * operating on scalars, we clear the overload.
+     */
+    private fun fixScalarBuiltinExprs() {
+        for (expr in exprTypes.keys) {
+            if (expr is RsBinaryExpr) {
+                val lhs = expr.left
+                val rhs = expr.right ?: continue
+                if (exprTypes[lhs]?.isScalar == true && exprTypes[rhs]?.isScalar == true) {
+                    when (val op = expr.operatorType) {
+                        is AssignmentOp.EQ -> Unit
+                        is ArithmeticOp, is BoolOp -> {
+                            if (!op.isByValue) {
+                                adjustments[lhs]?.removeLastOrNull()
+                                adjustments[rhs]?.removeLastOrNull()
+                            }
+                        }
+
+                        is ArithmeticAssignmentOp -> {
+                            adjustments[lhs]?.removeLastOrNull()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun fallbackUnresolvedTypeVarsIfPossible() {
@@ -429,7 +497,7 @@ class RsInferenceContext(
         resolvedMethods[call] = InferredMethodCallInfo(resolvedTo)
     }
 
-    fun writeResolvedMethodSubst(call: RsMethodCall, subst: Substitution, ty: TyFunction) {
+    fun writeResolvedMethodSubst(call: RsMethodCall, subst: Substitution, ty: TyFunctionBase) {
         resolvedMethods[call]?.let {
             it.subst = subst
             it.type = ty
@@ -466,7 +534,9 @@ class RsInferenceContext(
             expr
         }
 
-        val isAutoborrowMut = adjustment.any { it is Adjustment.BorrowReference && it.mutability == MUTABLE }
+        val isAutoborrowMut = adjustment.any {
+            it is Adjustment.BorrowReference && it.mutability is AutoBorrowMutability.Mutable
+        }
 
         adjustments.getOrPut(unwrappedExpr) { mutableListOf() }.addAll(adjustment)
 
@@ -582,9 +652,15 @@ class RsInferenceContext(
             ty1 is TyTuple && ty2 is TyTuple && ty1.types.size == ty2.types.size -> {
                 combineTypePairs(ty1.types.zip(ty2.types))
             }
-            ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
+            ty1 is TyFunctionBase && ty2 is TyFunctionBase && ty1.paramTypes.size == ty2.paramTypes.size
+                && (
+                (ty1 is TyFunctionPointer && ty2 is TyFunctionPointer) ||
+                    (ty1 is TyFunctionDef && ty2 is TyFunctionDef && ty1.def == ty2.def) ||
+                    (ty1 is TyClosure && ty2 is TyClosure && ty1.def == ty2.def)
+                    ) -> {
                 combineTypePairs(ty1.paramTypes.zip(ty2.paramTypes))
                     .and { combineTypes(ty1.retType, ty2.retType) }
+                    .and { combineUnsafety(ty1, ty2) }
             }
             ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
                 combineTypePairs(ty1.typeArguments.zip(ty2.typeArguments))
@@ -597,6 +673,7 @@ class RsInferenceContext(
             ty1 is TyNever || ty2 is TyNever -> Ok(Unit)
             else -> Err(TypeMismatch(ty1, ty2))
         }
+
 
     fun combineConsts(const1: Const, const2: Const): RelateResult {
         return combineConstsResolved(shallowResolve(const1), shallowResolve(const2))
@@ -627,6 +704,9 @@ class RsInferenceContext(
             const1 == const2 -> Ok(Unit)
             else -> Err(ConstMismatch(const1, const2))
         }
+
+    private fun combineUnsafety(ty1: TyFunctionBase, ty2: TyFunctionBase): RelateResult =
+        if (ty1.fnSig.unsafety == ty2.fnSig.unsafety) Ok(Unit) else Err(TypeMismatch(ty1, ty2))
 
     fun combineTypePairs(pairs: List<Pair<Ty, Ty>>): RelateResult = combinePairs(pairs, ::combineTypes)
 
@@ -695,7 +775,47 @@ class RsInferenceContext(
                 coerceMutability(inferred.mutability, expected.mutability) -> {
                 coerceReference(inferred, expected)
             }
+
+            inferred is TyClosure && expected is TyFunctionPointer -> {
+                inferred.def.move
+                // TODO: check for captured variables
+                combineTypes(TyFunctionPointer(inferred.fnSig.copy(unsafety = expected.unsafety)), expected).map {
+                    CoerceOk(adjustments = listOf(Adjustment.ClosureFnPointer(expected)))
+                }
+            }
+
+            inferred is TyFunctionDef && expected is TyFunctionPointer -> {
+                // FIXME: Provide better error messages. Current message will only mention function signature, which is not the reason for the error
+                if (inferred.def.isIntrinsic) {
+                    // Intrinsics are not coercible to function pointers
+                    Err(TypeMismatch(inferred, expected))
+                } else if (expected.unsafety == Unsafety.Normal && inferred.def.queryAttributes.hasAttribute("target_feature")) {
+                    // Safe `#[target_feature]` functions are not assignable to safe fn pointers (RFC 2396).
+                    Err(TypeMismatch(inferred, expected))
+                } else {
+                    val adjustments = listOf<Adjustment>(Adjustment.ReifyFnPointer(TyFunctionPointer(inferred.fnSig)))
+                    coerceFromSafeFn(inferred, expected, adjustments)
+                }
+            }
+
+            inferred is TyFunctionPointer && expected is TyFunctionPointer -> {
+                coerceFromSafeFn(inferred, expected)
+            }
+
             else -> combineTypes(inferred, expected).into()
+        }
+    }
+
+    private fun coerceFromSafeFn(inferred: TyFunctionBase, expected: TyFunctionPointer, adjustments: List<Adjustment> = emptyList()): RsResult<CoerceOk, TypeError> {
+        val finalAdjustments = adjustments.toMutableList()
+        val inf = if (inferred.unsafety == Unsafety.Normal && expected.unsafety == Unsafety.Unsafe) {
+            finalAdjustments.add(Adjustment.UnsafeFnPointer(expected))
+            TyFunctionPointer(inferred.fnSig.copy(unsafety = Unsafety.Unsafe))
+        } else {
+            TyFunctionPointer(inferred.fnSig)
+        }
+        return combineTypes(inf, expected).map {
+            CoerceOk(adjustments = finalAdjustments)
         }
     }
 
@@ -797,9 +917,9 @@ class RsInferenceContext(
                 if (!isTrivialReborrow) {
                     val adjustments = autoderef.steps().toAdjustments(items) +
                         listOf(Adjustment.BorrowReference(derefTyRef))
-                    return Ok(CoerceOk(adjustments))
+                    return Ok(CoerceOk(adjustments, obligations = autoderef.obligations()))
                 }
-                return Ok(CoerceOk())
+                return Ok(CoerceOk(obligations = autoderef.obligations()))
             }
         }
 
@@ -831,6 +951,14 @@ class RsInferenceContext(
     }
 
     private val shallowResolver: ShallowResolver = ShallowResolver()
+
+    fun resolveTypeVarsWithObligations(ty: Ty): Ty {
+        if (!ty.needsInfer) return ty
+        val tyRes = resolveTypeVarsIfPossible(ty)
+        if (!tyRes.needsInfer) return tyRes
+        fulfill.selectWherePossible()
+        return resolveTypeVarsIfPossible(tyRes)
+    }
 
     fun <T : TypeFoldable<T>> resolveTypeVarsIfPossible(value: T): T = value.foldWith(opportunisticVarResolver)
 
@@ -1047,7 +1175,7 @@ class RsInferenceContext(
         return TyWithObligations(ty.value, obligations)
     }
 
-    private fun <T : TypeFoldable<T>> hasUnresolvedTypeVars(_ty: T): Boolean = _ty.visitWith(object : TypeVisitor {
+    private fun <T : TypeFoldable<T>> hasUnresolvedTypeVars(ty: T): Boolean = ty.visitWith(object : TypeVisitor {
         override fun visitTy(ty: Ty): Boolean {
             val resolvedTy = shallowResolve(ty)
             return when {
@@ -1230,7 +1358,7 @@ class RsInferenceContext(
             val baseAdjustments = adjustments[base] ?: continue
 
             baseAdjustments.forEachIndexed { i, adjustment ->
-                if (adjustment is Adjustment.BorrowReference && adjustment.mutability == IMMUTABLE) {
+                if (adjustment is Adjustment.BorrowReference && adjustment.mutability is AutoBorrowMutability.Immutable) {
                     baseAdjustments[i] = Adjustment.BorrowReference(adjustment.target.copy(mutability = MUTABLE))
                 }
             }
@@ -1264,7 +1392,7 @@ val RsGenericDeclaration.predicates: List<Predicate>
     }
 
 private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
-    val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
+    val whereBounds = wherePreds.asSequence()
         .flatMap {
             val selfTy = it.typeReference?.rawType ?: return@flatMap emptySequence<PsiPredicate>()
             it.typeParamBounds?.polyboundList.toPredicates(selfTy)
@@ -1358,7 +1486,7 @@ sealed class ResolvedPath {
     ) : ResolvedPath()
 
     companion object {
-        fun from(entry: ScopeEntry, context: RsElement): ResolvedPath? {
+        fun from(entry: ScopeEntry, context: RsElement): ResolvedPath {
             return if (entry is AssocItemScopeEntry) {
                 AssocItem(entry.element, entry.source)
             } else {
@@ -1375,12 +1503,12 @@ sealed class ResolvedPath {
 data class InferredMethodCallInfo(
     val resolveVariants: List<MethodResolveVariant>,
     var subst: Substitution = emptySubstitution,
-    var type: TyFunction? = null,
+    var type: TyFunctionBase? = null,
 ) : TypeFoldable<InferredMethodCallInfo> {
     override fun superFoldWith(folder: TypeFolder): InferredMethodCallInfo = InferredMethodCallInfo(
         resolveVariants,
         subst.foldValues(folder),
-        type?.foldWith(folder) as? TyFunction
+        type?.foldWith(folder) as? TyFunctionBase
     )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean {
@@ -1400,13 +1528,16 @@ data class MethodPick(
     val source: TraitImplSource,
     val derefSteps: List<Autoderef.AutoderefStep>,
     val autorefOrPtrAdjustment: AutorefOrPtrAdjustment?,
-    val isValid: Boolean
+    val isValid: Boolean,
+    val obligations: List<Obligation>,
 ) {
     fun toMethodResolveVariant(): MethodResolveVariant =
         MethodResolveVariant(element.name!!, element, formalSelfTy, derefCount, source)
 
     sealed class AutorefOrPtrAdjustment {
         data class Autoref(val mutability: Mutability, val unsize: Boolean) : AutorefOrPtrAdjustment()
+
+        @Suppress("unused")
         object ToConstPtr : AutorefOrPtrAdjustment()
     }
 
@@ -1415,11 +1546,12 @@ data class MethodPick(
             m: MethodResolveVariant,
             methodSelfTy: Ty,
             derefSteps: List<Autoderef.AutoderefStep>,
-            autorefOrPtrAdjustment: AutorefOrPtrAdjustment?
-        ) = MethodPick(m.element, m.selfTy, methodSelfTy, m.derefCount, m.source, derefSteps, autorefOrPtrAdjustment, true)
+            autorefOrPtrAdjustment: AutorefOrPtrAdjustment?,
+            obligations: List<Obligation>
+        ) = MethodPick(m.element, m.selfTy, methodSelfTy, m.derefCount, m.source, derefSteps, autorefOrPtrAdjustment, true, obligations)
 
         fun from(m: MethodResolveVariant) =
-            MethodPick(m.element, m.selfTy, TyUnknown, m.derefCount, m.source, emptyList(), null, false)
+            MethodPick(m.element, m.selfTy, TyUnknown, m.derefCount, m.source, emptyList(), null, false, emptyList())
     }
 }
 

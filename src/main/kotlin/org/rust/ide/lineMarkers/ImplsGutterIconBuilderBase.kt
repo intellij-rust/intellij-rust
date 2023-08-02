@@ -6,11 +6,13 @@
 package org.rust.ide.lineMarkers
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
@@ -22,13 +24,14 @@ import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.Icon
 
-abstract class ImplsGutterIconBuilderBase(private val elementName: String, icon: Icon) :
+class ImplsGutterIconBuilder(private val elementName: String, icon: Icon) :
     NavigationGutterIconBuilder<PsiElement>(icon, DEFAULT_PSI_CONVERTOR, PSI_GOTO_RELATED_ITEM_PROVIDER) {
 
-    protected fun createGutterIconRendererInner(
-        pointers: NotNullLazyValue<List<SmartPsiElementPointer<*>>>,
-        renderer: Computable<PsiElementListCellRenderer<*>>,
-        empty: Boolean
+    override fun createGutterIconRenderer(
+        pointers: NotNullLazyValue<out List<SmartPsiElementPointer<*>>>,
+        renderer: Computable<out PsiElementListCellRenderer<*>>,
+        empty: Boolean,
+        navigationHandler: GutterIconNavigationHandler<PsiElement>?
     ): NavigationGutterIconRenderer {
         return ImplsNavigationGutterIconRenderer(
             popupTitle = myPopupTitle,
@@ -44,14 +47,14 @@ abstract class ImplsGutterIconBuilderBase(private val elementName: String, icon:
     }
 
     private class ImplsNavigationGutterIconRenderer(
-        popupTitle: String?,
-        emptyText: String?,
-        pointers: NotNullLazyValue<List<SmartPsiElementPointer<*>>>,
-        cellRenderer: Computable<PsiElementListCellRenderer<*>>,
+        @NlsContexts.PopupTitle popupTitle: String?,
+        @NlsContexts.PopupContent emptyText: String?,
+        pointers: NotNullLazyValue<out List<SmartPsiElementPointer<*>>>,
+        cellRenderer: Computable<out PsiElementListCellRenderer<*>>,
         private val elementName: String,
         private val alignment: Alignment,
         private val icon: Icon,
-        private val tooltipText: String?,
+        @NlsContexts.Tooltip private val tooltipText: String?,
         private val empty: Boolean
     ) : NavigationGutterIconRenderer(popupTitle, emptyText, cellRenderer, pointers, /* computeTargetsInBackground = */ !isUnitTestMode) {
         override fun isNavigateAction(): Boolean = !empty

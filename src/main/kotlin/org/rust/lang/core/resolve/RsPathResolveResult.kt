@@ -18,17 +18,9 @@ data class RsPathResolveResult<T : RsElement>(
     val element: T,
     val resolvedSubst: Substitution = emptySubstitution,
     val isVisible: Boolean,
+    val namespaces: Set<Namespace> = emptySet(),
 ) : ResolveResult {
     override fun getElement(): PsiElement = element
 
     override fun isValidResult(): Boolean = true
-
-    inline fun mapSubst(
-        f: (Substitution) -> Substitution
-    ): RsPathResolveResult<T> {
-        if (resolvedSubst === emptySubstitution) {
-            return this
-        }
-        return RsPathResolveResult(element, f(resolvedSubst), isVisible)
-    }
 }

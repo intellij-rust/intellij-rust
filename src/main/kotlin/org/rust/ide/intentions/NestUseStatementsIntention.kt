@@ -9,8 +9,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Nest imports 1 depth
@@ -30,8 +33,10 @@ import org.rust.lang.core.psi.ext.*
  * ```
  */
 class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatementsIntention.Context>() {
-    override fun getText() = "Nest use statements"
+    override fun getText() = RsBundle.message("intention.name.nest.use.statements")
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     interface Context {
         val useSpecks: List<RsUseSpeck>
@@ -73,7 +78,7 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
             ctx.root.addAfter(RsPsiFactory(project).createComma(), inserted)
         }
 
-        editor.caretModel.moveToOffset(inserted!!.startOffset + ctx.cursorOffset)
+        editor.moveCaretToOffset(inserted, inserted.startOffset + ctx.cursorOffset)
     }
 
     private fun makeGroupedPath(basePath: String, useSpecks: List<RsUseSpeck>): String {

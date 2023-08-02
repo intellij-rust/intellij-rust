@@ -1,0 +1,48 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:6:11: 6:11
+    let _1: A;                           // in scope 0 at src/main.rs:7:9: 7:11
+    let mut _3: A;                       // in scope 0 at src/main.rs:8:27: 8:29
+    let mut _6: A;                       // in scope 0 at src/main.rs:10:27: 10:29
+    scope 1 {
+        debug a1 => _1;                  // in scope 1 at src/main.rs:7:9: 7:11
+        let _2: B;                       // in scope 1 at src/main.rs:8:9: 8:11
+        scope 2 {
+            debug b1 => _2;              // in scope 2 at src/main.rs:8:9: 8:11
+            let _4: A;                   // in scope 2 at src/main.rs:9:9: 9:11
+            scope 3 {
+                debug a2 => _4;          // in scope 3 at src/main.rs:9:9: 9:11
+                let _5: B;               // in scope 3 at src/main.rs:10:9: 10:11
+                scope 4 {
+                    debug b2 => _5;      // in scope 4 at src/main.rs:10:9: 10:11
+                }
+            }
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:7:9: 7:11
+        _1 = A { x: const 1_i32 };       // scope 0 at src/main.rs:7:14: 7:24
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:7:9: 7:11
+        StorageLive(_2);                 // scope 1 at src/main.rs:8:9: 8:11
+        StorageLive(_3);                 // scope 1 at src/main.rs:8:27: 8:29
+        _3 = move _1;                    // scope 1 at src/main.rs:8:27: 8:29
+        _2 = B { y: const 2_i32, z: move _3 }; // scope 1 at src/main.rs:8:14: 8:31
+        StorageDead(_3);                 // scope 1 at src/main.rs:8:30: 8:31
+        FakeRead(ForLet(None), _2);      // scope 1 at src/main.rs:8:9: 8:11
+        StorageLive(_4);                 // scope 2 at src/main.rs:9:9: 9:11
+        _4 = move (_2.1: A);             // scope 2 at src/main.rs:9:14: 9:18
+        FakeRead(ForLet(None), _4);      // scope 2 at src/main.rs:9:9: 9:11
+        StorageLive(_5);                 // scope 3 at src/main.rs:10:9: 10:11
+        StorageLive(_6);                 // scope 3 at src/main.rs:10:27: 10:29
+        _6 = move _4;                    // scope 3 at src/main.rs:10:27: 10:29
+        _5 = B { y: const 3_i32, z: move _6 }; // scope 3 at src/main.rs:10:14: 10:31
+        StorageDead(_6);                 // scope 3 at src/main.rs:10:30: 10:31
+        FakeRead(ForLet(None), _5);      // scope 3 at src/main.rs:10:9: 10:11
+        _0 = const ();                   // scope 0 at src/main.rs:6:11: 11:2
+        StorageDead(_5);                 // scope 3 at src/main.rs:11:1: 11:2
+        StorageDead(_4);                 // scope 2 at src/main.rs:11:1: 11:2
+        StorageDead(_2);                 // scope 1 at src/main.rs:11:1: 11:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:11:1: 11:2
+        return;                          // scope 0 at src/main.rs:11:2: 11:2
+    }
+}

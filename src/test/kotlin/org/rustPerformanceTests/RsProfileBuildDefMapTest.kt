@@ -14,7 +14,7 @@ class RsProfileBuildDefMapTest : RsPerfTestBase() {
     fun `test Cargo`() = doTest(CARGO)
     fun `test mysql_async`() = doTest(MYSQL_ASYNC)
     fun `test tokio`() = doTest(TOKIO)
-    fun `test amethyst`() = doTest(AMETHYST)
+    fun `test bevy`() = doTest(BEVY)
     fun `test clap`() = doTest(CLAP)
     fun `test diesel`() = doTest(DIESEL)
     fun `test rust_analyzer`() = doTest(RUST_ANALYZER)

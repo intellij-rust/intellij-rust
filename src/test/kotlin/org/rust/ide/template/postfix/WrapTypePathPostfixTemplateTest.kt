@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class WrapTypePathPostfixTemplateTest : RsPostfixTemplateTest(WrapTypePathPostfixTemplate(RsPostfixTemplateProvider())) {
+class WrapTypePathPostfixTemplateTest : RsPostfixTemplateTest(WrapTypePathPostfixTemplate::class) {
     fun `test ignore path expression`() = doTestNotApplicable("""
         struct S;
 

@@ -1,0 +1,33 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:2:11: 2:11
+    let _1: E;                           // in scope 0 at src/main.rs:3:9: 3:12
+    scope 1 {
+        debug foo => _1;                 // in scope 1 at src/main.rs:3:9: 3:12
+        let _2: i32;                     // in scope 1 at src/main.rs:5:18: 5:19
+        let _3: i32;                     // in scope 1 at src/main.rs:5:21: 5:22
+        scope 2 {
+            debug a => _2;               // in scope 2 at src/main.rs:5:18: 5:19
+            debug b => _3;               // in scope 2 at src/main.rs:5:21: 5:22
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:3:9: 3:12
+        _1 = E::Foo { a: const 0_i32, b: const 0_i32 }; // scope 0 at src/main.rs:3:15: 3:36
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:3:9: 3:12
+        FakeRead(ForMatchedPlace(None), _1); // scope 1 at src/main.rs:4:11: 4:14
+        StorageLive(_2);                 // scope 1 at src/main.rs:5:18: 5:19
+        _2 = ((_1 as Foo).0: i32);       // scope 1 at src/main.rs:5:18: 5:19
+        StorageLive(_3);                 // scope 1 at src/main.rs:5:21: 5:22
+        _3 = ((_1 as Foo).1: i32);       // scope 1 at src/main.rs:5:21: 5:22
+        _0 = const ();                   // scope 2 at src/main.rs:5:28: 5:30
+        StorageDead(_3);                 // scope 1 at src/main.rs:5:29: 5:30
+        StorageDead(_2);                 // scope 1 at src/main.rs:5:29: 5:30
+        goto -> bb1;                     // scope 1 at src/main.rs:5:29: 5:30
+    }
+
+    bb1: {
+        StorageDead(_1);                 // scope 0 at src/main.rs:7:1: 7:2
+        return;                          // scope 0 at src/main.rs:7:2: 7:2
+    }
+}

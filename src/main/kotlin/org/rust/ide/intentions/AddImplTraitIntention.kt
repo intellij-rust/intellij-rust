@@ -15,50 +15,55 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
-import org.rust.ide.inspections.fixes.insertGenericArgumentsIfNeeded
+import org.rust.RsBundle
+import org.rust.ide.fixes.insertGenericArgumentsIfNeeded
 import org.rust.ide.refactoring.implementMembers.generateMissingTraitMembers
+import org.rust.ide.utils.PsiInsertionPlace
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.createSmartPointer
 
 class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention.Context>() {
-    override fun getText() = "Implement trait"
+    override fun getText() = RsBundle.message("intention.name.implement.trait")
     override fun getFamilyName() = text
 
-    class Context(val type: RsStructOrEnumItemElement, val name: String)
+    class Context(
+        val type: RsStructOrEnumItemElement,
+        val typeName: String,
+        val placeForImpl: PsiInsertionPlace,
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val struct = element.ancestorStrict<RsStructOrEnumItemElement>() ?: return null
-        val name = struct.name ?: return null
-        return Context(struct, name)
+        val typeName = struct.name ?: return null
+        val placeForImpl = PsiInsertionPlace.forItemInTheScopeOf(struct) ?: return null
+        return Context(struct, typeName, placeForImpl)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val impl = RsPsiFactory(project).createTraitImplItem(
-            ctx.name,
+        val newImpl = RsPsiFactory(project).createTraitImplItem(
+            ctx.typeName,
             "T",
             ctx.type.typeParameterList,
             ctx.type.whereClause
         )
 
-        val inserted = ctx.type.parent.addAfter(impl, ctx.type) as RsImplItem
-        val traitName = inserted.traitRef?.path ?: return
+        val insertedImpl = ctx.placeForImpl.insert(newImpl)
+        val traitName = insertedImpl.traitRef?.path ?: return
 
-        val implPtr = inserted.createSmartPointer()
-        val traitNamePtr = traitName.createSmartPointer()
-        val tpl = editor.newTemplateBuilder(inserted) ?: return
-        tpl.replaceElement(traitNamePtr.element ?: return, MacroCallNode(CompleteMacro()))
-        tpl.withFinishResultListener {
-            val implCurrent = implPtr.element
-            if (implCurrent != null) {
-                runWriteAction {
-                    afterTraitNameEntered(implCurrent, editor)
+        val implPtr = insertedImpl.createSmartPointer()
+        editor.newTemplateBuilder(insertedImpl)
+            .replaceElement(traitName, MacroCallNode(CompleteMacro()))
+            .withDisabledDaemonHighlighting()
+            .runInline {
+                val implCurrent = implPtr.element
+                if (implCurrent != null) {
+                    runWriteAction {
+                        afterTraitNameEntered(implCurrent, editor)
+                    }
                 }
             }
-        }
-        tpl.withDisabledDaemonHighlighting()
-        tpl.runInline()
     }
 
     private fun afterTraitNameEntered(impl: RsImplItem, editor: Editor) {
@@ -71,7 +76,7 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
             null
         }
 
-        generateMissingTraitMembers(impl)
+        generateMissingTraitMembers(impl, traitRef, editor)
 
         showGenericArgumentsTemplate(
             editor,
@@ -94,17 +99,17 @@ class AddImplTraitIntention : RsElementBaseIntentionAction<AddImplTraitIntention
             val typeToUsage = insertedGenericArguments.associateWith { ty ->
                 ty.path.referenceName?.let { pathTypes[it] } ?: emptyList()
             }
-            val tmp = editor.newTemplateBuilder(impl) ?: return
+            val tpl = editor.newTemplateBuilder(impl)
             for ((type, usages) in typeToUsage) {
-                tmp.introduceVariable(type).apply {
+                tpl.introduceVariable(type).apply {
                     for (usage in usages) {
                         replaceElementWithVariable(usage)
                     }
                 }
             }
-            tmp.withExpressionsHighlighting()
-            tmp.withDisabledDaemonHighlighting()
-            tmp.runInline()
+            tpl.withExpressionsHighlighting()
+            tpl.withDisabledDaemonHighlighting()
+            tpl.runInline()
         }
     }
 

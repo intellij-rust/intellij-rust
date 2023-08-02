@@ -1,0 +1,107 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.rust.toml.resolve.CargoTomlReferenceContributor"/>
+        <psi.referenceContributor language="Rust"
+                                  implementation="org.rust.toml.resolve.RsCargoTomlIntegrationReferenceContributor"/>
+        <completion.contributor language="TOML"
+                                implementationClass="org.rust.toml.completion.CargoTomlCompletionContributor"/>
+        <completion.contributor language="Rust"
+                                implementationClass="org.rust.toml.completion.RsCargoTomlIntegrationCompletionContributor"/>
+        <codeInsight.lineMarkerProvider language="TOML"
+                                        implementationClass="org.rust.toml.CargoCrateDocLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="TOML"
+                                        implementationClass="org.rust.toml.CargoFeatureLineMarkerProvider"/>
+        <codeInsight.gotoSuper language="TOML" implementationClass="org.rust.toml.CargoTomlGotoSuperHandler"/>
+
+        <findUsagesHandlerFactory implementation="org.rust.toml.search.CargoTomlFindUsagesHandlerFactory"/>
+        <usageTypeProvider implementation="org.rust.toml.search.CargoTomlUsageTypeProvider"/>
+        <elementDescriptionProvider implementation="org.rust.toml.CargoTomlElementDescriptionProvider"/>
+
+        <!--suppress PluginXmlExtensionRegistration -->
+        <localInspection groupKey="rust"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.toml.inspections.MissingFeaturesInspection"
+                         key="inspection.missing.features.display.name" bundle="messages.RsBundle"/>
+
+        <localInspection language="TOML"
+                         groupPath="Rust"
+                         groupKey="cargo.toml"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="org.rust.toml.inspections.CargoTomlCyclicFeatureInspection"
+                         key="inspection.cargo.toml.cyclic.feature.display.name" bundle="messages.RsBundle"/>
+        <localInspection language="TOML"
+                         groupPath="Rust"
+                         groupKey="cargo.toml"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"
+                         key="inspection.crate.not.found.display.name" bundle="messages.RsBundle"/>
+
+        <localInspection language="TOML"
+                         groupPath="Rust"
+                         groupKey="cargo.toml"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.CrateVersionInvalidInspection"
+                         key="inspection.crate.version.invalid.display.name" bundle="messages.RsBundle"/>
+        <localInspection language="TOML"
+                         groupPath="Rust"
+                         groupKey="cargo.toml"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="org.rust.toml.inspections.NewCrateVersionAvailableInspection"
+                         key="inspection.new.crate.version.available.display.name" bundle="messages.RsBundle"/>
+        <localInspection language="TOML"
+                         groupPath="Rust"
+                         groupKey="cargo.toml"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="org.rust.toml.inspections.TomlInvalidKeywordSegmentInspection"
+                         key="inspection.toml.invalid.keyword.segment.display.name" bundle="messages.RsBundle"/>
+
+
+        <localInspection language="TOML"
+                         key="inspection.duplicated.key.display.name" bundle="messages.RsBundle"
+                         groupPath="Rust"
+                         groupKey="cargo.toml"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="org.rust.toml.inspections.TomlDuplicatedKeyInspection"/>
+
+        <intentionAction>
+            <bundleName>messages.RsBundle</bundleName>
+            <className>org.rust.toml.intentions.ExpandDependencySpecificationIntention</className>
+            <categoryKey>rust.cargo.toml</categoryKey>
+            <language>TOML</language>
+        </intentionAction>
+
+        <intentionAction>
+            <bundleName>messages.RsBundle</bundleName>
+            <className>org.rust.toml.intentions.SimplifyDependencySpecificationIntention</className>
+            <categoryKey>rust.cargo.toml</categoryKey>
+            <language>TOML</language>
+        </intentionAction>
+
+        <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
+                            serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
+                            testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>
+
+        <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>
+
+        <vfs.asyncListener implementation="org.rust.toml.crates.local.CratesLocalIndexVfsListener"/>
+
+        <registryKey key="org.rust.crates.local.index.update.interval" defaultValue="60"
+                     description="Interval between crates.io index updates in minutes"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="JavaScript">
+        <JsonSchema.ProviderFactory implementation="org.rust.toml.jsonSchema.CargoTomlJsonSchemaProviderFactory"/>
+    </extensions>
+
+    <projectListeners>
+        <listener class="org.rust.toml.crates.local.CratesLocalIndexWaker"
+                  topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
+    </projectListeners>
+</idea-plugin>

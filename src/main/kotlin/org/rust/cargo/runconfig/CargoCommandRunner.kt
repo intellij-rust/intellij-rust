@@ -8,13 +8,13 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.ExecutionManagerImpl.Companion.EXECUTION_SKIP_RUN
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.runconfig.command.hasRemoteTarget
 
 open class CargoCommandRunner : RsDefaultProgramRunnerBase() {
     override fun getRunnerId(): String = RUNNER_ID
@@ -24,7 +24,7 @@ open class CargoCommandRunner : RsDefaultProgramRunnerBase() {
         val cleaned = profile.clean().ok ?: return false
         val isLocalRun = !profile.hasRemoteTarget || profile.buildTarget.isRemote
         val isLegacyTestRun = !profile.isBuildToolWindowAvailable &&
-            cleaned.cmd.command == "test" &&
+            cleaned.cmd.command in listOf("test", "bench") &&
             getBuildConfiguration(profile) != null
         return isLocalRun && !isLegacyTestRun
     }
@@ -35,6 +35,10 @@ open class CargoCommandRunner : RsDefaultProgramRunnerBase() {
             !(isBuildConfiguration(configuration) && configuration.isBuildToolWindowAvailable)) {
             super.doExecute(state, environment)
         } else {
+            // For commands like `cargo build` or `cargo test --no-run`
+            // we skip execution here because build already was performed
+            // in Build Tool window
+            environment.putUserData(EXECUTION_SKIP_RUN, true)
             null
         }
     }

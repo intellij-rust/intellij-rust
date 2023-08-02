@@ -7,7 +7,8 @@ package org.rust.ide.inspections
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.RsBundle
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.CompilerFeature.Companion.LET_ELSE
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.psi.*
@@ -20,10 +21,10 @@ import org.rust.lang.core.psi.ext.*
  * See also [RsConstantConditionIfInspection].
  */
 class RsRedundantElseInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Redundant else"
+    override fun getDisplayName() = RsBundle.message("redundant.else")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
 
             override fun visitElseBranch(expr: RsElseBranch) {
                 if (expr.isRedundant) registerProblem(expr, expr.`else`.textRangeInParent)
@@ -38,9 +39,9 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
                 holder.registerProblem(
                     expr,
                     textRange,
-                    "Redundant `else`",
+                    RsBundle.message("inspection.message.redundant.else"),
                     SubstituteTextFix.delete(
-                        "Remove `else`",
+                        RsBundle.message("intention.name.remove.else"),
                         expr.containingFile,
                         expr.rangeWithPrevSpace
                     )

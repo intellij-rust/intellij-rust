@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsMacroBodyIdent
 import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-abstract class RsMacroBodyIdentMixin(node: ASTNode) : RsElementImpl(node), RsMacroBodyIdent {
+abstract class RsMacroBodyIdentMixin(type: IElementType) : RsElementImpl(type), RsMacroBodyIdent {
     override val referenceNameElement: PsiElement
         get() = identifier
 

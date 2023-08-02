@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.MockRustcVersion
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -16,10 +17,12 @@ class EncloseExprInBracesFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         struct S<const N: usize = { 1 + 1 }>;
     """)
 
+    @MockRustcVersion("1.70.0")
     fun `test const generic default unavailable 1`() = checkFixIsUnavailable("Enclose the expression in braces", """
         struct S<const N: usize = /*caret*/1>;
     """)
 
+    @MockRustcVersion("1.70.0")
     fun `test const generic default unavailable 2`() = checkFixIsUnavailable("Enclose the expression in braces", """
         struct S<const N: usize = /*caret*/{ 1 + 1 }>;
     """)
@@ -50,8 +53,10 @@ class EncloseExprInBracesFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         }
     """)
 
+    @MockRustcVersion("1.60.0-nightly")
     fun `test const generic all expressions`() = checkErrors("""
-        #![feature(const_generics)]
+        #![feature(min_const_generics)]
+        #![feature(adt_const_params)]
         #![feature(const_generics_defaults)]
 
         use std::ops::Neg;

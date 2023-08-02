@@ -32,10 +32,10 @@ class PerNsHashMap<K : Any>(
 
     /**
      * Stores [VisItem] data in encoded form:
-     * - First two bits encode namespace and [VisItem.isModOrEnum]
+     * - First three bits encode namespace and [VisItem.isModOrEnum]
      * - Next three bits encode [VisItem.visibility]
      * - Next bit encodes [VisItem.isFromNamedImport] flag
-     * - Last two bits are unused
+     * - Last bit is unused
      * See [encodeMask] and `decode*`
      */
     private var masks: ByteArray = EMPTY_BYTE_ARRAY
@@ -45,10 +45,11 @@ class PerNsHashMap<K : Any>(
         if (path !is ModPath) return path as PerNs
         val mask = masks[index].toInt()
         val isModOrEnum = decodeIsModOrEnum(mask)
+        val isTrait = decodeIsTrait(mask)
         val namespace = decodeNamespace(mask)
         val visibility = decodeVisibility(mask)
         val isFromNamedImport = decodeIsFromNamedImport(mask)
-        val visItem = VisItem(path, visibility, isModOrEnum, isFromNamedImport)
+        val visItem = VisItem(path, visibility, isModOrEnum, isTrait, isFromNamedImport)
 
         val visItemArray = arrayOf(visItem)
         return when (namespace) {
@@ -95,9 +96,10 @@ class PerNsHashMap<K : Any>(
 
         val namespaceMask = when {
             visItem.isModOrEnum -> 0
-            namespace === Namespace.Types -> 1
-            namespace === Namespace.Values -> 2
-            namespace === Namespace.Macros -> 3
+            visItem.isTrait -> 1
+            namespace === Namespace.Types -> 2
+            namespace === Namespace.Values -> 3
+            namespace === Namespace.Macros -> 4
             else -> error("unreachable")
         }
 
@@ -125,25 +127,26 @@ class PerNsHashMap<K : Any>(
 
         val isFromNamedImportMask = if (visItem.isFromNamedImport) 1 else 0
 
-        val mask = namespaceMask or (visibilityMask shl 2) or (isFromNamedImportMask shl 5)
+        val mask = namespaceMask or (visibilityMask shl 3) or (isFromNamedImportMask shl 6)
         return mask.toByte()
     }
 
-    private fun decodeIsFromNamedImport(mask: Int): Boolean = mask and 0b1_000_00 != 0
+    private fun decodeIsFromNamedImport(mask: Int): Boolean = mask and 0b1_000_000 != 0
 
-    private fun decodeIsModOrEnum(mask: Int): Boolean = mask and 0b11 == 0
+    private fun decodeIsModOrEnum(mask: Int): Boolean = mask and 0b111 == 0
+
+    private fun decodeIsTrait(mask: Int): Boolean = mask and 0b111 == 1
 
     private fun decodeNamespace(mask: Int): Namespace =
-        when (mask and 0b11) {
-            0 -> Namespace.Types
-            1 -> Namespace.Types
-            2 -> Namespace.Values
-            3 -> Namespace.Macros
+        when (mask and 0b111) {
+            0, 1, 2 -> Namespace.Types
+            3 -> Namespace.Values
+            4 -> Namespace.Macros
             else -> error("unreachable")
         }
 
     private fun decodeVisibility(mask: Int): Visibility =
-        when ((mask shr 2) and 0b111) {
+        when ((mask shr 3) and 0b111) {
             0 -> Visibility.CfgDisabled
             1 -> Visibility.Invisible
             2 -> Visibility.Public

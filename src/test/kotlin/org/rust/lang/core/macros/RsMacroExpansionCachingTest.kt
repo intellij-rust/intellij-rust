@@ -15,7 +15,6 @@ import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.intellij.lang.annotations.Language
 import org.rust.CheckTestmarkHit
-import org.rust.ExpandMacros
 import org.rust.TestProject
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsFile
@@ -25,7 +24,6 @@ import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 
-@ExpandMacros
 class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
     private fun type(text: String = "a"): () -> Unit = {
         myFixture.type(text)

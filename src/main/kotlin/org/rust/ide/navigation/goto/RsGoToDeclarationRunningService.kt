@@ -6,10 +6,9 @@
 package org.rust.ide.navigation.goto
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -30,20 +29,20 @@ class RsGoToDeclarationRunningService {
 
     @Suppress("unused")
     private class Listener : AnActionListener {
-        override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
             if (action.isGoToDeclaration) {
                 getInstance()._isGoToDeclarationAction = true
             }
         }
 
-        override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
             if (action.isGoToDeclaration) {
                 getInstance()._isGoToDeclarationAction = false
             }
         }
 
         private val AnAction.isGoToDeclaration: Boolean
-            get() = this is GotoDeclarationAction || this is GotoDeclarationOnlyAction
+            get() = this is GotoDeclarationAction
     }
 
     companion object {

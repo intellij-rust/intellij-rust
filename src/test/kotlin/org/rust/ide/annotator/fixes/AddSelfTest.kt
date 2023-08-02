@@ -14,7 +14,7 @@ class AddSelfTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         impl S {
             fn foo() {
-                <error>self/*caret*/</error>;
+                /*error*/self/*caret*//*error**/;
             }
         }
     """, """
@@ -32,7 +32,7 @@ class AddSelfTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         impl S {
             fn foo(a: i32) {
-                <error>self/*caret*/</error>;
+                /*error*/self/*caret*//*error**/;
             }
         }
     """, """
@@ -50,7 +50,7 @@ class AddSelfTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         impl S {
             fn foo(#[cfg(intellij_rust)] a: i32) {
-                <error>self/*caret*/</error>;
+                /*error*/self/*caret*//*error**/;
             }
         }
     """, """

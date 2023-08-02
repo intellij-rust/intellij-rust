@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsExpressionAnnotator
 
+@SkipTestWrapping
 class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class) {
 
     fun `test basic`() = checkFixByText("Create field", """
@@ -94,6 +96,27 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """)
 
+    fun `test struct referenced via Self`() = checkFixByTextWithoutHighlighting("Create field", """
+        struct Foo {}
+        impl Foo {
+            fn new() -> Foo {
+                Self {
+                    /*caret*/field: 0,
+                }
+            }
+        }
+    """, """
+        struct Foo {
+            field: i32,
+        }
+        impl Foo {
+            fn new() -> Foo {
+                Self {
+                    /*caret*/field: 0,
+                }
+            }
+        }
+    """)
 
     fun `test no block`() = checkFixByText("Create field", """
         struct S;

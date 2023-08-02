@@ -19,10 +19,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.Alarm
+import org.rust.ide.intentions.util.macros.RsIntentionInsideMacroExpansionEditor
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.ext.RsElement
 import javax.swing.JComponent
@@ -108,12 +110,21 @@ fun JTextField.addTextChangeListener(listener: (DocumentEvent) -> Unit) {
 
 fun selectElement(element: RsElement, editor: Editor) {
     val start = element.textRange.startOffset
-    editor.caretModel.moveToOffset(start)
-    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
-    editor.selectionModel.setSelection(start, element.textRange.endOffset)
+    val unwrappedEditor = if (editor is RsIntentionInsideMacroExpansionEditor && element.containingFile != editor.psiFileCopy) {
+        if (element.containingFile != editor.originalFile) return
+        editor.originalEditor
+    } else {
+        editor
+    }
+    unwrappedEditor.caretModel.moveToOffset(start)
+    unwrappedEditor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    unwrappedEditor.selectionModel.setSelection(start, element.textRange.endOffset)
 }
 
 fun <T : JComponent> Row.fullWidthCell(component: T): Cell<T> {
     return cell(component)
         .horizontalAlign(HorizontalAlign.FILL)
 }
+
+val JBTextField.trimmedText: String
+    get() = text.trim()

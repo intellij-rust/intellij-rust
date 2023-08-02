@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsLifetimeNamingInspection
 
@@ -22,6 +23,7 @@ class RsLifetimeNamingInspectionTest : RsInspectionsTestBase(RsLifetimeNamingIns
         fn lifetimes<'LifetimeFoo>() {}
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test lifetimes fix`() = checkFixByText("Rename to `'lifetime_foo`", """
         fn lifetimes<
             <warning descr="Lifetime `'LifetimeFoo` should have a snake case name such as `'lifetime_foo`">'Lifetime<caret>Foo</warning>>(x: &'LifetimeFoo u32) {

@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsAssocTypeNamingInspection
 
@@ -23,6 +24,7 @@ class RsAssocTypeNamingInspectionTest : RsInspectionsTestBase(RsAssocTypeNamingI
         }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test associated types fix`() = checkFixByText("Rename to `AssocFoo`", """
         trait Foo {
             type <warning descr="Type `assoc_foo` should have a camel case name such as `AssocFoo`">ass<caret>oc_foo</warning>;

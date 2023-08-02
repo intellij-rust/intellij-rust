@@ -5,9 +5,10 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
@@ -19,9 +20,9 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 
 class RsAssertEqualInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
 
-        override fun visitMacroCall(o: RsMacroCall) {
+        override fun visitMacroCall2(o: RsMacroCall) {
             if (o.macroName != "assert") return
             val assertMacroArg = o.assertMacroArgument ?: return
 
@@ -37,8 +38,8 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
 
             holder.registerProblem(
                 o,
-                "assert!(a $operator b) can be $macroName!(a, b)",
-                SpecializedAssertQuickFix(macroName)
+                RsBundle.message("inspection.message.assert.b.can.be.b", operator, macroName),
+                SpecializedAssertQuickFix(o, macroName)
             )
         }
 
@@ -48,13 +49,13 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
 
             val lookup = ImplLookup.relativeTo(expr)
             // The `assert_eq!` macro, as opposed to `assert!`, requires both arguments to implement `core::fmt::Debug`.
-            if (!lookup.isDebug(leftType) || !lookup.isDebug(rightType)) {
+            if (!lookup.isDebug(leftType).isTrue || !lookup.isDebug(rightType).isTrue) {
                 Testmarks.DebugTraitIsNotImplemented.hit()
                 return false
             }
             // Don't try to convert `assert!` macro into `assert_eq!/assert_ne!`
             // if expressions can't be compared at all
-            if (!lookup.isPartialEq(leftType, rightType)) {
+            if (!lookup.isPartialEq(leftType, rightType).isTrue) {
                 Testmarks.PartialEqTraitIsNotImplemented.hit()
                 return false
             }
@@ -62,14 +63,15 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
         }
     }
 
-    private class SpecializedAssertQuickFix(private val assertName: String) : LocalQuickFix {
-        override fun getName() = "Convert to $assertName!"
+    private class SpecializedAssertQuickFix(
+        element: RsMacroCall,
+        private val assertName: String
+    ) : RsQuickFixBase<RsMacroCall>(element) {
+        override fun getText() = RsBundle.message("intention.name.convert.to.macro", assertName)
+        override fun getFamilyName(): String = text
 
-        override fun getFamilyName(): String = name
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val macro = descriptor.psiElement as RsMacroCall
-            val assertArg = macro.assertMacroArgument!!
+        override fun invoke(project: Project, editor: Editor?, element: RsMacroCall) {
+            val assertArg = element.assertMacroArgument!!
 
             val (left, right) = comparedAssertArgs(assertArg) ?: return
             val formatArgs = assertArg.formatMacroArgList
@@ -79,12 +81,12 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
                 ""
             }
             val newAssert = RsPsiFactory(project).createMacroCall(
-                macro.expansionContext,
-                macro.bracesKind ?: return,
+                element.expansionContext,
+                element.bracesKind ?: return,
                 assertName,
                 "${left.text}, ${right.text}$appendix"
             )
-            macro.replace(newAssert)
+            element.replace(newAssert)
         }
 
         private fun comparedAssertArgs(arg: RsAssertMacroArgument): Pair<RsExpr, RsExpr>? {

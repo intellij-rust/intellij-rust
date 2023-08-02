@@ -14,6 +14,12 @@ pub enum <ENUM>Flag</ENUM> {
 
 const <CONSTANT>QUALITY</CONSTANT>: <ENUM>Flag</ENUM> = <ENUM>Flag</ENUM>::<ENUM_VARIANT>Good</ENUM_VARIANT>;
 
+static <STATIC>COUNTER</STATIC>: <STRUCT>AtomicUsize</STRUCT> = <STRUCT>AtomicUsize</STRUCT>::<ASSOC_FUNCTION_CALL>new</ASSOC_FUNCTION_CALL>(0);
+
+extern "C" {
+    static mut <MUT_STATIC>ERROR_MESSAGE</MUT_STATIC>: *mut std::os::raw::c_char;
+}
+
 struct Table<const <CONST_PARAMETER>N</CONST_PARAMETER>: usize>([[i32; <CONST_PARAMETER>N</CONST_PARAMETER>]; <CONST_PARAMETER>N</CONST_PARAMETER>])
 
 pub trait <TRAIT>Write</TRAIT> {

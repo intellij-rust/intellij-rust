@@ -7,9 +7,11 @@ package org.rust.ide.intentions
 
 import org.intellij.lang.annotations.Language
 import org.rust.MockServerFixture
+import org.rust.SkipTestWrapping
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.ide.actions.ShareInPlaygroundActionTest
 
+@SkipTestWrapping
 class ShareInPlaygroundIntentionTest : RsIntentionTestBase(ShareInPlaygroundIntention::class) {
 
     private val mockServerFixture: MockServerFixture = MockServerFixture()

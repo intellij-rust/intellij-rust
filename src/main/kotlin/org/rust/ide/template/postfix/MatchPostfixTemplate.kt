@@ -5,13 +5,12 @@
 
 package org.rust.ide.template.postfix
 
-import com.intellij.codeInsight.template.TemplateResultListener
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
+import org.rust.ide.fixes.AddRemainingArmsFix
+import org.rust.ide.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.checkExhaustive
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
@@ -54,30 +53,27 @@ class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
         val matchBody = matchExpr.matchBody ?: return
-        val arm = matchBody.matchArmList.firstOrNull() ?: return
-        val blockExpr = arm.expr as? RsBlockExpr ?: return
         val toBeReplaced = processor.getElementsToReplace(matchBody)
 
-        if (toBeReplaced.isEmpty()) {
-            moveCaretToMatchArmBlock(editor, blockExpr)
-        } else {
-            val blockExprPointer = blockExpr.createSmartPointer()
-            editor.buildAndRunTemplate(
-                matchBody,
-                toBeReplaced.map { it.createSmartPointer() },
-                TemplateResultListener {
-                    if (it == TemplateResultListener.TemplateResult.Finished) {
-                        val restoredBlockExpr = blockExprPointer.element ?: return@TemplateResultListener
-                        moveCaretToMatchArmBlock(editor, restoredBlockExpr)
-                    }
-                }
-            )
+        editor.fillArmsPlaceholders(toBeReplaced, matchExpr)
+    }
+}
+
+private fun Editor.fillArmsPlaceholders(elementsToReplace: Collection<RsElement>, match: RsMatchExpr) {
+    val firstArmBlock = match.matchBody?.matchArmList?.firstOrNull()?.expr as? RsBlockExpr ?: return
+    if (elementsToReplace.isEmpty()) {
+        moveCaretToMatchArmBlock(this, firstArmBlock)
+    } else {
+        val firstArmBlockPointer = firstArmBlock.createSmartPointer()
+        buildAndRunTemplate(match, elementsToReplace) {
+            val restored = firstArmBlockPointer.element ?: return@buildAndRunTemplate
+            moveCaretToMatchArmBlock(this, restored)
         }
     }
+}
 
-    private fun moveCaretToMatchArmBlock(editor: Editor, blockExpr: RsBlockExpr) {
-        editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
-    }
+private fun moveCaretToMatchArmBlock(editor: Editor, blockExpr: RsBlockExpr) {
+    editor.caretModel.moveToOffset(blockExpr.block.lbrace.textOffset + 1)
 }
 
 private fun getMatchProcessor(ty: Ty, context: RsElement): MatchProcessor {
@@ -108,7 +104,7 @@ private object GenericMatchProcessor : MatchProcessor() {
         } else {
             AddRemainingArmsFix(matchExpr, patterns)
         }
-        fix.invoke(matchExpr.project, matchExpr.containingFile, matchExpr, matchExpr)
+        fix.invoke(matchExpr.project, editor = null, matchExpr)
     }
 
     override fun getElementsToReplace(matchBody: RsMatchBody): List<RsElement> =
@@ -129,4 +125,10 @@ private open class StringLikeMatchProcessor : MatchProcessor() {
 
 private object StringMatchProcessor : StringLikeMatchProcessor() {
     override fun expressionToText(expression: RsExpr): String = "${expression.text}.as_str()"
+}
+
+fun fillMatchArms(match: RsMatchExpr, editor: Editor) {
+    GenericMatchProcessor.normalizeMatch(match)
+    val elementsToReplace = match.descendantsOfType<RsPatWild>()
+    editor.fillArmsPlaceholders(elementsToReplace, match)
 }

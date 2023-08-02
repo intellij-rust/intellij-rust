@@ -8,12 +8,16 @@ package org.rust.cargo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
+import org.junit.runner.RunWith
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.tools.rustc
@@ -28,6 +32,7 @@ import org.rust.stdext.RsResult
  * Unlike [org.rust.RsTestBase] it does not use in-memory temporary VFS
  * and instead copies real files.
  */
+@RunWith(RsJUnit4TestRunner::class)
 abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
 
     protected lateinit var rustupFixture: RustupTestFixture
@@ -106,10 +111,15 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
     }
 
     override fun tearDown() {
-        Disposer.dispose(earlyTestRootDisposable)
-        rustupFixture.tearDown()
-        super.tearDown()
-        checkMacroExpansionFileSystemAfterTest()
+        runAll(
+            {
+                // Fixes flaky tests
+                (ProjectLevelVcsManagerEx.getInstance(project) as ProjectLevelVcsManagerImpl).waitForInitialized()
+            },
+            { Disposer.dispose(earlyTestRootDisposable) },
+            { rustupFixture.tearDown() },
+            { super.tearDown() },
+        )
     }
 
     protected open fun createRustupFixture(): RustupTestFixture = RustupTestFixture(project)

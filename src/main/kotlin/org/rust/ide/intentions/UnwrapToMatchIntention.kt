@@ -8,8 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.intentions.UnwrapToMatchIntention.ReceiverType.*
-import org.rust.lang.core.psi.*
+import org.rust.RsBundle
+import org.rust.ide.intentions.UnwrapToMatchIntention.ReceiverType.OPTION
+import org.rust.ide.intentions.UnwrapToMatchIntention.ReceiverType.RESULT
+import org.rust.ide.utils.PsiModificationUtil
+import org.rust.lang.core.psi.RsEnumItem
+import org.rust.lang.core.psi.RsMatchExpr
+import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.psi.ext.receiver
@@ -18,7 +24,7 @@ import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
 class UnwrapToMatchIntention: RsElementBaseIntentionAction<UnwrapToMatchIntention.Context>() {
-    override fun getText() = "Replace .unwrap() with match"
+    override fun getText() = RsBundle.message("intention.name.replace.unwrap.with.match")
     override fun getFamilyName() = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
@@ -26,12 +32,14 @@ class UnwrapToMatchIntention: RsElementBaseIntentionAction<UnwrapToMatchIntentio
         val itemType = (methodCall.receiver.type as? TyAdt)?.item as? RsEnumItem ?: return null
         val enumType = getReceiverType(itemType) ?: return null
 
-        if (methodCall.referenceName == "unwrap" &&
-            methodCall.typeArgumentList == null &&
-            methodCall.valueArgumentList.exprList.isEmpty()) {
-            return Context(methodCall, enumType)
-        }
-        return null
+        val isAppropriateMethod = methodCall.referenceName == "unwrap"
+            && methodCall.typeArgumentList == null
+            && methodCall.valueArgumentList.exprList.isEmpty()
+            && PsiModificationUtil.canReplace(methodCall.parentDotExpr)
+
+        if (!isAppropriateMethod) return null
+
+        return Context(methodCall, enumType)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {

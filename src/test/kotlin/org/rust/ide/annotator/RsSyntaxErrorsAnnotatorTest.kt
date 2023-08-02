@@ -6,7 +6,9 @@
 package org.rust.ide.annotator
 
 import org.rust.MockRustcVersion
+import org.rust.SkipTestWrapping
 
+@SkipTestWrapping
 class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
     fun `test E0379 const trait function`() = checkErrors("""
         trait Foo {
@@ -60,7 +62,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
 
             <error descr="Associated function `default_foo` cannot have the `default` qualifier">default</error> fn default_foo();
             <error descr="Associated function `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo();
-            fn tup_param(<error descr="Associated function `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn tup_param(<error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y)</error>: (u8, u8), a: bool);
             fn var_foo(a: bool, <error descr="Associated function `var_foo` cannot be variadic">...</error>);
         }
     """)
@@ -76,7 +78,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
 
             <error descr="Method `default_foo` cannot have the `default` qualifier">default</error> fn default_foo(&self);
             <error descr="Method `pub_foo` cannot have the `pub` qualifier">pub</error> fn pub_foo(&mut self);
-            fn tup_param(&self, <error descr="Method `tup_param` cannot have tuple parameters">(x, y): (u8, u8)</error>, a: bool);
+            fn tup_param(&self, <error descr="Patterns aren't allowed in functions without bodies [E0642]">(x, y)</error>: (u8, u8), a: bool);
             fn var_foo(&self, a: bool, <error descr="Method `var_foo` cannot be variadic">...</error>);
         }
     """)
@@ -106,6 +108,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         pub type UInt = u32;
         type Maybe<T> = Option<T>;
         type SizedMaybe<T> where T: Sized = Option<T>;
+        type SizedMaybe2<T> = Option<T> <error descr="Type `SizedMaybe2` cannot have `where` clause after the type">where T: Sized</error>;
 
         <error descr="Type `DefBool` cannot have the `default` qualifier">default</error> type DefBool = bool;
         <error descr="Type `Unknown` should have a body`">type Unknown;</error>
@@ -396,8 +399,8 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
     """)
 
     fun `test constants without a type`() = checkErrors("""
-        <error descr="Missing type for `const` item">const MY_CONST = 1;</error>
-        <error descr="Missing type for `static` item">static MY_STATIC = 1;</error>
+        const <error descr="Missing type for `const` item">MY_CONST</error> = 1;
+        static <error descr="Missing type for `static` item">MY_STATIC</error> = 1;
         const PARTIAL_TYPE:<error descr="<type> expected, got '='"> </error> = 1;
     """)
 
@@ -479,4 +482,79 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         }
     """)
 
+    fun `test underscore expressions`() = checkErrors("""
+        fn main() {
+            let x = 0;
+            _ = x;
+            x = <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>;
+            (_, _) = (x, x);
+            (x, x) = (<error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>, <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>);
+            (<error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error> + <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>, <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error> - <error descr="In expressions, `_` can only be used on the left-hand side of an assignment">_</error>) = (x, x);
+        }
+    """)
+
+    fun `test default parameter values`() = checkErrors("""
+        fn foo(x: i32 = <error descr="Default parameter values are not supported in Rust">0</error>) {}
+        struct S { x: i32 = <error descr="Default parameter values are not supported in Rust">0</error> }
+        struct T(i32 = <error descr="Default parameter values are not supported in Rust">0</error>);
+    """)
+
+    fun `test impl in type bounds`() = checkErrors("""
+        fn foo1<U: <error descr="Expected trait bound, found `impl Trait` type">impl</error> T>() {}
+        fn foo2<U: <error descr="Expected trait bound, found `impl Trait` type">impl</error> T + T>() {}
+        fn foo3<T: <error descr="Expected trait bound, found `impl Trait` type">impl</error> Fn() -> i32>() {}
+    """)
+
+    fun `test dyn in type bounds`() = checkErrors("""
+        fn foo1<U: <error descr="Invalid `dyn` keyword">dyn</error> T>() {}
+        fn foo2<U: <error descr="Invalid `dyn` keyword">dyn</error> T + T>() {}
+        fn foo3<T: <error descr="Invalid `dyn` keyword">dyn</error> Fn() -> i32>() {}
+    """)
+
+    fun `test struct inheritance`() = checkErrors("""
+        struct A;
+        struct B : <error descr="Struct inheritance is not supported in Rust">A</error>;
+        struct C : <error descr="Struct inheritance is not supported in Rust">A, B</error>;
+        struct D : <error descr="Struct inheritance is not supported in Rust">A + B</error>;
+        struct E(i32) : <error descr="Struct inheritance is not supported in Rust">A</error>;
+        struct F : <error descr="Struct inheritance is not supported in Rust">A</error> { x: i32 }
+        struct G : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B;
+        struct H(i32) : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B;
+        struct I : <error descr="Struct inheritance is not supported in Rust">A</error> where A: B { x: i32 }
+    """)
+
+    fun `test prefix increment operator top expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            <error descr="Rust has no prefix increment operator">++</error>a;
+        }
+    """)
+
+    fun `test postfix increment operator top expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            a<error descr="Rust has no postfix increment operator">++</error>;
+        }
+    """)
+
+    fun `test postfix decrement operator top expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            a<error descr="Rust has no postfix decrement operator">--</error>;
+        }
+    """)
+
+    fun `test prefix increment operator nested expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            <error descr="Rust has no prefix increment operator">++</error>a < 1;
+        }
+    """)
+
+    fun `test postfix increment operator nested expr`() = checkErrors("""
+        fn main() {
+            let mut a = 0;
+            a<error descr="Rust has no postfix increment operator">++</error> < 1;
+        }
+    """)
 }

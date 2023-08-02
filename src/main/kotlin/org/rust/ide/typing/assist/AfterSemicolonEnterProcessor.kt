@@ -15,14 +15,14 @@ import org.rust.lang.core.psi.ext.endOffset
 
 class AfterSemicolonEnterProcessor : SmartEnterProcessorWithFixers.FixEnterProcessor() {
     override fun doEnter(atCaret: PsiElement, file: PsiFile, editor: Editor, modified: Boolean): Boolean {
-        return when (atCaret) {
-            is RsExprStmt,
-            is RsLetDecl -> {
-                val elementEndOffset = atCaret.endOffset
-                editor.caretModel.moveToOffset(elementEndOffset)
-                modified
-            }
-            else -> false
-        }
+        if (!modified) return false
+
+        val isSuitableElement = RsSmartEnterProcessor.isSuitableElement(atCaret)
+            || atCaret is RsExprStmt || atCaret is RsLetDecl
+        if (!isSuitableElement) return false
+
+        val elementEndOffset = atCaret.endOffset
+        editor.caretModel.moveToOffset(elementEndOffset)
+        return true
     }
 }

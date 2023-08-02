@@ -7,10 +7,8 @@ package org.rust.lang.core.psi
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.lang.core.psi.AttributeType.*
+import org.rust.lang.core.psi.RsAttributeTest.AttributeType.*
 import org.rust.lang.core.psi.ext.*
-
-enum class AttributeType { Outer, Inner, Both, None }
 
 class RsAttributeTest : RsTestBase() {
 
@@ -239,4 +237,6 @@ class RsAttributeTest : RsTestBase() {
             //^
         }
     """, Outer)
+
+    private enum class AttributeType { Outer, Inner, Both, None }
 }

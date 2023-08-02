@@ -538,6 +538,44 @@ New:
   ')'
     """.trimIndent())
 
+    fun `test change method impl with explicit self type`() = doTestChangeSignature("""
+        trait Trait {
+            fn foo(&self: &Self/*caret*/);
+        }
+
+        struct S;
+        impl Trait for S {
+            fn foo(&self: &Self) {}
+        }
+    """, """
+        trait Trait {
+            fn foo(&self: &Self, a: u32);
+        }
+
+        struct S;
+        impl Trait for S {
+            fn foo(&self: &Self, a: u32) {}
+        }
+    """, "foo", {
+        myFixture.type(", a: u32")
+    }, """
+Old:
+  'foo'
+  '('
+  LineBreak('', false)
+  ')'
+New:
+  'foo'
+  '('
+  LineBreak('', true)
+  Group (added):
+    'a'
+    ': '
+    'u32'
+  LineBreak('', false)
+  ')'
+    """.trimIndent())
+
     fun `test default value only parameter`() {
         val factory = RsPsiFactory(project)
         val exprs = listOf(

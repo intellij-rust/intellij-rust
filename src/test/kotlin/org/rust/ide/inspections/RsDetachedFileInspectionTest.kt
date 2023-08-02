@@ -11,7 +11,7 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.impl.DEFAULT_EDITION_FOR_TESTS
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.inspections.fixes.withMockModuleAttachSelector
+import org.rust.ide.fixes.withMockModuleAttachSelector
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.containingCrate
@@ -32,7 +32,6 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         /*caret*/
     """)
 
-    @ExpandMacros
     fun `test included file via macro`() = checkByFileTree("""
         //- lib.rs
             macro_rules! generate_include {
@@ -305,6 +304,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- macro.rs
     """, preview = null)
 
+    @SkipTestWrapping // Investigate after enabling file-tree with wrapping
     fun `test code insight after attach`() = checkFixByFileTreeWithoutHighlighting("Attach file to lib.rs", """
     //- lib.rs
         fn func() {}

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiParserFacade
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.ide.refactoring.*
 import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.psi.*
@@ -89,7 +90,7 @@ private class ExpressionReplacer(
 
             if (nameElem != null) {
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-                RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
+                RsInPlaceVariableIntroducer(nameElem, editor, project, RsBundle.message("command.name.choose.variable"))
                     .performInplaceRefactoring(suggestedNames.all)
             }
         }

@@ -14,7 +14,9 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import org.rust.lang.core.psi.RsElementTypes.COLON
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPatIdent
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.childrenWithLeaves
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.rawValueParameters
 
 data class RsSignatureAdditionalData(val isFunction: Boolean) : SuggestedRefactoringSupport.SignatureAdditionalData
 data class RsParameterAdditionalData(val isPatIdent: Boolean) : SuggestedRefactoringSupport.ParameterAdditionalData
@@ -24,10 +26,9 @@ class RsSuggestedRefactoringStateChanges(
 ) : SuggestedRefactoringStateChanges(support) {
     override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
         val function = anchor as? RsFunction ?: return emptyList()
-        val parameterColons: List<PsiElement?> = listOf(function.selfParameter?.colon) +
-            function.rawValueParameters.map { parameter ->
-                parameter.childrenWithLeaves.firstOrNull { it.elementType == COLON }
-            }
+        val parameterColons: List<PsiElement?> = function.rawValueParameters.map { parameter ->
+            parameter.childrenWithLeaves.firstOrNull { it.elementType == COLON }
+        }
         return parameterColons.mapNotNull { it?.textRange }
     }
 

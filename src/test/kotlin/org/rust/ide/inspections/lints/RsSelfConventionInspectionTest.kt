@@ -8,8 +8,8 @@ package org.rust.ide.inspections.lints
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.lints.RsSelfConventionInspection
 
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
     fun `test from`() = checkByText("""
         struct Foo;
@@ -64,7 +64,6 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test is suppressed for copyable`() = checkByText("""
         #[derive(Copy)]
         struct Copyable;
@@ -73,7 +72,6 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test is suppressed for copyable on trait`() = checkByText("""
         use std::marker::Copy;
         trait Copyable: Copy {

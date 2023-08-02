@@ -9,7 +9,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.toPsiFile
@@ -38,7 +37,6 @@ class RsDefMapMacroIndexConsistencyTest : RsTestBase() {
         [0, 7] macro macro3
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test proc macros`() = doTest("""
         use test_proc_macros::*;

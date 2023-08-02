@@ -71,7 +71,7 @@ class RsToolchainPathChoosingComboBox(onTextChanged: () -> Unit = {}) : Componen
     /**
      * Obtains a list of toolchains on a pool using [toolchainObtainer], then fills the combobox and calls [callback] on the EDT.
      */
-    @Suppress("UnstableApiUsage")
+    @Suppress("UnstableApiUsage", "MemberVisibilityCanBePrivate")
     fun addToolchainsAsync(toolchainObtainer: () -> List<Path>, callback: () -> Unit) {
         setBusy(true)
         ApplicationManager.getApplication().executeOnPooledThread {

@@ -6,19 +6,22 @@
 package org.rust.cargo.project.workspace
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.ProcessProgressListener
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RsToolchainBase.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadataException
 import org.rust.cargo.toolchain.impl.RustcVersion
@@ -26,6 +29,7 @@ import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.StdLibType
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.isFeatureEnabled
@@ -36,6 +40,7 @@ import org.rust.stdext.toPath
 import org.rust.stdext.unwrapOrElse
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 data class StandardLibrary(
     val workspaceData: CargoWorkspaceData,
@@ -72,6 +77,7 @@ data class StandardLibrary(
         ): StandardLibrary? {
             val srcDir = findSrcDir(sources) ?: return null
 
+            fun warn(message: @Nls String) {
             if (useBsp) {
                 return fetchHardcodedStdlib(srcDir)
             }
@@ -85,13 +91,13 @@ data class StandardLibrary(
                 val rustcVersion = rustcInfo?.version
                 val semverVersion = rustcVersion?.semver
                 if (semverVersion == null) {
-                    warn("Toolchain version is unknown. Hardcoded stdlib structure will be used")
+                    warn(RsBundle.message("toolchain.version.is.unknown.hardcoded.stdlib.structure.will.be.used"))
                     fetchHardcodedStdlib(srcDir)
                 } else {
-                    val buildTarget = cargoConfig.buildTarget ?: rustcVersion.host
-                    val result = fetchActualStdlib(project, srcDir, rustcVersion, buildTarget, rustcInfo.rustupActiveToolchain, listener)
+                    val buildTargets = cargoConfig.buildTargets.ifEmpty { listOfNotNull(rustcVersion.host) }
+                    val result = fetchActualStdlib(project, srcDir, rustcVersion, buildTargets, rustcInfo.rustupActiveToolchain, listener)
                     if (result == null) {
-                        warn("Fetching actual stdlib info failed. Hardcoded stdlib structure will be used")
+                        warn(RsBundle.message("fetching.actual.stdlib.info.failed.hardcoded.stdlib.structure.will.be.used"))
                     }
                     result ?: fetchHardcodedStdlib(srcDir)
                 }
@@ -116,20 +122,22 @@ data class StandardLibrary(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
-            buildTarget: String?,
+            buildTargets: List<String>,
             activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean = false
         ): StandardLibrary? {
             try {
-                return StdlibDataFetcher.create(project, srcDir, version, buildTarget, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
+                return StdlibDataFetcher.create(project, srcDir, version, buildTargets, activeToolchain, listener, cleanVendorDir)?.fetchStdlibData()
             } catch (e: Throwable) {
-                if (!isUnitTestMode) {
-                    // Logger.error in tests, fail the test
+                if (isUnitTestMode) {
+                    // Don't fail a test - we have some tests that check error recovery during stdlib fetching
+                    LOG.warn(e)
+                } else {
                     LOG.error(e)
                 }
                 if (!cleanVendorDir && e is CargoMetadataException) {
-                    return fetchActualStdlib(project, srcDir, version, buildTarget, activeToolchain, listener, cleanVendorDir = true)
+                    return fetchActualStdlib(project, srcDir, version, buildTargets, activeToolchain, listener, cleanVendorDir = true)
                 }
             }
             return null
@@ -195,9 +203,10 @@ class StdlibDataFetcher private constructor(
     private val project: Project,
     private val cargo: Cargo,
     private val srcDir: VirtualFile,
+    private val version: RustcVersion,
     private val testPackageSrcDir: VirtualFile,
     private val stdlibDependenciesDir: Path,
-    private val buildTarget: String?,
+    private val buildTargets: List<String>,
     private val activeToolchain: String?,
     private val listener: ProcessProgressListener?
 ) {
@@ -309,11 +318,12 @@ class StdlibDataFetcher private constructor(
         val metadataProject = cargo.fetchMetadata(
             project,
             pathAsPath,
-            buildTarget = buildTarget,
+            buildTargets = buildTargets,
             toolchainOverride = activeToolchain,
+            environmentVariables = additionalEnvVariables(version),
             listener = listener
         ).unwrapOrElse {
-            listener?.error("Failed to fetch stdlib package info", it.message.orEmpty())
+            listener?.error(RsBundle.message("build.event.title.failed.to.fetch.stdlib.package.info"), it.message.orEmpty())
             throw it
         }
 
@@ -323,12 +333,13 @@ class StdlibDataFetcher private constructor(
 
     companion object {
         private val LOG: Logger = logger<StdlibDataFetcher>()
+        private val RUSTC_1_72_BETA = "1.72.0-beta".parseSemVer()
 
         fun create(
             project: Project,
             srcDir: VirtualFile,
             version: RustcVersion,
-            buildTarget: String?,
+            buildTargets: List<String>,
             activeToolchain: String?,
             listener: ProcessProgressListener?,
             cleanVendorDir: Boolean
@@ -352,9 +363,10 @@ class StdlibDataFetcher private constructor(
                 project,
                 cargo,
                 srcDir,
+                version,
                 testPackageSrcDir,
                 stdlibDependenciesDir,
-                buildTarget,
+                buildTargets,
                 activeToolchain,
                 listener
             )
@@ -391,8 +403,15 @@ class StdlibDataFetcher private constructor(
             if (!stdlibVendorExists) {
                 // `test` package depends on all other stdlib packages,
                 // so it's enough to vendor only its dependencies
-                cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor, activeToolchain, listener).unwrapOrElse {
-                    listener?.error("Failed to load stdlib dependencies", it.message.orEmpty())
+                cargo.vendorDependencies(
+                    project,
+                    testPackageSrcDir.pathAsPath,
+                    stdlibVendor,
+                    activeToolchain,
+                    environmentVariables = additionalEnvVariables(version),
+                    listener
+                ).unwrapOrElse {
+                    listener?.error(RsBundle.message("build.event.title.failed.to.load.stdlib.dependencies"), it.message.orEmpty())
                     LOG.error(it)
                     return null
                 }
@@ -404,6 +423,18 @@ class StdlibDataFetcher private constructor(
             val pathHash = HashCode.compute(srcDir.path)
             val versionHash = HashCode.compute(version.commitHash ?: version.semver.parsedVersion)
             return HashCode.mix(pathHash, versionHash).toString()
+        }
+
+        private fun additionalEnvVariables(version: RustcVersion): EnvironmentVariablesData {
+            // Starting from `1.72.0-beta.1` there is a nightly Cargo feature usage in the stdlib:
+            // `cargo-features = ["public-dependency"]`
+            // (see the tracking issue for the feature: https://github.com/rust-lang/rust/issues/44663)
+            val addRustcBootstrap = version.semver >= RUSTC_1_72_BETA
+            return if (addRustcBootstrap) {
+                EnvironmentVariablesData.create(mapOf(RUSTC_BOOTSTRAP to "1"), /*passParentEnvs=*/ true)
+            } else {
+                EnvironmentVariablesData.DEFAULT
+            }
         }
     }
 }

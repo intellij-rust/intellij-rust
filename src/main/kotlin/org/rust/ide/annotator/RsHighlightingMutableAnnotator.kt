@@ -71,7 +71,7 @@ class RsHighlightingMutableAnnotator : AnnotatorBase() {
     companion object {
         private val MUTABLE_HIGHLIGHTING = HighlightSeverity(
             "MUTABLE_HIGHLIGHTING",
-            HighlightSeverity.INFORMATION.myVal + 3
+            HighlightSeverity.INFORMATION.myVal + 1
         )
     }
 }

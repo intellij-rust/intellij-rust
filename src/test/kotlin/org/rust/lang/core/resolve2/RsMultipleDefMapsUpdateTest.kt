@@ -16,6 +16,7 @@ import org.rust.lang.core.resolve2.CrateInfo.*
 
 /** Tests which exactly [CrateDefMap]s are updated when we modify some crate and then run resolve in some other crate */
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+@WithDisabledMacroExpansion
 class RsMultipleDefMapsUpdateTest : RsTestBase() {
 
     override fun setUp() {
@@ -116,7 +117,7 @@ class RsMultipleDefMapsUpdateTest : RsTestBase() {
 }
 
 /**
- * See [WithDependencyRustProjectDescriptor.testCargoProject]
+ * See [WithDependencyRustProjectDescriptor.createTestCargoWorkspace]
  *
  * BIN -> LIB -> DEP_LIB -> TRANS_LIB -> TRANS_LIB2
  *                  |
