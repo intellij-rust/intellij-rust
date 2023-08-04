@@ -65,7 +65,7 @@ class CargoSyncTask(
     private val result: CompletableFuture<List<CargoProjectImpl>>
 ) : Task.Backgroundable(project, RsBundle.message("progress.title.reloading.cargo.projects"), true), RsTask {
 
-    private val serviceName = if (project.service<BspConnectionService>().hasBspServer()) "Bsp" else "Cargo"
+    private val serviceName = if (project.service<BspConnectionService>().hasBspServer()) "bsp" else "cargo"
     override val taskType: RsTask.TaskType
         get() = RsTask.TaskType.CARGO_SYNC
 
@@ -156,8 +156,7 @@ class CargoSyncTask(
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
         buildContentDescriptor.isNavigateToError = project.rustSettings.autoShowErrorsInEditor
         val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
-        // TODO TG: val descriptor = DefaultBuildDescriptor(Any(), "cargo" -> "$serviceName", project.basePath!!, System.currentTimeMillis())
-        val descriptor = DefaultBuildDescriptor(Any(), RsBundle.message("build.event.title.cargo"), project.basePath!!, System.currentTimeMillis())
+        val descriptor = DefaultBuildDescriptor(Any(), RsBundle.message("build.event.title.$serviceName"), project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(refreshAction)
             .withRestartAction(StopAction(progress))
@@ -365,7 +364,7 @@ private fun List<CargoProjectImpl>.deduplicateProjects(): List<CargoProjectImpl>
 private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<CargoWorkspace> {
     return context.runWithChildProgress(RsBundle.message("progress.text.updating.workspace.info")) { childContext ->
 
-        //todo tg val serviceName = if (context.project.service<BspConnectionService>().hasBspServer()) "Cargo" else "Bsp"
+        val serviceName = if (context.project.service<BspConnectionService>().hasBspServer()) "cargo" else "bsp"
         val toolchain = childContext.toolchain
         if (!toolchain.looksLikeValidToolchain()) {
             return@runWithChildProgress TaskResult.Err(RsBundle.message("invalid.rust.toolchain.0", toolchain.presentableLocation))
@@ -380,9 +379,8 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val cargoConfig = when (cargoConfigResult) {
             is RsResult.Ok -> cargoConfigResult.ok
             is RsResult.Err -> {
-                //todo tg: cargo->service
-                val message = RsBundle.message("build.event.message.fetching.cargo.config.failed", cargoConfigResult.err.message.orEmpty())
-                childContext.warning(RsBundle.message("build.event.title.fetching.cargo.config"), message)
+                val message = RsBundle.message("build.event.message.fetching.$serviceName.config.failed", cargoConfigResult.err.message.orEmpty())
+                childContext.warning(RsBundle.message("build.event.title.fetching.$serviceName.config"), message)
                 CargoConfig.DEFAULT
             }
         }
@@ -488,20 +486,17 @@ private fun Rustup.fetchStdlib(
         val stdlib: VirtualFile? = try {
             bspService.getStdLibPath()
         } catch (e: NoSuchElementException) {
-//todo tg   return TaskResult.Err(e.message ?: "Failed to get standard library")
-            return TaskResult.Err(RsBundle.message("corrupted.standard.library"))
+            return TaskResult.Err(RsBundle.message("failed.to.get.standard.library.0", e.message ?: ""))
         }
         return if (stdlib != null) {
             val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context), useBsp = true)
             if (lib == null) {
-//todo tg       TaskResult.Err("Corrupted standard library: ${stdlib.presentableUrl}")
-                TaskResult.Err(RsBundle.message("corrupted.standard.library"))
+                TaskResult.Err(RsBundle.message("corrupted.standard.library.0", stdlib.presentableUrl))
             } else {
                 TaskResult.Ok(lib)
             }
         } else {
-//todo tg   TaskResult.Err("Failed to fetch standard library from BSP server")
-            TaskResult.Err(RsBundle.message("corrupted.standard.library"))
+            TaskResult.Err(RsBundle.message("failed.to.fetch.standard.library.from.bsp"))
         }
     }
     return when (val download = UnitTestRustcCacheService.cached(rustcInfo?.version) { downloadStdlib() }) {

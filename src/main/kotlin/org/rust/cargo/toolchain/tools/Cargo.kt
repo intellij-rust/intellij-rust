@@ -175,7 +175,7 @@ class Cargo(
         if (useBSP) {
             return try {
                 //TODO make returned status depend on bsp outcome
-                Ok(ProjectDescription(fetchViaBSP(owner, projectDirectory, buildTargets), OK))
+                Ok(ProjectDescription(fetchViaBSP(owner, projectDirectory), OK))
             } catch (e: JacksonException) {
                 Err(RsDeserializationException(e))
             }
@@ -235,7 +235,7 @@ class Cargo(
     private fun fetchViaBSP(
         project: Project,
         projectDirectory: Path,
-        buildTarget: String?,
+        buildTargets: List<String> = emptyList(),
         toolchainOverride: String? = null,
         listener: ProcessListener? = null,
     ): CargoWorkspaceData {

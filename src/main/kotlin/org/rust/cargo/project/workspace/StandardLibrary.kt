@@ -77,12 +77,11 @@ data class StandardLibrary(
         ): StandardLibrary? {
             val srcDir = findSrcDir(sources) ?: return null
 
-            fun warn(message: @Nls String) {
             if (useBsp) {
                 return fetchHardcodedStdlib(srcDir)
             }
 
-            fun warn(message: String) {
+            fun warn(message: @Nls String) {
                 LOG.warn(message)
                 listener?.warning(message, "")
             }

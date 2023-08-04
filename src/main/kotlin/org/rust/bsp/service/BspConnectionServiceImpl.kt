@@ -299,6 +299,8 @@ fun calculateProjectDetailsWithCapabilities(
     }
 
     val projectWorkspaceData = queryForWorkspaceData(server, rustBspTargetsIds).get()
+    val del = "___________________________________________________________________________________________________________________________________________________________________________________________________________________"
+    println(del+ "\n$projectWorkspaceData\n" + del)
 
     val projectPackages = createPackages(projectWorkspaceData, pathReplacer)
     val dependencies = createDependencies(projectWorkspaceData)
@@ -495,6 +497,7 @@ fun createRawDependencies(projectWorkspaceData: RustWorkspaceResult): Map<Packag
 
 
 fun queryForWorkspaceData(server: BspServer, params: List<BuildTargetIdentifier>): CompletableFuture<RustWorkspaceResult> {
+    println("_______________________________________________________________________________________________________________________________\n QueryForWorkspaceParams: $params ______________________________________________________________________________________________________-\n\n\n")
     return server.rustWorkspace(RustWorkspaceParams(params))
 }
 
