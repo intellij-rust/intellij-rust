@@ -93,6 +93,6 @@ class RsVcsCodeVisionTestCase : CodeVisionTestCase() {
     """)
 
     private fun doTest(@Language("Rust") text: String) {
-        testProviders(text.trimIndent(), "main.rs", VcsCodeVisionProvider.id)
+        testProviders(text.trimIndent(), "main.rs", VcsCodeVisionProvider().groupId)
     }
 }
