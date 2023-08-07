@@ -13,6 +13,7 @@ import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.SuppressIntentionActionFromFix
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -20,6 +21,7 @@ import com.intellij.testFramework.fixtures.impl.BaseFixture
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.findAnnotationInstance
+import org.rust.ide.DeferredPreviewCheck
 import org.rust.ide.checkNoPreview
 import org.rust.ide.checkPreviewAndLaunchAction
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
@@ -36,6 +38,7 @@ abstract class AnnotationTestFixtureBase(
     lateinit var enabledInspections: List<InspectionProfileEntry>
 
     protected abstract val baseFileName: String
+    protected open val isWrappingActive: Boolean get() = false
 
     override fun setUp() {
         super.setUp()
@@ -114,7 +117,10 @@ abstract class AnnotationTestFixtureBase(
         before,
         after,
         configure = this::configureByText,
-        checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
+        checkBefore = {
+            checkWarningFlags(before, checkWarn, checkWeakWarn)
+            checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
+        },
         checkAfter = this::checkByText,
         preview = preview,
     )
@@ -127,7 +133,10 @@ abstract class AnnotationTestFixtureBase(
         checkWeakWarn: Boolean = false
     ) = checkFix(fixName, before, before,
         configure = this::configureByText,
-        checkBefore = { codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn) },
+        checkBefore = {
+            checkWarningFlags(before, checkWarn, checkWeakWarn)
+            checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
+        },
         checkAfter = { },
         preview = SamePreviewAsResult,
     )
@@ -179,6 +188,31 @@ abstract class AnnotationTestFixtureBase(
         preview = preview,
     )
 
+    open fun checkFixAvailableInSelectionOnly(
+        fixName: String,
+        before: String,
+        checkWarn: Boolean = true,
+        checkInfo: Boolean = false,
+        checkWeakWarn: Boolean = false,
+    ) {
+        configureByText(before.replace("<selection>", "<selection><caret>"))
+        checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
+        val selections = codeInsightFixture.editor.selectionModel.let { model ->
+            model.blockSelectionStarts.zip(model.blockSelectionEnds)
+                .map { TextRange(it.first, it.second + 1) }
+        }
+        for (pos in codeInsightFixture.file.text.indices) {
+            codeInsightFixture.editor.caretModel.moveToOffset(pos)
+            val expectAvailable = selections.any { it.contains(pos) }
+            val isAvailable = codeInsightFixture.filterAvailableIntentions(fixName).size == 1
+            check(isAvailable == expectAvailable) {
+                "Expect ${if (expectAvailable) "available" else "unavailable"}, " +
+                    "actually ${if (isAvailable) "available" else "unavailable"} " +
+                    "at `${StringBuilder(codeInsightFixture.file.text).insert(pos, "/*caret*/")}`"
+            }
+        }
+    }
+
     protected open fun <T> check(
         content: T,
         checkWarn: Boolean,
@@ -187,8 +221,20 @@ abstract class AnnotationTestFixtureBase(
         ignoreExtraHighlighting: Boolean,
         configure: (T) -> Unit,
     ) {
+        if (content is String) {
+            checkWarningFlags(content, checkWarn, checkWeakWarn)
+        }
         configure(content)
-        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
+        checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
+    }
+
+    private fun checkWarningFlags(content: String, checkWarn: Boolean, checkWeakWarn: Boolean) {
+        if ("</warning>" in content || "/*warning**/" in content) {
+            check(checkWarn) { "Use `checkWarn = true`" }
+        }
+        if ("</weak_warning>" in content || "/*weak_warning**/" in content) {
+            check(checkWeakWarn) { "Use `checkWeakWarn = true`" }
+        }
     }
 
     protected open fun checkFix(
@@ -202,26 +248,38 @@ abstract class AnnotationTestFixtureBase(
     ) {
         configure(before)
         checkBefore()
-        applyQuickFix(fixName, preview)
+        val previewChecker = applyQuickFix(fixName, preview)
         checkAfter(after)
+        previewChecker.checkPreview()
     }
 
-    fun checkByText(text: String) {
+    protected open fun checkHighlighting(
+        checkWarn: Boolean,
+        checkInfo: Boolean,
+        checkWeakWarn: Boolean,
+        ignoreExtraHighlighting: Boolean,
+    ) {
+        codeInsightFixture.checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting)
+    }
+
+    open fun checkByText(text: String) {
         codeInsightFixture.checkResult(replaceCaretMarker(text.trimIndent()))
     }
 
-    fun applyQuickFix(name: String, preview: Preview?) {
+    fun applyQuickFix(name: String, preview: Preview?): DeferredPreviewCheck {
         val action = codeInsightFixture.findSingleIntention(name)
-        if (!skipPreview(action)) {
+        return if (!skipPreview(action)) {
             if (preview != null) {
                 val previewText = (preview as? ExplicitPreview)?.text
-                codeInsightFixture.checkPreviewAndLaunchAction(action, previewText)
+                codeInsightFixture.checkPreviewAndLaunchAction(action, previewText, isWrappingActive)
             } else {
-                codeInsightFixture.checkNoPreview(action)
+                val previewChecker = codeInsightFixture.checkNoPreview(action)
                 codeInsightFixture.launchAction(action)
+                previewChecker
             }
         } else {
             codeInsightFixture.launchAction(action)
+            DeferredPreviewCheck.IgnorePreview
         }
     }
 
@@ -230,7 +288,7 @@ abstract class AnnotationTestFixtureBase(
         return unwrapped is SuppressIntentionActionFromFix
     }
 
-    fun registerSeverities(severities: List<HighlightSeverity>) {
+    open fun registerSeverities(severities: List<HighlightSeverity>) {
         val testSeverityProvider = TestSeverityProvider(severities)
         SeveritiesProvider.EP_NAME.point.registerExtension(testSeverityProvider, testRootDisposable)
     }

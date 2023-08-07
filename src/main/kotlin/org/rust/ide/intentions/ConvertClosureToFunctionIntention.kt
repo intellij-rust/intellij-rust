@@ -9,21 +9,29 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPsiElementPointer
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.PsiModificationUtil
 import org.rust.ide.utils.template.buildAndRunTemplate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.ty.TyFunction
+import org.rust.lang.core.types.ty.TyFunctionBase
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.openapiext.createSmartPointer
+import org.rust.openapiext.moveCaretToOffset
 
 class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertClosureToFunctionIntention.Context>() {
-
-    override fun getText(): String = "Convert closure to function"
+    override fun getText(): String = RsBundle.message("intention.name.convert.closure.to.function")
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+
+    data class Context(
+        val letDecl: RsLetDecl,
+        val lambda: RsLambdaExpr,
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         // We try to find a let declaration
@@ -37,6 +45,7 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
             lambdaExpr.retType?.endOffset ?: lambdaExpr.valueParameterList.endOffset
         )
         if (element.startOffset !in availabilityRange) return null
+        if (!PsiModificationUtil.canReplace(possibleTarget)) return null
 
         return Context(possibleTarget, lambdaExpr)
     }
@@ -48,7 +57,7 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val useDefaultName = letBidingName == null
         val targetFunctionName = letBidingName ?: "func"
 
-        val fnType = ctx.lambda.type as? TyFunction ?: return
+        val fnType = ctx.lambda.type as? TyFunctionBase ?: return
         val parametersText = ctx.lambda.valueParameters.zip(fnType.paramTypes).joinToString(", ") { (pat, paramType) ->
             val patText = pat.patText ?: "_"
             val type = paramType.renderInsertionSafe()
@@ -80,14 +89,14 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
 
         // in case we auto-generated a function name, we encourage the user to change it by running a template on the replacement
         if (useDefaultName || placeholders.isNotEmpty()) {
-            val placeholderElements = mutableListOf<SmartPsiElementPointer<PsiElement>>()
+            val placeholderElements = mutableListOf<PsiElement>()
             if (useDefaultName) {
-                placeholderElements.add(replaced.identifier.createSmartPointer())
+                placeholderElements.add(replaced.identifier)
             }
-            placeholderElements += placeholders.map { it.createSmartPointer() }
+            placeholderElements += placeholders
             editor.buildAndRunTemplate(replaced, placeholderElements)
         } else {
-            editor.caretModel.moveToOffset(replaced.endOffset)
+            editor.moveCaretToOffset(replaced, replaced.endOffset)
         }
     }
 
@@ -97,9 +106,4 @@ class ConvertClosureToFunctionIntention : RsElementBaseIntentionAction<ConvertCl
         val wildcardPaths = parameters.descendantsOfType<RsPath>().filter { it.path?.text == "_" }
         return wildcardPats + wildcardPaths
     }
-
-    data class Context(
-        val letDecl: RsLetDecl,
-        val lambda: RsLambdaExpr,
-    )
 }

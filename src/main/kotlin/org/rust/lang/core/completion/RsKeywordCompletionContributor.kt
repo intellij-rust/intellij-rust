@@ -6,28 +6,36 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.impl.MacroCallNode
+import com.intellij.codeInsight.template.macro.CompleteMacro
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.TokenType
+import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
+import org.rust.ide.template.postfix.fillMatchArms
+import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.*
 import org.rust.lang.core.RsPsiPattern.baseDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseInherentImplDeclarationPattern
 import org.rust.lang.core.RsPsiPattern.baseTraitOrImplDeclaration
 import org.rust.lang.core.RsPsiPattern.declarationPattern
+import org.rust.lang.core.RsPsiPattern.simplePathPattern
 import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.createSmartPointer
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Completes Rust keywords
@@ -36,11 +44,27 @@ import org.rust.lang.core.psi.ext.*
  */
 class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
+    private val afterUseItemWithoutGroupingWithoutWildcard = psiElement<PsiElement>()
+        .withPrevSiblingSkipping(RsPsiPattern.whitespace,
+            psiElement<RsUseItem>().with(object: PatternCondition<RsUseItem>("afterUseItemWithoutGroupingWithoutWildcard") {
+                override fun accepts(t: RsUseItem, context: ProcessingContext?) = t.useSpeck?.let {
+                    it.mul == null && it.useGroup == null
+                } ?: true
+            }))
+
+    private val insideUseGroupAfterIdentifierWithoutWildcard = psiElement<PsiElement>().withAncestor(2,
+        psiElement<PsiElement>()
+            .withPrevSiblingSkipping(RsPsiPattern.whitespace or psiElement<PsiErrorElement>(),
+                psiElement<RsUseSpeck>().with(object: PatternCondition<RsUseSpeck>("insideUseGroupAfterIdentifierWithoutWildcard") {
+                    override fun accepts(t: RsUseSpeck, context: ProcessingContext?) = t.mul == null
+                })))
+
+
     init {
         extend(CompletionType.BASIC, declarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "async", "enum", "extern", "fn", "impl", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, afterVisDeclarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "async", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
             RsKeywordCompletionProvider("crate", "fn"))
         extend(CompletionType.BASIC, unsafeDeclarationPattern(),
@@ -55,12 +79,20 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("where"))
         extend(CompletionType.BASIC, constParameterBeginningPattern(),
             RsKeywordCompletionProvider("const"))
+        extend(CompletionType.BASIC, inherentImplDeclarationPattern(),
+            RsKeywordCompletionProvider("async"))
+        extend(CompletionType.BASIC, structLiteralPathPattern(),
+            RsKeywordCompletionProvider("async"))
         extend(CompletionType.BASIC, traitOrImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
         extend(CompletionType.BASIC, unsafeTraitOrImplDeclarationPattern(),
             RsKeywordCompletionProvider("fn"))
+        extend(CompletionType.BASIC, asyncDeclarationPattern(),
+            RsKeywordCompletionProvider("fn"))
         extend(CompletionType.BASIC, afterVisInherentImplDeclarationPattern(),
             RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
+        extend(CompletionType.BASIC, asPattern(),
+            RsKeywordCompletionProvider("as"))
 
         extend(CompletionType.BASIC, ifElsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -72,7 +104,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             }
         })
 
-        extend(CompletionType.BASIC, letElsePattern(), object : CompletionProvider<CompletionParameters>() {
+        extend(CompletionType.BASIC, afterLetDecl(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                 val elseBuilder = elseLookupElement()
                 result.addElement(elseBuilder.toKeywordElement())
@@ -86,13 +118,67 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 }
             }
         })
+
+        extend(CompletionType.BASIC, pathExpressionPattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+                result.addElement(lambdaLookupElement("async").toKeywordElement())
+            }
+        })
+
+        extendWithFnTypeCompletion()
+
+        extend(CompletionType.BASIC, afterIfOrWhilePattern(), RsKeywordCompletionProvider("let"))
+        extend(CompletionType.BASIC, afterImplTraitPattern(), RsKeywordCompletionProvider("for"))
     }
+
 
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         super.fillCompletionVariants(parameters, RsCompletionContributor.withRustSorter(parameters, result))
     }
 
-    private fun conditionLookupElement(lookupString: String): LookupElementBuilder {
+    private fun conditionLookupElement(keyword: String): LookupElementBuilder {
+        return LookupElementBuilder
+            .create(keyword)
+            .bold()
+            .withTailText(" {...}")
+            .withInsertHandler { context, _ ->
+                conditionLookupElementHandleInsert(context, keyword)
+            }
+    }
+
+    private fun conditionLookupElementHandleInsert(context: InsertionContext, keyword: String) {
+        val element0: RsExpr = when (keyword) {
+            "if", "else if" -> context.getElementOfType<RsIfExpr>()
+            "match" -> context.getElementOfType<RsMatchExpr>()
+            else -> null
+        } ?: return
+        val elementPointer = element0.createSmartPointer()
+
+        val semicolon = if (element0.parent is RsLetDecl && !context.nextCharIs(';')) ";" else ""
+        // `f` is condition expr which will be replaced by template builder
+        context.document.insertString(context.selectionEndOffset, " f {  }$semicolon")
+        PsiDocumentManager.getInstance(context.project).commitDocument(context.document)
+
+        val element1 = elementPointer.element ?: return
+        val expr = when (element1) {
+            is RsIfExpr -> element1.condition?.expr
+            is RsMatchExpr -> element1.expr
+            else -> null
+        } ?: return
+        context.editor.newTemplateBuilder(element1)
+            .replaceElement(expr, MacroCallNode(CompleteMacro()))
+            .runInline {
+                val element2 = elementPointer.element ?: return@runInline
+                context.editor.moveCaretToOffset(element2, element2.endOffset - " }".length)
+                if (element2 is RsMatchExpr && !DumbService.isDumb(element2.project)) {
+                    runWriteAction {
+                        fillMatchArms(element2, context.editor)
+                    }
+                }
+            }
+    }
+
+    private fun lambdaLookupElement(lookupString: String): LookupElementBuilder {
         return LookupElementBuilder
             .create(lookupString)
             .bold()
@@ -103,10 +189,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                     ?.let { it.expr?.text == lookupString } == true
                 val hasSemicolon = context.nextCharIs(';')
 
-                var tail = "  { }"
+                var tail = " {  }"
                 if (isLetExpr && !hasSemicolon) tail += ';'
                 context.document.insertString(context.selectionEndOffset, tail)
-                EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+                EditorModificationUtil.moveCaretRelatively(context.editor, 3)
             }
     }
 
@@ -146,7 +232,11 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return psiElement().afterLeafSkipping(RsPsiPattern.whitespace, braceAfterIf)
     }
 
-    private fun letElsePattern(): PsiElementPattern.Capture<PsiElement> {
+    private fun asPattern() = afterExpr().andNot(psiElement().with("isMacroCall") { psi ->
+        psi.contexts.any { it is RsMacroCall }
+    }) or afterUseItemWithoutGroupingWithoutWildcard or insideUseGroupAfterIdentifierWithoutWildcard
+
+    private fun afterLetDecl(): PsiElementPattern.Capture<PsiElement> {
         val withSemicolon = psiElement().withLastChildSkipping(RsPsiPattern.whitespace, psiElement(SEMICOLON))
         val letPattern = psiElement<RsLetDecl>().andNot(withSemicolon)
         val parent = psiElement().withPrevSiblingSkipping(RsPsiPattern.whitespace, letPattern)
@@ -199,6 +289,18 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             .inside(psiElement<RsFunction>())
     }
 
+    private fun pathTypePattern(): PsiElementPattern.Capture<PsiElement> {
+        val parent = psiElement<RsPath>()
+            .with("RsPath") { path, _ ->
+                val identifier = path.identifier
+                path.firstChild == identifier && path.lastChild == identifier
+            }
+
+        return psiElement(IDENTIFIER)
+            .withParent(parent)
+            .withSuperParent<RsPathType>(2)
+    }
+
     private fun constParameterBeginningPattern(): PsiElementPattern.Capture<PsiElement> {
         val parent = psiElement<RsTypeParameter>()
             .with(object : PatternCondition<RsTypeParameter>("RsConstParameterBeginning") {
@@ -224,12 +326,52 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern())
     }
 
+    private fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(statementBeginningPattern())
+    }
+
+    private fun structLiteralPathPattern(): PsiElementPattern.Capture<PsiElement> {
+        return simplePathPattern.withSuperParent(2, psiElement<RsStructLiteral>())
+    }
+
+    private fun asyncDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
+        baseDeclarationPattern().or(baseInherentImplDeclarationPattern()).and(statementBeginningPattern("async"))
+
     private fun unsafeTraitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseTraitOrImplDeclaration().and(statementBeginningPattern("unsafe"))
     }
 
     private fun afterVisInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseInherentImplDeclarationPattern().and(afterVis())
+    }
+
+    private fun afterIfOrWhilePattern(): PsiElementPattern.Capture<PsiElement> {
+        return afterIfPattern().or(afterWhilePattern())
+    }
+
+    private fun afterIfPattern(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().afterLeaf(psiElement(IF).withParent(psiElement(IF_EXPR)))
+    }
+
+    private fun afterWhilePattern(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().afterLeaf(psiElement(WHILE).withParent(psiElement(WHILE_EXPR)))
+    }
+
+    private fun afterImplTraitPattern(): PsiElementPattern.Capture<PsiElement> {
+        val impl = psiElement<RsImplItem>()
+            .withLastChildSkipping(RsPsiPattern.error, psiElement<RsPathType>().with("isTrait") { it ->
+                if (it.project.service<DumbService>().isDumb) {
+                    // Considering that `impl Struct for` (where `Struct` is a struct, not a trait) is invalid code,
+                    // it will not be written often
+                    // So we can assume that a trait is specified
+                    true
+                } else {
+                    it.path.reference?.resolve() is RsTraitItem
+                }
+            })
+
+        return psiElement()
+            .withPrevSiblingSkipping(RsPsiPattern.whitespace, impl)
     }
 
     // TODO(parser recovery?): it would be really nice to just say something like element.prevSibling is RsVis
@@ -243,6 +385,14 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         siblings.lastOrNull()?.elementType == PUB
     }
 
+    private fun afterExpr(): PsiElementPattern.Capture<PsiElement> = psiElement().withPrevLeafSkipping(
+        psiElement<PsiErrorElement>().or(psiElement<PsiWhiteSpace>()),
+        psiElement<PsiElement>().with("previousLeafIsInsideExpr") { leaf ->
+            val leafEndOffset = leaf.endOffset
+            leaf.contexts.any { it is RsExpr && it.endOffset == leafEndOffset }
+        }
+    )
+
     private fun elseLookupElement() = LookupElementBuilder
         .create("else")
         .bold()
@@ -251,6 +401,26 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             ctx.document.insertString(ctx.selectionEndOffset, " {  }")
             EditorModificationUtil.moveCaretRelatively(ctx.editor, 3)
         }
+
+    private fun extendWithFnTypeCompletion() {
+        extend(CompletionType.BASIC, pathTypePattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+                val lookup = LookupElementBuilder
+                    .create("fn")
+                    .bold()
+                    .withTailText("()")
+                    .withInsertHandler { ctx, _ ->
+                        ctx.document.insertString(ctx.selectionEndOffset, "()")
+                        EditorModificationUtil.moveCaretRelatively(ctx.editor, 1)
+                    }
+                    .toRsLookupElement(RsLookupElementProperties())
+
+                @Suppress("UnstableApiUsage")
+                val wrapped = MLRankingIgnorable.wrap(lookup)
+                result.addElement(wrapped)
+            }
+        })
+    }
 
     companion object {
         @JvmField

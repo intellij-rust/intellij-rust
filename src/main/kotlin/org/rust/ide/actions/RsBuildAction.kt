@@ -6,14 +6,16 @@
 package org.rust.ide.actions
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.PlatformUtils
 import org.rust.cargo.runconfig.buildProject
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.hasCargoProject
+import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.project
 
 class RsBuildAction : AnAction() {
@@ -25,12 +27,14 @@ class RsBuildAction : AnAction() {
     @VisibleForTesting
     fun performForContext(e: DataContext) {
         val project = e.project ?: return
-        if (project.isBuildToolWindowAvailable) {
+        if (isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) {
             ProjectTaskManager.getInstance(project).buildAllModules()
         } else {
             project.buildProject()
         }
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         super.update(e)

@@ -6,13 +6,11 @@
 package org.rust.lang.core.completion
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithActualStdlibRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
-import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibCompletionTest : RsCompletionTestBase() {
@@ -36,7 +34,7 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
     fun `test iter`() = @Suppress("DEPRECATION") checkSingleCompletion("iter_mut()", """
         fn main() {
             let vec: Vec<i32> = Vec::new();
-            let iter = vec.iter_m/*caret*/
+            let iter = vec.iter_mu/*caret*/
         }
     """)
 
@@ -92,7 +90,6 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         use std::/*caret*/;
     """)
 
-    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test complete items from 'os' module unix`() {
         if (!SystemInfo.isUnix && project.toolchain !is RsWslToolchain) return
@@ -103,7 +100,6 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         """)
     }
 
-    @ExpandMacros(MacroExpansionScope.ALL, "actual_std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test complete items from 'os' module windows`() {
         if (!SystemInfo.isWindows || project.toolchain is RsWslToolchain) return
@@ -113,5 +109,108 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
             use std::os::windows/*caret*/
         """)
     }
-}
 
+    fun `test don't complete borrow method`() = checkNotContainsCompletion("borrow", """
+        fn main() {
+            0.borro/*caret*/
+        }
+    """)
+
+    fun `test complete iter enumerate (vector)`() = doSingleCompletion("""
+        fn main() {
+            let v = vec![1, 2, 3];
+            v.enumerat/*caret*/
+        }
+    """, """
+        fn main() {
+            let v = vec![1, 2, 3];
+            v.iter().enumerate()/*caret*/
+        }
+    """)
+
+    fun `test complete iter enumerate (custom struct)`() = doSingleCompletion("""
+        struct Foo {}
+        impl Foo {
+            fn iter(&self) -> impl Iterator<Item=i32> {
+                vec![].into_iter()
+            }
+        }
+        fn main() {
+            let foo = Foo {};
+            foo.enumerat/*caret*/
+        }
+    """, """
+        struct Foo {}
+        impl Foo {
+            fn iter(&self) -> impl Iterator<Item=i32> {
+                vec![].into_iter()
+            }
+        }
+        fn main() {
+            let foo = Foo {};
+            foo.iter().enumerate()/*caret*/
+        }
+    """)
+
+    fun `test complete chain methods if iter method is from imported trait`() = checkContainsCompletion("iter().enumerate", """
+        struct Foo {}
+        mod inner {
+            pub trait Trait {
+                fn iter(&self) -> std::vec::IntoIter<i32> {
+                    vec![].into_iter()
+                }
+            }
+            impl Trait for super::Foo {}
+        }
+        use inner::Trait;
+        fn main() {
+            let foo = Foo {};
+            foo.enumerat/*caret*/
+        }
+    """)
+
+    fun `test don't complete chain methods if iter method need import`() = checkNoCompletion("""
+        struct Foo {}
+        mod inner {
+            pub trait Trait {
+                fn iter(&self) -> std::vec::IntoIter<i32> {
+                    vec![].into_iter()
+                }
+            }
+            impl Trait for super::Foo {}
+        }
+        fn main() {
+            let foo = Foo {};
+            foo.enumerat/*caret*/
+        }
+    """)
+
+    fun `test don't complete chain methods if name is not iter`() = checkNoCompletion("""
+        struct Foo {}
+        impl Foo {
+            fn iter2(&self) -> impl Iterator<Item=i32> {
+                vec![].into_iter()
+            }
+        }
+        fn main() {
+            let foo = Foo {};
+            foo.enumerat/*caret*/
+        }
+    """)
+
+    fun `test don't complete chain methods if type doesn't implement Iterator`() = checkNoCompletion("""
+        struct Bar();
+        impl Bar {
+            fn enumerate(&self) {}
+        }
+
+        struct Foo {}
+        impl Foo {
+            fn iter(&self) -> Bar { Bar() }
+        }
+        fn main() {
+            let foo = Foo {};
+            foo.enumerat/*caret*/
+        }
+    """)
+}

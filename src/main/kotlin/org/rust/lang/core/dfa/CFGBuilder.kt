@@ -212,7 +212,13 @@ class CFGBuilder(
         val initExit = process(letDecl.expr, pred)
         val exit = process(letDecl.pat, initExit)
 
-        finishWithAstNode(letDecl, exit)
+        val elseBranch = letDecl.letElseBranch
+        if (elseBranch != null) {
+            val elseBranchExit = process(elseBranch.block, initExit)
+            finishWithAstNode(letDecl, exit, elseBranchExit)
+        } else {
+            finishWithAstNode(letDecl, exit)
+        }
     }
 
     override fun visitLetExpr(letExpr: RsLetExpr) {

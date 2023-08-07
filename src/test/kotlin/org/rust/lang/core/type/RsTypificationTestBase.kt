@@ -46,7 +46,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         val (expr, data) = findElementAndDataInEditor<RsExpr>()
         val expectedTypes = data.split("|").map(String::trim)
 
-        val type = expr.type.render(skipUnchangedDefaultTypeArguments = false, useAliasNames = false)
+        val type = expr.type.render(skipUnchangedDefaultGenericArguments = false, useAliasNames = false)
         check(type in expectedTypes) {
             "Type mismatch. Expected one of $expectedTypes, found: $type. $description"
         }

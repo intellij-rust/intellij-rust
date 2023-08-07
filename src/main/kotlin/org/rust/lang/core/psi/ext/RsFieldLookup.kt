@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.resolve.ref.RsFieldLookupReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-abstract class RsFieldLookupImplMixin(node: ASTNode) : RsElementImpl(node), RsFieldLookup {
+abstract class RsFieldLookupImplMixin(type: IElementType) : RsElementImpl(type), RsFieldLookup {
     override val referenceNameElement: PsiElement get() = (identifier ?: integerLiteral)!!
 
     override fun getReference(): RsReference = RsFieldLookupReferenceImpl(this)

@@ -17,13 +17,10 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.completion.RsLookupElementProperties.KeywordKind
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFieldLookup
-import org.rust.lang.core.psi.ext.findAssociatedType
 import org.rust.lang.core.psi.ext.isAtLeastEdition2018
 import org.rust.lang.core.psi.ext.receiver
-import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -40,7 +37,7 @@ object RsAwaitCompletionProvider : RsCompletionProvider() {
                         if (context == null || !t.isAtLeastEdition2018) return false
                         val receiver = t.receiver.safeGetOriginalOrSelf()
                         val lookup = ImplLookup.relativeTo(receiver)
-                        val awaitTy = receiver.type.lookupFutureOutputTy(lookup)
+                        val awaitTy = lookup.lookupFutureOutputTy(receiver.type, strict = true).value
                         if (awaitTy is TyUnknown) return false
                         context.put(AWAIT_TY, awaitTy)
                         return true
@@ -57,25 +54,5 @@ object RsAwaitCompletionProvider : RsCompletionProvider() {
             .bold()
             .withTypeText(awaitTy.toString())
         result.addElement(awaitBuilder.toKeywordElement(KeywordKind.AWAIT))
-    }
-
-    private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
-        val outputTy = this.lookupRawFutureOutputTy(lookup)
-        if (outputTy !is TyUnknown) return outputTy
-        return this.lookupIntoFutureOutputTy(lookup)
-    }
-
-    private fun Ty.lookupRawFutureOutputTy(lookup: ImplLookup): Ty {
-        val futureTrait = lookup.items.Future ?: return TyUnknown
-        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjectionStrict(TraitRef(this, futureTrait.withSubst()), outputType.withSubst())
-        return selection.ok()?.value ?: TyUnknown
-    }
-
-    private fun Ty.lookupIntoFutureOutputTy(lookup: ImplLookup): Ty {
-        val intoFutureTrait = lookup.items.IntoFuture ?: return TyUnknown
-        val outputType = intoFutureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjectionStrict(TraitRef(this, intoFutureTrait.withSubst()), outputType.withSubst())
-        return selection.ok()?.value ?: TyUnknown
     }
 }

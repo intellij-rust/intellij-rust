@@ -6,9 +6,12 @@
 package org.rust.ide.hints.type
 
 import com.intellij.lang.ExpressionTypeProvider
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
+import org.rust.RsBundle
 import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
@@ -27,7 +30,7 @@ import org.rust.openapiext.escaped
 
 class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
 
-    override fun getErrorHint(): String = "Select an expression!"
+    override fun getErrorHint(): String = RsBundle.message("hint.text.select.expression")
 
     override fun getExpressionsAt(pivot: PsiElement): List<PsiElement> =
         pivot.findExpansionElementOrSelf()
@@ -41,20 +44,8 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
         val (type, adjustedType) = getType(element)
         return if (adjustedType != null) {
             val (alignedType, alignedCoerced) = renderAndAlignTypes(type, adjustedType)
-            """
-                <html>
-                    <table>
-                        <tr>
-                            <td style="color: #909090">Type:</td>
-                            <td style="font-family: monospace;">$alignedType</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #909090">Coerced type:</td>
-                            <td style="font-family: monospace;">$alignedCoerced</td>
-                        </tr>
-                    </table>
-                </html>
-            """.trimIndent()
+            @NlsSafe val hint = RsBundle.message("hint.text.html.table.tr.td.style.color.type.td.td.style.font.family.monospace.td.tr.tr.td.style.color.coerced.type.td.td.style.font.family.monospace.td.tr.table.html", alignedType, alignedCoerced).trimIndent()
+            hint
         } else {
             renderTy(type).escaped
         }
@@ -84,7 +75,8 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
         else -> error("Unexpected element type: $element")
     }
 
-    private fun renderTy(ty: Ty): String = ty.render(skipUnchangedDefaultTypeArguments = false)
+    @NlsContexts.HintText
+    private fun renderTy(ty: Ty): String = ty.render(skipUnchangedDefaultGenericArguments = false)
 
     private fun renderAndAlignTypes(type: Ty, adjustedType: AdjustedType): Pair<String, String> {
         val (l1, _, l3) = alignTypes(renderTy(type), renderTy(adjustedType.derefTy), renderTy(adjustedType.finalTy))

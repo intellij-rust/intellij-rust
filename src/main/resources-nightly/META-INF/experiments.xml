@@ -3,9 +3,6 @@
         <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="100">
             <description>Enable Cargo tasks to use Build Tool Window. Requires Rust +1.48.0</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.cargo.test.tool.window" percentOfUsers="100">
-            <description>Show test results in Test Tool Window</description>
-        </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.fetch.actual.stdlib.metadata" percentOfUsers="100">
             <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
         </experimentalFeature>
@@ -18,7 +15,7 @@
         <experimentalFeature id="org.rust.macros.proc.derive" percentOfUsers="100">
             <description>Enables derive procedural macro expansion</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.macros.proc.attr" percentOfUsers="0">
+        <experimentalFeature id="org.rust.macros.proc.attr" percentOfUsers="100">
             <description>Enables attribute procedural macro expansion</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.crates.local.index" percentOfUsers="100">
@@ -29,6 +26,18 @@
         </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="100">
             <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.ide.intentions.macros.function-like" percentOfUsers="0">
+            <description>Invoke intention actions inside function-like macro expansions</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.coverage.source" percentOfUsers="0">
+            <description>Use source-based coverage</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.mir.borrow-check" percentOfUsers="0">
+            <description>Code analysis based on MIR borrow checker</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.mir.move-analysis" percentOfUsers="0">
+            <description>Move analysis based on MIR borrow checker</description>
         </experimentalFeature>
     </extensions>
 </idea-plugin>

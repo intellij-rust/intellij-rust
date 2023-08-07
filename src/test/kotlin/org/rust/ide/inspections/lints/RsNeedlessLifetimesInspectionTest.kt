@@ -44,6 +44,32 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn <caret>foo(x: &str) -> Box<&str> { unimplemented!() }
     """)
 
+    fun `test one input lifetime (fn pointer with parameter lifetime)`() = doTest("""
+        /*weak_warning*/fn /*caret*/foo<'a>(s: &'a str, b: fn(&'a i32)) -> &'a i32/*weak_warning**/ { unimplemented!() }
+    """, """
+        fn foo(s: &str, b: fn(&i32)) -> &i32 { unimplemented!() }
+    """)
+
+    fun `test one input lifetime (Fn trait with parameter lifetime)`() = doTest("""
+        /*weak_warning*/fn /*caret*/foo<'a>(s: &'a str, b: impl Fn(&'a i32)) -> &'a i32/*weak_warning**/ { unimplemented!() }
+    """, """
+        fn foo(s: &str, b: impl Fn(&i32)) -> &i32 { unimplemented!() }
+    """)
+
+    fun `test one input lifetime (fn pointer with path lifetime)`() = doTest("""
+        trait Trait {
+            type AssocType<'a>;
+            fn foo<'a>(_: &'a str, _: fn(Self::AssocType<'a>)) -> &'a i32 { unimplemented!() }
+        }
+    """)
+
+    fun `test one input lifetime (Fn trait with path lifetime)`() = doTest("""
+        trait Trait {
+            type AssocType<'a>;
+            fn foo<'a>(_: &'a str, _: impl Fn(Self::AssocType<'a>)) -> &'a i32 { unimplemented!() }
+        }
+    """)
+
     fun `test no input lifetimes`() = doTest("""
         fn foo() -> &str { unimplemented!() }
     """)
@@ -92,11 +118,11 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
     fun `test output trait type`() = doTest("""
         trait T<'a> {}
         impl <'a> T<'a> for () {}
-        <weak_warning>fn <caret>foo<'a>(a: &'a str) -> impl T<'a></weak_warning> { unimplemented!() }
+        /*weak_warning*/fn /*caret*/foo<'a>(a: &'a str) -> impl T<'a>/*weak_warning**/ { unimplemented!() }
     """, """
         trait T<'a> {}
         impl <'a> T<'a> for () {}
-        fn <caret>foo(a: &str) -> impl T { unimplemented!() }
+        fn /*caret*/foo(a: &str) -> impl T { unimplemented!() }
     """)
 
     fun `test input struct with implicit lifetime`() = doTest("""
@@ -179,6 +205,30 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         struct S;
         impl S {
             fn foo<'b, 'c>(self, b: &'b str, c: &'c str) -> &str { unimplemented!() }
+        }
+    """)
+
+    fun `test self 7 (&Self)`() = doTest("""
+        struct S;
+        impl S {
+            /*weak_warning*/fn /*caret*/foo<'a, 'b>(self: &'a Self, _: &'b i32) -> &'a i32/*weak_warning**/ { &0 }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(self: &Self, _: &i32) -> &i32 { &0 }
+        }
+    """)
+
+    fun `test self 8 (Box)`() = doTest("""
+        struct S;
+        impl S {
+            /*weak_warning*/fn /*caret*/foo<'a, 'b>(self: Box<&'a Self>, _: &'b i32) -> &'a i32/*weak_warning**/ { &0 }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(self: Box<&Self>, _: &i32) -> &i32 { &0 }
         }
     """)
 
@@ -345,7 +395,7 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
 
         #[allow(clippy)]
         fn foo5<'a>(_: &'a str) {}
-    """)
+    """, checkWeakWarn = true)
 
     fun `test global allow`() = checkByText("""
         #![allow(clippy::needless_lifetimes)]
@@ -353,7 +403,15 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn foo1<'a>(_: &'a str) {}
 
         fn foo2<'a>(_: &'a str) {}
-    """)
+    """, checkWeakWarn = true)
+
+    fun `test async fn`() = checkByText("""
+        struct S<'a>(&'a str);
+
+        async fn foo1<'a>(a: S<'a>) -> S<'a> {}
+
+        async <weak_warning>fn foo2<'a>(a: &'a str) -> &'a str</weak_warning> {}
+    """, checkWeakWarn = true)
 
     private fun doTest(
         @Language("Rust") text: String

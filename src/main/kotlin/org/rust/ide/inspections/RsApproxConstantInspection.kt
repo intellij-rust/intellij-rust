@@ -5,23 +5,55 @@
 
 package org.rust.ide.inspections
 
-import org.rust.lang.core.psi.RsLitExpr
-import org.rust.lang.core.psi.RsLiteralKind
-import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.kind
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import org.rust.RsBundle
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.ide.fixes.RsQuickFixBase
+import org.rust.ide.utils.import.stdlibAttributes
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFile.Attributes
+import org.rust.lang.core.types.ty.TyFloat
+import org.rust.lang.core.types.type
 import kotlin.math.*
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitLitExpr(o: RsLitExpr) {
             val literal = o.kind
             if (literal is RsLiteralKind.Float) {
                 val value = literal.value ?: return
                 val constant = KNOWN_CONSTS.find { it.matches(value) } ?: return
-                holder.registerProblem(o, literal.suffix ?: "f64", constant)
+                val lib = when (o.stdlibAttributes) {
+                    Attributes.NONE -> STD
+                    Attributes.NO_STD -> CORE
+                    Attributes.NO_CORE -> return
+                }
+                val type = when (val type = o.type) {
+                    is TyFloat -> type.name
+                    else -> "f64"
+                }
+                val path = RsBundle.message("inspection.message.consts", lib, type, constant.name)
+                val fix = ReplaceWithPredefinedQuickFix(o, path)
+                holder.registerProblem(o, RsBundle.message("inspection.message.approximate.value.found.consider.using.it.directly", path), fix)
             }
         }
+    }
+
+    private class ReplaceWithPredefinedQuickFix(
+        element: RsLitExpr,
+        private val path: String
+    ) : RsQuickFixBase<RsLitExpr>(element) {
+
+        override fun getFamilyName() = RsBundle.message("intention.family.name.replace.with.predefined.constant")
+        override fun getText() = RsBundle.message("intention.name.replace.with2", path)
+
+        override fun invoke(project: Project, editor: Editor?, element: RsLitExpr) {
+            val pathExpr = RsPsiFactory(project).createExpression(path)
+            element.replace(pathExpr)
+        }
+
     }
 
     private companion object {
@@ -51,8 +83,4 @@ data class PredefinedConstant(val name: String, val value: Double, val minDigits
     private val accuracy: Double = 0.1.pow(minDigits.toDouble())
 
     fun matches(value: Double): Boolean = abs(value - this.value) < accuracy
-}
-
-private fun RsProblemsHolder.registerProblem(element: RsElement, type: String, constant: PredefinedConstant) {
-    registerProblem(element, "Approximate value of `std::$type::consts::${constant.name}` found. Consider using it directly.")
 }

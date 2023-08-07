@@ -47,10 +47,12 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
 
     constructor(stub: RsConstantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon {
+    override fun getIcon(flags: Int): Icon = getIcon(flags, allowNameResolution = true)
+
+    override fun getIcon(flags: Int, allowNameResolution: Boolean): Icon {
         val baseIcon = when (kind) {
             RsConstantKind.CONST -> {
-                val owner = owner
+                val owner = if (allowNameResolution) owner else ownerBySyntaxOnly
                 val icon = when (owner) {
                     is RsAbstractableOwner.Trait -> if (isAbstract) RsIcons.ABSTRACT_ASSOC_CONSTANT else RsIcons.ASSOC_CONSTANT
                     is RsAbstractableOwner.Impl -> RsIcons.ASSOC_CONSTANT

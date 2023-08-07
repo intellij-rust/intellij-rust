@@ -8,18 +8,27 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.utils.template.newTemplateBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.createSmartPointer
+import org.rust.openapiext.showErrorHint
 
 class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTypeParamIntention.Context>() {
-    override fun getText(): String = "Convert `impl Trait` to type parameter"
+    override fun getText(): String = RsBundle.message("intention.name.convert.impl.trait.to.type.parameter")
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+
+    data class Context(
+        val argType: RsTraitType,
+        val fnSignature: RsFunction
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val traitType = element.ancestorStrict<RsTraitType>() ?: return null
@@ -37,10 +46,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
         if (argType.descendantsOfType<RsTraitType>().any { it.impl != null }) {
             OuterImplTestMark.hit()
             if (fnSignature.isIntentionPreviewElement) return
-            HintManager.getInstance().showErrorHint(
-                editor,
-                "Please convert innermost `impl Trait` first",
-                HintManager.UNDER)
+            editor.showErrorHint(RsBundle.message("hint.text.please.convert.innermost.impl.trait.first"), HintManager.UNDER)
             return
         }
 
@@ -74,20 +80,13 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
 
         val newArgType = argType.replace(psiFactory.createType(typeParameterName)).createSmartPointer()
 
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-
-        val tpl = editor.newTemplateBuilder(fnSignature) ?: return
+        val tpl = editor.newTemplateBuilder(fnSignature)
         tpl.introduceVariable(typeParameter.identifier, typeParameterName).apply {
             replaceElementWithVariable(newArgType.element ?: return)
         }
         tpl.withExpressionsHighlighting()
         tpl.runInline()
     }
-
-    data class Context(
-        val argType: RsTraitType,
-        val fnSignature: RsFunction
-    )
 
     companion object {
         object OuterImplTestMark : Testmark()

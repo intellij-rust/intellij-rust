@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
 import org.rust.ide.utils.import.ImportInfo
 import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
@@ -20,7 +21,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.namespaces
 
 class AddImportIntention : RsElementBaseIntentionAction<AddImportIntention.Context>() {
-    override fun getFamilyName() = "Add import"
+    override fun getFamilyName() = RsBundle.message("intention.family.name.add.import")
 
     class Context(val path: RsPath, val needsImport: Boolean)
 
@@ -49,7 +50,7 @@ class AddImportIntention : RsElementBaseIntentionAction<AddImportIntention.Conte
             return null
         }
 
-        text = "Add import for `${importablePath.text}`"
+        text = RsBundle.message("intention.name.add.import.for", importablePath.text)
         return Context(importablePath, existingItem == null)
     }
 

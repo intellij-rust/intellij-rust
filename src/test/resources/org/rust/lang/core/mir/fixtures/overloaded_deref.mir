@@ -1,0 +1,40 @@
+fn foo(_1: Rc<i32>) -> () {
+    debug rc => _1;                      // in scope 0 at src/main.rs:3:8: 3:10
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:3:21: 3:21
+    let _2: i32;                         // in scope 0 at src/main.rs:4:9: 4:10
+    let mut _3: &i32;                    // in scope 0 at src/main.rs:4:13: 4:16
+    let mut _4: &std::rc::Rc<i32>;       // in scope 0 at src/main.rs:4:14: 4:16
+    scope 1 {
+        debug a => _2;                   // in scope 1 at src/main.rs:4:9: 4:10
+    }
+
+    bb0: {
+        StorageLive(_2);                 // scope 0 at src/main.rs:4:9: 4:10
+        StorageLive(_3);                 // scope 0 at src/main.rs:4:13: 4:16
+        StorageLive(_4);                 // scope 0 at src/main.rs:4:14: 4:16
+        _4 = &_1;                        // scope 0 at src/main.rs:4:14: 4:16
+        _3 = deref(move _4) -> [return: bb1, unwind: bb3]; // scope 0 at src/main.rs:4:13: 4:16
+    }
+
+    bb1: {
+        _2 = (*_3);                      // scope 0 at src/main.rs:4:13: 4:16
+        StorageDead(_4);                 // scope 0 at src/main.rs:4:15: 4:16
+        FakeRead(ForLet(None), _2);      // scope 0 at src/main.rs:4:9: 4:10
+        StorageDead(_3);                 // scope 0 at src/main.rs:4:16: 4:17
+        _0 = const ();                   // scope 0 at src/main.rs:3:21: 5:2
+        StorageDead(_2);                 // scope 0 at src/main.rs:5:1: 5:2
+        drop(_1) -> [return: bb2, unwind: bb4]; // scope 0 at src/main.rs:5:1: 5:2
+    }
+
+    bb2: {
+        return;                          // scope 0 at src/main.rs:5:2: 5:2
+    }
+
+    bb3 (cleanup): {
+        drop(_1) -> [return: bb4, unwind terminate]; // scope 0 at src/main.rs:5:1: 5:2
+    }
+
+    bb4 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:3:1: 5:2
+    }
+}

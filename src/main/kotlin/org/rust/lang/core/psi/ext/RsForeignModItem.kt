@@ -12,6 +12,19 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsForeignModItem
 import org.rust.lang.core.stubs.RsForeignModStub
 
+val RsForeignModItem.effectiveAbi: String
+    get() = abi ?: "C"
+
+val RsForeignModItem.abi: String?
+    get() {
+        val stub = greenStub
+        return if (stub != null) {
+            stub.abi
+        } else {
+            externAbi.litExpr?.stringValue
+        }
+    }
+
 abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsForeignModStub>,
                                            RsForeignModItem {
 

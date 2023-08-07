@@ -14,6 +14,7 @@ import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.isUnitTestMode
 
 abstract class RsInlineDialog(
     element: RsNameIdentifierOwner,
@@ -31,6 +32,7 @@ abstract class RsInlineDialog(
     override fun isInlineThis(): Boolean = false
 
     final override fun init() {
+        check(!isUnitTestMode)
         title = borderTitle
         myInvokedOnReference = refElement != null
 

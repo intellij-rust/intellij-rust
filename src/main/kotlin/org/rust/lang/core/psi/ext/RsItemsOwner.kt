@@ -158,7 +158,7 @@ private fun RsElement.processItem(
                 }
             }
             is ProcMacroAttribute.Derive -> attr.derives
-            ProcMacroAttribute.None -> null
+            null -> null
         }
     } else {
         null

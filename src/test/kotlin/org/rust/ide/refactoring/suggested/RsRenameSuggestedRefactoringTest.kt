@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.suggested
 import com.intellij.openapi.actionSystem.IdeActions
 
 class RsRenameSuggestedRefactoringTest : RsSuggestedRefactoringTestBase() {
+
     fun `test rename local variable`() = doTestRename("""
         fn foo() {
             let a/*caret*/ = 0;

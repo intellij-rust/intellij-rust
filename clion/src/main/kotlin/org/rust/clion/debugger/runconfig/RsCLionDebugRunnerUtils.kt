@@ -7,9 +7,11 @@ package org.rust.clion.debugger.runconfig
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
 import com.jetbrains.cidr.toolchains.OSType
+import org.rust.RsBundle
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.BuildResult.ToolchainError
 import org.rust.cargo.runconfig.BuildResult.ToolchainError.*
@@ -40,7 +42,10 @@ object RsCLionDebugRunnerUtils {
                 return GNUWithRustMSVC
             }
         }
-        return toolSet.isDebugSupportDisabled?.let { Other(it) }
+        return toolSet.isDebugSupportDisabled?.let {
+            @Suppress("HardCodedStringLiteral")
+            Other(it)
+        }
     }
 
     fun checkToolchainConfigured(project: Project): Boolean {
@@ -48,7 +53,7 @@ object RsCLionDebugRunnerUtils {
         // TODO: Fix synchronous execution on EDT
         val toolchain = toolchains.defaultToolchain
         if (toolchain == null) {
-            showConfigureToolchainDialog(project, "Debug toolchain is not configured.")
+            showConfigureToolchainDialog(project, RsBundle.message("dialog.message.debug.toolchain.not.configured"))
             return false
         }
         return true
@@ -65,7 +70,7 @@ object RsCLionDebugRunnerUtils {
         }
     }
 
-    private fun showConfigureToolchainDialog(project: Project, message: String) {
+    private fun showConfigureToolchainDialog(project: Project, @NlsContexts.DialogMessage message: String) {
         val option = Messages.showDialog(
             project,
             message,

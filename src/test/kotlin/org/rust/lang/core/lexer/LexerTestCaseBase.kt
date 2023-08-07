@@ -12,11 +12,14 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.annotations.NonNls
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.TestCase
 import org.rust.pathToGoldTestFile
 import org.rust.pathToSourceTestFile
 import java.io.IOException
 
+@RunWith(RsJUnit4TestRunner::class)
 abstract class LexerTestCaseBase : LexerTestCase(), TestCase {
     override fun getDirPath(): String = throw UnsupportedOperationException()
 

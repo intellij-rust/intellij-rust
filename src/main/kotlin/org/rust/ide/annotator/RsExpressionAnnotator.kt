@@ -12,9 +12,10 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
-import org.rust.ide.annotator.fixes.AddStructFieldsFix
-import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
-import org.rust.ide.annotator.fixes.RemoveRedundantParenthesesFix
+import org.rust.RsBundle
+import org.rust.ide.fixes.AddStructFieldsFix
+import org.rust.ide.fixes.CreateStructFieldFromConstructorFix
+import org.rust.ide.fixes.RemoveRedundantParenthesesFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -42,7 +43,7 @@ class RsExpressionAnnotator : AnnotatorBase() {
                 field.reference.multiResolve().none { it is RsFieldDecl }
             }
             .forEach { field ->
-                val annotationBuilder = holder.newErrorAnnotation(field.referenceNameElement, "No such field") ?: return@forEach
+                val annotationBuilder = holder.newErrorAnnotation(field.referenceNameElement, RsBundle.message("inspection.message.no.such.field")) ?: return@forEach
 
                 CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotationBuilder.withFix(it) }
 
@@ -50,29 +51,26 @@ class RsExpressionAnnotator : AnnotatorBase() {
             }
 
         for (field in body.structLiteralFieldList.findDuplicateReferences()) {
-            holder.createErrorAnnotation(field.referenceNameElement, "Duplicate field")
+            holder.createErrorAnnotation(field.referenceNameElement, RsBundle.message("inspection.message.duplicate.field"))
         }
 
         if (body.dotdot != null) return  // functional update, no need to declare all the fields.
 
-        if (decl is RsStructItem && decl.kind == RsStructKind.UNION) {
-            if (body.structLiteralFieldList.size > 1) {
-                holder.createErrorAnnotation(body, "Union expressions should have exactly one field")
-            }
-        } else {
-            if (calculateMissingFields(body, decl).isNotEmpty()) {
-                if (!literal.existsAfterExpansion) return
+        if (decl is RsStructItem && decl.kind == RsStructKind.UNION) return
 
-                val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
-                if (structNameRange != null) {
-                    holder.holder.newAnnotation(HighlightSeverity.ERROR, "Some fields are missing")
-                        .range(structNameRange)
-                        .newFix(AddStructFieldsFix(literal)).range(body.parent.textRange).registerFix()
-                        .newFix(AddStructFieldsFix(literal, recursive = true)).range(body.parent.textRange).registerFix()
-                        .create()
-                }
+        if (calculateMissingFields(body, decl).isNotEmpty()) {
+            if (!literal.existsAfterExpansion) return
+
+            val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
+            if (structNameRange != null) {
+                holder.holder.newAnnotation(HighlightSeverity.ERROR, RsBundle.message("inspection.message.some.fields.are.missing"))
+                    .range(structNameRange)
+                    .newFix(AddStructFieldsFix(literal)).range(body.parent.textRange).registerFix()
+                    .newFix(AddStructFieldsFix(literal, recursive = true)).range(body.parent.textRange).registerFix()
+                    .create()
             }
         }
+
 
     }
 }
@@ -80,19 +78,19 @@ class RsExpressionAnnotator : AnnotatorBase() {
 
 private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder) : RsVisitor() {
     override fun visitCondition(o: RsCondition) =
-        o.expr.warnIfParens("Predicate expression has unnecessary parentheses")
+        o.expr.warnIfParens(RsBundle.message("inspection.message.predicate.expression.has.unnecessary.parentheses"))
 
     override fun visitRetExpr(o: RsRetExpr) =
-        o.expr.warnIfParens("Return expression has unnecessary parentheses")
+        o.expr.warnIfParens(RsBundle.message("inspection.message.return.expression.has.unnecessary.parentheses"))
 
     override fun visitMatchExpr(o: RsMatchExpr) =
-        o.expr.warnIfParens("Match expression has unnecessary parentheses")
+        o.expr.warnIfParens(RsBundle.message("inspection.message.match.expression.has.unnecessary.parentheses"))
 
     override fun visitForExpr(o: RsForExpr) =
-        o.expr.warnIfParens("For loop expression has unnecessary parentheses")
+        o.expr.warnIfParens(RsBundle.message("inspection.message.for.loop.expression.has.unnecessary.parentheses"))
 
     override fun visitParenExpr(o: RsParenExpr) {
-        if (o.parent !is RsParenExpr) o.expr.warnIfParens("Redundant parentheses in expression")
+        if (o.parent !is RsParenExpr) o.expr.warnIfParens(RsBundle.message("inspection.message.redundant.parentheses.in.expression"))
     }
 
     private fun RsExpr?.warnIfParens(@InspectionMessage message: String) {

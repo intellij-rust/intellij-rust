@@ -6,6 +6,8 @@
 package org.rust.lang.core.resolve
 
 import org.rust.CheckTestmarkHit
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.ext.ArithmeticOp
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
@@ -427,6 +429,130 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                   //X
         fn main() {
             A.foo();
+        }   //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test deref with trait bounds`() = checkByCode("""
+        use std::ops::{FnOnce, Deref};
+
+        struct Lazy<T, F>(T, F);
+
+        impl<T, F> Lazy<T, F> {
+            fn new(_: F) -> Lazy<T, F> { todo!() }
+        }
+
+        impl<T, F: FnOnce() -> T> Deref for Lazy<T, F> {
+            type Target = T;
+            fn deref(&self) -> &T { todo!() }
+        }
+
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }    //X
+        fn foo() {
+            let a = Lazy::new(|| S);
+            a.bar();
+        }   //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test deref with trait bounds field access`() = checkByCode("""
+        use std::ops::{FnOnce, Deref};
+        struct Lazy<T, F>(T, F);
+
+        impl<T, F> Lazy<T, F> {
+            fn new(_: F) -> Lazy<T, F> { todo!() }
+        }
+
+        impl<T, F: FnOnce() -> T> Deref for Lazy<T, F> {
+            type Target = T;
+            fn deref(&self) -> &T { todo!() }
+        }
+
+        struct S {
+            i: i32
+          //X
+        }
+        fn foo() {
+            let a = Lazy::new(|| S { i: 1i32 });
+            a.i;
+        }   //^
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test deref with trait bounds two traits`() = checkByCode("""
+        use std::ops::{FnOnce, Deref};
+
+        struct Lazy<T, F, A, B>(T, F, A, B);
+
+        impl<T, F, A, B> Lazy<T, F, A, B> {
+            fn new(_: F, _: B) -> Lazy<T, F, A, B> { todo!() }
+        }
+
+        trait Deref2 {
+            type Target;
+
+            fn deref_2(&self) -> &Self::Target;
+        }
+
+        impl<T, F: FnOnce() -> T, A, B> Deref for Lazy<T, F, A, B> {
+            type Target = T;
+            fn deref(&self) -> &T { todo!() }
+        }
+
+        impl<T, F, A, B: FnOnce() -> A> Deref2 for Lazy<T, F, A, B> {
+            type Target = A;
+            fn deref_2(&self) -> &A { todo!() }
+        }
+
+        struct S;
+        impl S {
+            fn bar(&self) {}
+             //X
+        }
+
+        struct B;
+        impl B {
+            fn baz(&self) {}
+        }
+
+        fn foo() {
+            let a = Lazy::new(
+                || S,
+                || B
+            );
+            a.bar();
+            //^
+            a.deref_2().baz();
+        }
+    """)
+
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test deref with trait bounds custom trait`() = checkByCode("""
+        struct Lazy<T, F>(T, F);
+        struct Foo;
+        trait Bound<T> {}
+        impl Bound<S> for Foo {}
+
+        impl<T, F> Lazy<T, F> {
+            fn new(_: F) -> Lazy<T, F> { todo!() }
+        }
+
+        impl<T, F: Bound<T>> std::ops::Deref for Lazy<T, F> {
+            type Target = T;
+            fn deref(&self) -> &T { todo!() }
+        }
+
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }    //X
+        fn foo() {
+            let a = Lazy::new(Foo);
+            a.bar();
         }   //^
     """)
 
@@ -1443,6 +1569,40 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             let a = E::Foo(1);
             if let E::Foo(_) = a {}
         }           //^
+    """)
+
+    fun `test a enum variant path qualified with an associated type 1`() = checkByCode("""
+        trait Trait {
+            type Item;
+            fn foo();
+        }
+        enum E {
+            Foo(),
+        } //X
+        struct S;
+        impl Trait for S {
+            type Item = E;
+            fn foo() {
+                let b = Self::Item::Foo();
+            }                     //^
+        }
+    """)
+
+    fun `test a enum variant path qualified with an associated type 2`() = checkByCode("""
+        trait Trait {
+            type Item;
+            fn foo();
+        }
+        enum E {
+            Foo(),
+        } //X
+        struct S;
+        impl Trait for S {
+            type Item = E;
+            fn foo() {
+                let b = <Self::Item>::Foo();
+            }                       //^
+        }
     """)
 
     fun `test impl for a type with an associated type`() = checkByCode("""

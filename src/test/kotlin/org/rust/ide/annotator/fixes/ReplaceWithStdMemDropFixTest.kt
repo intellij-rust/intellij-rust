@@ -52,7 +52,7 @@ class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
 
         fn main() {
             let mut x = X {};
-            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">X::drop/*caret*/</error>(&mut x, 123, "foo");
+            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">X::drop/*caret*/</error>(&mut x, /*error*/123, "foo"/*error**/);
         }
     """, """
         struct X;
@@ -112,7 +112,7 @@ class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
 
         fn main() {
             let mut x = X {};
-            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">Drop::drop/*caret*/</error>(&mut x, 123, "foo");
+            <error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">Drop::drop/*caret*/</error>(&mut x, /*error descr="This function takes 1 parameter but 3 parameters were supplied [E0061]"*/123, "foo"/*error**/);
         }
     """, """
         struct X;
@@ -173,7 +173,7 @@ class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
 
         fn main() {
             let mut x = X {};
-            x.<error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">drop/*caret*/</error>(123, "foo");
+            x.<error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">drop/*caret*/</error>(/*error*/123, "foo"/*error**/);
         }
     """, """
         struct X;
@@ -248,7 +248,7 @@ class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
         }
 
         fn main() {
-            XFactory {}.create_x(123).<error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">drop/*caret*/</error>(123, "foo");
+            XFactory {}.create_x(123).<error descr="Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead [E0040]">drop/*caret*/</error>(/*error*/123, "foo"/*error**/);
         }
     """, """
         struct X;

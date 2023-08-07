@@ -12,7 +12,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.injected.isInsideInjection
 import org.rust.lang.core.crate.Crate
@@ -28,9 +28,13 @@ import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateLoses
 import org.rust.lang.core.types.infer.TypeInferenceMarks.WinnowParamCandidateWins
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.hitOnTrue
 import org.rust.openapiext.testAssert
-import org.rust.stdext.*
+import org.rust.stdext.buildList
+import org.rust.stdext.removeLast
+import org.rust.stdext.swapRemoveAt
+import org.rust.stdext.withPrevious
 import kotlin.LazyThreadSafetyMode.NONE
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
@@ -131,13 +135,14 @@ sealed class TraitImplSource {
 
     companion object {
         @JvmStatic
-        private fun lazyTraitMembers(trait: RsTraitItem): Lazy<THashMap<String, MutableList<RsAbstractable>>> =
+        private fun lazyTraitMembers(trait: RsTraitItem): Lazy<Map<String, MutableList<RsAbstractable>>> =
             lazy(PUBLICATION) { collectTraitMembers(trait) }
 
         @JvmStatic
-        private fun collectTraitMembers(trait: RsTraitItem): THashMap<String, MutableList<RsAbstractable>> {
-            val membersMap = THashMap<String, MutableList<RsAbstractable>>()
-            for (member in trait.members?.expandedMembers.orEmpty()) {
+        private fun collectTraitMembers(trait: RsTraitItem): Map<String, MutableList<RsAbstractable>> {
+            val members = trait.members?.expandedMembers ?: return emptyMap()
+            val membersMap = Object2ObjectOpenHashMap<String, MutableList<RsAbstractable>>(members.size)
+            for (member in members) {
                 val name = member.name ?: continue
                 membersMap.getOrPut(name) { SmartList() }.add(member)
             }
@@ -172,9 +177,11 @@ interface ParamEnv {
                             add(TraitRef(TyTypeParameter.self(), owner.trait.withDefaultSubst()))
                             addAll(owner.trait.bounds)
                         }
+
                         is RsAbstractableOwner.Impl -> {
                             addAll(owner.impl.bounds)
                         }
+
                         else -> Unit
                     }
                 }
@@ -216,6 +223,7 @@ class LazyParamEnv(private val parentItem: RsGenericDeclaration) : ParamEnv {
                 } else {
                     emptySequence()
                 }
+
                 TyTypeParameter.Self -> if (parentItem !is RsTraitOrImpl) {
                     parentItem.whereClause?.wherePredList.orEmpty().asSequence()
                         .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.kind == PathKind.CSELF }
@@ -301,11 +309,13 @@ class ImplLookup(
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
                 findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
             }
-            is TyFunction -> {
+
+            is TyFunctionBase -> {
                 findExplicitImpls(ty) { implsAndTraits += it.explicitImpl; false }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
                 listOfNotNull(items.Clone, items.Copy).mapTo(implsAndTraits) { TraitImplSource.Builtin(it) }
             }
+
             is TyAnon -> {
                 ty.getTraitBoundsTransitively()
                     .distinctBy { it.element }
@@ -316,6 +326,7 @@ class ImplLookup(
                     }
                 }
             }
+
             is TyProjection -> {
                 val subst = ty.trait.subst + ty.target.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
                 implsAndTraits += ty.trait.element.bounds.asSequence()
@@ -325,6 +336,7 @@ class ImplLookup(
                     .distinct()
 
             }
+
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
@@ -372,14 +384,9 @@ class ImplLookup(
             val set = mutableSetOf(fingerprint)
             if (processor(fingerprint)) return true
             val aliases = findPotentialAliases(fingerprint)
-            val result = aliases.any {
-                val name = it.name ?: return@any false
+            val result = aliases.any { name ->
                 val aliasFingerprint = TyFingerprint(name)
-                val isAppropriateAlias = run {
-                    val (declaredType, generics, constGenerics) = it.typeAndGenerics
-                    canCombineTypes(selfTy, declaredType, generics, constGenerics)
-                }
-                isAppropriateAlias && set.add(aliasFingerprint) && processor(aliasFingerprint)
+                set.add(aliasFingerprint) && processor(aliasFingerprint)
             }
             if (result) return true
         }
@@ -392,10 +399,8 @@ class ImplLookup(
             .filter { useImplsFromCrate(it.containingCrates) }
             .plus(implsFromNestedMacros[tyf].orEmpty())
 
-    private fun findPotentialAliases(tyf: TyFingerprint) =
+    private fun findPotentialAliases(tyf: TyFingerprint): List<String> =
         indexCache.findPotentialAliases(tyf)
-            .asSequence()
-            .filter { useImplsFromCrate(it.containingCrates) }
 
     private fun useImplsFromCrate(crates: List<Crate>): Boolean =
         crates.any { containingCrate.hasTransitiveDependencyOrSelf(it) }
@@ -585,6 +590,7 @@ class ImplLookup(
         return when {
             other is BuiltinCandidate && !other.hasNested
                 || other == ConstDestructCandidate -> true
+
             victim is BuiltinCandidate && !victim.hasNested
                 || victim == ConstDestructCandidate -> false
 
@@ -660,6 +666,7 @@ class ImplLookup(
                 assembleCandidatesFromImpls(ref, candidates)
                 assembleBuiltinBoundCandidates(copyCloneConditions(ref.selfTy), candidates)
             }
+
             items.Sized -> assembleBuiltinBoundCandidates(sizedConditions(ref), candidates)
             items.Unsize -> assembleCandidatesForUnsizing(ref, candidates)
             items.Destruct -> candidates.list.add(ConstDestructCandidate)
@@ -692,21 +699,24 @@ class ImplLookup(
             is BuiltinImplConditions.Where -> {
                 candidates.list += BuiltinCandidate(hasNested = conditions.nested.isNotEmpty())
             }
+
             BuiltinImplConditions.None -> Unit
             BuiltinImplConditions.Ambiguous -> candidates.ambiguous = true
-        }.exhaustive
+        }
     }
 
     // https://github.com/rust-lang/rust/blob/3a90bedb332d/compiler/rustc_trait_selection/src/traits/select/mod.rs#L1820
     private fun copyCloneConditions(selfTy: Ty): BuiltinImplConditions {
         return when (selfTy) {
-            is TyInfer.IntVar, is TyInfer.FloatVar, is TyFunction, TyUnknown, is TyUnit -> {
+            is TyInfer.IntVar, is TyInfer.FloatVar, is TyFunctionBase, TyUnknown, is TyUnit -> {
                 BuiltinImplConditions.Where(emptyList())
             }
+
             is TyInteger, is TyFloat, is TyBool, is TyChar, is TyPointer, is TyNever, is TyReference, is TyArray -> {
                 // Implementations provided in libcore
                 BuiltinImplConditions.None
             }
+
             is TyTuple -> BuiltinImplConditions.Where(selfTy.types)
             else -> BuiltinImplConditions.None
         }
@@ -719,7 +729,7 @@ class ImplLookup(
             is TyInfer.FloatVar,
             is TyNumeric,
             is TyBool,
-            is TyFunction,
+            is TyFunctionBase,
             is TyPointer,
             is TyReference,
             is TyChar,
@@ -754,7 +764,7 @@ class ImplLookup(
 
     // TODO simplify
     private fun getTyFunctionImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        if (ty is TyFunction) {
+        if (ty is TyFunctionBase) {
             val fnOnceOutput = fnOnceOutput
             val args = if (ty.paramTypes.isEmpty()) TyUnit.INSTANCE else TyTuple(ty.paramTypes)
             val assoc = if (fnOnceOutput != null) mapOf(fnOnceOutput to ty.retType) else emptyMap()
@@ -886,24 +896,31 @@ class ImplLookup(
             is BuiltinCandidate -> {
                 SelectionResult.Ok(confirmBuiltinCandidate(ref, recursionDepth, candidate.hasNested))
             }
+
             is ParamCandidate -> {
                 SelectionResult.Ok(confirmParamCandidate(ref, candidate))
             }
+
             is ImplCandidate -> {
                 SelectionResult.Ok(confirmImplCandidate(ref, candidate, recursionDepth))
             }
+
             is ProjectionCandidate -> {
                 SelectionResult.Ok(confirmProjectionCandidate(ref, candidate))
             }
+
             ObjectCandidate -> {
                 SelectionResult.Ok(confirmObjectCandidate(ref))
             }
+
             BuiltinUnsizeCandidate -> {
                 confirmBuiltinUnsizeCandidate(ref, recursionDepth)
             }
+
             is FnPointerCandidate -> {
                 SelectionResult.Ok(confirmFnPointerCandidate(ref))
             }
+
             ConstDestructCandidate -> {
                 SelectionResult.Ok(Selection(ref.trait.element, emptyList()))
             }
@@ -956,6 +973,7 @@ class ImplLookup(
         when (candidate) {
             is ImplCandidate.DerivedTrait ->
                 return confirmDerivedCandidate(ref, candidate, recursionDepth)
+
             is ImplCandidate.ExplicitImpl -> Unit
         }
         testAssert { !candidate.formalSelfTy.containsTyOfClass(TyInfer::class.java) }
@@ -1123,10 +1141,10 @@ class ImplLookup(
 
     fun coercionSequence(baseTy: Ty): Autoderef = Autoderef(this, ctx, baseTy)
 
-    fun deref(ty: Ty): Ty? = when (ty) {
-        is TyReference -> ty.referenced
-        is TyPointer -> ty.referenced
-        else -> findDerefTarget(ty)?.value // TODO don't ignore obligations
+    fun deref(ty: Ty): TyWithObligations<Ty>? = when (ty) {
+        is TyReference -> TyWithObligations(ty.referenced)
+        is TyPointer -> TyWithObligations(ty.referenced)
+        else -> findDerefTarget(ty)
     }
 
     private fun findDerefTarget(ty: Ty): TyWithObligations<Ty>? {
@@ -1231,7 +1249,8 @@ class ImplLookup(
     }
 
     private fun lookupAssocTypeInSelection(selection: Selection, assocDef: BoundElement<RsTypeAlias>): Ty? {
-        val assocImpl = selection.impl.associatedTypesTransitively.find { it.name == assocDef.element.name } ?: return null
+        val assocImpl = selection.impl.associatedTypesTransitively.find { it.name == assocDef.element.name }
+            ?: return null
         val subst = substFromTraitToImpl(assocDef, assocImpl)
         return assocImpl.typeReference?.rawType?.substitute(selection.subst + subst)
     }
@@ -1272,8 +1291,9 @@ class ImplLookup(
     fun findOverloadedOpImpl(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): RsTraitOrImpl? =
         selectOverloadedOp(lhsType, rhsType, op).ok()?.impl
 
-    fun asTyFunction(ty: Ty): TyWithObligations<TyFunction>? {
-        return (ty as? TyFunction)?.withObligations() ?: run {
+    // TODO: return FnSig instead
+    fun asTyFunction(ty: Ty): TyWithObligations<TyFunctionBase>? {
+        return (ty as? TyFunctionBase)?.withObligations() ?: run {
             val output = fnOnceOutput ?: return@run null
 
             val inputArgVar = TyInfer.TyVar()
@@ -1281,55 +1301,72 @@ class ImplLookup(
                 .mapNotNull { ctx.commitIfNotNull { selectProjection(it to output, ty, inputArgVar).ok() } }
                 .firstOrNull() ?: return@run null
             TyWithObligations(
-                TyFunction((ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(), ok.value),
+                TyFunctionPointer(
+                    FnSig(
+                        (ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(),
+                        ok.value,
+                        Unsafety.Normal
+                    )
+                ),
                 ok.obligations
             )
         }
     }
 
-    fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunction? {
+    fun asTyFunction(ref: BoundElement<RsTraitItem>): TyFunctionBase? {
         return ref.asFunctionType
+    }
+
+    /**
+     * If `Ty` is a `Future` or convertible into a `Future` (i.e. `IntoFuture`), get the type of
+     * that future's output.
+     *
+     * If `Ty` is not convertible into a future, or if the `Future` and `IntoFuture` lang items are missing,
+     * returns `TyUnknown`.
+     *
+     * The `IntoFuture` trait is automatically used for Rust versions which support it.
+     */
+    fun lookupFutureOutputTy(ty: Ty, strict: Boolean): TyWithObligations<Ty> {
+        val futureTrait = items.IntoFuture ?: items.Future ?: return TyWithObligations(TyUnknown)
+        val outputType = futureTrait.findAssociatedType("Output")?.withSubst() ?: return TyWithObligations(TyUnknown)
+        val traitRef = TraitRef(ty, futureTrait.withSubst())
+        val selection = if (strict) {
+            selectProjectionStrict(traitRef, outputType)
+        } else {
+            selectProjection(traitRef, outputType)
+        }
+        return selection.ok() ?: TyWithObligations(TyUnknown)
     }
 
     fun isSized(ty: Ty): Boolean {
         // Treat all types as sized if `Sized` trait is not found. This suppresses error noise in the
         // case of the toolchain misconfiguration (when there is not a `Sized` trait)
-        val sizedTrait = items.Sized ?: return true
-        return ty.isTraitImplemented(sizedTrait)
+        return ty.isTraitImplemented(items.Sized) != ThreeValuedLogic.False
     }
 
-    fun isDeref(ty: Ty): Boolean = ty.isTraitImplemented(items.Deref)
-    fun isCopy(ty: Ty): Boolean = ty.isTraitImplemented(items.Copy)
-    fun isClone(ty: Ty): Boolean = ty.isTraitImplemented(items.Clone)
-    fun isDebug(ty: Ty): Boolean = ty.isTraitImplemented(items.Debug)
-    fun isDefault(ty: Ty): Boolean = ty.isTraitImplemented(items.Default)
-    fun isEq(ty: Ty): Boolean = ty.isTraitImplemented(items.Eq)
-    fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
-    fun isIntoIterator(ty: Ty): Boolean = ty.isTraitImplemented(items.IntoIterator)
-    fun isAnyFn(ty: Ty): Boolean = isFn(ty) || isFnOnce(ty) || isFnMut(ty)
+    fun isDeref(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Deref)
+    fun isCopy(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Copy)
+    fun isClone(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Clone)
+    fun isDebug(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Debug)
+    fun isDefault(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Default)
+    fun isEq(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Eq)
+    fun isPartialEq(ty: Ty, rhsType: Ty = ty): ThreeValuedLogic = ty.isTraitImplemented(items.PartialEq, rhsType)
+    fun isIntoIterator(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.IntoIterator)
+    fun isDrop(ty: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Drop)
+    fun isIndex(ty: Ty, indexType: Ty): ThreeValuedLogic = ty.isTraitImplemented(items.Index, indexType)
 
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFn(ty: Ty): Boolean = ty.isTraitImplemented(items.Fn)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFnOnce(ty: Ty): Boolean = ty.isTraitImplemented(items.FnOnce)
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun isFnMut(ty: Ty): Boolean = ty.isTraitImplemented(items.FnMut)
-
-
-    private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
-        if (trait == null) return false
-        return canSelect(TraitRef(this, trait.withSubst(*subst)))
+    private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): ThreeValuedLogic {
+        if (trait == null) return ThreeValuedLogic.Unknown
+        return ThreeValuedLogic.fromBoolean(canSelect(TraitRef(this, trait.withSubst(*subst))))
     }
 
-    private val BoundElement<RsTraitItem>.asFunctionType: TyFunction?
+    private val BoundElement<RsTraitItem>.asFunctionType: TyFunctionBase?
         get() {
             val outputParam = fnOnceOutput ?: return null
             val param = element.typeParamSingle ?: return null
             val argumentTypes = ((subst[param] ?: TyUnknown) as? TyTuple)?.types.orEmpty()
             val outputType = (assoc[outputParam] ?: TyUnit.INSTANCE)
-            return TyFunction(argumentTypes, outputType)
+            return TyFunctionPointer(FnSig(argumentTypes, outputType))
         }
 
     companion object {
@@ -1569,7 +1606,7 @@ private fun collectNestedMacroCallsAndImpls(
         when (val attr = possibleMacroCall.procMacroAttributeWithDerives) {
             is ProcMacroAttribute.Attr -> macroCalls += attr.attr
             is ProcMacroAttribute.Derive -> macroCalls += attr.derives
-            ProcMacroAttribute.None -> when (possibleMacroCall) {
+            null -> when (possibleMacroCall) {
                 is RsMacroCall -> macroCalls += possibleMacroCall
                 is RsImplItem -> impls?.add(possibleMacroCall)
             }

@@ -8,6 +8,8 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsUseItem
@@ -15,6 +17,7 @@ import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isStarImport
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.openapiext.moveCaretToOffset
 
 /**
  * Adds curly braces to singleton imports, changing from this
@@ -30,8 +33,10 @@ import org.rust.lang.core.psi.ext.startOffset
  * ```
  */
 class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesIntention.Context>() {
-    override fun getText() = "Add curly braces"
+    override fun getText() = RsBundle.message("intention.name.add.curly.braces")
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     class Context(
         val useSpeck: RsUseSpeck,
@@ -80,6 +85,6 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
         ctx.useSpeck.add(newColonColon)
         ctx.useSpeck.add(newGroup)
 
-        editor.caretModel.moveToOffset(ctx.semicolon.startOffset - 1)
+        editor.moveCaretToOffset(ctx.semicolon, ctx.semicolon.startOffset - 1)
     }
 }

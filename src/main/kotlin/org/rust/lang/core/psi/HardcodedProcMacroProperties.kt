@@ -16,7 +16,9 @@ import org.rust.openapiext.isUnitTestMode
 private val RS_HARDCODED_PROC_MACRO_ATTRIBUTES: Map<String, Map<String, KnownProcMacroKind>> = mapOf(
     "tokio_macros" to mapOf(
         "main" to KnownProcMacroKind.ASYNC_MAIN,
+        "main_rt" to KnownProcMacroKind.ASYNC_MAIN,
         "test" to KnownProcMacroKind.ASYNC_TEST,
+        "test_rt" to KnownProcMacroKind.ASYNC_TEST,
     ),
     "async_attributes" to mapOf(
         "main" to KnownProcMacroKind.ASYNC_MAIN,
@@ -53,6 +55,7 @@ private val RS_HARDCODED_PROC_MACRO_ATTRIBUTES: Map<String, Map<String, KnownPro
     ),
     "uefi_macros" to mapOf("entry" to KnownProcMacroKind.CUSTOM_MAIN),
     "async_trait" to mapOf("async_trait" to KnownProcMacroKind.ASYNC_TRAIT),
+    "sqlx_macros" to mapOf("test" to KnownProcMacroKind.ASYNC_TEST),
 )
 
 fun getHardcodeProcMacroProperties(packageName: String, macroName: String): KnownProcMacroKind {
@@ -61,7 +64,7 @@ fun getHardcodeProcMacroProperties(packageName: String, macroName: String): Know
         return kind
     }
 
-    if (isUnitTestMode && packageName == "test_proc_macros" && macroName == "attr_hardcoded_not_a_macro") {
+    if (isUnitTestMode && packageName == "test_proc_macros" && macroName in listOf("attr_hardcoded_not_a_macro", "attr_hardcoded_as_is")) {
         return KnownProcMacroKind.IDENTITY
     }
 
@@ -73,6 +76,7 @@ fun getHardcodeProcMacroProperties(packageName: String, macroName: String): Know
  *
  * @see RS_HARDCODED_PROC_MACRO_ATTRIBUTES
  */
+@Suppress("KDocUnresolvedReference")
 enum class KnownProcMacroKind {
     /** No special behavior */
     DEFAULT_PURE,

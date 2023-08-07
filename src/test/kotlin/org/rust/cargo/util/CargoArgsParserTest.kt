@@ -41,8 +41,12 @@ class CargoArgsParserTest(
             arrayOf("run", "--bin a", "--bin a", ""),
             arrayOf("run", "--bin a b", "--bin a", "b"),
             arrayOf("run", "--test a", "--test", "a"),
+            arrayOf("run", "-F a b", "-F a b", ""),
             arrayOf("run", "--features a b", "--features a b", ""),
             arrayOf("run", "--qwe a", "--qwe", "a"),
+            arrayOf("run", "--color always", "--color always", ""),
+            arrayOf("run", "--profile debuginfo", "--profile debuginfo", ""),
+            arrayOf("run", "--config KEY=VALUE", "--config KEY=VALUE", ""),
 
             arrayOf("test", "a", "a", "a"),
             arrayOf("test", "a b", "a b", "b"),
@@ -53,8 +57,12 @@ class CargoArgsParserTest(
             arrayOf("test", "--bin a", "--bin a", ""),
             arrayOf("test", "--test a", "--test a", ""),
             arrayOf("test", "--bin a b", "--bin a b", "b"),
+            arrayOf("test", "-F a b", "-F a b", ""),
             arrayOf("test", "--features a b", "--features a b", ""),
-            arrayOf("test", "--qwe a", "--qwe a", "a")
+            arrayOf("test", "--qwe a", "--qwe a", "a"),
+            arrayOf("test", "--color always", "--color always", ""),
+            arrayOf("test", "--profile debuginfo", "--profile debuginfo", ""),
+            arrayOf("test", "--config KEY=VALUE", "--config KEY=VALUE", "")
         )
     }
 }

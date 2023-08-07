@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
@@ -189,9 +188,7 @@ class RsLambdaExprCompletionTest : RsCompletionTestBase() {
     private fun checkCompletion() {
         val items = myFixture.completeBasic()
         val item = items.find {
-            val presentation = LookupElementPresentation()
-            it.renderElement(presentation)
-            presentation.itemText == "|| {}"
+            it.presentation.itemText == "|| {}"
         } ?: error("No lambda completion found")
         myFixture.lookup.currentItem = item
         myFixture.type('\n')

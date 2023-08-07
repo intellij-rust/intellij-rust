@@ -50,9 +50,9 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S;
 
-        impl Foo/*caret*/ for S {
+        impl Foo for S {
             fn foo(&self) {
-                todo!()
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -70,7 +70,7 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S;
 
-        impl Foo/*caret*/ for S { const FOO: u32 = 0; }
+        impl Foo for S { const FOO: u32 = <selection>0</selection>; }
     """)
 
     fun `test trait with associated type`() = doAvailableTestWithLiveTemplate("""
@@ -110,8 +110,8 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S;
 
-        impl Foo/*caret*/ for S {
-            type Type = ();
+        impl Foo for S {
+            type Type = <selection>()</selection>;
             const FOO: u32 = 0;
 
             fn foo(&self) {
@@ -193,9 +193,9 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S<'a, R, T>(R, &'a T);
 
-        impl<'a, R, T> Foo/*caret*/ for S<'a, R, T> {
+        impl<'a, R, T> Foo for S<'a, R, T> {
             fn foo(&self) -> u32 {
-                todo!()
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -213,9 +213,9 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S<'a, R, T>(R, &'a T) where R: Foo;
 
-        impl<'a, R, T> Foo/*caret*/ for S<'a, R, T> where R: Foo {
+        impl<'a, R, T> Foo for S<'a, R, T> where R: Foo {
             fn foo(&self) -> u32 {
-                todo!()
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -239,9 +239,9 @@ class AddImplTraitIntentionTest : RsIntentionTestBase(AddImplTraitIntention::cla
 
         struct S;
 
-        impl Foo/*caret*/ for S {
+        impl Foo for S {
             fn foo(&self) -> u32 {
-                todo!()
+                <selection>todo!()</selection>
             }
         }
     """)

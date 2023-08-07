@@ -19,6 +19,42 @@ class RsFrameTypeDecoratorTest {
     )
 
     @Test
+    fun `test decorate msvc ptr_const str`() = checkDecorate(
+        "ptr_const$<str>",
+        "*const str"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_mut str`() = checkDecorate(
+        "ptr_mut$<str>",
+        "*mut str"
+    )
+
+    @Test
+    fun `test decorate msvc ref str$`() = checkDecorate(
+        "ref$<str$>",
+        "&str"
+    )
+
+    @Test
+    fun `test decorate msvc ref_mut str$`() = checkDecorate(
+        "ref_mut$<str$>",
+        "&mut str"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_const str$`() = checkDecorate(
+        "ptr_const$<str$>",
+        "*const str"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_mut str$`() = checkDecorate(
+        "ptr_mut$<str$>",
+        "*mut str"
+    )
+
+    @Test
     fun `test decorate msvc str in generics`() = checkDecorate(
         "Foo<str>",
         "Foo<&str>"
@@ -87,6 +123,42 @@ class RsFrameTypeDecoratorTest {
     fun `test decorate msvc slice`() = checkDecorate(
         "slice$<Foo>",
         "&[Foo]"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_const slice`() = checkDecorate(
+        "ptr_const$<slice$<Foo> >",
+        "*const [Foo]"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_mut slice`() = checkDecorate(
+        "ptr_mut$<slice$<Foo> >",
+        "*mut [Foo]"
+    )
+
+    @Test
+    fun `test decorate msvc ref slice2`() = checkDecorate(
+        "ref$<slice2$<Foo> >",
+        "&[Foo]"
+    )
+
+    @Test
+    fun `test decorate msvc ref_mut slice2`() = checkDecorate(
+        "ref_mut$<slice2$<Foo> >",
+        "&mut [Foo]"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_const slice2`() = checkDecorate(
+        "ptr_const$<slice2$<Foo> >",
+        "*const [Foo]"
+    )
+
+    @Test
+    fun `test decorate msvc ptr_mut slice2`() = checkDecorate(
+        "ptr_mut$<slice2$<Foo> >",
+        "*mut [Foo]"
     )
 
     @Test

@@ -1,7 +1,6 @@
 # Rust plugin for the IntelliJ Platform
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 [![JetBrains plugins][plugin-version-svg]][plugin-repo]
 [![JetBrains plugins][plugin-downloads-svg]][plugin-repo]
 
@@ -28,18 +27,19 @@ New features are regularly announced in [changelogs](https://intellij-rust.githu
 The plugin is compatible with all IntelliJ-based IDEs starting from the version 2022.2, with the following differences in the sets of the available features:
 
 
-|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate, [PyCharm] Professional, [GoLand] (commercial) | [WebStorm], [PhpStorm], other commercial IDEs |
-|------------------------|---|---|---|---|
-| Language support       | + | + | + | + |
-| Cargo support          | + | + | + | + |
-| Code coverage          | + | + | + | + |
-| Debugger               | - | + | +** | - |
-| Profiler               | - | + | - | - |
-| Valgrind Memcheck      | - | + | - | - |
-| [Detecting duplicates] | - | + | + | + |
+|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] | [IntelliJ IDEA] Ultimate, [GoLand] | [PyCharm] Professional | [WebStorm], [PhpStorm], other commercial IDEs |
+|------------------------|----------------------------------------------|---------|------------------------------------|------------------------|-----------------------------------------------|
+| [Language support]     | +                                            | +       | +                                  | +                      | +                                             |
+| [Cargo support]        | +                                            | +       | +                                  | +                      | +                                             |
+| [Code coverage]        | +                                            | +       | +                                  | +                      | +                                             |
+| [Detecting duplicates] | -                                            | +       | +                                  | +                      | +                                             |
+| [Debugger]             | -                                            | +       | +**                                | +**                    | -                                             |
+| [Run targets]          | -                                            | +       | +                                  | -                      | -                                             |
+| [Profiler]             | -                                            | +       | -                                  | -                      | -                                             |
+| [Valgrind Memcheck]    | -                                            | +       | -                                  | -                      | -                                             |
 
 
-\* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
+\* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu], [IntelliJ IDEA Edu], and third-party IntelliJ-based IDEs.
 
 \** Requires the
 [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin. 
@@ -64,8 +64,6 @@ understand the high-level structure of the codebase. If you are not sure where t
 [toml]: https://github.com/JetBrains/intellij-community/tree/master/plugins/toml
 
 <!-- Badges -->
-[gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
-[gitter-chat-svg]: https://badges.gitter.im/Join%20Chat.svg
 
 [plugin-repo]: https://plugins.jetbrains.com/plugin/8182-rust
 [plugin-version-svg]: https://img.shields.io/jetbrains/plugin/v/8182-rust.svg
@@ -90,5 +88,13 @@ understand the high-level structure of the codebase. If you are not sure where t
 [GoLand]: https://www.jetbrains.com/go/
 [WebStorm]: https://www.jetbrains.com/webstorm/
 [PhpStorm]: https://www.jetbrains.com/phpstorm/
-[PyCharm Edu and IntelliJ IDEA Edu]: https://www.jetbrains.com/education
+[PyCharm Edu]: https://www.jetbrains.com/pycharm-edu/
+[IntelliJ IDEA Edu]: https://www.jetbrains.com/idea-edu/
 [Detecting duplicates]: https://www.jetbrains.com/help/idea/analyzing-duplicates.html
+[Language support]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-syntax-highlighting.html
+[Cargo support]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-new-cargo-projects.html
+[Code coverage]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-code-coverage.html
+[Debugger]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-debugging.html
+[Run targets]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-run-targets.html
+[Profiler]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-profiler.html
+[Valgrind Memcheck]: https://plugins.jetbrains.com/plugin/8182-rust/docs/rust-valgrind.html

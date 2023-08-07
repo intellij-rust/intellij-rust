@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.ui.components.JBCheckBox
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsBaseEditorRefactoringAction
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -41,11 +42,11 @@ class RsConvertToTupleAction : RsBaseEditorRefactoringAction() {
     }
 
     private class Dialog(project: Project, val element: RsFieldsOwner) : RefactoringDialog(project, false) {
-        val cb = JBCheckBox("Convert all usages", true)
+        val cb = JBCheckBox(RsBundle.message("checkbox.convert.all.usages"), true)
 
         init {
             super.init()
-            title = "Convert to Tuple"
+            title = RsBundle.message("dialog.title.convert.to.tuple")
         }
 
         override fun doAction() {

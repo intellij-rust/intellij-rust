@@ -720,10 +720,10 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn foo(t: Rc/*caret*/<usize>) {}
     """)
 
-    fun `test import item from proc_macro`() = checkAutoImportFixByFileTree("""
+    fun `test import item from proc_macro`() = checkAutoImportFixByFileTreeWithMultipleChoice("""
     //- dep-proc-macro/lib.rs
         fn foo(_: <error descr="Unresolved reference: `TokenStream`">TokenStream/*caret*/</error>) {}
-    """, """
+    """, listOf("proc_macro::TokenStream", "proc_macro::bridge::server::TokenStream"), "proc_macro::TokenStream", """
     //- dep-proc-macro/lib.rs
         use proc_macro::TokenStream;
 
@@ -785,5 +785,24 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn main() {
             Vec::new();
         }
+    """)
+
+    fun `test don't import method of Borrow trait`() = checkAutoImportFixIsUnavailable("""
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        fn main() {
+            let rc = Rc::new(RefCell::new(0));
+            let option = Some(rc);
+            option.<error>borrow/*caret*/</error>()
+        }
+    """)
+
+    fun `test import Borrow trait`() = checkAutoImportFixByTextWithoutHighlighting("""
+        fn func(_: impl /*caret*/Borrow<i32>) {}
+    """, """
+        use std::borrow::Borrow;
+
+        fn func(_: impl Borrow<i32>) {}
     """)
 }

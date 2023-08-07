@@ -1191,6 +1191,28 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test implement function with const generic defaults`() = doTest("""
+        trait T {
+            fn f<const N: usize = 1>();
+        }
+        struct S;
+        impl T for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("f<const N: usize = 1>()", byDefault = true, isSelected = true),
+    ), """
+        trait T {
+            fn f<const N: usize = 1>();
+        }
+        struct S;
+        impl T for S {
+            fn f<const N: usize = 1>() {
+                <selection>todo!()</selection>
+            }
+        }
+    """)
+
     fun `test do not implement methods already present`() = doTest("""
         trait T {
             fn f1();
@@ -1855,6 +1877,45 @@ class ImplementMembersHandlerTest : RsTestBase() {
             type B<'a, T> where T: 'a = ();
             type C = ();
             type D = ();
+        }
+    """)
+
+    fun `test escape path type qualifier during substitution`() = doTest("""
+        trait Trait {
+            type T;
+        }
+        impl Trait for () {
+            type T = ();
+        }
+
+        trait Foo<X: Trait> {
+            fn foo1(t: X::T);
+            fn foo2(t: X);
+        }
+        impl Foo<()> for () { /*caret*/ }
+    """, listOf(
+        ImplementMemberSelection("foo1(t: X::T)", byDefault = true),
+        ImplementMemberSelection("foo2(t: X)", byDefault = true),
+    ), """
+        trait Trait {
+            type T;
+        }
+        impl Trait for () {
+            type T = ();
+        }
+
+        trait Foo<X: Trait> {
+            fn foo1(t: X::T);
+            fn foo2(t: X);
+        }
+        impl Foo<()> for () {
+            fn foo1(t: <()>::T) {
+                todo!()
+            }
+
+            fn foo2(t: ()) {
+                todo!()
+            }
         }
     """)
 

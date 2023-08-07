@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class SomePostfixTemplateTest : RsPostfixTemplateTest(SomePostfixTemplate(RsPostfixTemplateProvider())) {
+class SomePostfixTemplateTest : RsPostfixTemplateTest(SomePostfixTemplate::class) {
 
     fun `test expr`() = doTest("""
         fn foo(number: i32) -> Option<i32> {

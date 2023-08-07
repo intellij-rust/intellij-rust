@@ -5,14 +5,15 @@
 
 package org.rust.ide.inspections
 
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.parentDotExpr
 
 class RsCStringPointerInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "Unsafe CString pointer"
+    override fun getDisplayName() = RsBundle.message("unsafe.cstring.pointer")
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitMethodCall(asPtrCall: RsMethodCall) {
                 if (asPtrCall.referenceName != "as_ptr") return
 

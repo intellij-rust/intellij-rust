@@ -18,9 +18,18 @@ class Autoderef(
     private val visitedTys: MutableSet<Ty> = hashSetOf()
     private val steps: MutableList<AutoderefStep> = mutableListOf()
 
+    private val obligations: MutableList<Obligation> = mutableListOf()
+
     private val sequence = generateSequence(ctx.resolveTypeVarsIfPossible(baseTy)) { from ->
         if (visitedTys.add(from)) {
-            val to = lookup.deref(from)?.let(ctx::resolveTypeVarsIfPossible)
+            val deref = lookup.deref(from)
+            if (deref != null && deref.obligations.isNotEmpty()) {
+                val fulfillment = FulfillmentContext(ctx, lookup)
+                fulfillment.registerPredicateObligations(deref.obligations)
+                fulfillment.selectWherePossible()
+                obligations += fulfillment.pendingObligations.map { it.obligation }
+            }
+            val to = deref?.value?.let(ctx::resolveTypeVarsWithObligations)
                 ?: (from as? TyArray)?.let { array -> TySlice(array.base) }
             if (to != null) {
                 steps += AutoderefStep(from, to)
@@ -34,6 +43,8 @@ class Autoderef(
     override fun iterator(): Iterator<Ty> = sequence.iterator()
 
     fun steps(): List<AutoderefStep> = ArrayList(steps)
+
+    fun obligations(): List<Obligation> = ArrayList(obligations)
 
     fun stepCount(): Int = steps.size
 

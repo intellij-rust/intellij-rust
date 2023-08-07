@@ -39,13 +39,14 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
     override fun getStatementAtCaret(editor: Editor, psiFile: PsiFile): PsiElement? {
         val atCaret = super.getStatementAtCaret(editor, psiFile) ?: return null
         if (atCaret is PsiWhiteSpace) return null
-        loop@ for (each in atCaret.ancestors) {
-            val elementType = each.node.elementType
-            when {
-                elementType == LBRACE || elementType == RBRACE -> continue@loop
-                each is RsMatchArm || each.parent is RsBlock
-                    || each.parent is RsFunction || each.parent is RsStructItem -> return each
-            }
+        for (element in atCaret.ancestors) {
+            val elementType = element.node.elementType
+            if (elementType == LBRACE || elementType == RBRACE) continue
+
+            val isSuitableElement = isSuitableElement(element)
+            val parent = element.parent
+            val stopAtParent = parent is RsBlock || parent is RsFunction || parent is RsStructItem
+            if (isSuitableElement || stopAtParent) return element
         }
         return null
     }
@@ -63,5 +64,14 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
             plainEnter(editor)
             return true
         }
+    }
+
+    companion object {
+        fun isSuitableElement(element: PsiElement): Boolean =
+            element is RsMatchArm
+                || element is RsTypeAlias
+                || element is RsTraitAlias
+                || element is RsConstant
+                || element is RsExternCrateItem
     }
 }

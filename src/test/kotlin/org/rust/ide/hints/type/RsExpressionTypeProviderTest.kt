@@ -8,7 +8,6 @@ package org.rust.ide.hints.type
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.openapiext.escaped
 
 
@@ -83,7 +82,6 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         }
     """, "i32, S")
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attr proc macro`() = doTest("""
@@ -95,7 +93,6 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         }
     """, "i32")
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attr proc macro 2`() = doTest("""
@@ -105,7 +102,7 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         fn main() {
             let _ = /*caret*/foo(0);
         }
-    """, "fn(i32) -> i32, i32")
+    """, "fn(i32) -> i32 {foo}, i32")
 
     fun `test inside macro call`() = doTest("""
         macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
@@ -117,7 +114,7 @@ class RsExpressionTypeProviderTest : RsTestBase() {
                 /*caret*/foo();
             }
         }
-    """, "fn() -> i32, i32")
+    """, "fn() -> i32 {foo}, i32")
 
     private fun doTest(@Language("Rust") code: String, type: String) {
         InlineFile(code).withCaret()

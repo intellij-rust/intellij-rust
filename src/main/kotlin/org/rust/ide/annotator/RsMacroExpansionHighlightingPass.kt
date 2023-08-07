@@ -22,15 +22,19 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.RsBundle
 import org.rust.ide.annotator.format.RsFormatMacroAnnotator
+import org.rust.ide.colors.RsColor
+import org.rust.ide.fixes.RsQuickFixBase
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.psi.AttrCache
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
-import org.rust.lang.core.psi.ext.RsPossibleMacroCall
-import org.rust.lang.core.psi.ext.existsAfterExpansion
-import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.psi.ext.isEnabledByCfg
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.removeLast
 
 class RsMacroExpansionHighlightingPassFactory(
@@ -68,27 +72,33 @@ class RsMacroExpansionHighlightingPass(
 ) : TextEditorHighlightingPass(file.project, document) {
     private val results = mutableListOf<HighlightInfo>()
 
-    private fun createAnnotators(): List<Annotator> = listOf(
-        RsEdition2018KeywordsAnnotator(),
-        RsHighlightingAnnotator(),
-        RsHighlightingMutableAnnotator(),
-        RsCfgDisabledCodeAnnotator(),
-        RsFormatMacroAnnotator(),
-    )
+    private fun createAnnotators(): Pair<List<Annotator>, List<Annotator>> {
+        val annotatorsForDeclMacros = listOf(
+            RsEdition2018KeywordsAnnotator(),
+            RsAttrHighlightingAnnotator(),
+            RsHighlightingMutableAnnotator(),
+            RsFormatMacroAnnotator(),
+        )
+        val annotatorsForAttrMacros = annotatorsForDeclMacros + listOf(
+            RsErrorAnnotator(),
+            RsUnsafeExpressionAnnotator(),
+        )
+        return annotatorsForDeclMacros to annotatorsForAttrMacros
+    }
 
     @Suppress("UnstableApiUsage")
     override fun doCollectInformation(progress: ProgressIndicator) {
-        val macros = mutableListOf<PreparedMacroCall>()
+        val macros = mutableListOf<MacroCallPreparedForHighlighting>()
 
         PsiTreeUtil.processElements(file) {
             when (it) {
                 is RsMacroCall -> {
                     if (it.macroArgument?.textRange?.intersects(restrictedRange) != true) return@processElements true
-                    macros += it.prepare() ?: return@processElements true
+                    macros += it.prepareForExpansionHighlighting() ?: return@processElements true
                 }
                 is RsAttrProcMacroOwner -> {
                     if (it.textRange?.intersects(restrictedRange) != true) return@processElements true
-                    macros += it.procMacroAttribute.attr?.prepare() ?: return@processElements true
+                    macros += it.procMacroAttribute?.attr?.prepareForExpansionHighlighting() ?: return@processElements true
                 }
             }
             true // Continue
@@ -97,7 +107,7 @@ class RsMacroExpansionHighlightingPass(
         if (macros.isEmpty()) return
 
         val crate = (file as? RsFile)?.crate?.asNotFake
-        val annotators = createAnnotators()
+        val (annotatorsForDeclMacros, annotatorsForAttrMacros) = createAnnotators()
 
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
@@ -106,32 +116,76 @@ class RsMacroExpansionHighlightingPass(
 
             @Suppress("DEPRECATION")
             val holder = AnnotationHolderImpl(annotationSession, false)
+            val annotators = if (macro.isDeeplyAttrMacro) annotatorsForAttrMacros else annotatorsForDeclMacros
+            val cfgDisabledElements = mutableListOf<PsiElement>()
 
             for (element in macro.elementsForHighlighting) {
+                if (RsCfgDisabledCodeAnnotator.shouldHighlightAsCfsDisabled(element, holder)) {
+                    cfgDisabledElements += element
+                }
                 for (ann in annotators) {
                     ProgressManager.checkCanceled()
                     holder.runAnnotatorWithContext(element, ann)
                 }
 
                 if (element is RsMacroCall) {
-                    macros += element.prepare() ?: continue
+                    macros += element.prepareForExpansionHighlighting(macro) ?: continue
                 } else if (element is RsAttrProcMacroOwner) {
-                    macros += element.procMacroAttribute.attr?.prepare() ?: continue
+                    macros += element.procMacroAttribute?.attr?.prepareForExpansionHighlighting(macro) ?: continue
                 }
             }
 
             for (ann in holder) {
                 mapAndCollectAnnotation(macro, ann)
             }
+
+            if (crate != null && AnnotatorBase.isEnabled(RsCfgDisabledCodeAnnotator::class.java)) {
+                highlightCfgDisabledRanges(crate, macro, cfgDisabledElements)
+            }
         }
     }
 
-    private fun mapAndCollectAnnotation(macro: PreparedMacroCall, ann: Annotation) {
+    private fun mapAndCollectAnnotation(macro: MacroCallPreparedForHighlighting, ann: Annotation) {
         val originRange = TextRange(ann.startOffset, ann.endOffset)
         val originInfo = HighlightInfo.fromAnnotation(ann)
         val mappedRanges = mapRangeFromExpansionToCallBody(macro.expansion, macro.macroCall, originRange)
         for (mappedRange in mappedRanges) {
-            results += originInfo.copyWithRange(mappedRange)
+            val newInfo = originInfo.copyWithRange(mappedRange)
+            originInfo.findRegisteredQuickFix<Any> { descriptor, quickfixTextRange ->
+                val mappedQfRanges = mapRangeFromExpansionToCallBody(macro.expansion, macro.macroCall, quickfixTextRange)
+                for (mappedQfRange in mappedQfRanges) {
+                    if (descriptor.action !is RsQuickFixBase<*>) continue
+                    newInfo.registerFix(descriptor.action, emptyList(), descriptor.displayName, mappedQfRange, null)
+                }
+                null
+            }
+            results += newInfo.createUnconditionally()
+        }
+    }
+
+    private fun highlightCfgDisabledRanges(
+        crate: Crate,
+        macro: MacroCallPreparedForHighlighting,
+        cfgDisabledElements: List<PsiElement>
+    ) {
+        val cache = AttrCache.HashMapCache(crate)
+        val cfgDisabledMappedRanges = cfgDisabledElements.flatMapTo(HashSet()) {
+            mapRangeFromExpansionToCallBody(macro.expansion, macro.macroCall, it.textRange)
+        }.filter { range ->
+            val element = file.findElementAt(range.startOffset) ?: return@filter false
+            val expansionElements = element.findExpansionElements(cache) ?: return@filter false
+            !expansionElements.any { it.isEnabledByCfg(crate) }
+        }
+
+        for (mappedRange in cfgDisabledMappedRanges) {
+            val color = RsColor.CFG_DISABLED_CODE
+            val severity = if (isUnitTestMode) color.testSeverity else RsCfgDisabledCodeAnnotator.CONDITIONALLY_DISABLED_CODE_SEVERITY
+            results += HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+                .severity(severity)
+                .textAttributes(color.textAttributesKey)
+                .range(mappedRange)
+                .descriptionAndTooltip(RsBundle.message("text.conditionally.disabled.code"))
+                .createUnconditionally()
         }
     }
 
@@ -148,24 +202,7 @@ class RsMacroExpansionHighlightingPass(
     }
 }
 
-private fun RsPossibleMacroCall.prepare(): PreparedMacroCall? {
-    if (this is RsMacroCall && macroArgument == null) return null // special macros should not be highlighted
-    if (!existsAfterExpansion) return null
-    val expansion = expansion ?: return null
-    return PreparedMacroCall(this, expansion)
-}
-
-private data class PreparedMacroCall(val macroCall: RsPossibleMacroCall, val expansion: MacroExpansion) {
-    val elementsForHighlighting: List<PsiElement>
-        get() {
-            if (expansion.ranges.isEmpty()) return emptyList()
-            // Don't try to restrict range by `getElementsInRange`: it does not return all ancestors
-            // even if `includeAllParents = true`
-            return CollectHighlightsUtil.getElementsInRange(expansion.file, 0, expansion.file.textLength)
-        }
-}
-
-private fun HighlightInfo.copyWithRange(newRange: TextRange): HighlightInfo {
+private fun HighlightInfo.copyWithRange(newRange: TextRange): HighlightInfo.Builder {
     val forcedTextAttributesKey = forcedTextAttributesKey
     val forcedTextAttributes = forcedTextAttributes
     val description = description
@@ -191,5 +228,5 @@ private fun HighlightInfo.copyWithRange(newRange: TextRange): HighlightInfo {
         b.endOfLine()
     }
 
-    return b.createUnconditionally()
+    return b
 }

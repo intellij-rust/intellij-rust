@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -108,7 +109,7 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
 private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>>
     get() {
         // trait Foo where Self: Bar {}
-        val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
+        val whereBounds = wherePreds.asSequence()
             .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.hasCself == true }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
         // trait Foo: Bar {}
@@ -149,28 +150,20 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
 
 class TraitImplementationInfo private constructor(
     val trait: RsTraitItem,
-    val traitName: String,
+    @NlsContexts.Label val traitName: String,
     traitMembers: RsMembers,
     implMembers: RsMembers
 ) {
     val declared = traitMembers.abstractable().filter { it.existsAfterExpansionSelf }
     private val implemented = implMembers.abstractable()
-    private val declaredByName = declared.associateBy { it.name!! }
-    private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
+    val declaredByNameAndType = declared.associateBy { it.name!! to it.elementType }
+    val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
 
     val missingImplementations: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType !in implementedByNameAndType }
 
     val alreadyImplemented: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType in implementedByNameAndType }
-
-    val nonExistentInTrait: List<RsAbstractable> = implemented.filter { it.name !in declaredByName }
-
-    val implementationToDeclaration: List<Pair<RsAbstractable, RsAbstractable>> =
-        implemented.mapNotNull { imp ->
-            val dec = declaredByName[imp.name]
-            if (dec != null) imp to dec else null
-        }
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
         expandedMembers.filter { it.name != null }

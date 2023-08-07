@@ -26,6 +26,10 @@ class RsStringLiteralManipulator : AbstractElementManipulator<RsLitExpr>() {
         return element.replace(newLitExpr) as RsLitExpr
     }
 
+    /**
+     * Used in "Inject language or reference" intention action to find a text range for injection.
+     * See `InjectLanguageIntentionTest`.
+     */
     override fun getRangeInElement(element: RsLitExpr): TextRange {
         return (element.kind as? RsLiteralKind.String)?.offsets?.value ?: super.getRangeInElement(element)
     }

@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsExpressionAnnotator
 
+@SkipTestWrapping // TODO make `RsExpressionAnnotator` work in macro expansions
 class RemoveRedundantParenthesesFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class) {
     fun `test simple parentheses`() = checkFixIsUnavailable("Remove parentheses from expression", """
         fn test() {

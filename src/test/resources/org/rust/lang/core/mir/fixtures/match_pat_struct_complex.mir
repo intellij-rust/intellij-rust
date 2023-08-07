@@ -1,0 +1,103 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:9:11: 9:11
+    let _1: A;                           // in scope 0 at src/main.rs:10:9: 10:10
+    let mut _2: isize;                   // in scope 0 at src/main.rs:12:9: 12:14
+    scope 1 {
+        debug a => _1;                   // in scope 1 at src/main.rs:10:9: 10:10
+        let _3: u32;                     // in scope 1 at src/main.rs:13:20: 13:21
+        let _4: i32;                     // in scope 1 at src/main.rs:13:26: 13:27
+        let _5: i32;                     // in scope 1 at src/main.rs:14:17: 14:18
+        let _6: i32;                     // in scope 1 at src/main.rs:14:20: 14:21
+        let _7: i32;                     // in scope 1 at src/main.rs:15:20: 15:22
+        let _8: i32;                     // in scope 1 at src/main.rs:15:27: 15:29
+        scope 2 {
+            debug x => _3;               // in scope 2 at src/main.rs:13:20: 13:21
+            debug y => _4;               // in scope 2 at src/main.rs:13:26: 13:27
+        }
+        scope 3 {
+            debug x => _5;               // in scope 3 at src/main.rs:14:17: 14:18
+            debug y => _6;               // in scope 3 at src/main.rs:14:20: 14:21
+        }
+        scope 4 {
+            debug x2 => _7;              // in scope 4 at src/main.rs:15:20: 15:22
+            debug y2 => _8;              // in scope 4 at src/main.rs:15:27: 15:29
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:10:9: 10:10
+        _1 = A::A0;                      // scope 0 at src/main.rs:10:13: 10:18
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:10:9: 10:10
+        FakeRead(ForMatchedPlace(None), _1); // scope 1 at src/main.rs:11:11: 11:12
+        _2 = discriminant(_1);           // scope 1 at src/main.rs:11:11: 11:12
+        switchInt(move _2) -> [0: bb1, 1: bb2, 2: bb3, 3: bb4, 4: bb5, otherwise: bb6]; // scope 1 at src/main.rs:11:5: 11:10
+    }
+
+    bb1: {
+        falseEdge -> [real: bb7, imaginary: bb2]; // scope 1 at src/main.rs:12:9: 12:14
+    }
+
+    bb2: {
+        falseEdge -> [real: bb8, imaginary: bb3]; // scope 1 at src/main.rs:13:9: 13:29
+    }
+
+    bb3: {
+        falseEdge -> [real: bb9, imaginary: bb4]; // scope 1 at src/main.rs:14:9: 14:23
+    }
+
+    bb4: {
+        falseEdge -> [real: bb10, imaginary: bb5]; // scope 1 at src/main.rs:15:9: 15:31
+    }
+
+    bb5: {
+        _0 = const ();                   // scope 1 at src/main.rs:16:31: 16:33
+        goto -> bb11;                    // scope 1 at src/main.rs:16:31: 16:33
+    }
+
+    bb6: {
+        unreachable;                     // scope 1 at src/main.rs:11:11: 11:12
+    }
+
+    bb7: {
+        _0 = const ();                   // scope 1 at src/main.rs:12:18: 12:20
+        goto -> bb11;                    // scope 1 at src/main.rs:12:18: 12:20
+    }
+
+    bb8: {
+        StorageLive(_3);                 // scope 1 at src/main.rs:13:20: 13:21
+        _3 = ((_1 as A1).1: u32);        // scope 1 at src/main.rs:13:20: 13:21
+        StorageLive(_4);                 // scope 1 at src/main.rs:13:26: 13:27
+        _4 = ((_1 as A1).0: i32);        // scope 1 at src/main.rs:13:26: 13:27
+        _0 = const ();                   // scope 2 at src/main.rs:13:33: 13:35
+        StorageDead(_4);                 // scope 1 at src/main.rs:13:34: 13:35
+        StorageDead(_3);                 // scope 1 at src/main.rs:13:34: 13:35
+        goto -> bb11;                    // scope 1 at src/main.rs:13:34: 13:35
+    }
+
+    bb9: {
+        StorageLive(_5);                 // scope 1 at src/main.rs:14:17: 14:18
+        _5 = ((_1 as A2).0: i32);        // scope 1 at src/main.rs:14:17: 14:18
+        StorageLive(_6);                 // scope 1 at src/main.rs:14:20: 14:21
+        _6 = ((_1 as A2).1: i32);        // scope 1 at src/main.rs:14:20: 14:21
+        _0 = const ();                   // scope 3 at src/main.rs:14:27: 14:29
+        StorageDead(_6);                 // scope 1 at src/main.rs:14:28: 14:29
+        StorageDead(_5);                 // scope 1 at src/main.rs:14:28: 14:29
+        goto -> bb11;                    // scope 1 at src/main.rs:14:28: 14:29
+    }
+
+    bb10: {
+        StorageLive(_7);                 // scope 1 at src/main.rs:15:20: 15:22
+        _7 = ((_1 as A3).0: i32);        // scope 1 at src/main.rs:15:20: 15:22
+        StorageLive(_8);                 // scope 1 at src/main.rs:15:27: 15:29
+        _8 = ((_1 as A3).1: i32);        // scope 1 at src/main.rs:15:27: 15:29
+        _0 = const ();                   // scope 4 at src/main.rs:15:35: 15:37
+        StorageDead(_8);                 // scope 1 at src/main.rs:15:36: 15:37
+        StorageDead(_7);                 // scope 1 at src/main.rs:15:36: 15:37
+        goto -> bb11;                    // scope 1 at src/main.rs:15:36: 15:37
+    }
+
+    bb11: {
+        StorageDead(_1);                 // scope 0 at src/main.rs:18:1: 18:2
+        return;                          // scope 0 at src/main.rs:18:2: 18:2
+    }
+}

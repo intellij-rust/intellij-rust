@@ -5,6 +5,8 @@
 
 package org.rust.ide.intentions
 
+import org.rust.SkipTestWrapping
+
 class AddImportIntentionTest : RsIntentionTestBase(AddImportIntention::class) {
 
     override val previewExpected: Boolean get() = false
@@ -444,6 +446,7 @@ class AddImportIntentionTest : RsIntentionTestBase(AddImportIntention::class) {
         }
     """)
 
+    @SkipTestWrapping // TODO fix reference search in macro
     fun `test replace usage inside module`() = doAvailableTest("""
         mod foo {
             pub mod bar {

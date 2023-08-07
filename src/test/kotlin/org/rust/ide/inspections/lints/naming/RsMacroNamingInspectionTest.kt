@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsMacroNamingInspection
 
@@ -19,6 +20,7 @@ class RsMacroNamingInspectionTest : RsInspectionsTestBase(RsMacroNamingInspectio
         macro_rules! MacroFoo { () => {}; }
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test macros fix`() = checkFixByText("Rename to `macro_foo`", """
         macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">Macro<caret>Foo</warning> { () => {}; }
         MacroFoo!();
@@ -27,6 +29,7 @@ class RsMacroNamingInspectionTest : RsInspectionsTestBase(RsMacroNamingInspectio
         macro_foo!();
     """, preview = null)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test macros with raw identifier`() = checkFixByText("Rename to `macro_foo`", """
         macro_rules! <warning descr="Macro `MacroFoo` should have a snake case name such as `macro_foo`">r#Macro/*caret*/Foo</warning> { () => {}; }
         r#MacroFoo!();

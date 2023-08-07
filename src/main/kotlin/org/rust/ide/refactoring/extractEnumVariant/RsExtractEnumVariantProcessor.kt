@@ -16,6 +16,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsInPlaceVariableIntroducer
 import org.rust.ide.refactoring.findTransitiveAttributes
 import org.rust.ide.utils.GenericConstraints
@@ -80,7 +81,7 @@ class RsExtractEnumVariantProcessor(
     }
 
     override fun getCommandName(): String {
-        return "Extracting variant ${ctx.name}"
+        return RsBundle.message("command.name.extracting.variant", ctx.name?:"")
     }
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
@@ -235,7 +236,7 @@ private fun offerStructRename(
     editor.caretModel.moveToOffset(range.startOffset)
 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-    RsInPlaceVariableIntroducer(inserted, editor, project, "choose struct name", additionalElementsToRename)
+    RsInPlaceVariableIntroducer(inserted, editor, project, RsBundle.message("command.name.choose.struct.name"), additionalElementsToRename)
         .performInplaceRefactoring(null)
 }
 

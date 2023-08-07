@@ -29,7 +29,7 @@ FILE
             RsMacroArgumentImpl(MACRO_ARGUMENT)
               PsiElement(()('(')
               PsiElement())(')')
-        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'let'
+        PsiErrorElement:'(', '+', '-', ';', <operator>, '[' or '}' expected, got 'let'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsLetDeclImpl(LET_DECL)

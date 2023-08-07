@@ -5,7 +5,10 @@
 
 package org.rust.ide.annotator.fixes
 
-import org.rust.ide.annotator.*
+import org.rust.ide.annotator.RsAnnotationTestBase
+import org.rust.ide.annotator.RsAnnotationTestFixture
+import org.rust.ide.annotator.RsErrorAnnotator
+import org.rust.ide.annotator.RsUnsafeExpressionAnnotator
 
 class AddUnsafeFixTest : RsAnnotationTestBase() {
 
@@ -391,5 +394,38 @@ class AddUnsafeFixTest : RsAnnotationTestBase() {
         unsafe trait Trait {}
 
         unsafe impl Trait/*caret*/ for () {}
+    """)
+
+    fun `test no add unsafe to function fix if test`() = checkFixIsUnavailable("Add unsafe to function", """
+        unsafe fn foo() {}
+
+        #[test]
+        fn some_test() {
+            <error>foo()<caret></error>;
+        }
+    """)
+
+    fun `test no add unsafe to function fix if doctest`() = checkFixIsUnavailable("Add unsafe to function", """
+        /// ```
+        /// unsafe fn foo() {}
+        /// foo()<caret>;
+        /// ```
+        fn bar() {}
+    """)
+
+    fun `test no add unsafe to function fix if implementing safe function`() = checkFixIsUnavailable("Add unsafe to function", """
+        unsafe fn unsafe_foo() {}
+
+        trait Foo {
+            fn foo();
+        }
+
+        struct Bar;
+
+        impl Foo for Bar {
+            fn foo() {
+                <error>unsafe_foo()<caret></error>;
+            }
+        }
     """)
 }

@@ -15,6 +15,7 @@ import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
+import org.rust.RsBundle
 import org.rust.ide.refactoring.move.common.ElementToMove
 import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
 import org.rust.ide.refactoring.move.common.RsMoveUtil.addInner
@@ -100,7 +101,7 @@ class RsMoveTopLevelItemsProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor =
         MoveMultipleElementsViewDescriptor(itemsToMove.toTypedArray(), targetMod.name ?: "")
 
-    override fun getCommandName(): String = "Move Items"
+    override fun getCommandName(): String = RsBundle.message("command.name.move.items")
 }
 
 private val RsMod.lastChildInner: PsiElement? get() = if (this is RsModItem) rbrace?.prevSibling else lastChild

@@ -11,7 +11,9 @@ import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleColoredComponent
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.ide.presentation.presentationInfo
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsFunction
@@ -23,6 +25,7 @@ import javax.swing.JTree
 
 
 class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: RsAbstractable) : ClassMember {
+    @Nls
     private val text: String = when (member) {
         is RsFunction, is RsTypeAlias ->
             member.presentationInfo?.projectStructureItemText ?: ""
@@ -69,7 +72,7 @@ typealias TraitMemberChooser = (
 
 private val memberChooserDialog: TraitMemberChooser = { project, all, selectedByDefault ->
     val chooser = MemberChooser(all.toTypedArray(), true, true, project).apply {
-        title = "Implement Members"
+        title = RsBundle.message("dialog.title.implement.members")
         selectElements(selectedByDefault.toTypedArray())
         setCopyJavadocVisible(false)
     }

@@ -100,7 +100,7 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false, parent: PsiElement? 
         isCompletion && qualifier == null -> TYPES_N_VALUES
         else -> VALUES
     }
-    is RsPatTupleStruct -> VALUES
+    is RsPatTupleStruct -> if (isCompletion) TYPES_N_VALUES else VALUES
     is RsMacroCall -> MACROS
     is RsPathCodeFragment -> parent.ns
     // TODO: Use proper namespace based on disambiguator

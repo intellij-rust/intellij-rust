@@ -6,17 +6,18 @@
 package org.rust.ide.intentions
 
 import org.intellij.lang.annotations.Language
-import org.rust.MockCargoFeatures
+import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.singleProject
-import org.rust.workspaceOrFail
+import org.rust.ide.experiments.RsExperiments
 
 class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::class) {
 
     override val previewExpected: Boolean get() = false
 
+    @WithoutExperimentalFeatures(RsExperiments.PROC_MACROS, RsExperiments.ATTR_PROC_MACROS)
+    @SkipTestWrapping // TODO fix `PsiElement.findExpansionElementsNonRecursive` for `cfg_attr` condition
     @MockCargoFeatures("foo")
     fun `test availability range`() = checkAvailableInSelectionOnly("""
         #[cfg(<selection>feature = "foo"</selection>)]
@@ -52,11 +53,12 @@ class ToggleFeatureIntentionTest : RsIntentionTestBase(ToggleFeatureIntention::c
         project.cargoProjects.modifyFeatures(cargoProject, setOf(feature), initialState)
 
         InlineFile(code.trimIndent()).withCaret()
-        launchAction()
+        val previewChecker = launchAction()
 
         val cargoProjectRefreshed = project.cargoProjects.singleProject()
         val pkgRefreshed = cargoProjectRefreshed.workspaceOrFail().packages.single { it.origin == PackageOrigin.WORKSPACE }
 
         assertEquals(!initialState, pkgRefreshed.featureState[featureName])
+        previewChecker.checkPreview()
     }
 }

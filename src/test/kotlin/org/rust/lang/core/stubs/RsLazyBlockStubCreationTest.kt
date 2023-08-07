@@ -42,6 +42,14 @@ class RsLazyBlockStubCreationTest : RsLazyBlockStubCreationTestBase() {
         }
     """)
 
+    fun `test const lambdas`() = doTest("""
+    //- main.rs
+        fn main() {
+            let l1 = const |x: i32| x;
+            let l2 = const move |x: i32| x;
+        }
+    """.trimIndent())
+
     private fun doTest(@Language("Rust") fileTreeText: String) {
         fileTreeFromText(fileTreeText).create()
         checkRustFiles(myFixture.findFileInTempDir("."), emptyList())

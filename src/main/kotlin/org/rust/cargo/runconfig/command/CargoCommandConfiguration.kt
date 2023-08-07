@@ -9,6 +9,7 @@ import com.intellij.execution.Executor
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
+import com.intellij.execution.impl.statistics.FusAwareRunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
@@ -16,7 +17,9 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.util.ProgramParametersUtil
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.options.SettingsEditor
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
@@ -35,6 +38,7 @@ import org.rust.cargo.runconfig.target.BuildTarget
 import org.rust.cargo.runconfig.target.RsLanguageRuntimeConfiguration
 import org.rust.cargo.runconfig.target.RsLanguageRuntimeType
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
+import org.rust.cargo.runconfig.test.CargoTestConsoleProperties.Companion.TEST_TOOL_WINDOW_SETTING_KEY
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -42,15 +46,10 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
-import org.rust.ide.experiments.RsExperiments
-import org.rust.openapiext.isFeatureEnabled
-import org.rust.openapiext.isUnitTestMode
+import org.rust.ide.statistics.CargoCommandUsagesCollector
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-
-val CargoCommandConfiguration.hasRemoteTarget: Boolean
-    get() = defaultTargetName != null
 
 /**
  * This class describes a Run Configuration.
@@ -66,12 +65,12 @@ open class CargoCommandConfiguration(
 ) : RsCommandConfiguration(project, name, factory),
     InputRedirectAware.InputRedirectOptions,
     ConsolePropertiesProvider,
-    TargetEnvironmentAwareRunProfile {
+    TargetEnvironmentAwareRunProfile,
+    FusAwareRunConfiguration {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
-    var emulateTerminal: Boolean = emulateTerminalDefault
     var withSudo: Boolean = false
     var buildTarget: BuildTarget = BuildTarget.REMOTE
     var backtrace: BacktraceMode = BacktraceMode.SHORT
@@ -124,7 +123,6 @@ open class CargoCommandConfiguration(
         element.writeEnum("channel", channel)
         element.writeBool("requiredFeatures", requiredFeatures)
         element.writeBool("allFeatures", allFeatures)
-        element.writeBool("emulateTerminal", emulateTerminal)
         element.writeBool("withSudo", withSudo)
         element.writeEnum("buildTarget", buildTarget)
         element.writeEnum("backtrace", backtrace)
@@ -142,7 +140,6 @@ open class CargoCommandConfiguration(
         element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readBool("requiredFeatures")?.let { requiredFeatures = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
-        element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readBool("withSudo")?.let { withSudo = it }
         element.readEnum<BuildTarget>("buildTarget")?.let { buildTarget = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
@@ -173,8 +170,8 @@ open class CargoCommandConfiguration(
         if (isRedirectInput) {
             val file = redirectInputFile
             when {
-                file?.exists() != true -> throw RuntimeConfigurationWarning("Input file doesn't exist")
-                !file.isFile -> throw RuntimeConfigurationWarning("Input file is not valid")
+                file?.exists() != true -> throw RuntimeConfigurationWarning(RsBundle.message("dialog.message.input.file.doesn.t.exist"))
+                !file.isFile -> throw RuntimeConfigurationWarning(RsBundle.message("dialog.message.input.file.not.valid"))
             }
         }
 
@@ -207,8 +204,8 @@ open class CargoCommandConfiguration(
     }
 
     private fun showTestToolWindow(commandLine: CargoCommandLine): Boolean = when {
-        !isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) -> false
-        commandLine.command != "test" -> false
+        !AdvancedSettings.getBoolean(TEST_TOOL_WINDOW_SETTING_KEY) -> false
+        commandLine.command !in listOf("test", "bench") -> false
         "--nocapture" in commandLine.additionalArguments -> false
         Cargo.TEST_NOCAPTURE_ENABLED_KEY.asBoolean() -> false
         else -> !hasRemoteTarget
@@ -240,37 +237,37 @@ open class CargoCommandConfiguration(
 
     fun clean(): CleanConfiguration {
         val workingDirectory = workingDirectory
-            ?: return CleanConfiguration.error("No working directory specified")
+            ?: return CleanConfiguration.error(RsBundle.message("dialog.message.no.working.directory.specified"))
 
         val cmd = run {
             val parsed = ParsedCommand.parse(command)
-                ?: return CleanConfiguration.error("No command specified")
+                ?: return CleanConfiguration.error(RsBundle.message("dialog.message.no.command.specified"))
 
             CargoCommandLine(
                 parsed.command,
                 workingDirectory,
                 parsed.additionalArguments,
                 redirectInputFile,
+                emulateTerminal,
                 backtrace,
                 parsed.toolchain,
                 channel,
                 env,
                 requiredFeatures,
                 allFeatures,
-                emulateTerminal,
                 withSudo
             )
         }
 
         val toolchain = project.toolchain
-            ?: return CleanConfiguration.error("No Rust toolchain specified")
+            ?: return CleanConfiguration.error(RsBundle.message("dialog.message.no.rust.toolchain.specified"))
 
         if (!toolchain.looksLikeValidToolchain()) {
-            return CleanConfiguration.error("Invalid toolchain: ${toolchain.presentableLocation}")
+            return CleanConfiguration.error(RsBundle.message("dialog.message.invalid.toolchain", toolchain.presentableLocation))
         }
 
         if (!toolchain.isRustupAvailable && channel != RustChannel.DEFAULT) {
-            return CleanConfiguration.error("Channel '$channel' is set explicitly with no rustup available")
+            return CleanConfiguration.error(RsBundle.message("dialog.message.channel.set.explicitly.with.no.rustup.available", channel))
         }
 
         return CleanConfiguration.Ok(cmd, toolchain)
@@ -282,6 +279,7 @@ open class CargoCommandConfiguration(
     }
 
     companion object {
+
         fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
             val cargoProjects = project.cargoProjects
             cargoProjects.allProjects.singleOrNull()?.let { return it }
@@ -352,9 +350,12 @@ open class CargoCommandConfiguration(
                 }
             }
         }
+    }
 
-        val emulateTerminalDefault: Boolean
-            get() = isFeatureEnabled(RsExperiments.EMULATE_TERMINAL) && !isUnitTestMode
+    @Suppress("UnstableApiUsage")
+    override fun getAdditionalUsageData(): List<EventPair<*>> {
+        val parsed = ParsedCommand.parse(command) ?: return emptyList()
+        return listOf(EventPair(CargoCommandUsagesCollector.COMMAND, parsed.command))
     }
 }
 

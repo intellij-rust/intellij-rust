@@ -6,12 +6,13 @@
 package org.rust.ide.lineMarkers
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.psi.PsiElement
 import com.intellij.util.Query
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.navigation.goto.RsGoToImplRenderer
 import org.rust.lang.core.psi.RsEnumItem
@@ -20,6 +21,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
+import javax.swing.Icon
 
 /**
  * Annotates trait declaration with an icon on the gutter that allows to jump to
@@ -27,7 +29,10 @@ import org.rust.openapiext.mapQuery
  *
  * See [org.rust.ide.navigation.goto.RsImplsSearch]
  */
-class RsImplsLineMarkerProvider : LineMarkerProvider {
+class RsImplsLineMarkerProvider : LineMarkerProviderDescriptor() {
+
+    override fun getName(): String = RsBundle.message("gutter.rust.implemented.item.name")
+    override fun getIcon(): Icon = RsIcons.IMPLEMENTED
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? = null
 
@@ -39,9 +44,9 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
             // if (query.isEmptyQuery) return null
             val query = implsQuery(el) ?: continue
             val targets: NotNullLazyValue<Collection<PsiElement>> = NotNullLazyValue.createValue { query.findAll() }
-            val info = ImplsGutterIconBuilder(el.text, RsIcons.IMPLEMENTED)
+            val info = ImplsGutterIconBuilder(el.text, icon)
                 .setTargets(targets)
-                .setTooltipText("Has implementations")
+                .setTooltipText(RsBundle.message("gutter.rust.implemented.item.tooltip"))
                 .setCellRenderer { RsGoToImplRenderer() }
                 .createLineMarkerInfo(el)
 

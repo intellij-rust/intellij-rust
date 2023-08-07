@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.nullize
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.project.settings.toolchain
@@ -38,8 +40,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         val project = cargoProject.project
-        val stdout = createCommandLine(cargoProject, document)
-            ?.execute(project, stdIn = document.text.toByteArray())
+        val stdout = reformatTextDocument(cargoProject, document, project)
             ?.unwrapOrElse { e ->
                 e.showRustfmtError(project)
                 if (isUnitTestMode) throw e else return null
@@ -47,19 +48,23 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         return stdout.nullize()
     }
 
+    fun reformatTextDocument(cargoProject: CargoProject, document: Document, project: Project): RsProcessResult<ProcessOutput>? =
+        createCommandLine(cargoProject, document)
+            ?.execute(project, stdIn = document.text.toByteArray())
+
     fun createCommandLine(cargoProject: CargoProject, document: Document): GeneralCommandLine? {
         val file = document.virtualFile ?: return null
         if (file.isNotRustFile || !file.isValid) return null
 
         val project = cargoProject.project
-        val settingsState = project.rustfmtSettings.state
+        val settings = project.rustfmtSettings
 
-        val arguments = ParametersListUtil.parse(settingsState.additionalArguments)
+        val arguments = ParametersListUtil.parse(settings.additionalArguments)
         val cleanArguments = mutableListOf<String>()
 
         val toolchain = arguments.firstOrNull()?.takeIf { it.startsWith("+") }
         when {
-            settingsState.channel != RustChannel.DEFAULT -> cleanArguments += "+${settingsState.channel}"
+            settings.channel != RustChannel.DEFAULT -> cleanArguments += "+${settings.channel}"
             toolchain != null -> cleanArguments += toolchain
         }
 
@@ -90,7 +95,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             edition.presentation
         }
 
-        return createBaseCommandLine(cleanArguments, cargoProject.workingDirectory, settingsState.envs)
+        return createBaseCommandLine(cleanArguments, cargoProject.workingDirectory, settings.envs)
     }
 
     fun reformatCargoProject(
@@ -98,8 +103,8 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
         owner: Disposable = cargoProject.project
     ): RsProcessResult<Unit> {
         val project = cargoProject.project
-        val settingsState = project.rustfmtSettings.state
-        val arguments = ParametersListUtil.parse(settingsState.additionalArguments).toMutableList()
+        val settings = project.rustfmtSettings
+        val arguments = ParametersListUtil.parse(settings.additionalArguments).toMutableList()
         val toolchain = if (arguments.firstOrNull()?.startsWith("+") == true) {
             arguments.removeFirst()
         } else {
@@ -109,12 +114,13 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             cargoProject,
             "fmt",
             listOf("--all", "--") + arguments,
+            false,
             toolchain,
-            settingsState.channel,
-            EnvironmentVariablesData.create(settingsState.envs, true)
+            settings.channel,
+            EnvironmentVariablesData.create(settings.envs, true)
         )
 
-        return project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {
+        return project.computeWithCancelableProgress(RsBundle.message("progress.title.reformatting.cargo.project.with.rustfmt")) {
             project.toolchain
                 ?.cargoOrWrapper(cargoProject.workingDirectory)
                 ?.toGeneralCommandLine(project, commandLine)
@@ -150,7 +156,7 @@ class Rustfmt(toolchain: RsToolchainBase) : RustupComponent(NAME, toolchain) {
             val message = message.orEmpty().trimEnd('\n')
             if (message.isNotEmpty()) {
                 val html = "<html>${message.escaped.replace("\n", "<br>")}</html>"
-                project.showBalloon("Rustfmt", html, NotificationType.ERROR, RustfmtEditSettingsAction("Show settings..."))
+                project.showBalloon(RsBundle.message("notification.title.rustfmt"), html, NotificationType.ERROR, RustfmtEditSettingsAction(RsBundle.message("action.show.settings.text")))
             }
         }
     }

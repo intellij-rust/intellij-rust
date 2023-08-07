@@ -13,6 +13,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -62,10 +63,10 @@ class RsInlineValueProcessor(
         }
     }
 
-    override fun getCommandName(): String = "Inline ${context.type} ${context.name}"
+    override fun getCommandName(): String = RsBundle.message("command.name.inline", context.type, context.name)
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
-        return RsInlineUsageViewDescriptor(context.element, "${context.type.capitalized()} to inline")
+        return RsInlineUsageViewDescriptor(context.element, RsBundle.message("list.item.to.inline", context.type.capitalized()))
     }
 }
 

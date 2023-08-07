@@ -6,9 +6,7 @@
 package org.rust.cargo.commands
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -99,7 +97,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         fn main() {
             println!("Hello, ΣΠ∫!");
         }
-    """) { reformatFile(myFixture.editor) }
+    """) { reformatFile() }
 
     fun `test rustfmt file action ignores emit option 1`() = doTest({
         toml("Cargo.toml", """
@@ -124,7 +122,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         project.rustfmtSettings.modifyTemporary(testRootDisposable) {
             it.additionalArguments = "--emit files"
         }
-        reformatFile(myFixture.editor)
+        reformatFile()
     }
 
     fun `test rustfmt file action ignores emit option 2`() = doTest({
@@ -150,7 +148,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         project.rustfmtSettings.modifyTemporary(testRootDisposable) {
             it.additionalArguments = "--emit=files"
         }
-        reformatFile(myFixture.editor)
+        reformatFile()
     }
 
     fun `test rustfmt file action with edited configuration 1`() = doTest({
@@ -177,7 +175,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
             it.additionalArguments = "--unstable-features"
             it.channel = RustChannel.NIGHTLY
         }
-        reformatFile(myFixture.editor)
+        reformatFile()
     }
 
     fun `test rustfmt file action with edited configuration 2`() = doTest({
@@ -205,7 +203,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
             it.channel = RustChannel.STABLE
         }
         assertThrows(RsProcessExecutionException::class.java) {
-            reformatFile(myFixture.editor)
+            reformatFile()
         }
     }
 
@@ -232,7 +230,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         project.rustfmtSettings.modifyTemporary(testRootDisposable) {
             it.additionalArguments = "+nightly --unstable-features"
         }
-        reformatFile(myFixture.editor)
+        reformatFile()
     }
 
     fun `test rustfmt file action edition 2018`() = doTest({
@@ -255,7 +253,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
         async fn foo() {
             println!("Hello, ΣΠ∫!");
         }
-    """) { reformatFile(myFixture.editor) }
+    """) { reformatFile() }
 
     fun `test rustfmt cargo project action`() = doTest({
         toml("Cargo.toml", """
@@ -531,8 +529,8 @@ class RustfmtTest : RsWithToolchainTestBase() {
         }
     }
 
-    private fun reformatFile(editor: Editor) {
-        myFixture.launchAction("Cargo.RustfmtFile", CommonDataKeys.EDITOR_EVEN_IF_INACTIVE to editor)
+    private fun reformatFile() {
+        myFixture.launchAction("Cargo.RustfmtFile")
     }
 
     private fun reformatCargoProject() {

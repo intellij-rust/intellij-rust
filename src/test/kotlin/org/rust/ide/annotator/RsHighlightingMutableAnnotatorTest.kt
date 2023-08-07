@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import org.rust.ProjectDescriptor
+import org.rust.SkipTestWrapping
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor.MUT_BINDING
 import org.rust.ide.colors.RsColor.MUT_PARAMETER
@@ -43,6 +44,7 @@ class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase(RsHighlightingMut
     """)
 
     @BatchMode
+    @SkipTestWrapping
     fun `test no highlighting in batch mode`() = checkHighlighting("""
         struct Foo {}
         impl Foo {

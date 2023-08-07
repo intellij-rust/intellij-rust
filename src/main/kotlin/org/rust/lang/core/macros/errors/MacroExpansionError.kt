@@ -86,6 +86,7 @@ sealed class ProcMacroExpansionError : MacroExpansionError() {
     object IOExceptionThrown : ProcMacroExpansionError()
 
     data class Timeout(val timeout: Long) : ProcMacroExpansionError()
+    data class UnsupportedExpanderVersion(val version: Int) : ProcMacroExpansionError()
     object CantRunExpander : ProcMacroExpansionError()
     object ExecutableNotFound : ProcMacroExpansionError()
     object ProcMacroExpansionIsDisabled : ProcMacroExpansionError()
@@ -104,11 +105,12 @@ fun DataOutput.writeMacroExpansionError(err: MacroExpansionError) {
         is ProcMacroExpansionError.ProcessAborted -> 3
         is ProcMacroExpansionError.IOExceptionThrown -> 4
         is ProcMacroExpansionError.Timeout -> 5
-        ProcMacroExpansionError.CantRunExpander -> 6
-        ProcMacroExpansionError.ExecutableNotFound -> 7
-        ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> 8
-        BuiltinMacroExpansionError -> 9
-        DeclMacroExpansionError.TooLargeExpansion -> 10
+        is ProcMacroExpansionError.UnsupportedExpanderVersion -> 6
+        ProcMacroExpansionError.CantRunExpander -> 7
+        ProcMacroExpansionError.ExecutableNotFound -> 8
+        ProcMacroExpansionError.ProcMacroExpansionIsDisabled -> 9
+        BuiltinMacroExpansionError -> 10
+        DeclMacroExpansionError.TooLargeExpansion -> 11
     }
     writeByte(ordinal)
 
@@ -122,8 +124,9 @@ fun DataOutput.writeMacroExpansionError(err: MacroExpansionError) {
         is ProcMacroExpansionError.ServerSideError -> IOUtil.writeUTF(this, err.message)
         is ProcMacroExpansionError.ProcessAborted -> writeInt(err.exitCode)
         is ProcMacroExpansionError.Timeout -> writeLong(err.timeout)
+        is ProcMacroExpansionError.UnsupportedExpanderVersion -> writeInt(err.version)
         else -> Unit
-    }.exhaustive
+    }
 }
 
 @Throws(IOException::class)
@@ -137,11 +140,12 @@ fun DataInput.readMacroExpansionError(): MacroExpansionError = when (val ordinal
     3 -> ProcMacroExpansionError.ProcessAborted(readInt())
     4 -> ProcMacroExpansionError.IOExceptionThrown
     5 -> ProcMacroExpansionError.Timeout(readLong())
-    6 -> ProcMacroExpansionError.CantRunExpander
-    7 -> ProcMacroExpansionError.ExecutableNotFound
-    8 -> ProcMacroExpansionError.ProcMacroExpansionIsDisabled
-    9 -> BuiltinMacroExpansionError
-    10 -> DeclMacroExpansionError.TooLargeExpansion
+    6 -> ProcMacroExpansionError.UnsupportedExpanderVersion(readInt())
+    7 -> ProcMacroExpansionError.CantRunExpander
+    8 -> ProcMacroExpansionError.ExecutableNotFound
+    9 -> ProcMacroExpansionError.ProcMacroExpansionIsDisabled
+    10 -> BuiltinMacroExpansionError
+    11 -> DeclMacroExpansionError.TooLargeExpansion
     else -> throw IOException("Unknown expansion error code $ordinal")
 }
 
@@ -175,7 +179,7 @@ private fun DataOutput.saveMatchingError(value: MacroMatchingError) {
             IOUtil.writeUTF(this, value.variableName)
         }
         else -> Unit
-    }.exhaustive
+    }
 }
 
 @Throws(IOException::class)

@@ -1,0 +1,41 @@
+fn foo() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:10: 1:10
+    let mut _1: i32;                     // in scope 0 at src/main.rs:2:9: 2:14
+    scope 1 {
+        debug a => _1;                   // in scope 1 at src/main.rs:2:9: 2:14
+        let _2: &i32;                    // in scope 1 at src/main.rs:3:9: 3:10
+        scope 2 {
+            debug b => _2;               // in scope 2 at src/main.rs:3:9: 3:10
+            let _3: i32;                 // in scope 2 at src/main.rs:4:9: 4:10
+            scope 3 {
+                debug c => _3;           // in scope 3 at src/main.rs:4:9: 4:10
+                let _4: &mut i32;        // in scope 3 at src/main.rs:5:9: 5:10
+                scope 4 {
+                    debug d => _4;       // in scope 4 at src/main.rs:5:9: 5:10
+                }
+            }
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:9: 2:14
+        _1 = const 43_i32;               // scope 0 at src/main.rs:2:17: 2:19
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:2:9: 2:14
+        StorageLive(_2);                 // scope 1 at src/main.rs:3:9: 3:10
+        _2 = &_1;                        // scope 1 at src/main.rs:3:13: 3:15
+        FakeRead(ForLet(None), _2);      // scope 1 at src/main.rs:3:9: 3:10
+        StorageLive(_3);                 // scope 2 at src/main.rs:4:9: 4:10
+        _3 = (*_2);                      // scope 2 at src/main.rs:4:13: 4:15
+        FakeRead(ForLet(None), _3);      // scope 2 at src/main.rs:4:9: 4:10
+        StorageLive(_4);                 // scope 3 at src/main.rs:5:9: 5:10
+        _4 = &mut _1;                    // scope 3 at src/main.rs:5:13: 5:19
+        FakeRead(ForLet(None), _4);      // scope 3 at src/main.rs:5:9: 5:10
+        (*_4) = const 42_i32;            // scope 4 at src/main.rs:6:5: 6:12
+        _0 = const ();                   // scope 0 at src/main.rs:1:10: 7:2
+        StorageDead(_4);                 // scope 3 at src/main.rs:7:1: 7:2
+        StorageDead(_3);                 // scope 2 at src/main.rs:7:1: 7:2
+        StorageDead(_2);                 // scope 1 at src/main.rs:7:1: 7:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:7:1: 7:2
+        return;                          // scope 0 at src/main.rs:7:2: 7:2
+    }
+}

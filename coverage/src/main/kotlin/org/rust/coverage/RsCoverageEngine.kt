@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.rt.coverage.data.ClassData
 import com.intellij.util.ui.ColumnInfo
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.coverage.LcovCoverageReport.Serialization.writeLcov
 import org.rust.lang.RsFileType
@@ -72,7 +73,7 @@ class RsCoverageEngine : CoverageEngine() {
 
     override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): CoverageSuite = RsCoverageSuite()
 
-    override fun getPresentableText(): String = "Rust Coverage"
+    override fun getPresentableText(): String = RsBundle.message("action.rust.coverage.text")
 
     override fun createCoverageViewExtension(
         project: Project,
@@ -83,11 +84,11 @@ class RsCoverageEngine : CoverageEngine() {
             override fun createColumnInfos(): Array<ColumnInfo<NodeDescriptor<*>, String>> {
                 val percentage = PercentageCoverageColumnInfo(
                     1,
-                    "Covered, %",
+                    RsBundle.message("column.name.covered"),
                     mySuitesBundle,
                     myStateBean
                 )
-                val files = object : ColumnInfo<NodeDescriptor<*>, String>("File") {
+                val files = object : ColumnInfo<NodeDescriptor<*>, String>(RsBundle.message("column.name.file")) {
                     override fun valueOf(item: NodeDescriptor<*>?): String = item.toString()
                     override fun getComparator(): Comparator<NodeDescriptor<*>>? = AlphaComparator.INSTANCE
                 }
@@ -137,7 +138,7 @@ class RsCoverageEngine : CoverageEngine() {
         val outputDir = File(settings.OUTPUT_DIRECTORY)
         FileUtil.createDirectory(outputDir)
         val outputFileName = getOutputFileName(currentSuiteBundle)
-        val title = "Coverage Report Generation"
+        val title = RsBundle.message("dialog.title.coverage.report.generation")
         try {
             val output = File(outputDir, outputFileName)
             writeLcov(coverageReport, output)
@@ -145,13 +146,16 @@ class RsCoverageEngine : CoverageEngine() {
             // TODO: generate html report ourselves
             val url = "https://github.com/linux-test-project/lcov"
             Messages.showInfoMessage(
-                "<html>Coverage report has been successfully saved as '$outputFileName' file.<br>" +
-                    "Use instruction in <a href='$url'>$url</a> to generate HTML output.</html>",
+                RsBundle.message("dialog.message.html.coverage.report.has.been.successfully.saved.as.file.br.use.instruction.in.href.to.generate.html.output.html", outputFileName, url, url),
                 title
             )
         } catch (e: IOException) {
             LOG.warn("Can not export coverage data", e)
-            Messages.showErrorDialog("Can not generate coverage report: ${e.message}", title)
+            Messages.showErrorDialog(
+                RsBundle.message(
+                    "dialog.message.can.not.generate.coverage.report", e.message ?: ""
+                ), title
+            )
         }
     }
 

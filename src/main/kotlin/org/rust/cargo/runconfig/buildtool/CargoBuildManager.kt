@@ -26,24 +26,21 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SystemNotifications
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.runconfig.CargoCommandRunner
-import org.rust.cargo.runconfig.CargoRunState
-import org.rust.cargo.runconfig.addFormatJsonOption
+import org.rust.RsBundle
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.ParsedCommand
-import org.rust.cargo.runconfig.command.hasRemoteTarget
 import org.rust.cargo.runconfig.target.localBuildArgsForRemoteRun
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
-import org.rust.cargo.util.parseSemVer
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.RsNotifications
 import org.rust.openapiext.isFeatureEnabled
@@ -55,25 +52,14 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 
 object CargoBuildManager {
-    private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test")
+    private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test", "bench")
 
     private val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         CompletableFuture.completedFuture(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
-    private val MIN_RUSTC_VERSION: SemVer = "1.48.0".parseSemVer()
-
-    val Project.isBuildToolWindowAvailable: Boolean
-        get() {
-            if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
-            val minVersion = cargoProjects.allProjects
-                .mapNotNull { it.rustcInfo?.version?.semver }
-                .minOrNull() ?: return false
-            return minVersion >= MIN_RUSTC_VERSION
-        }
-
     val CargoCommandConfiguration.isBuildToolWindowAvailable: Boolean
         get() {
-            if (!project.isBuildToolWindowAvailable) return false
+            if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
             val hasBuildBeforeRunTask = beforeRunTasks.any { task -> task is CargoBuildTaskProvider.BuildTask }
             return hasBuildBeforeRunTask && (!hasRemoteTarget || buildTarget.isLocal)
         }
@@ -104,9 +90,9 @@ object CargoBuildManager {
         return execute(CargoBuildContext(
             cargoProject = cargoProject,
             environment = environment,
-            taskName = "Build",
-            progressTitle = "Building...",
-            isTestBuild = state.commandLine.command == "test",
+            taskName = RsBundle.message("progress.title.build"),
+            progressTitle = RsBundle.message("progress.text.building1"),
+            isTestBuild = state.commandLine.command in listOf("test", "bench"),
             buildId = buildId,
             parentId = buildId
         )) {
@@ -126,10 +112,14 @@ object CargoBuildManager {
         }
     }
 
+    fun clean(project: CargoProject): Future<Boolean> =
+        CargoCommandLine.forProject(project, "clean", emulateTerminal = false)
+            .runAsync(project, saveConfiguration = false)
+
     private fun execute(
         context: CargoBuildContext,
         doExecute: CargoBuildContext.() -> Unit
-    ): CompletableFuture<CargoBuildResult> {
+    ): Future<CargoBuildResult> {
         context.environment.notifyProcessStartScheduled()
         val processCreationLock = Any()
 
@@ -208,7 +198,7 @@ object CargoBuildManager {
         val parsed = ParsedCommand.parse(configuration.command) ?: return false
         return when (val command = parsed.command) {
             "build", "check", "clippy" -> true
-            "test" -> {
+            "test", "bench" -> {
                 val (commandArguments, _) = parseArgs(command, parsed.additionalArguments)
                 "--no-run" in commandArguments
             }
@@ -232,6 +222,7 @@ object CargoBuildManager {
         buildConfiguration.command = ParametersListUtil.join(when (parsed.command) {
             "run" -> listOfNotNull(parsed.toolchain, "build", *commandArguments.toTypedArray())
             "test" -> listOfNotNull(parsed.toolchain, "test", "--no-run", *commandArguments.toTypedArray())
+            "bench" -> listOfNotNull(parsed.toolchain, "bench", "--no-run", *commandArguments.toTypedArray())
             else -> return null
         })
 
@@ -265,8 +256,8 @@ object CargoBuildManager {
     fun showBuildNotification(
         project: Project,
         messageType: MessageType,
-        message: String,
-        details: String? = null,
+        @NlsContexts.SystemNotificationTitle message: String,
+        @NlsContexts.SystemNotificationText details: String? = null,
         time: Long = 0
     ) {
         val notificationContent = buildNotificationMessage(message, details, time)
@@ -287,9 +278,10 @@ object CargoBuildManager {
         )
     }
 
+    @NlsContexts.NotificationContent
     private fun buildNotificationMessage(message: String, details: String?, time: Long): String {
-        var notificationContent = message + if (details == null) "" else " with $details"
-        if (time > 0) notificationContent += " in " + NlsMessages.formatDuration(time)
+        var notificationContent = RsBundle.message("notification.content.choice.with", message, details?:"", if (details == null) 0 else 1)
+        if (time > 0) notificationContent += RsBundle.message("notification.content.in", NlsMessages.formatDuration(time))
         return notificationContent
     }
 

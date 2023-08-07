@@ -18,9 +18,10 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
-import org.rust.ide.annotator.fixes.updateMutable
-import org.rust.ide.inspections.RsFieldInitShorthandInspection
-import org.rust.ide.inspections.fixes.deleteUseSpeck
+import org.rust.RsBundle
+import org.rust.ide.fixes.ChangeToFieldShorthandFix
+import org.rust.ide.fixes.deleteUseSpeck
+import org.rust.ide.fixes.updateMutable
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.refactoring.freshenName
 import org.rust.ide.refactoring.inlineTypeAlias.fillPathWithActualType
@@ -30,6 +31,7 @@ import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.inference
@@ -121,8 +123,7 @@ class RsInlineFunctionProcessor(
             handleUsage(usage, function)
         }
         if (removeDefinition && handledUsages.size == usages.size) {
-            (originalFunction.prevSibling as? PsiWhiteSpace)?.delete()
-            originalFunction.delete()
+            originalFunction.deleteWithPreviousWhitespace()
         }
     }
 
@@ -198,10 +199,10 @@ class RsInlineFunctionProcessor(
         returnExpr.replace(returnValue)
     }
 
-    override fun getCommandName(): String = "Inline function ${originalFunction.name}"
+    override fun getCommandName(): String = RsBundle.message("command.name.inline.function", originalFunction.name?:"")
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
-        RsInlineUsageViewDescriptor(originalFunction, "Function to inline")
+        RsInlineUsageViewDescriptor(originalFunction, RsBundle.message("list.item.function.to.inline"))
 
     override fun getElementsToWrite(descriptor: UsageViewDescriptor): Collection<PsiElement> =
         when {
@@ -248,10 +249,7 @@ private class InlineSingleUsage(
 ) {
 
     /** The expression which should be replaced by function body */
-    private val functionCall: RsExpr = when (usage) {
-        is FunctionCallUsage -> usage.functionCall
-        is MethodCallUsage -> usage.methodCall.parent as RsDotExpr
-    }
+    private val functionCall: RsExpr = prepareFunctionCall(usage)
     private val factory: RsPsiFactory = RsPsiFactory(functionCall.project)
     private val function: RsFunction = preprocessFunction(function)
 
@@ -409,6 +407,23 @@ private class InlineSingleUsage(
         return declarationLastUsages.any { it is RsPathExpr && it.path == usage }
     }
 
+    private fun prepareFunctionCall(usage: CallUsage): RsExpr {
+        val functionCall = when (usage) {
+            is FunctionCallUsage -> usage.functionCall
+            is MethodCallUsage -> usage.methodCall.parent as RsDotExpr
+        }
+        return functionCall.unwrapAwait() ?: functionCall
+    }
+
+    // `foo().await` -> `foo()`
+    //  ~~~~~ [this]
+    private fun RsExpr.unwrapAwait(): RsExpr? {
+        if (!originalFunction.isAsync) return null
+        val parent = parent as? RsDotExpr
+        if (parent?.fieldLookup?.isAsync != true) return null
+        return parent.replace(this) as RsExpr
+    }
+
     private fun preprocessFunction(originalFunction: RsFunction): RsFunction {
         val outerScopeNames = functionCall.getAllVisibleBindingsIncludingContainingLetDeclaration()
         val functionNames = function.descendantsOfType<RsNameIdentifierOwner>().mapNotNullTo(hashSetOf()) { it.name }
@@ -472,7 +487,7 @@ private class InlineSingleUsage(
         for (field in function.descendantsOfType<RsStructLiteralField>()) {
             val name = field.identifier?.text ?: continue
             if (field.colon != null && name == field.expr?.text) {
-                RsFieldInitShorthandInspection.applyShorthandInit(field)
+                ChangeToFieldShorthandFix.applyShorthandInit(field)
             }
         }
     }
@@ -552,7 +567,9 @@ private class InsertFunctionBody(
         val statement = bodyStatements.singleOrNull() as? RsExprStmt ?: return false
         if (statement.semicolon != null || statement.textContains('\n')) return false
 
-        functionCall.replaceWithAddingParentheses(statement.expr, factory)
+        functionCall
+            .replaceWithAddingParentheses(statement.expr, factory)
+            .unwrapTryExprIfPossible()
         return true
     }
 
@@ -652,7 +669,9 @@ private class InsertFunctionBody(
         } else {
             factory.createExpression("()") to bodyStatements.last()
         }
-        val functionCallReplaced = functionCall.replaceWithAddingParentheses(returnValue, factory)
+        val functionCallReplaced = functionCall
+            .replaceWithAddingParentheses(returnValue, factory)
+            .unwrapTryExprIfPossible()
 
         if (lastBodyStatement == null) return true
         val containingStatement = functionCallReplaced.findOrCreateContainingStatement() ?: return false
@@ -766,4 +785,22 @@ private fun RsElement.renameUsages(name: String, scope: RsElement) {
 private fun PsiElement.replaceWithRange(first: PsiElement, last: PsiElement) {
     parent.addRangeBefore(first, last, this)
     delete()
+}
+
+// `Some(0)?` -> `0`
+//  ~~~~~~~ [this]
+private fun PsiElement.unwrapTryExprIfPossible(): PsiElement {
+    val parent = parent as? RsTryExpr ?: return this
+    if (this !is RsCallExpr) return this
+    val value = valueArgumentList.exprList.singleOrNull() ?: return this
+    val path = (expr as? RsPathExpr)?.path ?: return this
+    val variant = path.reference?.resolve() as? RsEnumVariant ?: return this
+    val target = variant.parentEnum
+    val isSome = variant.name == "Some" && target == knownItems.Option
+    val isOk = variant.name == "Ok" && target == knownItems.Result
+    return if (isSome || isOk) {
+        parent.replace(value)
+    } else {
+        this
+    }
 }

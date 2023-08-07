@@ -13,13 +13,18 @@ import com.intellij.openapi.application.runReadAction
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
+import kotlin.reflect.KClass
 
-abstract class RsPostfixTemplateTest(private val postfixTemplate: PostfixTemplate) : RsTestBase() {
+abstract class RsPostfixTemplateTest(
+    postfixTemplateKClass: KClass<out PostfixTemplate>,
+    private val postfixTemplateName: String? = null
+) : RsTestBase() {
+    private val postfixTemplateClass: Class<out PostfixTemplate> = postfixTemplateKClass.java
 
     fun `test template has documentation`() {
-        val description = "postfixTemplates/${postfixTemplate.javaClass.simpleName}/description.html"
+        val description = "postfixTemplates/${postfixTemplateClass.simpleName}/description.html"
         val text = getResourceAsString(description)
-            ?: error("No postfix template description for ${postfixTemplate.javaClass} ($description)")
+            ?: error("No postfix template description for $postfixTemplateClass ($description)")
         checkHtmlStyle(text)
 
         checkExampleTemplate("before.rs.template")
@@ -27,9 +32,9 @@ abstract class RsPostfixTemplateTest(private val postfixTemplate: PostfixTemplat
     }
 
     private fun checkExampleTemplate(fileName: String) {
-        val path = "postfixTemplates/${postfixTemplate.javaClass.simpleName}/$fileName"
+        val path = "postfixTemplates/${postfixTemplateClass.simpleName}/$fileName"
         val text = getResourceAsString(path)
-            ?: error("No `$fileName` for ${postfixTemplate.javaClass.simpleName}")
+            ?: error("No `$fileName` for ${postfixTemplateClass.simpleName}")
         if (text.isBlank()) {
             error("Please add example text into `$path`")
         }
@@ -76,17 +81,17 @@ abstract class RsPostfixTemplateTest(private val postfixTemplate: PostfixTemplat
     }
 
     private fun checkApplicability(testCase: String, isApplicable: Boolean) {
-        val provider = LanguagePostfixTemplate.LANG_EP.allForLanguage(RsLanguage)
-            .first { descriptor ->
-                descriptor.templates.any { template ->
-                    template.javaClass == this.postfixTemplate.javaClass
-                }
+        val template = LanguagePostfixTemplate.LANG_EP.allForLanguage(RsLanguage)
+            .flatMap { it.templates }
+            .first { template ->
+                template.javaClass == postfixTemplateClass &&
+                    (postfixTemplateName == null || postfixTemplateName == template.presentableName)
             }
 
         val result = runReadAction {
             PostfixLiveTemplate.isApplicableTemplate(
-                provider,
-                postfixTemplate.key,
+                template.provider ?: error("Template provider must not be null. Template: $postfixTemplateClass"),
+                template.key,
                 myFixture.file,
                 myFixture.editor
             )

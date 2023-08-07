@@ -6,8 +6,10 @@
 package org.rust.ide.annotator
 
 import org.rust.MockAdditionalCfgOptions
+import org.rust.SkipTestWrapping
 import org.rust.ide.colors.RsColor
 
+@SkipTestWrapping
 class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnnotator::class) {
     override fun setUp() {
         super.setUp()
@@ -97,5 +99,31 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         fn foo() {
             let x = 1;
         }</CFG_DISABLED_CODE>
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test disabled code in a macro call`() = checkHighlighting("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                #[cfg(disabled)]
+                fn foo() {$ e;}
+            };
+        }
+        fn main() {
+            foo!(/*CFG_DISABLED_CODE*/2 + 2/*CFG_DISABLED_CODE**/);
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test disabled code is not highlighted in a macro call if the same code is used as enabled`() = checkHighlighting("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                #[cfg(disabled)]
+                fn foo() {$ e;}
+            };
+        }
+        fn main() {
+            foo!(2 + 2);
+        }
     """)
 }

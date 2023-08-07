@@ -7,10 +7,7 @@ package org.rust.ide.docs
 
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsPathType
@@ -502,6 +499,21 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;</pre></div>
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test impl generic assoc type with where clause`() = doTest("""
+        trait Trait {
+            type AssocType<'a, 'b> where 'a: 'static  = () where 'b: 'static;
+        }
+        struct Foo;
+        impl Trait for Foo {
+            type AssocType<'a, 'b> where 'a: 'static  = () where 'b: 'static;
+                //^
+        }
+    """, """
+        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        type <b>AssocType</b>&lt;&#39;a, &#39;b&gt; = ()<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;&#39;a: &#39;static,<br>&nbsp;&nbsp;&nbsp;&nbsp;&#39;b: &#39;static,</pre></div>
+    """)
+
     fun `test trait assoc type`() = doTest("""
         trait MyTrait {
             /// Documented
@@ -929,6 +941,13 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>type parameter <b>T</b></pre></div>
     """)
 
+    fun `test const parameter`() = doTest("""
+        fn foo<const N: usize>() { unimplemented!() }
+                   //^
+    """, """
+        <div class='definition'><pre>const parameter <b>N</b>: usize</pre></div>
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test type parameter with single bound`() = doTest("""
         use std::borrow::Borrow;
@@ -965,6 +984,14 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
              //^
     """, """
         <div class='definition'><pre>type parameter <b>T</b> = <a href="psi_element://RandomState">RandomState</a></pre></div>
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test const parameter with default value`() = doTest("""
+        fn foo<const N: usize = 0>() { unimplemented!() }
+                   //^
+    """, """
+        <div class='definition'><pre>const parameter <b>N</b>: usize = 0</pre></div>
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -1264,7 +1291,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         originalElement to originalElement.textOffset
     }
 
-    @ExpandMacros
     fun `test documentation provided via macro definition 1`() = doTest("""
         macro_rules! foobar {
             ($ name:ident) => {
@@ -1287,7 +1313,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Say hello!</p></div>
     """)
 
-    @ExpandMacros
     fun `test documentation provided via macro definition 2`() = doTest("""
         pub struct Bar {
             pub bar: i32
@@ -1317,7 +1342,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Say hello</p></div>
     """)
 
-    @ExpandMacros
     fun `test documentation provided via macro call`() = doTest("""
         macro_rules! foo {
             ($ i:item) => { $ i }
@@ -1343,6 +1367,65 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                              //^
         }
     """, null)
+
+    fun `test documentation for macro expansion`() = doTest("""
+        /// # Description
+        /// This macro sums a vararg of numbers
+        macro_rules! sum {
+            () => { 0 }
+            ($ x:expr $ (, $ y:expr)*) => {
+                $ x + sum!($ ($ y),*)
+            };
+        }
+
+        fn main() {
+            sum!(1, 2, 3);
+             //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>sum</b></pre></div>
+        <div class='content'><h2>Description</h2><p>This macro sums a vararg of numbers</p></div>
+        <div class='content'><h2><em>Macro expansion</em></h2><p><span style="color:#0000ff;">1&#32;</span><span style="">+&#32;</span><span style="color:#0000ff;">2&#32;</span><span style="">+&#32;</span><span style="color:#0000ff;">3&#32;</span><span style="">+&#32;</span><span style="color:#0000ff;">0</span></p></div>
+    """)
+
+    fun `test documentation for unexpanded macro expansion`() = doTest("""
+        /// # Description
+        /// This macro sums a vararg of numbers
+        macro_rules! malformed {
+            (x) => { x };
+        }
+
+        fn main() {
+            malformed!();
+             //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>malformed</b></pre></div>
+        <div class='content'><h2>Description</h2><p>This macro sums a vararg of numbers</p></div>
+        <div class='content'><h2><em>Macro expansion</em></h2><p class='grayed'><em>Expansion is unavailable in quick documentation. Please use the intention action</em></p></div>
+    """)
+
+    fun `test documentation for big macro`() = doTest("""
+        /// # Description
+        /// Result of this macro exceeds given limit
+        macro_rules! big {
+            () => {
+                "${(0..RsDocumentationProvider.macroExpansionLimitInBytes).joinToString("") { "0" }}"
+            };
+        }
+
+        fn main() {
+            big!();
+            //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        macro <b>big</b></pre></div>
+        <div class='content'><h2>Description</h2><p>Result of this macro exceeds given limit</p></div>
+        <div class='content'><h2><em>Macro expansion</em></h2><p class='grayed'><em>Expansion is unavailable in quick documentation. Please use the intention action</em></p></div>
+    """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?)
         = doTest(code, expected, block = RsDocumentationProvider::generateDoc)

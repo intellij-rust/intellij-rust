@@ -367,4 +367,7 @@ sealed class Entry {
 
 fun replaceCaretMarker(text: String): String = text.replace("/*caret*/", "<caret>")
 fun hasCaretMarker(text: String): Boolean = text.contains("/*caret*/") || text.contains("<caret>")
+fun replaceSelectionMarker(text: String): String = text
+    .replace("/*selection*/", "<selection>")
+    .replace("/*selection**/", "</selection>")
 fun hasSelectionMarker(text: String): Boolean = text.contains("<selection>") && text.contains("</selection>")

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "RsUserTemplatesState", storages = [Storage("rust.usertemplates.xml")])
@@ -25,4 +26,4 @@ class RsUserTemplatesState : PersistentStateComponent<RsUserTemplatesState> {
     }
 }
 
-data class RsUserTemplate(var name: String = "", var url: String = "")
+data class RsUserTemplate(@NlsContexts.ListItem var name: String = "", var url: String = "")

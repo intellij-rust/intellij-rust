@@ -9,19 +9,22 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallCargoExpand
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.isUnderDarkTheme
 import org.rust.stdext.buildList
 
 class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandIntention.Context>(), LowPriorityAction {
-    override fun getText(): String = "Show the result of macro expansion (cargo expand)"
+    override fun getText(): String = RsBundle.message("intention.name.show.result.macro.expansion.cargo.expand")
     override fun getFamilyName(): String = text
 
-    override fun startInWriteAction(): Boolean = false
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
+    override val functionLikeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     data class Context(
         val cargoProject: CargoProject,
@@ -37,12 +40,14 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
         return Context(cargoProject, cargoTarget, crateRelativePath)
     }
 
+    override fun startInWriteAction(): Boolean = false
+
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (cargoProject, cargoTarget, crateRelativePath) = ctx
         if (checkNeedInstallCargoExpand(cargoProject.project)) return
 
         val theme = if (isUnderDarkTheme) "Dracula" else "GitHub"
-        val additionalArguments = buildList<String> {
+        val additionalArguments = buildList {
             add("--color=always")
             add("--theme=$theme")
             add("--tests")

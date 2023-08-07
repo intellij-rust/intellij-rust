@@ -5,6 +5,7 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.openapi.util.NlsSafe
 import org.rust.ide.utils.import.ImportCandidatesCollector
 import org.rust.ide.utils.import.ImportContext
 import org.rust.lang.core.psi.RsConstParameter
@@ -24,11 +25,12 @@ import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.utils.evaluation.evaluate
 import org.rust.stdext.withPrevious
 
 private const val MAX_SHORT_TYPE_LEN = 50
 
-fun Ty.render(
+@NlsSafe fun Ty.render(
     context: RsElement? = null,
     level: Int = Int.MAX_VALUE,
     unknown: String = "<unknown>",
@@ -41,7 +43,7 @@ fun Ty.render(
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
     useAliasNames: Boolean = true,
-    skipUnchangedDefaultTypeArguments: Boolean = true
+    skipUnchangedDefaultGenericArguments: Boolean = true
 ): String = TypeRenderer(
     context = context,
     unknown = unknown,
@@ -54,7 +56,7 @@ fun Ty.render(
     includeTypeArguments = includeTypeArguments,
     includeLifetimeArguments = includeLifetimeArguments,
     useAliasNames = useAliasNames,
-    skipUnchangedDefaultTypeArguments = skipUnchangedDefaultTypeArguments
+    skipUnchangedDefaultGenericArguments = skipUnchangedDefaultGenericArguments
 ).render(this, level)
 
 fun Ty.renderInsertionSafe(
@@ -64,7 +66,7 @@ fun Ty.renderInsertionSafe(
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
     useAliasNames: Boolean = true,
-    skipUnchangedDefaultTypeArguments: Boolean = true
+    skipUnchangedDefaultGenericArguments: Boolean = true
 ): String = TypeRenderer(
     context = context,
     unknown = "_",
@@ -77,7 +79,7 @@ fun Ty.renderInsertionSafe(
     includeTypeArguments = includeTypeArguments,
     includeLifetimeArguments = includeLifetimeArguments,
     useAliasNames = useAliasNames,
-    skipUnchangedDefaultTypeArguments = skipUnchangedDefaultTypeArguments
+    skipUnchangedDefaultGenericArguments = skipUnchangedDefaultGenericArguments
 ).render(this, level)
 
 val Ty.shortPresentableText: String
@@ -100,7 +102,7 @@ private data class TypeRenderer(
     val includeTypeArguments: Boolean,
     val includeLifetimeArguments: Boolean,
     val useAliasNames: Boolean,
-    val skipUnchangedDefaultTypeArguments: Boolean
+    val skipUnchangedDefaultGenericArguments: Boolean
 ) {
     fun render(ty: Ty, level: Int): String {
         require(level >= 0)
@@ -131,7 +133,8 @@ private data class TypeRenderer(
         }
 
         return when (ty) {
-            is TyFunction -> formatFnLike("fn", ty.paramTypes, ty.retType, render)
+            is TyFunctionDef -> formatFunctionDef(ty.def.name, ty.unsafety, ty.paramTypes, ty.retType, render)
+            is TyFunctionBase -> formatFnLike("fn", ty.unsafety, ty.paramTypes, ty.retType, render)
             is TySlice -> "[${render(ty.elementType)}]"
 
             is TyTuple -> if (ty.types.size == 1) {
@@ -198,14 +201,28 @@ private data class TypeRenderer(
             else -> unknownConst
         }
 
-    private fun formatFnLike(fnType: String, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
+    private fun formatFnLike(fnType: String, unsafety: Unsafety, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
         buildString {
-            paramTypes.joinTo(this, ", ", "$fnType(", ")", transform = render)
-            if (retType !is TyUnit) {
-                append(" -> ")
-                append(render(retType))
+            buildFnLikeString(fnType, unsafety, paramTypes, retType, render)
+        }
+
+
+    private fun formatFunctionDef(name: String?, unsafety: Unsafety, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
+        buildString {
+            buildFnLikeString("fn", unsafety, paramTypes, retType, render)
+            if (name != null) {
+                append(" {$name}")
             }
         }
+
+    private fun StringBuilder.buildFnLikeString(fnType: String, unsafety: Unsafety, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String) {
+        val unsafetyPrefix = if (unsafety == Unsafety.Unsafe) "unsafe " else ""
+        paramTypes.joinTo(this, ", ", "$unsafetyPrefix$fnType(", ")", transform = render)
+        if (retType !is TyUnit) {
+            append(" -> ")
+            append(render(retType))
+        }
+    }
 
     private fun formatTrait(trait: BoundElement<RsTraitItem>, render: (Ty) -> String): String = buildString {
         val name = trait.element.name ?: return anonymous
@@ -219,7 +236,7 @@ private data class TypeRenderer(
                 .find { it.key.name == "Output" }
                 ?.value
                 ?: TyUnit.INSTANCE
-            append(formatFnLike(name, paramTypes, retType, render))
+            append(formatFnLike(name, Unsafety.fromBoolean(trait.element.isUnsafe), paramTypes, retType, render))
         } else {
             append(name)
             if (includeTypeArguments) append(formatTraitGenerics(trait, render))
@@ -279,13 +296,15 @@ private data class TypeRenderer(
         val renderedList = mutableListOf<String>()
         var nonDefaultParamFound = false
         for (parameter in declaration.getGenericParameters().asReversed()) {
-            if (skipUnchangedDefaultTypeArguments && !nonDefaultParamFound) {
-                if (parameter is RsTypeParameter &&
-                    parameter.typeReference != null &&
-                    parameter.typeReference?.normType?.isEquivalentTo(subst[parameter]) == true) {
-                    continue
-                } else {
-                    nonDefaultParamFound = true
+            if (skipUnchangedDefaultGenericArguments && !nonDefaultParamFound) {
+                when {
+                    parameter is RsTypeParameter &&
+                        parameter.typeReference != null &&
+                        parameter.typeReference?.normType?.isEquivalentTo(subst[parameter]) == true -> continue
+                    parameter is RsConstParameter &&
+                        parameter.expr != null &&
+                        parameter.expr?.evaluate(parameter.typeReference?.normType ?: TyUnknown) == subst[parameter] -> continue
+                    else  -> nonDefaultParamFound = true
                 }
             }
 

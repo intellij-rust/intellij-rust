@@ -11,8 +11,8 @@ import javax.swing.Icon
 
 object CargoIcons {
     val ICON = load("/icons/cargo.svg")
-    val LOCK_ICON = load("/icons/cargo-lock.svg")
-    val BUILD_RS_ICON = load("/icons/build-rs.svg")
+    val LOCK_ICON = load("/icons/cargoLock.svg")
+    val BUILD_RS_ICON = load("/icons/rustBuild.svg")
     val TEST = AllIcons.RunConfigurations.TestState.Run
     val TEST_GREEN = AllIcons.RunConfigurations.TestState.Green2
     val TEST_RED = AllIcons.RunConfigurations.TestState.Red2
@@ -29,7 +29,7 @@ object CargoIcons {
     val BSP = load("/icons/bsp/bsp.svg")
     val RUST = load("/icons/rust.svg")
 
-    val RELOAD_ICON = load("/icons/reloadRustProject.svg")
+    val RELOAD_ICON = load("/icons/rustReload.svg")
 
     private fun load(path: String): Icon = IconLoader.getIcon(path, CargoIcons::class.java)
 }

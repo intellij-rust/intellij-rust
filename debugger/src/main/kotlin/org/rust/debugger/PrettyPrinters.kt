@@ -10,7 +10,7 @@ import org.rust.openapiext.RsPathManager
 
 val PP_PATH: String get() = RsPathManager.prettyPrintersDir().toString()
 const val LLDB_LOOKUP: String = "lldb_lookup"
-const val GDB_LOOKUP: String = "gdb_lookup"
+const val GDB_LOOKUP: String = "gdb_formatters.gdb_lookup"
 
 enum class LLDBRenderers(@PropertyKey(resourceBundle = BUNDLE) private val descriptionKey: String) {
     NONE("rust.debugger.renderers.none.item"),

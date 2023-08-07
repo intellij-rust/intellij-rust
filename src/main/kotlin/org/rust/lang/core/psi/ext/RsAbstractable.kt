@@ -17,9 +17,11 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
+import javax.swing.Icon
 
 interface RsAbstractable : RsNameIdentifierOwner, RsExpandedElement, RsVisible, RsDocAndAttributeOwner {
     val isAbstract: Boolean
+    fun getIcon(flags: Int, allowNameResolution: Boolean): Icon
 }
 
 sealed class RsAbstractableOwner {
@@ -34,8 +36,9 @@ sealed class RsAbstractableOwner {
 }
 
 val RsAbstractable.owner: RsAbstractableOwner get() = getOwner(PsiElement::getContext)
+val RsAbstractable.ownerBySyntaxOnly: RsAbstractableOwner get() = getOwner(PsiElement::stubParent)
 
-inline fun RsAbstractable.getOwner(getAncestor: PsiElement.() -> PsiElement?): RsAbstractableOwner {
+private inline fun RsAbstractable.getOwner(getAncestor: PsiElement.() -> PsiElement?): RsAbstractableOwner {
     return when (val ancestor = getAncestor()) {
         is RsForeignModItem -> RsAbstractableOwner.Foreign
         is RsMembers -> {

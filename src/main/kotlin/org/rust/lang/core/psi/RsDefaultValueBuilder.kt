@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.psi
 
-import org.rust.ide.inspections.RsFieldInitShorthandInspection
+import org.rust.ide.fixes.ChangeToFieldShorthandFix
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.types.implLookup
@@ -57,7 +57,7 @@ class RsDefaultValueBuilder(
 
                 var default = this.defaultValue
                 val implLookup = mod.implLookup
-                if (implLookup.isDefault(ty)) {
+                if (implLookup.isDefault(ty).isTrue) {
                     default = psiFactory.createAssocFunctionCall("Default", "default", emptyList())
                 }
 
@@ -67,7 +67,7 @@ class RsDefaultValueBuilder(
                     items.String -> psiFactory.createExpression("\"\".to_string()")
                     items.Vec -> psiFactory.createExpression("vec![]")
                     is RsStructItem -> if (item.kind == RsStructKind.STRUCT && item.canBeInstantiatedIn(mod)) {
-                        if (implLookup.isDefault(ty)) {
+                        if (implLookup.isDefault(ty).isTrue) {
                             return default
                         }
 
@@ -100,7 +100,7 @@ class RsDefaultValueBuilder(
                         default
                     }
                     is RsEnumItem -> {
-                        if (implLookup.isDefault(ty)) {
+                        if (implLookup.isDefault(ty).isTrue) {
                             return default
                         }
 
@@ -170,7 +170,7 @@ class RsDefaultValueBuilder(
         return when {
             type.isEquivalentTo(binding.type) -> {
                 val field = psiFactory.createStructLiteralField(escapedName, psiFactory.createExpression(escapedName))
-                RsFieldInitShorthandInspection.applyShorthandInit(field)
+                ChangeToFieldShorthandFix.applyShorthandInit(field)
                 field
             }
             isRefContainer(type, binding.type) -> {

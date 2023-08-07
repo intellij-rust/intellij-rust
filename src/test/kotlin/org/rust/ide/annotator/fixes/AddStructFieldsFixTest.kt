@@ -7,10 +7,12 @@ package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
+import org.rust.SkipTestWrapping
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsExpressionAnnotator
 
+@SkipTestWrapping
 class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class) {
     fun `test no named fields`() = checkBothQuickFix("""
         struct S { foo: i32, bar: f64 }

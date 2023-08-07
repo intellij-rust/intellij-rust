@@ -5,18 +5,21 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.CargoSettingsFilesService
-import org.rust.ide.inspections.fixes.AttachFileToModuleFix
-import org.rust.ide.notifications.confirmLoadingUntrustedProject
+import org.rust.ide.fixes.AttachFileToModuleFix
+import org.rust.ide.fixes.ReloadProjectQuickFix
 import org.rust.lang.core.psi.RsFile
-import org.rust.openapiext.saveAllDocuments
 
 class RsDetachedFileInspection : RsLocalInspectionTool() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
@@ -49,7 +52,7 @@ class RsDetachedFileInspection : RsLocalInspectionTool() {
 
             return arrayOf(
                 manager.createProblemDescriptor(file,
-                    "File is not included in module tree, analysis is not available",
+                    RsBundle.message("inspection.message.file.not.included.in.module.tree.analysis.not.available"),
                     isOnTheFly,
                     fixes.toTypedArray(),
                     ProblemHighlightType.WARNING
@@ -66,7 +69,7 @@ class RsDetachedFileInspection : RsLocalInspectionTool() {
         !PropertiesComponent.getInstance(project).getBoolean(file.disablingKey, false)
 
     private class SuppressFix : SuppressQuickFix {
-        override fun getFamilyName(): String = "Do not show again"
+        override fun getFamilyName(): String = RsBundle.message("intention.family.name.do.not.show.again")
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val file = descriptor.startElement as? RsFile ?: return
             PropertiesComponent.getInstance(project).setValue(file.virtualFile.disablingKey, true)
@@ -81,15 +84,5 @@ class RsDetachedFileInspection : RsLocalInspectionTool() {
 
         private val VirtualFile.disablingKey: String
             get() = NOTIFICATION_STATUS_KEY + path
-    }
-
-    private class ReloadProjectQuickFix : LocalQuickFix {
-        override fun getFamilyName(): String = "Reload project"
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            // It seems it's impossible to be here if project is not trusted but let's be 100% sure
-            if (!project.confirmLoadingUntrustedProject()) return
-            saveAllDocuments()
-            project.cargoProjects.refreshAllProjects()
-        }
     }
 }

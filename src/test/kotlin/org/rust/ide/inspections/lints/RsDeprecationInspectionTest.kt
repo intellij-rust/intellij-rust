@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 /**
@@ -54,28 +55,8 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
     """)
 
-    fun `test will be deprecated function with since and note params`() = checkByText("""
+    fun `test will be deprecated function with since and note params`() = checkWarnings("""
         #[deprecated(since="1.0.0", note="here could be your reason")]
-        pub fn foo() {
-        }
-
-        fn main() {
-            <weak_warning descr="`foo` will be deprecated from 1.0.0: here could be your reason">foo</weak_warning>();
-        }
-    """)
-
-    fun `test rustc_deprecated attribute`() = checkByText("""
-        #[rustc_deprecated(since="0.0.1", reason="here could be your reason")]
-        pub fn foo() {
-        }
-
-        fn main() {
-            <warning descr="`foo` is deprecated since 0.0.1: here could be your reason">foo</warning>();
-        }
-    """)
-
-    fun `test future rustc_deprecated attribute`() = checkByText("""
-        #[rustc_deprecated(since="1.0.0", reason="here could be your reason")]
         pub fn foo() {
         }
 
@@ -282,8 +263,9 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
     //- foo.rs
         #[deprecated(since="1.0.0", note="here could be your reason")]
         pub fn bar() {}
-    """)
+    """, checkWeakWarn = true)
 
+    @SkipTestWrapping // TODO remove after enabling quick-fixes in macros
     fun `test suppression quick fix for statement 1`() = expect<AssertionError> {
         checkFixByText("Suppress `deprecated` for statement", """
             #[deprecated]

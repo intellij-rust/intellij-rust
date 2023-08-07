@@ -12,7 +12,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments.EVALUATE_BUILD_SCRIPTS
 import org.rust.ide.experiments.RsExperiments.PROC_MACROS
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
 
@@ -114,7 +113,6 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attribute proc macro`() = testSingleStepExpansion("""
@@ -129,7 +127,6 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(EVALUATE_BUILD_SCRIPTS, PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test recursive attribute proc macro`() = testRecursiveExpansion("""

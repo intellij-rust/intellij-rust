@@ -13,7 +13,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.WindowManager
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.RsBundle
+import org.rust.cargo.project.settings.externalLinterSettings
 import org.rust.ide.status.RsExternalLinterWidget
 import java.util.*
 import javax.swing.event.HyperlinkEvent
@@ -35,17 +36,11 @@ class RsExternalLinterSlowRunNotifier(val project: Project) {
         if (prevDurations.size == MAX_QUEUE_SIZE && minPrevDuration > maxDuration) {
             val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return
             val widget = statusBar.getWidget(RsExternalLinterWidget.ID) as? RsExternalLinterWidget ?: return
-            val content = buildString {
-                append("Low performance due to Rust external linter")
-                append(HtmlChunk.br())
-                append(HtmlChunk.link("disable", "Disable"))
-                append("&nbsp;&nbsp;&nbsp;&nbsp;")
-                append(HtmlChunk.link("dont-show-again", "Don't show again"))
-            }
+            val content = RsBundle.message("notification.content.low.performance.due.to.rust.external.linter.nbsp.nbsp.nbsp.nbsp", HtmlChunk.br(), HtmlChunk.link("disable", RsBundle.message("disable")), HtmlChunk.link("dont-show-again", RsBundle.message("don.t.show.again")))
             widget.showBalloon(content, MessageType.WARNING, project) { e ->
                 if (e?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
                     when (e.description) {
-                        "disable" -> project.rustSettings.modify { it.runExternalLinterOnTheFly = false }
+                        "disable" -> project.externalLinterSettings.modify { it.runOnTheFly = false }
                         "dont-show-again" -> PropertiesComponent.getInstance().setValue(DO_NOT_SHOW_KEY, true, false)
                     }
                 }

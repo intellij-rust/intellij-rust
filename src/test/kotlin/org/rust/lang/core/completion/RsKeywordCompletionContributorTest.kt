@@ -298,6 +298,18 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         unsafe fn /*caret*/
     """)
 
+    fun `test fn type 1`() = checkCompletion("fn", """
+        fn func(x: f/*caret*/) {}
+    """, """
+        fn func(x: fn(/*caret*/)) {}
+    """)
+
+    fun `test fn type 2`() = checkCompletion("fn", """
+        fn func(x: fn/*caret*/) {}
+    """, """
+        fn func(x: fn(/*caret*/)) {}
+    """)
+
     fun `test impl`() = checkCompletion("impl", """
         imp/*caret*/
     """, """
@@ -514,13 +526,13 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test else if`() = checkCompletion("else if", """
+    fun `test else if`() = checkCompletionWithLiveTemplate("else if", """
         fn main() {
             if true { } /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn main() {
-            if true { } else if /*caret*/ { }
+            if true { } else if foo { /*caret*/ }
         }
     """)
 
@@ -683,43 +695,43 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         impl<T> Foo<T> for Bar where /*caret*/
     """)
 
-    fun `test if or match in start of statement`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in start of statement`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            /*lookup*/ /*caret*/ { }
+            /*lookup*/ foo { /*caret*/ }
         }
     """)
 
-    fun `test if or match in let statement`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in let statement`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            let x = /*lookup*/ /*caret*/ { };
+            let x = /*lookup*/ foo { /*caret*/ };
         }
     """)
 
-    fun `test if or match in let statement with semicolon`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in let statement with semicolon`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             let x = /*caret*/;
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            let x = /*lookup*/ /*caret*/ { };
+            let x = /*lookup*/ foo { /*caret*/ };
         }
     """)
 
-    fun `test if or match in expression`() = checkCompletion(CONDITION_KEYWORDS, """
+    fun `test if or match in expression`() = checkCompletionWithLiveTemplate(CONDITION_KEYWORDS, """
         fn foo() {
             let x = 1 + /*caret*/
         }
-    """, """
+    """, "foo\t", """
         fn foo() {
-            let x = 1 + /*lookup*/ /*caret*/ { }
+            let x = 1 + /*lookup*/ foo { /*caret*/ }
         }
     """)
 
@@ -916,6 +928,390 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test if let completion`() = checkCompletion("let", """
+        fn main() {
+            if l/*caret*/
+        }
+    """, """
+        fn main() {
+            if let /*caret*/
+        }
+    """)
+
+
+    fun `test if let completion in else`() = checkCompletion("let", """
+        fn main() {
+            if 1 == 1 { } else if l/*caret*/
+        }
+    """, """
+        fn main() {
+            if 1 == 1 { } else if let /*caret*/
+        }
+    """)
+
+    fun `test if let completion in struct literal`() = checkCompletion("let", """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: if l/*caret*/ }
+        }
+    """, """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: if let /*caret*/ }
+        }
+    """)
+
+    fun `test if let completion within struct`() = checkNotContainsCompletion("let", """
+        struct S { if l/*caret*/ }
+    """)
+
+
+    fun `test while let completion`() = checkCompletion("let", """
+        fn main() {
+            while l/*caret*/
+        }
+    """, """
+        fn main() {
+            while let /*caret*/
+        }
+    """)
+
+    fun `test while let completion in struct literal`() = checkCompletion("let", """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: while l/*caret*/ }
+        }
+    """, """
+        struct S { a: i32 }
+        fn main() {
+            let s = S { a: while let /*caret*/ }
+        }
+    """)
+
+    fun `test while let completion within struct`() = checkNotContainsCompletion("let", """
+        struct S { while l/*caret*/ }
+    """)
+
+    fun `test as completion after primitive`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = 1 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after path`() = checkCompletion("as", """
+        fn main() {
+            let b = 12;
+            let a = b /*caret*/
+        }
+    """, """
+        fn main() {
+            let b = 12;
+            let a = b as /*caret*/
+        }
+    """)
+
+    fun `test as completion after path before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let b = 12;
+            let a = b /*caret*/;
+        }
+    """, """
+        fn main() {
+            let b = 12;
+            let a = b as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after another cast`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 as i32 /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = 1 as i32 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after expression`() = checkCompletion("as", """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } as /*caret*/
+        }
+    """)
+
+    fun `test as completion after expression before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } /*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = if 1 + 1 == 2 { 1 } else { 2 } as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after primitive before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 /*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = 1 as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after another cast before semicolon`() = checkCompletion("as", """
+        fn main() {
+            let a = 1 as i32 /*caret*/;
+        }
+    """, """
+        fn main() {
+            let a = 1 as i32 as /*caret*/;
+        }
+    """)
+
+    fun `test as completion function call argument`() = checkCompletion("as", """
+        fn foo(a: i64) {}
+        fn main() {
+            foo(1 /*caret*/);
+        }
+    """, """
+        fn foo(a: i64) {}
+        fn main() {
+            foo(1 as /*caret*/);
+        }
+    """)
+
+    fun `test no as completion function call argument variable name`() = checkNotContainsCompletion("as", """
+        fn foo(a: i64) {}
+        fn main() {
+            let a = 1;
+            foo(a/*caret*/);
+        }
+    """)
+
+    fun `test as completion function call in let decl`() = checkCompletion("as", """
+        fn foo() -> i64 { 1 }
+        fn main() {
+            let a = foo() /*caret*/;
+        }
+    """, """
+        fn foo() -> i64 { 1 }
+        fn main() {
+            let a = foo() as /*caret*/;
+        }
+    """)
+
+    fun `test as completion after struct field`() = checkCompletion("as", """
+        struct S { a: i64 }
+        fn main() {
+            S { a: 1 /*caret*/ };
+        }
+    """, """
+        struct S { a: i64 }
+        fn main() {
+            S { a: 1 as /*caret*/ };
+        }
+    """)
+
+    fun `test no as completion in struct field name`() = checkNotContainsCompletion("as", """
+        struct S { a: i64 }
+        fn main() {
+            S { a/*caret*/ };
+        }
+    """)
+
+    fun `test no as completion in second struct field name`() = checkNotContainsCompletion("as", """
+        struct S { x: i32, a: i64 }
+        fn main() {
+            S { x: 1, a/*caret*/ };
+        }
+    """)
+
+    fun `test as completion after return`() = checkCompletion("as", """
+        fn foo() -> i32 {
+            return 1 /*caret*/
+        }
+    """, """
+        fn foo() -> i32 {
+            return 1 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after return before semicolon`() = checkCompletion("as", """
+        fn foo() -> i32 {
+            return 1 /*caret*/;
+        }
+    """, """
+        fn foo() -> i32 {
+            return 1 as /*caret*/;
+        }
+    """)
+
+    fun `test async completion in file`() = checkCompletion("async", """
+        pub as/*caret*/
+    ""","""
+        pub async /*caret*/
+    """)
+
+    fun `test async completion in module`() = checkCompletion("async", """
+        mod foo {
+          as/*caret*/
+        }
+    """, """
+        mod foo {
+          async /*caret*/
+        }
+    """)
+
+    fun `test async completion in function`() = checkCompletion("async", """
+        fn main() {
+          as/*caret*/
+        }
+    """, """
+        fn main() {
+          async /*caret*/
+        }
+    """)
+
+    fun `test async completion in inherent impl`() = checkCompletion("async", """
+        struct S;
+        impl S {
+            fn main() {
+              /*caret*/
+            }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn main() {
+              async /*caret*/
+            }
+        }
+    """)
+
+    fun `test no async completion in trait`() = checkNotContainsCompletion("async", """
+        trait T {
+            asy/*caret*/
+        }
+    """)
+
+    fun `test fn completion after async in file`() = checkCompletion("fn", """
+        async /*caret*/
+    """, """
+        async fn /*caret*/
+    """)
+
+    fun `test fn completion after async in inherent impl`() = checkCompletion("fn", """
+        struct S;
+        impl S {
+            async /*caret*/
+        }
+    """, """
+        struct S;
+        impl S {
+            async fn /*caret*/
+        }
+    """)
+
+    fun `test async completion in block`() = checkCompletion("async", """
+        fn main () {
+            a/*caret*/{}
+        }
+    """, """
+        fn main () {
+            async {}
+        }
+    """)
+
+    fun `test async completion in closure as path`() = checkCompletion("async", """
+        fn main () {
+            let x = a/*caret*/
+        }
+    """, """
+        fn main () {
+            let x = async { /*caret*/ };
+        }
+    """)
+
+    fun `test async completion in closure as path in function call`() = checkCompletion("async", """
+        fn main () {
+            foo(as/*caret*/)
+        }
+    """, """
+        fn main () {
+            foo(async { /*caret*/ })
+        }
+    """)
+
+    fun `test async completion in closure with existing braces`() = checkCompletion("async", """
+        fn main () {
+            foo(as/*caret*/{})
+        }
+    """, """
+        fn main () {
+            foo(async /*caret*/{})
+        }
+    """)
+
+
+    fun `test as completion after returning value`() = checkCompletion("as", """
+        fn foo() -> i64 {
+            1 /*caret*/
+        }
+    """, """
+        fn foo() -> i64 {
+            1 as /*caret*/
+        }
+    """)
+
+    fun `test as completion after macro call`() = checkCompletion("as", """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() /*caret*/
+        }
+    """, """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() as /*caret*/
+        }
+    """)
+
+    fun `test as completion after macro call before semicolon`() = checkCompletion("as", """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() /*caret*/;
+        }
+    """, """
+        macro_rules! foo {
+            () => { 1 }
+        }
+        fn main() {
+            foo!() as /*caret*/;
+        }
+    """)
+
+    fun `test no as completion macro call argument if nothing to cast`() = checkNotContainsCompletion("as", """
+        macro_rules! foo {
+            ($ i: ident) => { _ };
+        }
+        fn main() {
+            foo!("123" /*caret*/)
+        }
+    """)
+
     // Smart mode is used for not completion tests to disable additional results
     // from language agnostic `com.intellij.codeInsight.completion.WordCompletionContributor`
     override fun checkNoCompletion(@Language("Rust") code: String) {
@@ -936,6 +1332,17 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     ) {
         for (lookupString in lookupStrings) {
             checkCompletion(lookupString, before, after.replace("/*lookup*/", lookupString))
+        }
+    }
+
+    private fun checkCompletionWithLiveTemplate(
+        lookupStrings: List<String>,
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String
+    ) {
+        for (lookupString in lookupStrings) {
+            checkCompletionWithLiveTemplate(lookupString, before, toType, after.replace("/*lookup*/", lookupString))
         }
     }
 

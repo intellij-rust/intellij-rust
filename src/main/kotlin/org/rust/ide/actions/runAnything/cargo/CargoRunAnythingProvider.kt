@@ -9,6 +9,7 @@ import com.intellij.execution.Executor
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -38,9 +39,9 @@ class CargoRunAnythingProvider : RsRunAnythingProvider() {
 
     override fun getIcon(value: String): Icon = CargoIcons.ICON
 
-    override fun getCompletionGroupTitle(): String = "Cargo Commands"
+    override fun getCompletionGroupTitle(): String = RsBundle.message("cargo.commands")
 
-    override fun getHelpGroupTitle(): String = "Cargo"
+    override fun getHelpGroupTitle(): String = RsBundle.message("build.event.title.cargo")
 
     override fun getHelpCommandPlaceholder(): String = "cargo <subcommand> <args...>"
 
@@ -48,7 +49,7 @@ class CargoRunAnythingProvider : RsRunAnythingProvider() {
 
     override fun getHelpIcon(): Icon = CargoIcons.ICON
 
-    override fun getHelpDescription(): String = "Runs Cargo command"
+    override fun getHelpDescription(): String = RsBundle.message("runs.cargo.command")
 
     companion object {
         const val HELP_COMMAND = "cargo"

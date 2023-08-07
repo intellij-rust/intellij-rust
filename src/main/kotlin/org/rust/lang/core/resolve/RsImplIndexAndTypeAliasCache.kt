@@ -14,8 +14,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.RustStructureChangeListener
 import org.rust.lang.core.psi.rustPsiManager
+import org.rust.lang.core.resolve.indexes.RsAliasIndex
 import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.indexes.RsTypeAliasIndex
 import org.rust.lang.core.types.TyFingerprint
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -24,13 +24,17 @@ import java.util.concurrent.atomic.AtomicReference
 class RsImplIndexAndTypeAliasCache(private val project: Project) : Disposable {
     // strong key -> soft value maps
     private val _implIndexCache: AtomicReference<ConcurrentMap<TyFingerprint, List<RsCachedImplItem>>?> = AtomicReference(null)
-    private val _typeAliasIndexCache: AtomicReference<ConcurrentMap<TyFingerprint, List<RsCachedTypeAlias>>?> = AtomicReference(null)
+    private val _typeAliasShallowIndexCache: AtomicReference<ConcurrentMap<TyFingerprint, List<String>>?> = AtomicReference(null)
+    private val _typeAliasTransitiveIndexCache: AtomicReference<ConcurrentMap<TyFingerprint, List<String>>?> = AtomicReference(null)
 
     private val implIndexCache: ConcurrentMap<TyFingerprint, List<RsCachedImplItem>>
         get() = _implIndexCache.getOrCreateMap()
 
-    private val typeAliasIndexCache: ConcurrentMap<TyFingerprint, List<RsCachedTypeAlias>>
-        get() = _typeAliasIndexCache.getOrCreateMap()
+    private val typeAliasShallowIndexCache: ConcurrentMap<TyFingerprint, List<String>>
+        get() = _typeAliasShallowIndexCache.getOrCreateMap()
+
+    private val typeAliasTransitiveIndexCache: ConcurrentMap<TyFingerprint, List<String>>
+        get() = _typeAliasTransitiveIndexCache.getOrCreateMap()
 
     /**
      * This map is actually used is a [Set] (the value is always [placeholder]).
@@ -50,7 +54,8 @@ class RsImplIndexAndTypeAliasCache(private val project: Project) : Disposable {
         rustPsiManager.subscribeRustStructureChange(connection, object : RustStructureChangeListener {
             override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) {
                 _implIndexCache.getAndSet(null)
-                _typeAliasIndexCache.getAndSet(null)
+                _typeAliasShallowIndexCache.getAndSet(null)
+                _typeAliasTransitiveIndexCache.getAndSet(null)
             }
         })
     }
@@ -64,12 +69,23 @@ class RsImplIndexAndTypeAliasCache(private val project: Project) : Disposable {
         }
     }
 
-    fun findPotentialAliases(tyf: TyFingerprint): List<RsCachedTypeAlias> {
-        return typeAliasIndexCache.getOrPut(tyf) {
-            RsTypeAliasIndex.findPotentialAliases(project, tyf).filter {
-                retainPsi(it.alias.containingFile)
-                it.isFreeAndValid
+    private fun shallowFindPotentialAliases(tyf: TyFingerprint): List<String> {
+        return typeAliasShallowIndexCache.getOrPut(tyf) {
+            RsAliasIndex.findPotentialAliases(project, tyf)
+        }
+    }
+
+    fun findPotentialAliases(tyf: TyFingerprint): List<String> {
+        return typeAliasTransitiveIndexCache.getOrPut(tyf) {
+            val result = hashSetOf(tyf.name)
+            val queue = shallowFindPotentialAliases(tyf).toMutableList()
+            while (true) {
+                val alias = queue.removeLastOrNull() ?: break
+                if (result.add(alias)) {
+                    queue += shallowFindPotentialAliases(TyFingerprint(alias))
+                }
             }
+            result.filterTo(ArrayList(result.size)) { it != tyf.name }
         }
     }
 

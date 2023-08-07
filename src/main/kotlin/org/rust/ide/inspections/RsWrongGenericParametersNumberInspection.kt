@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.openapi.util.text.StringUtil
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsVisitor
@@ -17,13 +18,15 @@ import org.rust.lang.utils.addToHolder
  * Inspection that detects the E0049 error.
  */
 class RsWrongGenericParametersNumberInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
-        override fun visitFunction(function: RsFunction) {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitFunction2(function: RsFunction) {
             checkParameters(holder, function, "type") { typeParameters }
             checkParameters(holder, function, "const") { constParameters }
         }
 
-        override fun visitTypeAlias(alias: RsTypeAlias) {
+        @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
+        override fun visitTypeAlias2(alias: RsTypeAlias) {
             checkParameters(holder, alias, "type") { typeParameters }
             checkParameters(holder, alias, "const") { constParameters }
         }
@@ -50,8 +53,7 @@ class RsWrongGenericParametersNumberInspection : RsLocalInspectionTool() {
 
         val paramName = "$paramType ${StringUtil.pluralize("parameter", typeParameters.size)}"
         val superParamName = "$paramType ${StringUtil.pluralize("parameter", superTypeParameters.size)}"
-        val problemText = "$itemType `$itemName` has ${typeParameters.size} $paramName " +
-            "but its trait declaration has ${superTypeParameters.size} $superParamName"
+        val problemText = RsBundle.message("inspection.message.has.but.its.trait.declaration.has", itemType, itemName, typeParameters.size, paramName, superTypeParameters.size, superParamName)
         RsDiagnostic.WrongNumberOfGenericParameters(toHighlight, problemText).addToHolder(holder)
     }
 }

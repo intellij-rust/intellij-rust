@@ -1,14 +1,22 @@
-#![feature(once_cell)]
-#![feature(derive_default_enum)]
+#![feature(lazy_cell)]
+
+use std::fmt;
+use std::num::NonZeroU32;
+
+pub use accepted::ACCEPTED_FEATURES;
+pub use active::{ACTIVE_FEATURES, Features, INCOMPATIBLE_FEATURES};
+pub use builtin_attrs::{
+    AttributeGate, AttributeTemplate, AttributeType, BUILTIN_ATTRIBUTE_MAP, BUILTIN_ATTRIBUTES,
+    BuiltinAttribute, deprecated_attributes, find_gated_cfg, GatedCfg, is_builtin_attr_name,
+};
+pub use builtin_attrs::AttributeDuplicates;
+pub use removed::{REMOVED_FEATURES, STABLE_REMOVED_FEATURES};
+use rustc_span::{edition::Edition, Span, symbol::Symbol};
 
 mod accepted;
 mod active;
 mod builtin_attrs;
 mod removed;
-
-use rustc_span::{edition::Edition, symbol::Symbol, Span};
-use std::fmt;
-use std::num::NonZeroU32;
 
 #[derive(Clone, Copy)]
 pub enum State {
@@ -55,11 +63,3 @@ const fn to_nonzero(n: Option<u32>) -> Option<NonZeroU32> {
     }
 }
 
-pub use accepted::ACCEPTED_FEATURES;
-pub use active::{Features, ACTIVE_FEATURES, INCOMPATIBLE_FEATURES};
-pub use builtin_attrs::AttributeDuplicates;
-pub use builtin_attrs::{
-    deprecated_attributes, find_gated_cfg, is_builtin_attr_name, AttributeGate, AttributeTemplate,
-    AttributeType, BuiltinAttribute, GatedCfg, BUILTIN_ATTRIBUTES, BUILTIN_ATTRIBUTE_MAP,
-};
-pub use removed::{REMOVED_FEATURES, STABLE_REMOVED_FEATURES};

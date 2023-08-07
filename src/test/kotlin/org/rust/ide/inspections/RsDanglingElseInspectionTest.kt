@@ -10,7 +10,7 @@ package org.rust.ide.inspections
  */
 class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspection::class) {
 
-    fun testSimple() = checkByText("""
+    fun `test simple`() = checkByText("""
         fn main() {
             if true {
             } <warning descr="Suspicious `else if` formatting">else
@@ -19,7 +19,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testElseOnSeparateLine() = checkByText("""
+    fun `test else on separate line`() = checkByText("""
         fn main() {
             if true {
             }
@@ -29,7 +29,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testMultipleNewLines() = checkByText("""
+    fun `test multiple new lines`() = checkByText("""
         fn main() {
             if true {
             } <warning descr="Suspicious `else if` formatting">else
@@ -40,7 +40,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testComments() = checkByText("""
+    fun `test comments`() = checkByText("""
         fn main() {
             if true {
             } <warning descr="Suspicious `else if` formatting">else
@@ -53,7 +53,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testNotAppliedWhenNoIf() = checkByText("""
+    fun `test not applied when no if`() = checkByText("""
         fn main() {
             if true {
             } else {
@@ -61,7 +61,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testNotAppliedWhenNotDangling() = checkByText("""
+    fun `test not applied when not dangling`() = checkByText("""
         fn main() {
             if true {
             } else if false {
@@ -69,7 +69,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testFixRemoveElse() = checkFixByText("Remove `else`", """
+    fun `test fix remove else`() = checkFixByText("Remove `else`", """
         fn main() {
             if true {
             }    <warning descr="Suspicious `else if` formatting">els<caret>e
@@ -85,7 +85,7 @@ class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspect
         }
     """)
 
-    fun testFixJoin() = checkFixByText("Join `else if`", """
+    fun `test fix join`() = checkFixByText("Join `else if`", """
         fn main() {
             if true {
             } <warning descr="Suspicious `else if` formatting">else

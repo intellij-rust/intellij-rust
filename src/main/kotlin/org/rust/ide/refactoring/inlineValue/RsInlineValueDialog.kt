@@ -7,6 +7,7 @@ package org.rust.ide.refactoring.inlineValue
 
 import com.intellij.openapi.project.Project
 import com.intellij.refactoring.RefactoringBundle
+import org.rust.RsBundle
 import org.rust.ide.refactoring.RsInlineDialog
 import org.rust.stdext.capitalized
 
@@ -39,7 +40,7 @@ class RsInlineValueDialog(
         RefactoringBundle.message("inline.field.border.title")
 
     override fun getNameLabelText(): String =
-        "${context.type.capitalized()} ${context.name} ${getOccurrencesText(occurrencesNumber)}"
+        RsBundle.message("label.", context.type.capitalized(), context.name, getOccurrencesText(occurrencesNumber))
 
     override fun getInlineAllText(): String {
         val text =
@@ -52,11 +53,11 @@ class RsInlineValueDialog(
     }
 
     override fun getInlineThisText(): String =
-        "Inline this only and keep the ${context.type}"
+        RsBundle.message("radio.inline.this.only.keep", context.type)
 
     override fun getKeepTheDeclarationText(): String =
         if (context.element.isWritable) {
-            "Inline all references and keep the ${context.type}"
+            RsBundle.message("radio.inline.all.references.keep", context.type)
         } else {
             super.getKeepTheDeclarationText()
         }

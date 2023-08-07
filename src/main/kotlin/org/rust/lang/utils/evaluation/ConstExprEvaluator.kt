@@ -187,18 +187,18 @@ private fun <T : Ty> simplifyToInteger(expr: ConstExpr<T>): ConstExpr<T> {
 private fun Long.validValueOrNull(ty: TyInteger): Long? = takeIf { it in ty.validValuesRange }
 
 // It returns wrong values for large types like `i128` or `usize`, but looks like it's enough for real cases
-private val TyInteger.validValuesRange: LongRange
+val TyInteger.validValuesRange: LongRange
     get() = when (this) {
-        is TyInteger.U8 -> LongRange(0, 1L shl 8)
-        is TyInteger.U16 -> LongRange(0, 1L shl 16)
-        is TyInteger.U32 -> LongRange(0, 1L shl 32)
-        is TyInteger.U64 -> LongRange(0, Long.MAX_VALUE)
-        is TyInteger.U128 -> LongRange(0, Long.MAX_VALUE)
-        is TyInteger.USize -> LongRange(0, Long.MAX_VALUE)
+        is TyInteger.U8 -> LongRange(0, (1L shl 8) - 1)
+        is TyInteger.U16 -> LongRange(0, (1L shl 16) - 1)
+        is TyInteger.U32 -> LongRange(0, (1L shl 32) - 1)
+        is TyInteger.U64 -> LongRange(0, Long.MAX_VALUE) // FIXME!
+        is TyInteger.U128 -> LongRange(0, Long.MAX_VALUE) // FIXME!
+        is TyInteger.USize -> LongRange(0, Long.MAX_VALUE) // FIXME!
         is TyInteger.I8 -> LongRange(-(1L shl 7), (1L shl 7) - 1)
         is TyInteger.I16 -> LongRange(-(1L shl 15), (1L shl 15) - 1)
         is TyInteger.I32 -> LongRange(-(1L shl 31), (1L shl 31) - 1)
-        is TyInteger.I64 -> LongRange(Long.MIN_VALUE, Long.MAX_VALUE)
-        is TyInteger.I128 -> LongRange(Long.MIN_VALUE, Long.MAX_VALUE)
-        is TyInteger.ISize -> LongRange(Long.MIN_VALUE, Long.MAX_VALUE)
+        is TyInteger.I64 -> LongRange(1L shl 63, (1L shl 63) - 1)
+        is TyInteger.I128 -> LongRange(Long.MIN_VALUE, Long.MAX_VALUE) // FIXME!
+        is TyInteger.ISize -> LongRange(1L shl 63, (1L shl 63) - 1)
     }

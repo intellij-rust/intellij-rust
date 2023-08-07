@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsMacroBodyQuoteIdent
 import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
-abstract class RsMacroBodyQuoteIdentMixin(node: ASTNode) : RsElementImpl(node), RsMacroBodyQuoteIdent {
+abstract class RsMacroBodyQuoteIdentMixin(type: IElementType) : RsElementImpl(type  ), RsMacroBodyQuoteIdent {
     override val referenceNameElement: PsiElement
         get() = quoteIdentifier
 

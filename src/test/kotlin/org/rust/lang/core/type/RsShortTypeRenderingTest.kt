@@ -70,6 +70,20 @@ class RsShortTypeRenderingTest : RsTestBase() {
         } //^ Foo<i32>
     """)
 
+    fun `test fn`() = testShortTypeExpr("""
+        fn func(a: i32) -> u64 { 1u64 }
+        fn main() {
+            func;
+        } //^ fn(i32) -> u64 {func}
+    """)
+
+    fun `test unsafe fn`() = testShortTypeExpr("""
+        unsafe fn func(a: i32) -> u64 { 1u64 }
+        fn main() {
+            func;
+        } //^ unsafe fn(i32) -> u64 {func}
+    """)
+
     private fun testShortTypeExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()

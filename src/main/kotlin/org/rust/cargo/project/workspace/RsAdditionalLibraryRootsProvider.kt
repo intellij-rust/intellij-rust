@@ -20,7 +20,6 @@ import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.stdext.buildList
-import org.rust.stdext.exhaustive
 import javax.swing.Icon
 
 /**
@@ -88,7 +87,7 @@ private val CargoProject.ideaLibraries: Collection<SyntheticLibrary>
                 STDLIB, STDLIB_DEPENDENCY -> stdlibPackages += pkg
                 DEPENDENCY -> dependencyPackages += pkg
                 WORKSPACE -> Unit
-            }.exhaustive
+            }
         }
 
         return buildList {
@@ -131,7 +130,7 @@ private fun CargoWorkspace.Package.toCargoLibrary(): CargoLibrary? {
     val excludedRoots = mutableSetOf<VirtualFile>()
     for (target in targets) {
         val crateRoot = target.crateRoot ?: continue
-        if (target.kind.isLib) {
+        if (target.kind.isLib || target.kind.isCustomBuild) {
             val crateRootDir = crateRoot.parent
             when (VfsUtilCore.getCommonAncestor(root, crateRootDir)) {
                 root -> sourceRoots += root

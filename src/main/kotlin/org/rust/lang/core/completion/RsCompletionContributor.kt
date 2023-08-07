@@ -25,7 +25,9 @@ class RsCompletionContributor : CompletionContributor() {
 
     init {
         extend(CompletionType.BASIC, RsPrimitiveTypeCompletionProvider)
+        extend(CompletionType.BASIC, RsLiteralSuffixCompletionProvider)
         extend(CompletionType.BASIC, RsBoolCompletionProvider)
+        extend(CompletionType.BASIC, RsSelfParameterCompletionProvider)
         extend(CompletionType.BASIC, RsFragmentSpecifierCompletionProvider)
         extend(CompletionType.BASIC, RsCommonCompletionProvider)
         extend(CompletionType.BASIC, RsTupleFieldCompletionProvider)
@@ -40,6 +42,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsClippyLintCompletionProvider)
         extend(CompletionType.BASIC, RsRustcLintCompletionProvider)
         extend(CompletionType.BASIC, RsImplTraitMemberCompletionProvider)
+        extend(CompletionType.BASIC, RsFnMainCompletionProvider)
         extend(CompletionType.BASIC, RsVisRestrictionCompletionProvider)
         extend(CompletionType.BASIC, RsLambdaExprCompletionProvider)
         extend(CompletionType.BASIC, RsPsiPattern.fieldVisibility, RsVisibilityCompletionProvider())
@@ -48,6 +51,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsCrateTypeAttrCompletionProvider)
         extend(CompletionType.BASIC, RsExternAbiCompletionProvider)
         extend(CompletionType.BASIC, RsStaticLifetimeCompletionProvider)
+        extend(CompletionType.BASIC, RsBuildScriptCargoInstructionCompletionProvider)
     }
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {

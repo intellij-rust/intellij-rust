@@ -78,8 +78,8 @@ class ChopLiteralFieldListIntentionTest : RsIntentionTestBase(ChopLiteralFieldLi
     fun `test has comment`() = doUnavailableTest("""
         struct S {  x: i32, y: i32, z: i32 }
         fn foo() {
-            S { 
-                /*caret*/x: 0, /* comment */ 
+            S {
+                /*caret*/x: 0, /* comment */
                 y: 0,
                 z: 0
             };
@@ -89,7 +89,7 @@ class ChopLiteralFieldListIntentionTest : RsIntentionTestBase(ChopLiteralFieldLi
     fun `test has comment 2`() = doAvailableTest("""
         struct S {  x: i32, y: i32, z: i32 }
         fn foo() {
-            S { 
+            S {
                 /*caret*/x: 0, /*
                     comment
                 */y: 0,

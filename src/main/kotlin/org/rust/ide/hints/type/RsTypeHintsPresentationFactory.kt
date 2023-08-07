@@ -8,17 +8,22 @@ package org.rust.ide.hints.type
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import org.rust.ide.presentation.shortPresentableText
+import org.rust.lang.core.psi.RsConstParameter
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
+import org.rust.lang.core.psi.ext.constParameters
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Kind
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.utils.evaluation.evaluate
 
 @Suppress("UnstableApiUsage")
 class RsTypeHintsPresentationFactory(
@@ -40,7 +45,7 @@ class RsTypeHintsPresentationFactory(
         return when (kind) {
             is TyTuple -> tupleTypeHint(kind, level)
             is TyAdt -> adtTypeHint(kind, level)
-            is TyFunction -> functionTypeHint(kind, level)
+            is TyFunctionBase -> functionTypeHint(kind, level)
             is TyReference -> referenceTypeHint(kind, level)
             is TyPointer -> pointerTypeHint(kind, level)
             is TyProjection -> projectionTypeHint(kind, level)
@@ -56,7 +61,7 @@ class RsTypeHintsPresentationFactory(
         }
     }
 
-    private fun functionTypeHint(type: TyFunction, level: Int): InlayPresentation {
+    private fun functionTypeHint(type: TyFunctionBase, level: Int): InlayPresentation {
         val parameters = type.paramTypes
         val returnType = type.retType
 
@@ -107,18 +112,17 @@ class RsTypeHintsPresentationFactory(
         val typeDeclaration = type.item
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { typeDeclaration }
         val typeArguments = type.typeArguments.zip(type.item.typeParameters)
-
-        return withGenericsTypeHint(typeNamePresentation, typeArguments, type.constArguments, level)
+        val constArguments = type.constArguments.zip(type.item.constParameters)
+        return withGenericsTypeHint(typeNamePresentation, typeArguments, constArguments, level)
     }
 
     private fun aliasTypeHint(boundElement: BoundElement<RsTypeAlias>, level: Int): InlayPresentation {
         val alias = boundElement.element
-
         val adtName = alias.name
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { alias }
         val typeArguments = alias.typeParameters.map { (boundElement.subst[it] ?: TyUnknown) to it }
-
-        return withGenericsTypeHint(typeNamePresentation, typeArguments, emptyList(), level)
+        val constArguments = alias.constParameters.map { (boundElement.subst[it] ?: CtUnknown) to it }
+        return withGenericsTypeHint(typeNamePresentation, typeArguments, constArguments, level)
     }
 
     private fun projectionTypeHint(type: TyProjection, level: Int): InlayPresentation {
@@ -145,18 +149,19 @@ class RsTypeHintsPresentationFactory(
     private fun withGenericsTypeHint(
         typeNamePresentation: InlayPresentation,
         typeArguments: List<Pair<Ty, RsTypeParameter>>,
-        constArguments: List<Const>,
+        constArguments: List<Pair<Const, RsConstParameter>>,
         level: Int
     ): InlayPresentation {
         val userVisibleKindArguments = mutableListOf<Kind>()
-        for ((argument, parameter) in typeArguments) {
-            if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
-                // don't show default types
-                continue
+
+        val genericArguments = (typeArguments + constArguments).sortedBy { (_, param) -> param.startOffset }
+        for ((argument, parameter) in genericArguments) {
+            if (!showObviousTypes) {
+                when {
+                    argument is Ty && parameter is RsTypeParameter && isDefaultTypeParameter(argument, parameter) -> continue
+                    argument is Const && parameter is RsConstParameter && isDefaultConstParameter(argument, parameter) -> continue
+                }
             }
-            userVisibleKindArguments.add(argument)
-        }
-        for (argument in constArguments) {
             userVisibleKindArguments.add(argument)
         }
 
@@ -170,6 +175,7 @@ class RsTypeHintsPresentationFactory(
             )
             return listOf(typeNamePresentation, collapsible).join()
         }
+
         return typeNamePresentation
     }
 
@@ -244,15 +250,24 @@ class RsTypeHintsPresentationFactory(
     ): InlayPresentation {
         val traitPresentation = factory.psiSingleReference(text(trait.element.name)) { trait.element }
 
-        val typeParametersPresentations = mutableListOf<InlayPresentation>()
-        for (parameter in trait.element.typeParameters) {
-            val argument = trait.subst[parameter] ?: continue
-            if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
-                // don't show default types
-                continue
+        val genericParametersPresentations = mutableListOf<InlayPresentation>()
+        val genericParameters = with(trait.element) { typeParameters + constParameters }.sortedBy { it.startOffset }
+        for (parameter in genericParameters) {
+            val argument = when (parameter) {
+                is RsTypeParameter -> {
+                    val argument = trait.subst[parameter] ?: continue
+                    if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) continue
+                    argument
+                }
+                is RsConstParameter -> {
+                    val argument = trait.subst[parameter] ?: continue
+                    if (!showObviousTypes && isDefaultConstParameter(argument, parameter)) continue
+                    argument
+                }
+                else -> continue
             }
             val parameterPresentation = hint(argument, level + 1)
-            typeParametersPresentations.add(parameterPresentation)
+            genericParametersPresentations.add(parameterPresentation)
         }
 
         val assocTypesPresentations = mutableListOf<InlayPresentation>()
@@ -272,7 +287,7 @@ class RsTypeHintsPresentationFactory(
             }
         }
 
-        val innerPresentations = typeParametersPresentations + assocTypesPresentations
+        val innerPresentations = genericParametersPresentations + assocTypesPresentations
 
         return if (innerPresentations.isEmpty()) {
             traitPresentation
@@ -294,6 +309,12 @@ class RsTypeHintsPresentationFactory(
 
     private fun isDefaultTypeParameter(argument: Ty, parameter: RsTypeParameter): Boolean =
         argument.isEquivalentTo(parameter.typeReference?.normType)
+
+    private fun isDefaultConstParameter(argument: Const, parameter: RsConstParameter): Boolean {
+        val expectedTy = parameter.typeReference?.normType ?: TyUnknown
+        val defaultValue = parameter.expr?.evaluate(expectedTy)
+        return defaultValue !is CtUnknown && argument == defaultValue
+    }
 
     private fun isDefaultTypeAlias(argument: Ty, alias: RsTypeAlias): Boolean =
         argument.isEquivalentTo(alias.typeReference?.normType)

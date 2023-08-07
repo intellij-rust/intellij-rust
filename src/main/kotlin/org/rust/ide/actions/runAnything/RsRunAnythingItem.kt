@@ -29,7 +29,7 @@ abstract class RsRunAnythingItem(command: String, icon: Icon) : RunAnythingItemB
         if (component !is JPanel) return
 
         val params = ParametersListUtil.parse(StringUtil.trimStart(command, helpCommand))
-        val description = when (params.size) {
+        @Suppress("HardCodedStringLiteral") val description = when (params.size) {
             0 -> null
             1 -> commandDescriptions[params.last()]
             else -> {

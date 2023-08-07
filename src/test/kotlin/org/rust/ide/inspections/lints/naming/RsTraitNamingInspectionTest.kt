@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsTraitNamingInspection
 
@@ -24,6 +25,7 @@ class RsTraitNamingInspectionTest : RsInspectionsTestBase(RsTraitNamingInspectio
         trait trait_foo {}
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test traits fix`() = checkFixByText("Rename to `HotFix`", """
         trait <warning descr="Trait `hot_fix` should have a camel case name such as `HotFix`">ho<caret>t_fix</warning> {}
         struct Patch {}

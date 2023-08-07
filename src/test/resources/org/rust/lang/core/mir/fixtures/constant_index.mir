@@ -1,0 +1,40 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:11: 1:11
+    let _1: [i32; 3];                    // in scope 0 at src/main.rs:2:9: 2:10
+    let _3: usize;                       // in scope 0 at src/main.rs:3:15: 3:16
+    let mut _4: usize;                   // in scope 0 at src/main.rs:3:13: 3:17
+    let mut _5: bool;                    // in scope 0 at src/main.rs:3:13: 3:17
+    scope 1 {
+        debug x => _1;                   // in scope 1 at src/main.rs:2:9: 2:10
+        let _2: i32;                     // in scope 1 at src/main.rs:3:9: 3:10
+        scope 2 {
+            debug y => _2;               // in scope 2 at src/main.rs:3:9: 3:10
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:9: 2:10
+        _1 = [const 1_i32, const 2_i32, const 3_i32]; // scope 0 at src/main.rs:2:13: 2:22
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:2:9: 2:10
+        StorageLive(_2);                 // scope 1 at src/main.rs:3:9: 3:10
+        StorageLive(_3);                 // scope 1 at src/main.rs:3:15: 3:16
+        _3 = const 0_usize;              // scope 1 at src/main.rs:3:15: 3:16
+        _4 = Len(_1);                    // scope 1 at src/main.rs:3:13: 3:17
+        _5 = Lt(_3, _4);                 // scope 1 at src/main.rs:3:13: 3:17
+        assert(move _5, "index out of bounds: the length is {} but the index is {}", move _4, _3) -> [success: bb1, unwind: bb2]; // scope 1 at src/main.rs:3:13: 3:17
+    }
+
+    bb1: {
+        _2 = _1[_3];                     // scope 1 at src/main.rs:3:13: 3:17
+        FakeRead(ForLet(None), _2);      // scope 1 at src/main.rs:3:9: 3:10
+        StorageDead(_3);                 // scope 1 at src/main.rs:3:17: 3:18
+        _0 = const ();                   // scope 0 at src/main.rs:1:11: 4:2
+        StorageDead(_2);                 // scope 1 at src/main.rs:4:1: 4:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:4:1: 4:2
+        return;                          // scope 0 at src/main.rs:4:2: 4:2
+    }
+
+    bb2 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 4:2
+    }
+}

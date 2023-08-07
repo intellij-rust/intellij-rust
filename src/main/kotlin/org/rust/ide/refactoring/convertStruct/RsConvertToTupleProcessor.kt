@@ -14,6 +14,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
+import org.rust.RsBundle
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.*
@@ -133,7 +134,7 @@ class RsConvertToTupleProcessor(
         if (element is RsStructItem) element.addAfter(rsPsiFactory.createSemicolon(), element.lastChild)
     }
 
-    override fun getCommandName(): String = "Converting ${element.name} to tuple"
+    override fun getCommandName(): String = RsBundle.message("command.name.converting.to.tuple", element.name ?: "")
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
         BaseUsageViewDescriptor(element)

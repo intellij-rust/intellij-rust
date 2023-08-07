@@ -7,7 +7,9 @@ package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
 import io.github.z4kn4fein.semver.toVersionOrNull
+import org.rust.RsBundle
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.psi.RsElementTypes.CSELF
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMetaItem
@@ -16,11 +18,11 @@ import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 
 class RsDeprecationInspection : RsLintInspection() {
-    override fun getDisplayName() = "Deprecated item"
+    override fun getDisplayName() = RsBundle.message("deprecated.item")
 
     override fun getLint(element: PsiElement): RsLint = RsLint.Deprecated
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitElement(ref: RsElement) {
             // item is non-inline module declaration or not reference element
             if (ref is RsModDeclItem || ref !is RsReferenceElement) return

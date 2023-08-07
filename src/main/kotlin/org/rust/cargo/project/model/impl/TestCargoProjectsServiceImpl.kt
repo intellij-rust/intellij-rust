@@ -17,6 +17,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.FeatureDep
 import org.rust.cargo.project.workspace.PackageFeature
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.psi.rustPsiManager
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Path
@@ -38,12 +39,19 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     @TestOnly
-    fun setRustcInfo(rustcInfo: RustcInfo, parentDisposable: Disposable) {
+    fun removeAllProjects() {
+        modifyProjectsSync { CompletableFuture.completedFuture(emptyList()) }
+    }
+
+    @TestOnly
+    fun setRustcVersion(rustcVersion: RustcVersion, parentDisposable: Disposable) {
         val oldValues = mutableMapOf<Path, RustcInfo?>()
 
         modifyProjectsSync { projects ->
             projects.forEach { oldValues[it.manifest] = it.rustcInfo }
             val updatedProjects = projects.map {
+                val oldRustcInfo = it.rustcInfo ?: RustcInfo("", null)
+                val rustcInfo = oldRustcInfo.copy(version = rustcVersion)
                 it.copy(rustcInfo = rustcInfo, rustcInfoStatus = CargoProject.UpdateStatus.UpToDate)
             }
             CompletableFuture.completedFuture(updatedProjects)

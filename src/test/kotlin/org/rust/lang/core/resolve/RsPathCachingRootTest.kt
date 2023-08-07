@@ -5,15 +5,19 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.psi.PsiAnchor
+import com.intellij.psi.StubBasedPsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.descendantsOfTypeOrSelf
+import org.rust.lang.core.psi.ext.stubDescendantsOfTypeOrSelf
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
 import org.rust.lang.core.types.rawType
+import org.rust.openapiext.toPsiFile
 
 class RsPathCachingRootTest : RsTestBase() {
     fun `test path arguments`() = doTest("""
@@ -42,7 +46,7 @@ class RsPathCachingRootTest : RsTestBase() {
             let _ = Foo::<   Bar<Bar<Bar<Baz>>>, Bar<Bar<Bar<Baz>>>>(1, 2);
                        //X //^ //^ //^ //^     //^ //^ //^ //^
         }
-    """)
+    """, testWithStub = false)
 
     fun `test caching root is null for expr path`() = checkCachingRootIsNull("""
         struct Foo<A, B>(A, B);
@@ -178,13 +182,31 @@ class RsPathCachingRootTest : RsTestBase() {
         {}
     """)
 
-    private fun doTest(@Language("Rust") code: String) {
-        InlineFile(code)
-        val paths = findElementsWithDataAndOffsetInEditor<RsPath>().map { it.first }.toMutableList()
-        var root = findElementAndDataInEditor<RsElement>("X").first
-        if (root is RsPath && root.parent is RsPathType) {
-            paths += root
-            root = root.parent as RsElement
+    private fun doTest(@Language("Rust") code: String, testWithStub: Boolean = true) {
+        val trimmedCode = code.trimIndent()
+        InlineFile(trimmedCode)
+        val paths = findElementsWithDataAndOffsetInEditor<RsPath>().map { it.first }
+        val root = findElementAndDataInEditor<RsElement>("X").first
+        doTestWithRootAndPaths(root, paths)
+
+        if (testWithStub) {
+            checkAstNotLoaded { true }
+            val file = myFixture.createFile("lib.rs", trimmedCode).toPsiFile(project) as RsFile
+            val fileStub = file.stubTree!!
+            val stubPaths = paths.map { fileStub.spine.getStubPsi(PsiAnchor.calcStubIndex(it)) as RsPath }
+            val stubRoot = fileStub.spine.getStubPsi(PsiAnchor.calcStubIndex(root as StubBasedPsiElement<*>))
+                as RsElement
+            doTestWithRootAndPaths(stubRoot, stubPaths)
+        }
+    }
+
+    private fun doTestWithRootAndPaths(rawRoot: RsElement, rawPaths: List<RsPath>) {
+        val paths = rawPaths.toMutableList()
+        val root = if (rawRoot is RsPath && rawRoot.parent is RsPathType) {
+            paths += rawRoot
+            rawRoot.parent as RsElement
+        } else {
+            rawRoot
         }
         for (path in paths) {
             val actualRoot = RsPathReferenceImpl.getRootCachingElement(path)
@@ -205,7 +227,7 @@ class RsPathCachingRootTest : RsTestBase() {
             assertEquals(pathSet.joinToString("\n") { it.text }, collectedPaths.joinToString("\n") { it.text })
         }
 
-        val collectedPaths2 = root.descendantsOfTypeOrSelf<RsPath>()
+        val collectedPaths2 = root.stubDescendantsOfTypeOrSelf<RsPath>()
             .filter { RsPathReferenceImpl.getRootCachingElement(it) == root }
             .toSet()
         if (pathSet != collectedPaths2) {

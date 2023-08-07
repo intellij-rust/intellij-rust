@@ -272,6 +272,16 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
         fn foo() {}
     """)
 
+    fun `test no builtin attr completion for qualified path 1`() = checkNoCompletion("""
+        #[tokio::tes/*caret*/]
+        fn main() {}
+    """)
+
+    fun `test no builtin attr completion for qualified path 2`() = checkNoCompletion("""
+        #[::tes/*caret*/]
+        fn main() {}
+    """)
+
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test attribute proc macro (unqualified)`() = doSingleCompletionByFileTree("""
     //- dep-proc-macro/lib.rs

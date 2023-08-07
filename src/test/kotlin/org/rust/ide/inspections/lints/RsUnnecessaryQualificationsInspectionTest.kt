@@ -28,7 +28,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">bar::/*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">bar::/*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -40,7 +40,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test multiple path necessary qualified`() = checkFixIsUnavailable("Remove unnecessary path prefix", """
         mod bar {
@@ -52,7 +52,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: bar::baz::/*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test multiple segments whole path`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -64,7 +64,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::baz::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">bar::baz::/*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">bar::baz::/*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -78,7 +78,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test multiple segments partial path`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -90,7 +90,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::baz;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">bar::/*caret*/</warning>baz::S;
+            let _: <weak_warning descr="Unnecessary qualification">bar::/*caret*/</weak_warning>baz::S;
         }
     """, """
         mod bar {
@@ -104,7 +104,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/baz::S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test associated method`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -117,7 +117,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _ = <warning descr="Unnecessary qualification">bar::/*caret*/</warning>S::new();
+            let _ = <weak_warning descr="Unnecessary qualification">bar::/*caret*/</weak_warning>S::new();
         }
     """, """
         mod bar {
@@ -132,7 +132,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _ = /*caret*/S::new();
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test expression context with generics`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -145,7 +145,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _ = <warning descr="Unnecessary qualification">bar::/*caret*/</warning>S::<u32>::new(0);
+            let _ = <weak_warning descr="Unnecessary qualification">bar::/*caret*/</weak_warning>S::<u32>::new(0);
         }
     """, """
         mod bar {
@@ -160,7 +160,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _ = /*caret*/S::<u32>::new(0);
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test crate prefix`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -170,7 +170,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">crate::/*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">crate::/*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -182,7 +182,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)
     fun `test bare colon colon`() = checkFixByText("Remove unnecessary path prefix", """
@@ -193,7 +193,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">::/*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">::/*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -205,7 +205,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)
     fun `test bare colon colon with nested path`() = checkFixByText("Remove unnecessary path prefix", """
@@ -216,7 +216,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">::bar::/*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">::bar::/*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -228,7 +228,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test bare colon colon necessary qualification`() = checkFixIsUnavailableByFileTree("Remove unnecessary path prefix", """
@@ -247,7 +247,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: ::dep_lib::bar::/*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test spaces in path`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -257,7 +257,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">bar ::   /*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">bar ::   /*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -269,7 +269,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test comments in path`() = checkFixByText("Remove unnecessary path prefix", """
         mod bar {
@@ -279,7 +279,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::S;
 
         fn foo() {
-            let _: <warning descr="Unnecessary qualification">bar/*foo*/ :: /*bar*//*caret*/</warning>S;
+            let _: <weak_warning descr="Unnecessary qualification">bar/*foo*/ :: /*bar*//*caret*/</weak_warning>S;
         }
     """, """
         mod bar {
@@ -291,7 +291,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _: /*caret*/S;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test path in value namespace`() = checkFixByText("Remove unnecessary path prefix", """
         enum Foo {
@@ -302,7 +302,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use Foo::B;
 
         fn foo() {
-            let _ = <warning descr="Unnecessary qualification">Foo::/*caret*/</warning>B;
+            let _ = <weak_warning descr="Unnecessary qualification">Foo::/*caret*/</weak_warning>B;
         }
     """, """
         enum Foo {
@@ -315,7 +315,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _ = /*caret*/B;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test path with type arguments 1`() = checkWarnings("""
         enum Foo<T> {
@@ -341,7 +341,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         use bar::Foo;
 
         fn foo() {
-            let _ = <warning descr="Unnecessary qualification">bar::/*caret*/</warning>Foo::<()>::B;
+            let _ = <weak_warning descr="Unnecessary qualification">bar::/*caret*/</weak_warning>Foo::<()>::B;
         }
     """, """
         mod bar {
@@ -356,7 +356,7 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
         fn foo() {
             let _ = /*caret*/Foo::<()>::B;
         }
-    """)
+    """, checkWeakWarn = true)
 
     fun `test allow`() = checkWarnings("""
         #![allow(unused_qualifications)]
@@ -383,6 +383,20 @@ class RsUnnecessaryQualificationsInspectionTest : RsInspectionsTestBase(RsUnnece
 
         fn foo() {
             let _: <error descr="Unnecessary qualification">bar::/*caret*/</error>S;
+        }
+    """)
+
+    fun `test deny 'unused' does not make the unused_qualifications a hard error`() = checkWarnings("""
+        #![deny(unused)]
+
+        mod bar {
+            pub struct S;
+        }
+
+        use bar::S;
+
+        fn foo() {
+            let _: <weak_warning descr="Unnecessary qualification">bar::/*caret*/</weak_warning>S;
         }
     """)
 }

@@ -5,15 +5,12 @@
 
 package org.rust.lang.core.stubs
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IndexSink
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.getOwner
-import org.rust.lang.core.psi.ext.stubParent
+import org.rust.lang.core.psi.ext.ownerBySyntaxOnly
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
-import org.rust.lang.core.resolve.indexes.RsTypeAliasIndex
 import org.rust.lang.core.stubs.index.*
 
 fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
@@ -62,6 +59,7 @@ fun IndexSink.indexTraitAlias(stub: RsTraitAliasStub) {
 
 fun IndexSink.indexFunction(stub: RsFunctionStub) {
     indexNamedStub(stub)
+    RsLangItemIndex.index(stub.psi, this)
 }
 
 fun IndexSink.indexConstant(stub: RsConstantStub) {
@@ -70,9 +68,8 @@ fun IndexSink.indexConstant(stub: RsConstantStub) {
 
 fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     indexNamedStub(stub)
-    if (stub.psi.getOwner(PsiElement::stubParent) !is RsAbstractableOwner.Impl) {
+    if (stub.psi.ownerBySyntaxOnly !is RsAbstractableOwner.Impl) {
         indexGotoClass(stub)
-        RsTypeAliasIndex.index(stub, this)
     }
 }
 
@@ -87,10 +84,6 @@ fun IndexSink.indexMacro(stub: RsMacroStub) {
 
 fun IndexSink.indexMacroDef(stub: RsMacro2Stub) {
     indexNamedStub(stub)
-}
-
-fun IndexSink.indexUseSpeck(stub: RsUseSpeckStub) {
-    RsReexportIndex.index(stub, this)
 }
 
 fun IndexSink.indexInnerAttr(stub: RsInnerAttrStub) {

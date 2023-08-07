@@ -1,0 +1,23 @@
+fn main() -> () {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:11: 1:11
+    let _1: ();                          // in scope 0 at src/main.rs:2:9: 2:10
+    scope 1 {
+        debug a => _1;                   // in scope 1 at src/main.rs:2:9: 2:10
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:2:9: 2:10
+        _1 = foo() -> [return: bb1, unwind: bb2]; // scope 0 at src/main.rs:2:13: 2:21
+    }
+
+    bb1: {
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:2:9: 2:10
+        _0 = const ();                   // scope 0 at src/main.rs:1:11: 3:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:3:1: 3:2
+        return;                          // scope 0 at src/main.rs:3:2: 3:2
+    }
+
+    bb2 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 3:2
+    }
+}

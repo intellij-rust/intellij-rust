@@ -5,10 +5,8 @@
 
 package org.rust.ide.intentions
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class ConvertClosureToFunctionIntentionTest : RsIntentionTestBase(ConvertClosureToFunctionIntention::class) {
 
@@ -49,7 +47,6 @@ class ConvertClosureToFunctionIntentionTest : RsIntentionTestBase(ConvertClosure
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test intention adds return type to function when closure doesnt have one`() = doAvailableTest("""
         fn main() {
             let foo = |x: i32/*caret*/| x + 1;

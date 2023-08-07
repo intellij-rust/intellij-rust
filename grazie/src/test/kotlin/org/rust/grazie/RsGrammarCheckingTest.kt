@@ -3,56 +3,44 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2021.1
-@file:Suppress("DEPRECATION")
-
 package org.rust.grazie
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
-import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.jlanguage.Lang
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
+import org.junit.runner.RunWith
+import org.rust.RsJUnit4TestRunner
 import org.rust.ide.annotator.RsAnnotationTestFixture
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.lang.RsLanguage
 
+@RunWith(RsJUnit4TestRunner::class)
 class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> =
         RsAnnotationTestFixture(this, myFixture, inspectionClasses = listOf(inspectionClass), baseFileName = "lib.rs")
 
-    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        // TODO: find out why `org.languagetool.JLanguageTool.getBuildDate(JLanguageTool.java:134)` fails
-        //  during `GrazieInitializerManager` initialization
-        if (ApplicationInfo.getInstance().build < BUILD_213) {
-            super.runTestRunnable(testRunnable)
-        }
-    }
-
     override fun setUp() {
         super.setUp()
-        // TODO: find out why `org.languagetool.JLanguageTool.getBuildDate(JLanguageTool.java:134)` fails
-        //  during `GrazieInitializerManager` initialization
-        if (ApplicationInfo.getInstance().build >= BUILD_213) return
-
-        val strategy = LanguageGrammarChecking.getStrategies().first { it is RsGrammarCheckingStrategy }
         val currentState = GrazieConfig.get()
-        if (strategy.getID() !in currentState.enabledGrammarStrategies || currentState.enabledLanguages != enabledLanguages) {
-            updateSettings { state ->
-                val checkingContext = state.checkingContext
-                state.copy(
-                    enabledGrammarStrategies = state.enabledGrammarStrategies + strategy.getID(),
-                    enabledLanguages = enabledLanguages,
-                    checkingContext = checkingContext.copy(enabledLanguages = checkingContext.enabledLanguages + RsLanguage.id)
-                )
-            }
+
+        updateSettings { state ->
+            val checkingContext = state.checkingContext.copy(
+                isCheckInStringLiteralsEnabled = true,
+                isCheckInCommentsEnabled = true,
+                isCheckInDocumentationEnabled = true,
+                enabledLanguages = setOf(RsLanguage.id),
+            )
+            state.copy(
+                enabledLanguages = enabledLanguages,
+                userEnabledRules = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START"),
+                checkingContext = checkingContext
+            )
         }
+
         Disposer.register(testRootDisposable) {
             updateSettings { currentState }
         }
@@ -60,16 +48,24 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
     fun `test check literals`() = doTest("""
         fn foo() {
-            let literal = "It is <TYPO>friend</TYPO> of human";
-            let raw_literal = r"It is <TYPO>friend</TYPO> of human";
-            let binary_literal = b"It is <TYPO>friend</TYPO> of human";
+            let literal = "It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human";
+            let raw_literal = r"It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human";
+            let binary_literal = b"It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human";
         }
     """, checkInStringLiterals = true)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/7446
+    fun `test sentence capitalization in comments`() = doTest("""
+        fn main() {
+            // <GRAMMAR_ERROR>hello</GRAMMAR_ERROR> world. <GRAMMAR_ERROR>how</GRAMMAR_ERROR> are you Harry Potter?
+            println!("Hello!")
+        }
+    """, checkInComments = true)
+
     fun `test check comments`() = doTest("""
         fn foo() {
-            // It is <TYPO>friend</TYPO> of human
-            /* It is <TYPO>friend</TYPO> of human */
+            // It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human
+            /* It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human */
             let literal = 123;
         }
     """, checkInComments = true)
@@ -77,11 +73,11 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
     // https://github.com/intellij-rust/intellij-rust/issues/7024
     fun `test check single sentence in sequential comments 1`() = doTest("""
         fn main() {
-            // Path to directory where someone <TYPO>write</TYPO>
-            // and from where someone reads
+            // With <GRAMMAR_ERROR>you</GRAMMAR_ERROR>
+            // I can finally be happy
             let path1 = "/foo/bar";
-            /* Path to directory where someone <TYPO>write</TYPO> */
-            /* and from where someone reads */
+            /* With <GRAMMAR_ERROR>you</GRAMMAR_ERROR> */
+            /* I can finally be happy */
             let path2 = "/foo/bar";
         }
     """, checkInComments = true)
@@ -89,19 +85,19 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
     // https://github.com/intellij-rust/intellij-rust/issues/7024
     fun `test check single sentence in sequential comments 2`() = doTest("""
         fn main() {
-            // Path to directory where someone writes
+            // With you
 
-            // <TYPE>and</TYPE> from where someone reads
+            // I can finally be happy
             let path = "/foo/bar";
         }
     """, checkInComments = true)
 
     fun `test check doc comments`() = doTest("""
-        /// It is <TYPO>friend</TYPO> of human
+        /// It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human
         mod foo {
-            //! It is <TYPO>friend</TYPO> of human
+            //! It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human
 
-            /** It is <TYPO>friend</TYPO> of human */
+            /** It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human */
             fn bar() {}
         }
     """, checkInDocumentation = true)
@@ -109,7 +105,7 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
     fun `test check injected Rust code in doc comments`() = doTest("""
         ///
         /// ```
-        /// let literal = "It is <TYPO>friend</TYPO> of human";
+        /// let literal = "It is <GRAMMAR_ERROR>an</GRAMMAR_ERROR> friend of human";
         /// for i in 1..10 {}
         /// ```
         pub fn foo() {}
@@ -148,7 +144,7 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
             state.copy(checkingContext = newContext)
         }
 
-        checkByText(text.replace("<TYPO.*?>(.*?)</TYPO>".toRegex(), "$1"))
+        checkByText(text.replace("<GRAMMAR_ERROR.*?>(.*?)</GRAMMAR_ERROR>".toRegex(), "$1"))
     }
 
     private fun updateSettings(change: (GrazieConfig.State) -> GrazieConfig.State) {
@@ -158,6 +154,5 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
     companion object {
         private val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH)
-        private val BUILD_213: BuildNumber = BuildNumber.fromString("213")!!
     }
 }

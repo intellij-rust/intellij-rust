@@ -90,6 +90,52 @@ class CargoPackagesTest : RsWithToolchainTestBase() {
         workspace.checkPackage("windows_package", shouldExist = true)
     }
 
+    @MinRustcVersion("1.64.0")
+    fun `test target specific dependencies with multiple build targets`() {
+        buildProject {
+            dir(".cargo") {
+                toml("config.toml", """
+                    [build]
+                    target = ["x86_64-pc-windows-msvc", "i686-pc-windows-msvc"]
+                """)
+            }
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                common_package = { path = "common_package" }
+
+                [target.'cfg(target_arch = "x86_64")'.dependencies]
+                x86_64_package = { path = "x86_64_package" }
+
+                [target.'cfg(target_arch = "x86")'.dependencies]
+                i686_package = { path = "i686_package" }
+
+                [target.'cfg(target_arch = "aarch64")'.dependencies]
+                aarch64_package = { path = "aarch64_package" }
+            """)
+
+            dir("src") {
+                rust("lib.rs", "")
+            }
+
+            dependencyPackage("common_package")
+            dependencyPackage("x86_64_package")
+            dependencyPackage("i686_package")
+            dependencyPackage("aarch64_package")
+        }
+
+        val workspace = project.cargoProjects.singleProject().workspaceOrFail()
+
+        workspace.checkPackage("common_package", shouldExist = true)
+        workspace.checkPackage("x86_64_package", shouldExist = true)
+        workspace.checkPackage("i686_package", shouldExist = true)
+        workspace.checkPackage("aarch64_package", shouldExist = false)
+    }
+
     @MinRustcVersion("1.53.0")
     fun `test target specific dependencies with custom build target`() {
         buildProject {

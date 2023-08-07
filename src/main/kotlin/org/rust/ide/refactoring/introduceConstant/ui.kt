@@ -16,7 +16,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
@@ -77,7 +79,7 @@ fun showInsertionChooser(
                 if (value == null) return@setItemSelectedCallback
                 highlighter.onSelect(value)
             }
-            .setTitle("Choose scope to introduce constant ${expr.text}")
+            .setTitle(RsBundle.message("popup.title.choose.scope.to.introduce.constant", expr.text))
             .setMovable(true)
             .setResizable(false)
             .setRequestFocus(true)
@@ -93,10 +95,11 @@ interface ExtractConstantUi {
 }
 
 data class InsertionCandidate(val context: PsiElement, val parent: PsiElement, val anchor: PsiElement) {
+    @Nls
     fun description(): String = when (val element = this.context) {
-        is RsFunction -> "fn ${element.name}"
-        is RsModItem -> "mod ${element.name}"
-        is RsFile -> "file"
+        is RsFunction -> RsBundle.message("fn.0", element.name?:"")
+        is RsModItem -> RsBundle.message("mod.0", element.name?:"")
+        is RsFile -> RsBundle.message("file")
         else -> error("unreachable")
     }
 }

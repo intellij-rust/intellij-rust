@@ -5,78 +5,96 @@
 
 package org.rust.debugger.settings
 
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Link
+import com.intellij.ui.dsl.builder.COLUMNS_SHORT
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.columns
+import org.rust.debugger.DebuggerAvailability
+import org.rust.debugger.DebuggerKind
 import org.rust.debugger.RsDebuggerBundle
 import org.rust.debugger.RsDebuggerToolchainService
-import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
-import org.rust.openapiext.fullWidthCell
-import org.rust.openapiext.pathToDirectoryTextField
-import javax.swing.AbstractButton
-import javax.swing.JComponent
-import javax.swing.JLabel
+import java.util.*
+import javax.swing.ComboBoxModel
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JEditorPane
 
 class RsDebuggerToolchainConfigurableUi : RsDebuggerUiComponent() {
 
-    private val downloadLink: JComponent = Link(RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.label")) {
-        val result = RsDebuggerToolchainService.getInstance().downloadDebugger()
-        if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
-            lldbPathField.text = result.lldbDir.absolutePath
-        }
-    }
-
-    private val lldbPathField = pathToDirectoryTextField(
-        this,
-        RsDebuggerBundle.message("settings.rust.debugger.toolchain.select.lldb.directory.dialog.title"),
-        onTextChanged = ::update
-    ).apply {
-        isEditable = false
-    }
-
+    private val debuggerKindCombobox = ComboBox(createDebuggerKindComboBoxModel())
     private val downloadAutomaticallyCheckBox: JBCheckBox =
         JBCheckBox(RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.debugger.automatically.checkbox"), RsDebuggerSettings.getInstance().downloadAutomatically)
 
+    private var comment: JEditorPane? = null
+
+    private val currentDebuggerKind: DebuggerKind get() = debuggerKindCombobox.item
+
     override fun isModified(settings: RsDebuggerSettings): Boolean {
-        return settings.lldbPath != lldbPathField.text &&
+        return settings.debuggerKind != debuggerKindCombobox.item ||
             settings.downloadAutomatically != downloadAutomaticallyCheckBox.isSelected
     }
 
     override fun reset(settings: RsDebuggerSettings) {
-        lldbPathField.text = settings.lldbPath.orEmpty()
+        debuggerKindCombobox.item = settings.debuggerKind
         downloadAutomaticallyCheckBox.isSelected = settings.downloadAutomatically
     }
 
     override fun apply(settings: RsDebuggerSettings) {
-        settings.lldbPath = lldbPathField.text
+        settings.debuggerKind = debuggerKindCombobox.item
         settings.downloadAutomatically = downloadAutomaticallyCheckBox.isSelected
     }
 
     override fun buildUi(panel: Panel) {
-        lldbPathField.text = RsDebuggerSettings.getInstance().lldbPath.orEmpty()
-        update()
         with(panel) {
-            row(RsDebuggerBundle.message("settings.rust.debugger.toolchain.lldb.path.label")) { fullWidthCell(lldbPathField) }
-            row("") { cell(downloadLink) }
+            row(RsDebuggerBundle.message("settings.rust.debugger.toolchain.debugger.label")) {
+                comment = cell(debuggerKindCombobox)
+                    .columns(COLUMNS_SHORT)
+                    // Exact text will be set in `update` call not to duplicate the code
+                    .comment("") { downloadDebugger() }
+                    .applyToComponent {
+                        whenItemSelected {
+                            update()
+                        }
+                    }
+                    .comment
+            }
             row { cell(downloadAutomaticallyCheckBox) }
+        }
+        update()
+    }
+
+    private fun createDebuggerKindComboBoxModel(): ComboBoxModel<DebuggerKind> {
+        val toolchainService = RsDebuggerToolchainService.getInstance()
+        val availableKinds = mutableListOf<DebuggerKind>()
+        if (toolchainService.lldbAvailability() != DebuggerAvailability.Unavailable) {
+            availableKinds += DebuggerKind.LLDB
+        }
+        if (toolchainService.gdbAvailability() != DebuggerAvailability.Unavailable) {
+            availableKinds += DebuggerKind.GDB
+        }
+
+        val model = DefaultComboBoxModel(Vector(availableKinds))
+        model.selectedItem = RsDebuggerSettings.getInstance().debuggerKind
+        return model
+    }
+
+    private fun downloadDebugger() {
+        val result = RsDebuggerToolchainService.getInstance().downloadDebugger(debuggerKind = currentDebuggerKind)
+        if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
+            update()
         }
     }
 
     private fun update() {
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val status = RsDebuggerToolchainService.getInstance().getLLDBStatus(lldbPathField.text)
-        val (text, isVisible) = when (status) {
-            LLDBStatus.Unavailable,
-            LLDBStatus.Bundled -> error("Unreachable")
-            LLDBStatus.NeedToDownload -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.label") to true
-            LLDBStatus.NeedToUpdate -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.update.label") to true
-            is LLDBStatus.Binaries -> "" to false
-        }
-        when (downloadLink) {
-            is JLabel -> downloadLink.text = text
-            is AbstractButton -> downloadLink.text = text
+        val availability = RsDebuggerToolchainService.getInstance().debuggerAvailability(currentDebuggerKind)
+        val text = when (availability) {
+            DebuggerAvailability.NeedToDownload -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.download.comment")
+            DebuggerAvailability.NeedToUpdate -> RsDebuggerBundle.message("settings.rust.debugger.toolchain.update.comment")
+            else -> null
         }
 
-        downloadLink.isVisible = isVisible
+        comment?.text = text
+        comment?.isVisible = text != null
     }
 }

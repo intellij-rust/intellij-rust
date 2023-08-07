@@ -29,6 +29,7 @@ val RsInferenceContextOwner.body: RsElement?
         is RsReplCodeFragment -> this
         is RsPathCodeFragment -> this
         is RsPath -> typeArgumentList
+        is RsDefaultParameterValue -> expr
         else -> null
     }
 

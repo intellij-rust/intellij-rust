@@ -6,8 +6,9 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import org.rust.ide.inspections.fixes.AddGenericArguments
-import org.rust.ide.inspections.fixes.RemoveGenericArguments
+import org.rust.RsBundle
+import org.rust.ide.fixes.AddGenericArguments
+import org.rust.ide.fixes.RemoveGenericArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
@@ -19,7 +20,7 @@ import org.rust.openapiext.createSmartPointer
  */
 class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitMethodCall(methodCall: RsMethodCall) = checkTypeArguments(holder, methodCall)
             override fun visitPath(path: RsPath) {
                 if (!isPathValid(path)) return
@@ -65,7 +66,7 @@ class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
             else -> "generic"
         }
 
-        val problemText = "Wrong number of $argumentName arguments: expected $errorText, found $actualArgs"
+        val problemText = RsBundle.message("inspection.message.wrong.number.arguments.expected.found", argumentName, errorText, actualArgs)
         val fixes = getFixes(declaration, element, actualArgs, expectedTotalParams)
 
         RsDiagnostic.WrongNumberOfGenericArguments(element, problemText, fixes).addToHolder(holder)
@@ -74,11 +75,11 @@ class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
 
 private fun getFixes(
     declaration: RsGenericDeclaration,
-    element: RsElement,
+    element: RsMethodOrPath,
     actualArgs: Int,
     expectedTotalParams: Int
 ): List<LocalQuickFix> = when {
-    actualArgs > expectedTotalParams -> listOf(RemoveGenericArguments(expectedTotalParams, actualArgs))
+    actualArgs > expectedTotalParams -> listOf(RemoveGenericArguments(element, expectedTotalParams, actualArgs))
     actualArgs < expectedTotalParams -> listOf(AddGenericArguments(declaration.createSmartPointer(), element))
     else -> emptyList()
 }

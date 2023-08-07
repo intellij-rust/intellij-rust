@@ -5,14 +5,12 @@
 
 package org.rust.ide.template.postfix
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.lang.core.macros.MacroExpansionScope
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 abstract class IterPostFixTemplateTestBase(private val key: String) :
-    RsPostfixTemplateTest(IterPostfixTemplate(key, RsPostfixTemplateProvider())) {
+    RsPostfixTemplateTest(IterPostfixTemplate::class, key) {
 
     fun `test non iterable expr`() = doTestNotApplicable("""
             let b = 5;
@@ -20,7 +18,6 @@ abstract class IterPostFixTemplateTestBase(private val key: String) :
         """
     )
 
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test iterable expr`() = doTest("""
         fn main(){
             let v = vec![1, 2, 3];

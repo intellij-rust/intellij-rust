@@ -1,0 +1,8 @@
+const FOO: () = {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:1:12: 1:14
+
+    bb0: {
+        _0 = ();                         // scope 0 at src/main.rs:1:17: 1:19
+        return;                          // scope 0 at src/main.rs:1:1: 1:20
+    }
+}

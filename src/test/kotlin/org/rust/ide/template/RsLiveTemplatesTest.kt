@@ -21,13 +21,37 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
-    fun `test print`() = expandSnippet("""
+    fun `test println`() = expandSnippet("""
         fn main() {
             p/*caret*/
         }
     """, """
         fn main() {
             println!("");
+        }
+    """)
+
+    fun `test println before absolute path`() = expandSnippet("""
+        fn main() {
+            p/*caret*/
+            ::foo();
+        }
+    """, """
+        fn main() {
+            println!("");
+            ::foo();
+        }
+    """)
+
+    fun `test println before block expr`() = expandSnippet("""
+        fn main() {
+            p/*caret*/
+            { 0 }
+        }
+    """, """
+        fn main() {
+            println!("");
+            { 0 }
         }
     """)
 
@@ -88,6 +112,14 @@ class RsLiveTemplatesTest : RsTestBase() {
     fun `test pattern binding`() = noSnippet("""
         fn main() {
             let p/*caret*/
+        }
+    """)
+
+    fun `test loop label`() = noSnippet("""
+        fn main() {
+            loop {
+                break '/*caret*/
+            }
         }
     """)
 
@@ -153,6 +185,54 @@ class RsLiveTemplatesTest : RsTestBase() {
         impl /*caret*/ for  {
         $indent
         }
+    """)
+
+    fun `test iter`() = expandSnippet("""
+        fn main() {
+            iter/*caret*/
+        }
+    """, """
+        fn main() {
+            for  in /*caret*/ {
+            $indent
+            }
+        }
+    """)
+
+    fun `test for`() = expandSnippet("""
+        fn main() {
+            for/*caret*/
+        }
+    """, """
+        fn main() {
+            for  in /*caret*/ {
+            $indent
+            }
+        }
+    """)
+
+    fun `test macro 1`() = expandSnippet("""
+        macro/*caret*/
+    """, """
+        macro_rules! /*caret*/ {
+            () => {};
+        }
+    """)
+
+    fun `test macro 2`() = expandSnippet("""
+        fn main() {
+            macro/*caret*/
+        }
+    """, """
+        fn main() {
+            macro_rules! /*caret*/ {
+                () => {};
+            }
+        }
+    """)
+
+    fun `test macro 3`() = noSnippet("""
+        fn macro/*caret*/
     """)
 
     private fun expandSnippet(@Language("Rust") before: String, @Language("Rust") after: String) =

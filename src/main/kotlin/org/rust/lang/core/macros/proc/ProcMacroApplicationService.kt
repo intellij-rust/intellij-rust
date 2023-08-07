@@ -14,6 +14,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.RsProjectSettingsServiceBase.*
+import org.rust.cargo.project.settings.RsProjectSettingsServiceBase.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RsToolchainBase
@@ -29,8 +31,9 @@ class ProcMacroApplicationService : Disposable {
     init {
         val connect = ApplicationManager.getApplication().messageBus.connect(this)
 
-        connect.subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustProjectSettingsService.RustSettingsListener {
-            override fun rustSettingsChanged(e: RustProjectSettingsService.RustSettingsChangedEvent) {
+        connect.subscribe(RUST_SETTINGS_TOPIC, object : RsSettingsListener {
+            override fun <T : RsProjectSettingsBase<T>> settingsChanged(e: SettingsChangedEventBase<T>) {
+                if (e !is RustProjectSettingsService.SettingsChangedEvent) return
                 if (e.oldState.toolchain?.distributionId != e.newState.toolchain?.distributionId) {
                     removeUnusableSevers()
                 }
@@ -45,14 +48,18 @@ class ProcMacroApplicationService : Disposable {
     }
 
     @Synchronized
-    fun getServer(toolchain: RsToolchainBase, procMacroExpanderPath: Path): ProcMacroServerPool? {
+    fun getServer(
+        toolchain: RsToolchainBase,
+        needsVersionCheck: Boolean,
+        procMacroExpanderPath: Path
+    ): ProcMacroServerPool? {
         if (!isAnyEnabled()) return null
 
         val id = toolchain.distributionId
-        val key = DistributionIdAndExpanderPath(id, procMacroExpanderPath)
+        val key = DistributionIdAndExpanderPath(id, needsVersionCheck, procMacroExpanderPath)
         var server = servers[key]
         if (server == null) {
-            server = ProcMacroServerPool.new(toolchain, procMacroExpanderPath, this)
+            server = ProcMacroServerPool.new(toolchain, needsVersionCheck, procMacroExpanderPath, this)
             servers[key] = server
         }
         return server
@@ -78,6 +85,7 @@ class ProcMacroApplicationService : Disposable {
 
     private data class DistributionIdAndExpanderPath(
         val distributionId: String,
+        val needsVersionCheck: Boolean,
         val procMacroExpanderPath: Path,
     )
 

@@ -28,12 +28,13 @@ fun Cargo.makeProject(
     module: Module,
     baseDir: VirtualFile,
     name: String,
-    template: RsProjectTemplate
+    template: RsProjectTemplate,
+    vcs: String? = null
 ): RsProcessResult<GeneratedFilesHolder> {
     RsCounterUsagesCollector.newProjectCreation(template)
     return when (template) {
-        is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary)
-        is RsCustomTemplate -> generate(project, module, baseDir, name, template.url)
+        is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary, vcs)
+        is RsCustomTemplate -> generate(project, module, baseDir, name, template.url, vcs)
     }
 }
 

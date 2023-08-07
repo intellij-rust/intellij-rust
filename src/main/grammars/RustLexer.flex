@@ -59,7 +59,13 @@ import static com.intellij.psi.TokenType.*;
       zzShaStride = -1;
       zzPostponedMarkedPos = -1;
 
-      return yycharat(0) == 'b' ? RAW_BYTE_STRING_LITERAL : RAW_STRING_LITERAL;
+      if (yycharat(0) == 'b') {
+          return RAW_BYTE_STRING_LITERAL;
+      } else if (yycharat(0) == 'c') {
+          return RAW_CSTRING_LITERAL;
+      } else {
+          return RAW_STRING_LITERAL;
+      }
   }
 
   IElementType imbueOuterEolComment(){
@@ -189,9 +195,6 @@ EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
   "_"                             { return UNDERSCORE; }
   "$"                             { return DOLLAR; }
 
-  "abstract"|"become"|"do"|"final"|"override"|"priv"|"typeof"|"unsized"|"virtual"
-                                  { return RESERVED_KEYWORD; }
-
   "true"|"false"                  { return BOOL_LITERAL; }
   "as"                            { return AS; }
   "box"                           { return BOX; }
@@ -247,9 +250,14 @@ EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
   "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 
   "b" {STRING_LITERAL}            { return BYTE_STRING_LITERAL; }
+  "c" {STRING_LITERAL}            { return CSTRING_LITERAL; }
   {STRING_LITERAL}                { return STRING_LITERAL; }
 
   "br" #* \"                      { yybegin(IN_RAW_LITERAL);
+                                    zzPostponedMarkedPos = zzStartRead;
+                                    zzShaStride          = yylength() - 3; }
+
+  "cr" #* \"                      { yybegin(IN_RAW_LITERAL);
                                     zzPostponedMarkedPos = zzStartRead;
                                     zzShaStride          = yylength() - 3; }
 
@@ -259,7 +267,8 @@ EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
 
 //nessesary to allow proper restart of lexer when there is an error in raw literal, see RsRestartLexingTestCase
   "r"  #+ |
-  "br" #+                         { return BAD_CHARACTER; }
+  "br" #+ |
+  "cr" #+                         { return BAD_CHARACTER; }
 
   {WHITE_SPACE}                   { return WHITE_SPACE; }
 }

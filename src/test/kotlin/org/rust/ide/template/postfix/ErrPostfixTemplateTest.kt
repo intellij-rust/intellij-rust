@@ -5,7 +5,7 @@
 
 package org.rust.ide.template.postfix
 
-class ErrPostfixTemplateTest : RsPostfixTemplateTest(ErrPostfixTemplate(RsPostfixTemplateProvider())) {
+class ErrPostfixTemplateTest : RsPostfixTemplateTest(ErrPostfixTemplate::class) {
 
     fun `test expr`() = doTest("""
         fn foo(number: i32) -> Result<(), i32> {

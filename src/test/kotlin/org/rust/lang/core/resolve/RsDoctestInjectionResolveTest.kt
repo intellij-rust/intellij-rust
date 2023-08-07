@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve
 
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 
 class RsDoctestInjectionResolveTest : RsResolveTestBase() {
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -174,7 +173,6 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
     """)
 
     @MinRustcVersion("1.46.0")
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test attribute proc macros`() = stubOnlyResolve("""

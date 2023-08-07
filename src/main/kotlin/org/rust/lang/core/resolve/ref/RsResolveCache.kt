@@ -257,7 +257,6 @@ private fun <K: Any, V: Any> createWeakMap(): ConcurrentMap<K, V> {
             }
         }
 
-        @Suppress("UNCHECKED_CAST")
         override fun get(key: K): V? {
             val v = super.get(key)
             return if (v === NULL_RESULT) null else v

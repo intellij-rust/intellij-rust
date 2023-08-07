@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
 import com.intellij.util.DocumentUtil
+import org.rust.RsBundle
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.errors.GetMacroExpansionError
@@ -55,7 +56,7 @@ fun expandMacroForViewWithProgress(
     ctx: RsPossibleMacroCall,
     expandRecursively: Boolean
 ): RsResult<MacroExpansionViewDetails, GetMacroExpansionError> {
-    val progressTitle = "${if (expandRecursively) "Recursive" else "Single step"} expansion progress..."
+    val progressTitle = RsBundle.message("progress.title.choice.recursive.single.step.expansion.progress", if (expandRecursively) 0 else 1)
     return project.computeWithCancelableProgress(progressTitle) {
         runReadAction { expandMacroForView(ctx, expandRecursively) }
     }
@@ -81,8 +82,14 @@ fun showMacroExpansionPopup(project: Project, editor: Editor, expansionDetails: 
     PopupPositionManager.positionPopupInBestPosition(popup, editor, null)
 }
 
-private fun expandMacroForView(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): RsResult<MacroExpansionViewDetails, GetMacroExpansionError> {
-    val expansions = getMacroExpansions(macroToExpand, expandRecursively).unwrapOrElse { return Err(it) }
+fun expandMacroForView(
+    macroToExpand: RsPossibleMacroCall,
+    expandRecursively: Boolean,
+    sizeLimit: Int = Int.MAX_VALUE,
+    hasWriteAccess: Boolean = true,
+): RsResult<MacroExpansionViewDetails, GetMacroExpansionError> {
+    val expansions = getMacroExpansions(macroToExpand, expandRecursively, sizeLimit, hasWriteAccess)
+        .unwrapOrElse { return Err(it) }
     return Ok(
         MacroExpansionViewDetails(
             macroToExpand,
@@ -92,12 +99,11 @@ private fun expandMacroForView(macroToExpand: RsPossibleMacroCall, expandRecursi
     )
 }
 
-@Suppress("UnstableApiUsage")
 @PopupTitle
 private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): String {
     val path = macroToExpand.path?.text
     val name = when (val kind = macroToExpand.kind) {
-        is RsPossibleMacroCallKind.MacroCall -> "$path! macro"
+        is RsPossibleMacroCallKind.MacroCall -> RsBundle.message("popup.title.macro", path ?: "")
         is RsPossibleMacroCallKind.MetaItem -> if (RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)) {
             "#[derive($path)]"
         } else {
@@ -105,34 +111,44 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expan
         }
     }
     return if (expandRecursively) {
-        "Recursive expansion of $name"
+        RsBundle.message("popup.title.recursive.expansion", name)
     } else {
-        "First level expansion of $name"
+        RsBundle.message("popup.title.first.level.expansion", name)
     }
 }
 
-private fun getMacroExpansions(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): RsResult<MacroExpansion, GetMacroExpansionError> {
+private fun getMacroExpansions(
+    macroToExpand: RsPossibleMacroCall,
+    expandRecursively: Boolean,
+    sizeLimit: Int = Int.MAX_VALUE,
+    hasWriteAccess: Boolean = true,
+): RsResult<MacroExpansion, GetMacroExpansionError> {
     val singleStepExpansion = macroToExpand.expansionResult
     if (singleStepExpansion is Err) {
         return singleStepExpansion
     }
 
     val depthLimit = if (expandRecursively) Int.MAX_VALUE else 1
-    val expansionText = macroToExpand.expandMacrosRecursively(depthLimit, replaceDollarCrate = true)
+    val expansionText = macroToExpand.expandMacrosRecursively(
+        depthLimit = depthLimit,
+        replaceDollarCrate = true,
+        sizeLimit = sizeLimit,
+    ) ?: return Err(GetMacroExpansionError.TooLargeExpansion)
 
     return parseExpandedTextWithContext(
         macroToExpand.expansionContext,
         // Without `eventSystemEnabled` file reformatting (that will be performed later) is too slow
-        RsPsiFactory(macroToExpand.project, markGenerated = false, eventSystemEnabled = true),
+        RsPsiFactory(macroToExpand.project, markGenerated = false, eventSystemEnabled = hasWriteAccess),
         expansionText
     ).toResult().mapErr {
         GetMacroExpansionError.MemExpParsingError(expansionText, macroToExpand.expansionContext)
     }
 }
 
-private fun reformatMacroExpansion(
+fun reformatMacroExpansion(
     macroToExpand: RsPossibleMacroCall,
-    expansion: MacroExpansion
+    expansion: MacroExpansion,
+    hasWriteAccess: Boolean = true,
 ): MacroExpansion {
     val file = expansion.file
         .takeIf { it.virtualFile == null }
@@ -140,7 +156,13 @@ private fun reformatMacroExpansion(
         ?: RsPsiFactory(expansion.file.project, eventSystemEnabled = true).createFile(expansion.file.text)
 
     RsPsiManager.withIgnoredPsiEvents(file) {
-        DocumentUtil.writeInRunUndoTransparentAction { formatPsiFile(file) }
+        if (hasWriteAccess) {
+            DocumentUtil.writeInRunUndoTransparentAction {
+                formatPsiFile(file)
+            }
+        } else {
+            formatPsiFile(file)
+        }
     }
 
     return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)

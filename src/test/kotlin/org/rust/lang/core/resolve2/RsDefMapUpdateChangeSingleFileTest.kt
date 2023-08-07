@@ -9,11 +9,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
 
 /** Tests whether [CrateDefMap] should be updated after file modification */
-@ExpandMacros  // needed to enable precise modification tracker
 class RsDefMapUpdateChangeSingleFileTest : RsDefMapUpdateTestBase() {
 
     fun `test edit function body`() = doTestNotChanged(type(), """

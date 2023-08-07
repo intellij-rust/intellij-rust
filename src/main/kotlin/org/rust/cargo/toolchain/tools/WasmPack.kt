@@ -7,7 +7,6 @@ package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
-import com.intellij.openapi.util.SystemInfo
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.util.splitOnDoubleDash
 import java.io.File
@@ -16,7 +15,12 @@ fun RsToolchainBase.wasmPack(): WasmPack? = if (hasCargoExecutable(WasmPack.NAME
 
 class WasmPack(toolchain: RsToolchainBase) : CargoBinary(NAME, toolchain) {
 
-    fun createCommandLine(workingDirectory: File, command: String, args: List<String>): GeneralCommandLine {
+    fun createCommandLine(
+        workingDirectory: File,
+        command: String,
+        args: List<String>,
+        emulateTerminal: Boolean
+    ): GeneralCommandLine {
         val (pre, post) = splitOnDoubleDash(args)
             .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
@@ -33,7 +37,7 @@ class WasmPack(toolchain: RsToolchainBase) : CargoBinary(NAME, toolchain) {
         var commandLine = createBaseCommandLine(allArgs, workingDirectory.toPath())
             .withRedirectErrorStream(true)
 
-        if (!SystemInfo.isWindows) {
+        if (emulateTerminal) {
             commandLine = PtyCommandLine(commandLine)
                 .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
                 .withConsoleMode(false)

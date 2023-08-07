@@ -7,11 +7,9 @@ package org.rust.ide.lineMarkers
 
 import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.icons.CargoIcons
-import org.rust.fileTree
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsElement
@@ -146,6 +144,15 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn has_icon() { assert(true) } // - Test has_icon
         #[cfg_attr(not(intellij_rust), test)]
         fn no_icon() { assert(true) }
+    """)
+
+    @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
+    @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
+    fun `test test function under a proc macro attribute`() = doTestByText("""
+        use test_proc_macros::attr_as_is;
+        #[attr_as_is]
+        #[test]
+        fn has_icon() { assert(true) } // - Test has_icon
     """)
 
     fun `test function doctest`() = doTestByText("""
