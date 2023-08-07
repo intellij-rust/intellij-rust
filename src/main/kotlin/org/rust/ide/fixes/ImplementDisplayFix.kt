@@ -46,6 +46,8 @@ class ImplementDisplayFix(adt: RsStructOrEnumItemElement) : RsQuickFixBase<RsStr
         val createdImpl = psiFactory.createTraitImplItem(
             type = element.name ?: return,
             trait = displayName,
+            typeParameterList = element.typeParameterList,
+            whereClause = element.whereClause,
         )
         val insertedImpl = placeForImpl.insert(createdImpl)
 

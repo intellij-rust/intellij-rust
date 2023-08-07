@@ -112,7 +112,7 @@ class CargoSyncTask(
 
         @Suppress("UnnecessaryVariable")
         val refreshedProjects = if (toolchain == null) {
-            //todo: TG syncProgress.fail(System.currentTimeMillis(), "$serviceName project update failed:\nNo Rust toolchain")
+            //todo: tg syncProgress.fail(System.currentTimeMillis(), "$serviceName project update failed:\nNo Rust toolchain")
             syncProgress.fail(System.currentTimeMillis(), RsBundle.message("build.event.message.cargo.project.update.failed.no.rust.toolchain"))
             cargoProjects
         } else {
@@ -187,7 +187,6 @@ class CargoSyncTask(
                     )
                 } catch (e: NoSuchElementException) {
                     return@runWithChildProgress TaskResult.Err(
-//                        RsBundle.message(context.error(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"), e.message.orEmpty()))
                           RsBundle.message(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"))
                     )
                 }

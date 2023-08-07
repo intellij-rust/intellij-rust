@@ -734,6 +734,31 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
     """, preview = null)
 
+    fun `test implement Display with generics`() = checkFixByTextWithoutHighlighting("Implement `Display` trait for `S`", """
+        trait Iterator {}
+        trait Clone {}
+        struct S<Iter: Iterator, C> where C: Clone { iter: Iter, c: C }
+        fn foo<A: Iterator, B: Clone>(s: S<A, B>) {
+            println!("{}", s/*caret*/)
+        }
+    """, """
+        use std::fmt::{Display, Formatter};
+
+        trait Iterator {}
+        trait Clone {}
+        struct S<Iter: Iterator, C> where C: Clone { iter: Iter, c: C }
+
+        impl<Iter: Iterator, C> Display for S<Iter, C> where C: Clone {
+            fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+                <selection><caret>todo!()</selection>
+            }
+        }
+
+        fn foo<A: Iterator, B: Clone>(s: S<A, B>) {
+            println!("{}", s)
+        }
+    """, preview = null)
+
     fun `test implement Display with Display structs in scope`() = checkFixByTextWithoutHighlighting(
         "Implement `Display` trait for `S2`", """
         struct Display;
@@ -823,6 +848,26 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         fn main() {
             let my_struct = S2 { a: 5, b: 5 };
             println!("{:?}", my_struct/*caret*/);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no derive Debug for external dependency`() = checkFixIsUnavailable("Derive `Debug` for `Vec` and replace `{}` with `{:?}`", """
+        struct S2 { a: i32, b: u8, }
+
+        fn main() {
+            let v = vec![S2 { a: 0, b: 0 }];
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", /*error descr="`Vec<S2>` doesn't implement `Display` (required by {}) [E0277]"*/v/*error**//*caret*/);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no implement Display for external dependency`() = checkFixIsUnavailable("Implement `Display` trait for `Vec`", """
+        struct S2 { a: i32, b: u8, }
+
+        fn main() {
+            let v = vec![S2 { a: 0, b: 0 }];
+            println!("<FORMAT_PARAMETER>{}</FORMAT_PARAMETER>", /*error descr="`Vec<S2>` doesn't implement `Display` (required by {}) [E0277]"*/v/*error**//*caret*/);
         }
     """)
 }
