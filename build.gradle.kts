@@ -29,7 +29,7 @@ val baseVersion = when (baseIDE) {
 }
 
 val tomlPlugin = "org.toml.lang"
-val nativeDebugPlugin: String by project
+val nativeDebugPlugin = if (baseIDE == "idea") prop("nativeDebugPlugin") else "com.intellij.nativeDebug"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin: String by project
 val intelliLangPlugin = "org.intellij.intelliLang"
@@ -37,7 +37,7 @@ val copyrightPlugin = "com.intellij.copyright"
 val javaPlugin = "com.intellij.java"
 val javaIdePlugin = "com.intellij.java.ide"
 val javaScriptPlugin = "JavaScript"
-val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion")
+val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion", nativeDebugPlugin)
 val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 val compileNativeCodeTaskName = "compileNativeCode"
