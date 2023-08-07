@@ -20,9 +20,9 @@ concurrency:
     cancel-in-progress: true
 
 env:
-    OLD_IDEA_VERSION: IU-2023.1
-    OLD_CLION_VERSION: CL-2023.1
-    OLD_NATIVE_DEBUG_PLUGIN_VERSION: 231.8109.46
+    OLD_IDEA_VERSION: IU-2023.2
+    OLD_CLION_VERSION: CL-2023.2
+    OLD_NATIVE_DEBUG_PLUGIN: "com.intellij.nativeDebug:232.8660.142"
 
 jobs:
     get-rust-versions:
@@ -85,14 +85,14 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 # TODO: check on more rustc versions
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
-                platform-version: [ 231, 232 ]
+                platform-version: [ 232 ]
                 include:
                     - os: ubuntu-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
-                      platform-version: 231
+                      platform-version: 232
                     - os: windows-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
-                      platform-version: 231
+                      platform-version: 232
 
         runs-on: ${{ matrix.os }}
         env:
@@ -116,7 +116,7 @@ jobs:
               run: |
                   echo "ORG_GRADLE_PROJECT_ideaVersion=${{ env.OLD_IDEA_VERSION }}" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_clionVersion=${{ env.OLD_CLION_VERSION }}" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=${{ env.OLD_NATIVE_DEBUG_PLUGIN_VERSION }}" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPlugin=${{ env.OLD_NATIVE_DEBUG_PLUGIN }}" >> $GITHUB_ENV
 
             - name: Retrieve CLion version
               id: clion-version
@@ -176,7 +176,7 @@ jobs:
                 # Make sequence from two outputs with version is not possible here.
                 rust-version: ${{ fromJSON(needs.get-rust-versions.outputs.matrix) }}
                 base-ide: [ idea, clion ]
-                platform-version: [ 231, 232 ]
+                platform-version: [ 232 ]
                 # it's enough to verify plugin structure only once per platform version
                 verify-plugin: [ false ]
                 default-edition-for-tests: [ 2021 ]
@@ -184,7 +184,7 @@ jobs:
                     - os: ubuntu-latest
                       rust-version: ${{ needs.get-rust-versions.outputs.old }}
                       base-ide: idea
-                      platform-version: 231
+                      platform-version: 232
                       verify-plugin: true
                       default-edition-for-tests: 2021
 
@@ -266,7 +266,7 @@ jobs:
               run: |
                   echo "ORG_GRADLE_PROJECT_ideaVersion=${{ env.OLD_IDEA_VERSION }}" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_clionVersion=${{ env.OLD_CLION_VERSION }}" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=${{ env.OLD_NATIVE_DEBUG_PLUGIN_VERSION }}" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPlugin=${{ env.OLD_NATIVE_DEBUG_PLUGIN }}" >> $GITHUB_ENV
 
             - name: Set up test env variables
               run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
