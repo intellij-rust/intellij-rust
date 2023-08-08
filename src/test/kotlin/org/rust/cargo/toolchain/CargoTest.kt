@@ -47,10 +47,31 @@ class CargoTest : RsTestBase() {
         checkCommandLine(
             cargo.toGeneralCommandLine(project, CargoCommandLine("check", wd)), """
             cmd: /usr/bin/cargo check
-            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
+            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268, https_proxy=http://user:pwd@host:3268
             """, """
             cmd: C:/usr/bin/cargo.exe check
-            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
+            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268, https_proxy=http://user:pwd@host:3268
+        """)
+    }
+
+    fun `test propagates socks proxy settings`() {
+        val http = HttpConfigurable().apply {
+            USE_HTTP_PROXY = true
+            PROXY_TYPE_IS_SOCKS = true
+            PROXY_AUTHENTICATION = true
+            PROXY_HOST = "host"
+            PROXY_PORT = 3268
+            proxyLogin = "user"
+            plainProxyPassword = "pwd"
+        }
+        val cargo = cargo.apply { setHttp(http) }
+        checkCommandLine(
+            cargo.toGeneralCommandLine(project, CargoCommandLine("check", wd)), """
+            cmd: /usr/bin/cargo check
+            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi, http_proxy=socks://user:pwd@host:3268, https_proxy=socks://user:pwd@host:3268, socks_proxy=socks://user:pwd@host:3268
+            """, """
+            cmd: C:/usr/bin/cargo.exe check
+            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi, http_proxy=socks://user:pwd@host:3268, https_proxy=socks://user:pwd@host:3268, socks_proxy=socks://user:pwd@host:3268
         """)
     }
 
