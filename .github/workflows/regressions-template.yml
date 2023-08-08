@@ -77,12 +77,11 @@ jobs:
                   java-version: 17
 
             - name: Set up Rust
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: stable
-                  components: rust-src
-                  default: true
+              run: |
+                  rustup set profile minimal
+                  rustup toolchain install stable \
+                    --component rust-src
+                  rustup default stable
 
             - name: Install bevy dependencies
               run: |

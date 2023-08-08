@@ -79,12 +79,11 @@ jobs:
 
             - name: Set up Rust
               if: ${{ !inputs.cache || !steps.cache-native-code-artifact.outputs.cache-hit }}
-              uses: actions-rs/toolchain@v1
-              with:
-                  profile: minimal
-                  toolchain: ${{ inputs.rust-version }}
-                  target: ${{ matrix.config.target }}
-                  default: true
+              run: |
+                  rustup set profile minimal
+                  rustup toolchain install ${{ inputs.rust-version }}
+                  rustup target add --toolchain ${{ inputs.rust-version }} ${{ matrix.config.target }}
+                  rustup default ${{ inputs.rust-version }}
 
             - name: Install Linux arm64 linker
               if: matrix.config.target == 'aarch64-unknown-linux-gnu'
