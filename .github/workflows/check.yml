@@ -208,16 +208,14 @@ jobs:
             - name: Set up Rust
               run: |
                   rustup set profile minimal
-                  rustup toolchain install ${{ matrix.rust-version }} \
-                    --component rust-src rustfmt clippy
+                  rustup toolchain install ${{ matrix.rust-version }} --component rust-src rustfmt clippy
                   rustup default ${{ matrix.rust-version }}
 
             # Requires for tests with overridden toolchain
             - name: Set up nightly Rust
               run: |
                   rustup set profile minimal
-                  rustup toolchain install nightly \
-                    --component rust-src rustfmt
+                  rustup toolchain install nightly --component rust-src rustfmt
 
             - name: Cache cargo binaries
               uses: actions/cache@v3
@@ -236,19 +234,15 @@ jobs:
             - name: Install evcxr
               # BACKCOMPAT: Evcxr 0.13 requires at least stable-1.59
               if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.59.0'
-              uses: actions-rs/cargo@v1
-              with:
-                  command: install
-                  # https://github.com/intellij-rust/intellij-rust/issues/9406
-                  args: evcxr_repl --locked --version ${{ env.EVCXR_REPL_VERSION }}
+              run: |
+                  cargo install evcxr_repl --locked --version ${{ env.EVCXR_REPL_VERSION }}
+              # https://github.com/intellij-rust/intellij-rust/issues/9406
 
             - name: Install cargo-generate
               # BACKCOMPAT: cargo-generate 0.15.2 requires Rust 1.61.0 or newer
               if: matrix.rust-version >= '1.61.0'
-              uses: actions-rs/cargo@v1
-              with:
-                  command: install
-                  args: cargo-generate --locked
+              run: |
+                  cargo install cargo-generate --locked
 
             - name: Check environment
               run: |

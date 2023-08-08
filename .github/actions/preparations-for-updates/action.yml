@@ -10,8 +10,7 @@ runs:
         - name: Set up Rust
           run: |
               rustup set profile minimal
-              rustup toolchain install ${{ inputs.toolchain }} \
-                --component rust-src rustfmt clippy  # should be synchronized with `check` workflow
+              rustup toolchain install ${{ inputs.toolchain }} --component rust-src rustfmt clippy  # should be synchronized with `check` workflow
               rustup default ${{ inputs.toolchain }}
 
         - name: Set up git user

@@ -79,8 +79,7 @@ jobs:
             - name: Set up Rust
               run: |
                   rustup set profile minimal
-                  rustup toolchain install stable \
-                    --component rust-src
+                  rustup toolchain install stable --component rust-src
                   rustup default stable
 
             - name: Install bevy dependencies

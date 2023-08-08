@@ -93,10 +93,10 @@ jobs:
 
             - name: Build
               if: ${{ !inputs.cache || !steps.cache-native-code-artifact.outputs.cache-hit }}
-              uses: actions-rs/cargo@v1
-              with:
-                  command: build
-                  args: --manifest-path native-helper/Cargo.toml --target ${{ matrix.config.target }} --release
+              run: |
+                  cargo \
+                      build \
+                      --manifest-path native-helper/Cargo.toml --target ${{ matrix.config.target }} --release
 
             - name: Publish
               uses: actions/upload-artifact@v3
