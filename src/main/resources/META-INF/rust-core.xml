@@ -328,6 +328,8 @@
 
         <colorSettingsPage implementation="org.rust.ide.colors.RsColorSettingsPage"/>
 
+        <editorTabColorProvider implementation="org.rust.ide.colors.ColorProvider" />
+
         <additionalTextAttributes scheme="Default" file="org/rust/ide/colors/RustDefault.xml"/>
         <additionalTextAttributes scheme="Darcula" file="org/rust/ide/colors/RustDarcula.xml"/>
 
