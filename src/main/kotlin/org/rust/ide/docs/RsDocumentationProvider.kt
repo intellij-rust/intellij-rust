@@ -8,18 +8,24 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.ide.actions.macroExpansion.expandMacroForView
+import org.rust.ide.actions.macroExpansion.reformatMacroExpansion
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.ide.presentation.render
 import org.rust.lang.core.crate.crateGraph
+import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.resolveTypeAliasToImpl
@@ -31,6 +37,7 @@ import org.rust.lang.doc.psi.RsDocComment
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.escaped
 import org.rust.openapiext.hitOnFalse
+import org.rust.stdext.RsResult
 import org.rust.stdext.joinToWithBuffer
 import java.util.function.Consumer
 
@@ -42,7 +49,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         when (element) {
             is RsTypeParameter -> definition(buffer) { generateDoc(element, it) }
             is RsConstParameter -> definition(buffer) { generateDoc(element, it) }
-            is RsDocAndAttributeOwner -> generateDoc(element, buffer)
+            is RsDocAndAttributeOwner -> generateDoc(element, buffer, originalElement)
             is RsPatBinding -> definition(buffer) { generateDoc(element, it) }
             is RsPath -> generateDoc(element, buffer)
             else -> generateCustomDoc(element, buffer)
@@ -80,7 +87,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
     }
 
-    private fun generateDoc(element: RsDocAndAttributeOwner, buffer: StringBuilder) {
+    private fun generateDoc(element: RsDocAndAttributeOwner, buffer: StringBuilder, originalElement: PsiElement?) {
         definition(buffer) {
             element.header(it)
             element.signature(it)
@@ -94,6 +101,44 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         if (text.isNullOrEmpty()) return
         buffer += "\n" // Just for more pretty html text representation
         content(buffer) { it += text }
+        buffer += "\n" // Just for more pretty html text representation
+        val possiblyExpandedElement = originalElement?.findExpansionElementOrSelf()
+        val macroCall = possiblyExpandedElement?.contextMacroCall
+        if (macroCall != null) {
+            generateExpansion(macroCall, buffer)
+        }
+    }
+
+    private fun generateExpansion(call: RsPossibleMacroCall, buffer: StringBuilder) {
+        val macroPreview = expandMacroForView(
+            macroToExpand = call,
+            expandRecursively = true,
+            sizeLimit = macroExpansionLimitInBytes,
+            hasWriteAccess = false,
+        )
+        content(buffer) { builder ->
+            builder.h2 { em { append(RsBundle.message("quick.doc.macro.expansion")) } }
+            when (macroPreview) {
+                is RsResult.Ok -> builder.p {
+                    val details = macroPreview.ok
+                    val expanded = reformatMacroExpansion(details.macroToExpand, details.expansion, false)
+                        .elements
+                        .joinToString(separator = "\n") { it.text }
+                    HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                        builder,
+                        call.project,
+                        call.language,
+                        expanded,
+                        DocumentationSettings.getHighlightingSaturation(false),
+                    )
+                }
+                is RsResult.Err -> builder.p("grayed") {
+                    em {
+                        append(RsBundle.message("quick.doc.expansion.is.unavailable"))
+                    }
+                }
+            }
+        }
     }
 
     private fun generateDoc(element: RsPatBinding, buffer: StringBuilder) {
@@ -275,6 +320,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     companion object {
         const val STD_DOC_HOST = "https://doc.rust-lang.org"
+        const val macroExpansionLimitInBytes: Int = 4096
     }
 
     object Testmarks {
@@ -641,4 +687,26 @@ private inline fun StringBuilder.b(action: (StringBuilder) -> Unit) {
     append("<b>")
     action(this)
     append("</b>")
+}
+
+private inline fun StringBuilder.h2(action: StringBuilder.() -> Unit) {
+    append("<h2>")
+    action(this)
+    append("</h2>")
+}
+
+private inline fun StringBuilder.em(action: StringBuilder.() -> Unit) {
+    append("<em>")
+    action(this)
+    append("</em>")
+}
+
+private inline fun StringBuilder.p(clazz: String? = null, action: StringBuilder.() -> Unit) {
+    append("<p")
+    if (clazz != null) {
+        append(" class='$clazz'")
+    }
+    append(">")
+    action(this)
+    append("</p>")
 }
