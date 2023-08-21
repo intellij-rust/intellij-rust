@@ -533,6 +533,7 @@ val CLIPPY_LINTS: List<Lint> = listOf(
     Lint("short_circuit_statement", false),
     Lint("should_assert_eq", false),
     Lint("should_implement_trait", false),
+    Lint("should_panic_without_expect", false),
     Lint("significant_drop_in_scrutinee", false),
     Lint("significant_drop_tightening", false),
     Lint("similar_names", false),
