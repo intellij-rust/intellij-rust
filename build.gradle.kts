@@ -49,7 +49,7 @@ val basePluginArchiveName = "intellij-rust"
 
 plugins {
     idea
-    kotlin("jvm") version "1.8.22"
+    kotlin("jvm") version "1.9.0"
     id("org.jetbrains.intellij") version "1.15.0"
     id("org.jetbrains.grammarkit") version "2022.3.1"
     id("net.saliman.properties") version "1.5.2"
