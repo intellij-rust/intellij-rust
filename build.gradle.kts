@@ -107,7 +107,7 @@ allprojects {
                 jvmTarget.set(JvmTarget.JVM_17)
                 languageVersion.set(KotlinVersion.DEFAULT)
                 // see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
-                apiVersion.set(KotlinVersion.KOTLIN_1_7)
+                apiVersion.set(KotlinVersion.KOTLIN_1_8)
                 freeCompilerArgs.set(listOf("-Xjvm-default=all"))
             }
         }
