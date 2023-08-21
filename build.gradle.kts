@@ -3,10 +3,7 @@ import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.intellij.tasks.PatchPluginXmlTask
-import org.jetbrains.intellij.tasks.PrepareSandboxTask
-import org.jetbrains.intellij.tasks.PublishPluginTask
-import org.jetbrains.intellij.tasks.RunIdeTask
+import org.jetbrains.intellij.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -356,11 +353,16 @@ project(":plugin") {
             finalizedBy(mergePluginJarTask)
             enabled = true
         }
-        buildSearchableOptions {
-            // Force `mergePluginJarTask` be executed before `buildSearchableOptions`
-            // Otherwise, `buildSearchableOptions` task can't load the plugin and searchable options are not built.
+        withType<RunIdeBase> {
+            // Force `mergePluginJarTask` be executed before any task based on `RunIdeBase` (for example, `runIde` or `buildSearchableOptions`).
+            // Otherwise, these tasks fail because of implicit dependency.
             // Should be dropped when jar merging is implemented in `gradle-intellij-plugin` itself
             dependsOn(mergePluginJarTask)
+        }
+        verifyPlugin {
+            dependsOn(mergePluginJarTask)
+        }
+        buildSearchableOptions {
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
         withType<PrepareSandboxTask> {
