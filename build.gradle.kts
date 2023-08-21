@@ -7,6 +7,8 @@ import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishPluginTask
 import org.jetbrains.intellij.tasks.RunIdeTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
@@ -101,12 +103,12 @@ allprojects {
 
     tasks {
         withType<KotlinCompile> {
-            kotlinOptions {
-                jvmTarget = VERSION_17.toString()
-                languageVersion = "1.8"
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_17)
+                languageVersion.set(KotlinVersion.DEFAULT)
                 // see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
-                apiVersion = "1.7"
-                freeCompilerArgs = listOf("-Xjvm-default=all")
+                apiVersion.set(KotlinVersion.KOTLIN_1_7)
+                freeCompilerArgs.set(listOf("-Xjvm-default=all"))
             }
         }
         withType<PatchPluginXmlTask> {
