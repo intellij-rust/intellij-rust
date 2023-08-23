@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 import com.intellij.openapi.util.text.StringUtil.unquoteString
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.SemVer
+import com.intellij.util.text.nullize
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.allPackages
@@ -284,11 +285,11 @@ class CargoTestEventsConverter(
         private val LINE_NUMBER_RE: Regex = """\s+\(line\s+(?<line>\d+)\)\s*""".toRegex()
 
         private val ERROR_MESSAGE_RE_OLD: Regex =
-            """thread '.*' panicked at '(assertion failed: `\(left (?<sign>.*) right\)`\s*left: `(?<left>.*?)`,\s*right: `(?<right>.*?)`(: )?)?(?<message>.*)',"""
+            """thread '.*' panicked at '(?<fullMessage>(assertion failed: `\(left (?<sign>.*) right\)`\s*left: `(?<left>.*?)`,\s*right: `(?<right>.*?)`(: )?)?(?<message>.*))',"""
                 .toRegex(setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
 
         private val ERROR_MESSAGE_RE: Regex =
-            """thread '.*' panicked at (\S*)\n(assertion `left (?<sign>.*) right` failed(: )?)?(?<message>.*?)\n\s*(left: (?<left>.*?)\n\s*right: (?<right>.*?)\n)?(note|stack backtrace):"""
+            """thread '.*' panicked at (\S*)\n(?<fullMessage>(assertion `left (?<sign>.*) right` failed(: )?)?(?<message>.*?)\n\s*(left: (?<left>.*?)\n\s*right: (?<right>.*?)\n)?)(note|stack backtrace):"""
                 .toRegex(setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
 
         private val NodeId.name: String
@@ -378,7 +379,8 @@ class CargoTestEventsConverter(
         private fun parseErrorMessage(failedMessage: String, rustcVersion: SemVer?): ErrorMessage? {
             val regex = if (rustcVersion == null || rustcVersion < RUSTC_1_73_BETA) ERROR_MESSAGE_RE_OLD else ERROR_MESSAGE_RE
             val groups = regex.find(failedMessage)?.groups ?: return null
-            val message = groups["message"]?.value ?: error("Failed to find `message` capturing group")
+            val message = groups["message"]?.value.nullize() ?: groups["fullMessage"]?.value
+                ?: error("Failed to find `message` or `fullMessage` capturing group")
 
             val diff = if (groups["sign"]?.value == "==") {
                 val left = groups["left"]?.value?.let(::unescape)
