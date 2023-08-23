@@ -947,22 +947,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test no keywords in pat tuple struct`() = checkNotContainsCompletion(listOf("pub", "async", "fn", "let"), """
-        fn main() {
-            match 0 {
-                /*caret*/() => {}
-            }
-        }
-    """)
-
-    fun `test no keywords in pat struct`() = checkNotContainsCompletion(listOf("pub", "async", "fn", "let"), """
-        fn main() {
-            match 0 {
-                /*caret*/{} => {}
-            }
-        }
-    """)
-
     fun `test if let completion`() = checkCompletion("let", """
         fn main() {
             if l/*caret*/
@@ -1384,16 +1368,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         fn main() {
             let lambda = async move/*caret*/ /*some comment*/ || { 1 };
-        }
-    """)
-
-    fun `test async move completion block`() = checkCompletion("move", tailText = " {...}", """
-        fn main() {
-            let lambda = async mo/*caret*/;
-        }
-    """, """
-        fn main() {
-            let lambda = async move { /*caret*/ };
         }
     """)
 

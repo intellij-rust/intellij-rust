@@ -9,7 +9,6 @@ import com.intellij.execution.Executor
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
-import com.intellij.execution.impl.statistics.FusAwareRunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
@@ -17,7 +16,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.util.ProgramParametersUtil
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -212,7 +210,9 @@ open class CargoCommandConfiguration(
     override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties? {
         val config = clean().ok ?: return null
         return if (showTestToolWindow(config.cmd)) {
-            CargoTestConsoleProperties(this, executor)
+            val cargoProject = findCargoProject(project, config.cmd.additionalArguments, config.cmd.workingDirectory)
+            val version = cargoProject?.rustcInfo?.version?.semver
+            CargoTestConsoleProperties(this, executor, version)
         } else {
             null
         }
