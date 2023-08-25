@@ -31,6 +31,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("cenum_impl_drop_cast", false),
     Lint("clashing_extern_declarations", false),
     Lint("coherence_leak_check", false),
+    Lint("coinductive_overlap_in_coherence", false),
     Lint("conflicting_repr_hints", false),
     Lint("confusable_idents", false),
     Lint("const_evaluatable_unchecked", false),
