@@ -48,6 +48,7 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("dropping_references", false),
     Lint("duplicate_macro_attributes", false),
     Lint("dyn_drop", false),
+    Lint("elided_lifetimes_in_associated_constant", false),
     Lint("elided_lifetimes_in_paths", false),
     Lint("ellipsis_inclusive_range_patterns", false),
     Lint("enum_intrinsics_non_enums", false),
