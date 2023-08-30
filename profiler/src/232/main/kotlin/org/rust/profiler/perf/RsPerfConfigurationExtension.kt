@@ -66,7 +66,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         val perfPath = toolchain.toLocalPath(settings.executablePath.orEmpty())
         val outputFilePath = PerfUtils.createOutputFilePath(toolEnvironment, settings.outputDirectory.nullize())
         cmdLine.addPerfStarter(perfPath, settings.samplingFrequency, settings.defaultCmdArgs, outputFilePath.toString())
-        toolchain.patchCommandLine(cmdLine)
+        toolchain.patchCommandLine(cmdLine, withSudo = false)
         context.putUserData(PERF_OUTPUT_FILE_KEY, outputFilePath)
     }
 

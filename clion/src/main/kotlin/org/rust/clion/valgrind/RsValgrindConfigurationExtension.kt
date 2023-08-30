@@ -87,7 +87,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
             val valgrindParameters = parametersBuilder.build(outputFilePath)
             valgrindParameters.add(programPath)
             cmdLine.parametersList.prependAll(*ArrayUtil.toStringArray(valgrindParameters))
-            toolchain.patchCommandLine(cmdLine)
+            toolchain.patchCommandLine(cmdLine, withSudo = false)
             putUserData<File>(OUTPUT_FILE_PATH_KEY, outputFile, configuration, context)
         } catch (e: IOException) {
             throw ExecutionException(e)
