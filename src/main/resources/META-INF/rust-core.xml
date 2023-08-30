@@ -1268,7 +1268,11 @@
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
 
         <notificationGroup id="Rust Plugin" displayType="BALLOON" bundle="messages.RsBundle" key="notification.group.rust.plugin"/>
+        <notificationGroup id="Rust Plugin Promotion" displayType="BALLOON" bundle="messages.RsBundle"
+                           key="notification.group.rust.promotion.plugin"/>
         <notificationGroup id="Rust Build Log" displayType="NONE" key="notification.group.rust.plugin"/>
+
+        <postStartupActivity implementation="org.rust.ide.notifications.RsIdePromotionStartupActivity"/>
 
         <!-- Editor Tab Title Providers -->
 
