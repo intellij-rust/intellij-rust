@@ -1,0 +1,23 @@
+<idea-plugin package="org.rust.profiler">
+    <!--suppress PluginXmlValidity -->
+    <dependencies>
+        <module name="intellij.profiler.asyncOne"/>
+        <module name="intellij.profiler.common"/>
+        <module name="intellij.profiler.clion"/>
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <programRunner implementation="org.rust.profiler.RsProfilerRunner"/>
+        <programRunner implementation="org.rust.profiler.legacy.RsProfilerRunnerLegacy"/>
+
+        <profiler.clion.profilerRunChecker implementation="org.rust.profiler.RsProfilerRunChecker"/>
+        <profiler.clion.profilerEnvironmentHost implementation="org.rust.profiler.RsProfilerEnvironmentHost"/>
+        <profiler.clion.navigatableSymbolSearcher implementation="org.rust.profiler.RsNavigatableSymbolSearcher"/>
+        <profiler.clion.profilerPresentationGroup implementation="org.rust.profiler.RsProfilerPresentationGroup"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.rust">
+        <runConfigurationExtension implementation="org.rust.profiler.perf.RsPerfConfigurationExtension"/>
+        <runConfigurationExtension implementation="org.rust.profiler.dtrace.RsDTraceConfigurationExtension"/>
+    </extensions>
+</idea-plugin>
