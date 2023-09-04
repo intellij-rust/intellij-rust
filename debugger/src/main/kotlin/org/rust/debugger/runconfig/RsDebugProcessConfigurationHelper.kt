@@ -98,7 +98,7 @@ class RsDebugProcessConfigurationHelper(
         val sysroot = checkSysroot(sysroot, RsBundle.message("notification.content.cannot.load.rustc.sources"))
             ?: return
         val sourceMapCommand = when (this) {
-            is LLDBDriver -> "settings set target.source-map"
+            is LLDBDriver -> "settings append target.source-map"
             is GDBDriver -> "set substitute-path"
             else -> return
         }
