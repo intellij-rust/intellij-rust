@@ -1,8 +1,10 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "support `Duplicated code fragment` inspection"
+
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

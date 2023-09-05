@@ -1,12 +1,14 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "integration with Grazie plugin"
+
 intellij {
-    plugins.set(listOf(ijRustBuild.graziePlugin))
+    plugins.set(listOf(intellijRust.graziePlugin))
 }
 
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

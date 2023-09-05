@@ -1,12 +1,14 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "interop with JavaScript language"
+
 intellij {
-    plugins.set(listOf(ijRustBuild.javaScriptPlugin))
+    plugins.set(listOf(intellijRust.javaScriptPlugin))
 }
 
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

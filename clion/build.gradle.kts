@@ -1,20 +1,16 @@
 plugins {
-    ijrust.conventions.base
-    idea
-    kotlin("jvm")
-    id("org.jetbrains.intellij")
-    id("org.jetbrains.grammarkit")
-    id("net.saliman.properties")
-    id("org.gradle.test-retry")
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "contains code available only in CLion"
+
 intellij {
-    version.set(ijRustBuild.clionVersion)
-    plugins.set(ijRustBuild.clionPlugins)
+    version.set(intellijRust.clionVersion)
+    plugins.set(intellijRust.clionPlugins)
 }
 
 dependencies {
-    implementation(project(":"))
-    implementation(project(":debugger"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    implementation(projects.debugger)
+    testImplementation(testFixtures(projects.intellijRust))
 }

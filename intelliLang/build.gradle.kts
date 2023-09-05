@@ -1,11 +1,14 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "integration with IntelliLang"
+
 intellij {
-    plugins.set(listOf(ijRustBuild.intelliLangPlugin))
+    plugins.set(listOf(intellijRust.intelliLangPlugin))
 }
+
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

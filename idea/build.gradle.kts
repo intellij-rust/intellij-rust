@@ -1,23 +1,21 @@
 plugins {
-    ijrust.conventions.base
-    idea
-    kotlin("jvm")
-    id("org.jetbrains.intellij")
-    id("org.jetbrains.grammarkit")
-    id("net.saliman.properties")
-    id("org.gradle.test-retry")
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "contains code available only in IDEA"
+
 intellij {
-    version.set(ijRustBuild.ideaVersion)
-    plugins.set(listOf(
-        ijRustBuild.javaPlugin,
-        // this plugin registers `com.intellij.ide.projectView.impl.ProjectViewPane` for IDEA that we use in tests
-        ijRustBuild.javaIdePlugin
-    ))
+    version.set(intellijRust.ideaVersion)
+    plugins.set(
+        listOf(
+            intellijRust.javaPlugin,
+            // this plugin registers `com.intellij.ide.projectView.impl.ProjectViewPane` for IDEA that we use in tests
+            intellijRust.javaIdePlugin
+        )
+    )
 }
 
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

@@ -1,8 +1,10 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "integration with IntelliJ Coverage plugin"
+
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

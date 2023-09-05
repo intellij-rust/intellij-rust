@@ -1,13 +1,12 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
 intellij {
-    version.set(ijRustBuild.clionVersion)
-    plugins.set(ijRustBuild.clionPlugins)
+    version.set(intellijRust.clionVersion)
+    plugins.set(intellijRust.clionPlugins)
 }
-
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }

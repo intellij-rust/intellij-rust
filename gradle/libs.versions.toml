@@ -1,0 +1,33 @@
+[versions]
+
+kotlin = "1.8.22"
+
+antlr = "4.13.0"
+
+intelliJGradle = "1.15.0"
+intelliJGradleGrammarKit = "2022.3.1"
+gradleProperties = "1.5.2"
+testRetry = "1.5.4"
+
+[libraries]
+
+jackson-dataformatToml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-toml", version = "2.14.2" }
+
+z4kn4fein-semver = { module = "io.github.z4kn4fein:semver", version = "1.4.2" }
+
+eclipse-jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version = "6.5.0.202303070854-r" }
+
+okhttp-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version = "4.11.0" }
+
+antlr-core = { module = "org.antlr:antlr4", version.ref = "antlr" }
+antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr" }
+
+intellijCompletionRanking-rust = { module = "org.jetbrains.intellij.deps.completion:completion-ranking-rust", version = "0.4.1" }
+
+#region Gradle plugins
+gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+gradlePlugin-intelliJGradle = { module = "org.jetbrains.intellij.plugins:gradle-intellij-plugin", version.ref = "intelliJGradle" }
+gradlePlugin-intelliJGradleGrammarKit = { module = "org.jetbrains.intellij.plugins:gradle-grammarkit-plugin", version.ref = "intelliJGradleGrammarKit" }
+gradlePlugin-gradleProperties = { module = "net.saliman:gradle-properties-plugin", version.ref = "gradleProperties" }
+gradlePlugin-testRetry = { module = "org.gradle:test-retry-gradle-plugin", version.ref = "testRetry" }
+#endregion

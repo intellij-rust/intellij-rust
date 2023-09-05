@@ -1,12 +1,15 @@
 plugins {
-    ijrust.conventions.intellij
+    id("intellij_rust.conventions.intellij")
 }
 
+description = "integration with IntelliJ Copyright plugin"
+
 intellij {
-    version.set(ijRustBuild.ideaVersion)
-    plugins.set(listOf(ijRustBuild.copyrightPlugin))
+    version.set(intellijRust.ideaVersion)
+    plugins.set(listOf(intellijRust.copyrightPlugin))
 }
+
 dependencies {
-    implementation(project(":"))
-    testImplementation(project(":", "testOutput"))
+    implementation(projects.intellijRust)
+    testImplementation(testFixtures(projects.intellijRust))
 }
