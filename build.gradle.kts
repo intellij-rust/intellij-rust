@@ -82,7 +82,7 @@ tasks {
         purgeOldFiles.set(true)
         classpath(grammarKitImplementation)
     }
-    withType<KotlinCompile> {
+    withType<KotlinCompile>().configureEach {
         dependsOn(generateLexer, generateParser)
     }
 }
