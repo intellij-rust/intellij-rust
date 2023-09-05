@@ -24,6 +24,8 @@ antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr" }
 
 intellijCompletionRanking-rust = { module = "org.jetbrains.intellij.deps.completion:completion-ranking-rust", version = "0.4.1" }
 
+jsoup = { module = "org.jsoup:jsoup", version = "1.16.1" }
+
 #region Gradle plugins
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 gradlePlugin-intelliJGradle = { module = "org.jetbrains.intellij.plugins:gradle-intellij-plugin", version.ref = "intelliJGradle" }

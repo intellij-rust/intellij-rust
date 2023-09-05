@@ -9,5 +9,5 @@ dependencies {
     implementation(libs.gradlePlugin.gradleProperties)
     implementation(libs.gradlePlugin.testRetry)
 
-    implementation("org.jsoup:jsoup:1.16.1")
+    implementation(libs.jsoup)
 }
