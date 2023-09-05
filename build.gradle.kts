@@ -12,9 +12,6 @@ import org.jsoup.Jsoup
 import java.io.Writer
 import kotlin.concurrent.thread
 
-// The same as `--stacktrace` param
-gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS
-
 val isCI = System.getenv("CI") != null
 val isTeamcity = System.getenv("TEAMCITY_VERSION") != null
 
