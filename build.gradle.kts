@@ -1,3 +1,6 @@
+import intellij_rust.tasks.UpdateCargoOptions
+import org.gradle.api.attributes.Usage.JAVA_RUNTIME
+import org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -55,6 +58,10 @@ val grammarKitImplementation by configurations.registering {
     isCanBeConsumed = false
     isCanBeResolved = true
 
+    attributes {
+        attribute(USAGE_ATTRIBUTE, objects.named(JAVA_RUNTIME))
+    }
+
     withDependencies {
         add(projects.grammarKitFakePsiDeps)
     }
@@ -99,7 +106,7 @@ tasks.register("resolveDependencies") {
     }
 }
 
-val updateCargoOptions by tasks.registering(intellij_rust.tasks.UpdateCargoOptions::class) {
+val updateCargoOptions by tasks.registering(UpdateCargoOptions::class) {
     cargoOptions.set(layout.projectDirectory.file("src/main/kotlin/org/rust/cargo/util/CargoOptions.kt"))
 }
 
