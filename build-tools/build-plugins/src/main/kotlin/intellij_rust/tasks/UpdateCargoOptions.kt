@@ -7,7 +7,7 @@ package intellij_rust.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.provider.Property
+import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
@@ -18,32 +18,37 @@ import java.io.Writer
 @CacheableTask
 abstract class UpdateCargoOptions : DefaultTask() {
 
+    /** The `CargoOptions.kt` that will be created by this task */
     @get:OutputFile
     abstract val cargoOptions: RegularFileProperty
 
+    /** The base URL for all cargo commands */
     @get:Input
-    abstract val commandUrl: Property<String>
+    val baseCommandUrl: String = "https://doc.rust-lang.org/cargo/commands"
 
+    init {
+        group = BasePlugin.BUILD_GROUP
+    }
 
     @TaskAction
     fun run() {
         cargoOptions.get().asFile.bufferedWriter().use {
             it.appendLine(
                 """
-                /*
-                 * Use of this source code is governed by the MIT license that can be
-                 * found in the LICENSE file.
-                 */
+                    /*
+                     * Use of this source code is governed by the MIT license that can be
+                     * found in the LICENSE file.
+                     */
 
-                package org.rust.cargo.util
+                    package org.rust.cargo.util
 
-                data class CargoOption(val name: String, val description: String) {
-                    val longName: String get() = "--${'$'}name"
-                }
+                    data class CargoOption(val name: String, val description: String) {
+                        val longName: String get() = "--${'$'}name"
+                    }
 
-            """.trimIndent()
+                """.trimIndent()
             )
-            it.writeCargoOptions("https://doc.rust-lang.org/cargo/commands")
+            it.writeCargoOptions(baseCommandUrl)
         }
     }
 
