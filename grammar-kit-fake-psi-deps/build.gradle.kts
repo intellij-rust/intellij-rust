@@ -1,0 +1,3 @@
+plugins {
+    ijrust.conventions.intellij
+}
