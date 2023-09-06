@@ -62,19 +62,21 @@ dependencies {
     kotlinSourcesJar(projects.mlCompletion)
 }
 
-// Collects all jars produced by compilation of project modules and merges them into single one.
-// We need to put all plugin manifest files into single jar to make new plugin model work
 val mergePluginJar by tasks.registering(Jar::class) {
+    group = BasePlugin.BUILD_GROUP
+
+    description = "Collects all jars produced by compilation of project modules and merges them into single one"
+    // We need to put all plugin manifest files into single jar to make new plugin model work
+
     duplicatesStrategy = DuplicatesStrategy.FAIL
+
     archiveBaseName.set(intellij.pluginName)
 
-    exclude("META-INF/MANIFEST.MF")
+    exclude("**/META-INF/MANIFEST.MF")
     exclude("**/classpath.index")
 
-    val pluginLibDir by lazy {
-        val sandboxTask = tasks.prepareSandbox.get()
-        sandboxTask.destinationDir.resolve("${sandboxTask.pluginName.get()}/lib")
-    }
+    val archives = serviceOf<ArchiveOperations>()
+    val fs = serviceOf<FileSystemOperations>()
 
     fun File.isManifestFile(): Boolean {
         if (extension != "xml") return false
@@ -91,23 +93,29 @@ val mergePluginJar by tasks.registering(Jar::class) {
     fun File.isPluginJar(): Boolean {
         if (!isFile) return false
         if (extension != "jar") return false
-        return zipTree(this).files.any { it.isManifestFile() }
+        return archives.zipTree(this).files.any { it.isManifestFile() }
     }
 
-    val pluginJars by lazy {
-        pluginLibDir.listFiles().orEmpty().filter { it.isPluginJar() }
+    val pluginLibDir: Provider<File> = tasks.prepareSandbox.map { task ->
+        task.destinationDir.resolve("${task.pluginName.get()}/lib")
     }
 
-    destinationDirectory.set(project.layout.dir(provider { pluginLibDir }))
+    outputs.dir(pluginLibDir).withPropertyName("pluginLibDir")
 
-    doFirst {
-        for (file in pluginJars) {
-            from(zipTree(file))
+    val pluginJars = pluginLibDir.map { dir ->
+        dir.listFiles().orEmpty().filter(File::isPluginJar)
+    }
+
+    val pluginJarsUnzipped = pluginJars.map { it.map(archives::zipTree) }
+
+    from(pluginJarsUnzipped)
+
+    destinationDirectory.set(temporaryDir)
+
+    doLast("remove the merged jars") {
+        fs.delete {
+            delete(pluginJars)
         }
-    }
-
-    doLast {
-        delete(pluginJars)
     }
 }
 
@@ -141,16 +149,19 @@ tasks {
         // Otherwise, base name is the same as gradle module name
         archiveBaseName.set(intellij.pluginName)
     }
+
     runIde { enabled = true }
+
     prepareSandbox {
         finalizedBy(mergePluginJar)
         enabled = true
     }
+
     buildSearchableOptions {
         // Force `mergePluginJar` be executed before `buildSearchableOptions`
         // Otherwise, `buildSearchableOptions` task can't load the plugin and searchable options are not built.
         // Should be dropped when jar merging is implemented in `gradle-intellij-plugin` itself
-        dependsOn(mergePluginJar)
+        mustRunAfter(mergePluginJar)
         val enableBuildSearchableOptions = intellijRust.enableBuildSearchableOptions
         onlyIf { enableBuildSearchableOptions.get() }
     }
@@ -178,7 +189,7 @@ tasks {
 
     withType<PublishPluginTask>().configureEach {
         token.set(intellijRust.publishToken)
-        channels.set(intellijRust.channel.map { listOf(it) })
+        channels.add(intellijRust.channel)
     }
 }
 
@@ -197,10 +208,19 @@ tasks.withType<PrepareSandboxTask>().configureEach {
     }
 }
 
-// Generates event scheme for Rust plugin FUS events to `plugin/build/eventScheme.json`
-task<RunIdeTask>("buildEventsScheme") {
+val buildEventsScheme by tasks.registering(RunIdeTask::class) {
+    description = "Generate event scheme for Rust plugin FUS events to `plugin/build/eventScheme.json`"
     dependsOn(tasks.prepareSandbox)
-    args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
+
+    val eventSchemeJsonFile = layout.projectDirectory.file("eventScheme.json")
+    outputs.file(eventSchemeJsonFile).withPropertyName("eventSchemeJsonFile")
+
+    args(
+        "buildEventsScheme",
+        "--outputFile=${eventSchemeJsonFile.asFile.absoluteFile.invariantSeparatorsPath}",
+        "--pluginId=org.rust.lang",
+    )
+
     // BACKCOMPAT: 2023.1. Update value to 232 and this comment
     // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
     // It will be used by TeamCity automation to set minimal IDE version for new events
