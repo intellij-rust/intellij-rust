@@ -196,7 +196,7 @@ The current Rust plugin modules:
 * `:js` - interop with JavaScript language
 * `:ml-completion` - integration with [Machine Learning Code Completion](https://github.com/JetBrains/intellij-community/tree/master/plugins/completion-ml-ranking) plugin
 
-If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
+If you want to implement integration with another plugin/IDE, you should create a new Gradle module for that.
 
 ### Platform versions
 
@@ -209,7 +209,7 @@ Supported values are the same as platform [branch numbers](https://www.jetbrains
 
 #### Source code for different platform versions
 
-Sometimes there are not compatible changes in new platform version.
+Sometimes there are no compatible changes in new platform version.
 To avoid creating several parallel vcs branches for each version, we have separate
 folders for each version to keep platform dependent code.
 
@@ -231,7 +231,7 @@ Of course, only one batch of platform dependent code will be used in compilation
 
 # Testing
 
-It is much easier to understand code changes if they are accompanied with tests.
+It is much easier to understand code changes if they are accompanied by tests.
 Most tests are fixture-driven. They typically:
   1. Load a rust file that represents the initial state
   2. Execute your method under test
@@ -276,32 +276,36 @@ the same filename as the initial fixture, but with `_after` appended.
 Continuing with our example above, our initial fixture `blocks.rs` could look
 like:
 
-    pub fn main() {
-    let x = {
-    92
-    };
-    x;
-    }
+```rust
+pub fn main() {
+let x = {
+92
+};
+x;
+}
+```
 
 While our expected-output fixture `blocks_after.rs` contains:
 
-    pub fn main() {
-        let x = {
-            92
-        };
-        x;
-    }
+```rust
+pub fn main() {
+    let x = {
+        92
+    };
+    x;
+}
+```
 
 Some tests are dependent on the position of the editor caret. Fixtures support a
 special marker `<caret>` for this purpose. Multiple such markers for more
 complex tests. An example of a fixture with a caret:
 
-    pub fn main>() {
-      let _ = S {
-        <caret>
-    };
-
-
+```rust
+pub fn main>() {
+  let _ = S {
+    <caret>
+};
+```
 #### Test Classes
 
 Test classes are JUnit and written in Kotlin. They specify the resource path in
@@ -309,12 +313,14 @@ which fixtures are found and contain a number of test methods. Test methods
 follow a simple convention: their name is the initial fixture name camel-cased.
 For example, `RsFormatterTest.kt` would look like:
 
-    class RsFormatterTest : FormatterTestCase() {
-        override fun getTestDataPath() = "src/test/resources"
-        override fun getFileExtension() = "rs"
+```kotlin
+class RsFormatterTest : FormatterTestCase() {
+    override fun getTestDataPath() = "src/test/resources"
+    override fun getFileExtension() = "rs"
 
-        fun testBlocks() = stubOnlyResolve()
-    }
+    fun testBlocks() = stubOnlyResolve()
+}
+```
 
 The test method `testBlocks` states that this test uses `blocks.rs` as the
 initial fixture and `blocks_after.rs` as the expected output fixture. A more
