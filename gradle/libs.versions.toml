@@ -1,12 +1,11 @@
 [versions]
 
-kotlin = "1.8.22"
+kotlin = "1.9.0"
 
 antlr = "4.13.0"
 
 intelliJGradle = "1.15.0"
 intelliJGradleGrammarKit = "2022.3.1"
-gradleProperties = "1.5.2"
 testRetry = "1.5.4"
 
 [libraries]
@@ -30,6 +29,5 @@ jsoup = { module = "org.jsoup:jsoup", version = "1.16.1" }
 gradlePlugin-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 gradlePlugin-intelliJGradle = { module = "org.jetbrains.intellij.plugins:gradle-intellij-plugin", version.ref = "intelliJGradle" }
 gradlePlugin-intelliJGradleGrammarKit = { module = "org.jetbrains.intellij.plugins:gradle-grammarkit-plugin", version.ref = "intelliJGradleGrammarKit" }
-gradlePlugin-gradleProperties = { module = "net.saliman:gradle-properties-plugin", version.ref = "gradleProperties" }
 gradlePlugin-testRetry = { module = "org.gradle:test-retry-gradle-plugin", version.ref = "testRetry" }
 #endregion

@@ -7,7 +7,6 @@ plugins {
     idea
     id("intellij_rust.conventions.intellij")
     id("intellij_rust.conventions.rust-compile")
-    id("net.saliman.properties") version "1.5.2"
 }
 
 description = "root/core module"
