@@ -93,6 +93,7 @@ val mergePluginJar by tasks.registering(Jar::class) {
     fun File.isPluginJar(): Boolean {
         if (!isFile) return false
         if (extension != "jar") return false
+        if (name == archiveFileName.get()) return false
         return archives.zipTree(this).files.any { it.isManifestFile() }
     }
 
@@ -110,7 +111,7 @@ val mergePluginJar by tasks.registering(Jar::class) {
 
     from(pluginJarsUnzipped)
 
-    destinationDirectory.set(temporaryDir)
+    destinationDirectory.set(objects.directoryProperty().fileProvider(pluginLibDir))
 
     doLast("remove the merged jars") {
         fs.delete {
