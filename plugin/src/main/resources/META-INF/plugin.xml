@@ -1,6 +1,6 @@
 <idea-plugin package="org.rust" xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <id>org.rust.lang</id>
-    <name>Rust</name>
+    <name>[Deprecated] Rust</name>
 
     <vendor>JetBrains</vendor>
 
