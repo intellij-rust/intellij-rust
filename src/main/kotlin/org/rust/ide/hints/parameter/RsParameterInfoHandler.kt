@@ -8,7 +8,7 @@ package org.rust.ide.hints.parameter
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.ParameterInfoUtils
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
-import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.RsCallExpr
@@ -26,8 +26,8 @@ class RsParameterInfoHandler : RsAsyncParameterInfoHandler<RsValueArgumentList, 
     override fun findTargetElement(file: PsiFile, offset: Int): RsValueArgumentList? =
         file.findElementAt(offset)?.ancestorStrict()
 
-    override fun calculateParameterInfo(element: RsValueArgumentList): Array<RsArgumentsDescription>? {
-        return RsArgumentsDescription.findDescriptionList(element)?.toTypedArray()
+    override fun calculateParameterInfo(element: RsValueArgumentList): Array<RsArgumentsDescription> {
+        return RsArgumentsDescription.findDescriptionList(element).toTypedArray()
     }
 
     override fun updateParameterInfo(parameterOwner: RsValueArgumentList, context: UpdateParameterInfoContext) {
@@ -78,13 +78,13 @@ class RsArgumentsDescription(
         /**
          * Finds declarations of the func/method and creates description of its arguments
          */
-        fun findDescriptionList(args: RsValueArgumentList): List<RsArgumentsDescription>? {
+        fun findDescriptionList(args: RsValueArgumentList): List<RsArgumentsDescription> {
             val call = args.parent
             val callInfos = when (call) {
                 is RsCallExpr -> CallInfo.multiResolve(call)
                 is RsMethodCall -> CallInfo.multiResolve(call)
                 else -> null
-            } ?: return null
+            } ?: return emptyList()
             return callInfos.map { getParams(call, it) }
         }
     }
