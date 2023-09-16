@@ -8,7 +8,6 @@ package org.rust.ide.refactoring
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.refactoring.introduceVariable.IntroduceVariableTestmarks
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsExpr
 
 
@@ -84,7 +83,6 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences forward`() = doTest("""
         fn hello() {
             foo(5 + /*caret*/10);
@@ -99,7 +97,6 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences backward`() = doTest("""
         fn main() {
             let a = 1;
@@ -116,7 +113,6 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences backward for expr stmt`() = doTest("""
         fn main() {
             let a = 1;
@@ -133,7 +129,6 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test replace occurrences backward for returned expr`() = doTest("""
         fn main() {
             let _ = {

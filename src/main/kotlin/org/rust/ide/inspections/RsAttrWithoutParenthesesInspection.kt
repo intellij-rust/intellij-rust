@@ -6,7 +6,6 @@
 package org.rust.ide.inspections
 
 import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.isRootMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.utils.RsDiagnostic
@@ -14,7 +13,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsAttrWithoutParenthesesInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitMetaItem(metaItem: RsMetaItem) {
             if (!metaItem.isRootMetaItem()) return
             val name = metaItem.name ?: return

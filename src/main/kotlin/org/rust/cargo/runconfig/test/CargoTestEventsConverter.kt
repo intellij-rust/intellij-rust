@@ -108,15 +108,23 @@ class CargoTestEventsConverter(
         outputType: Key<*>,
         visitor: ServiceMessageVisitor
     ): Boolean {
-        val testMessage = LibtestTestMessage.fromJson(jsonObject)
-            ?.let {
+        val serviceMessages = when (
+            val libtestMessage = LibtestTestMessage.fromJson(jsonObject) ?: LibtestBenchMessage.fromJson(jsonObject)
+        ) {
+            is LibtestTestMessage -> {
                 // Parse `rustdoc` test name:
                 // src/lib.rs - qualifiedName (line #i) -> qualifiedName (line #i)
-                val qualifiedName = it.name.substringAfter(" - ")
-                it.copy(name = "$target::$qualifiedName")
-            } ?: return false
-        val messages = createServiceMessagesFor(testMessage) ?: return false
-        for (message in messages) {
+                val qualifiedName = libtestMessage.name.substringAfter(" - ")
+                val fixedMessage = libtestMessage.copy(name = "$target::$qualifiedName")
+                createServiceMessagesFor(fixedMessage) ?: return false
+            }
+            is LibtestBenchMessage -> {
+                val fixedMessage = libtestMessage.copy(name = "$target::${libtestMessage.name}")
+                createServiceMessagesFor(fixedMessage)
+            }
+            else -> return false
+        }
+        for (message in serviceMessages) {
             super.processServiceMessages(message.toString(), outputType, visitor)
         }
         return true
@@ -167,6 +175,17 @@ class CargoTestEventsConverter(
             }
             else -> return null
         }
+        return messages
+    }
+
+    private fun createServiceMessagesFor(benchMessage: LibtestBenchMessage): List<ServiceMessageBuilder> {
+        val messages = mutableListOf<ServiceMessageBuilder>()
+        val result = "${benchMessage.median} ns/iter (+/- ${benchMessage.deviation})\n"
+        messages.add(createTestStdOutMessage(benchMessage.name, result))
+        val duration = getTestDuration(benchMessage.name)
+        messages.add(createTestFinishedMessage(benchMessage.name, duration))
+        recordSuiteChildFinished(benchMessage.name)
+        processFinishedSuites(messages)
         return messages
     }
 
@@ -420,6 +439,22 @@ private data class LibtestTestMessage(
                 return null
             }
             return Gson().fromJson(json, LibtestTestMessage::class.java)
+        }
+    }
+}
+
+private data class LibtestBenchMessage(
+    val type: String,
+    val name: String,
+    val median: String,
+    val deviation: String
+) {
+    companion object {
+        fun fromJson(json: JsonObject): LibtestBenchMessage? {
+            if (json.getAsJsonPrimitive("type")?.asString != "bench") {
+                return null
+            }
+            return Gson().fromJson(json, LibtestBenchMessage::class.java)
         }
     }
 }

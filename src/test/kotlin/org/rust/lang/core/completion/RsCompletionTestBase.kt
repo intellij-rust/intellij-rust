@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
@@ -68,6 +69,14 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         @Language("Rust") after: String
     ) = completionFixture.doSingleCompletionByFileTree(before, after)
 
+    protected fun doSingleCompletionWithLiveTemplate(
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String
+    ) = checkByTextWithLiveTemplate(before, after, toType) {
+        executeSoloCompletion()
+    }
+
     protected fun checkContainsCompletion(
         variant: String,
         @Language("Rust") code: String,
@@ -103,6 +112,22 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         @Language("Rust") after: String,
         completionChar: Char = '\n'
     ) = completionFixture.checkCompletion(lookupString, before, after, completionChar)
+
+    fun checkCompletionWithLiveTemplate(
+        lookupString: String,
+        @Language("Rust") before: String,
+        toType: String,
+        @Language("Rust") after: String
+    ) {
+        checkByTextWithLiveTemplate(before.trimIndent(), after.trimIndent(), toType) {
+            val items = myFixture.completeBasic()!!
+            val lookupItem = items.find {
+                it.presentation.itemText == lookupString
+            } ?: error("Lookup string $lookupString not found")
+            myFixture.lookup.currentItem = lookupItem
+            myFixture.type('\n')
+        }
+    }
 
     protected fun checkNotContainsCompletion(
         variant: String,
@@ -157,3 +182,6 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         RIGHT
     }
 }
+
+val LookupElement.presentation: LookupElementPresentation
+    get() = LookupElementPresentation().also { renderElement(it) }

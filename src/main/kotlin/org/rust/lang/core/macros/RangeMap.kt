@@ -18,7 +18,7 @@ import kotlin.math.min
 /**
  * Must provide [equals] method because it is used to track changes in the macro expansion mechanism
  */
-data class RangeMap(val ranges: List<MappedTextRange>) {
+open class RangeMap(val ranges: List<MappedTextRange>) {
 
     constructor(range: MappedTextRange) : this(listOf(range))
 
@@ -26,9 +26,19 @@ data class RangeMap(val ranges: List<MappedTextRange>) {
 
     fun isEmpty(): Boolean = ranges.isEmpty()
 
-    fun mapOffsetFromExpansionToCallBody(offset: Int): Int? {
+    fun mapOffsetFromExpansionToCallBody(offset: Int, stickTo: StickTo = StickTo.ANY): Int? {
+        return when (stickTo) {
+            StickTo.LEFT -> mapOffsetFromExpansionToCallBody(offset, true)
+            StickTo.RIGHT -> mapOffsetFromExpansionToCallBody(offset, false)
+            StickTo.ANY -> {
+                mapOffsetFromExpansionToCallBody(offset, false) ?: mapOffsetFromExpansionToCallBody(offset, true)
+            }
+        }
+    }
+
+    fun mapOffsetFromExpansionToCallBody(offset: Int, stickToLeft: Boolean): Int? {
         return ranges.singleOrNull { range ->
-            offset >= range.dstOffset && offset < range.dstEndOffset
+            offset >= range.dstOffset && (offset < range.dstEndOffset || stickToLeft && offset == range.dstEndOffset)
         }?.let { range ->
             range.srcOffset + (offset - range.dstOffset)
         }
@@ -42,7 +52,7 @@ data class RangeMap(val ranges: List<MappedTextRange>) {
         }
     }
 
-    private fun mapTextRangeFromExpansionToCallBody(toMap: TextRange): List<MappedTextRange> {
+    fun mapTextRangeFromExpansionToCallBody(toMap: TextRange): List<MappedTextRange> {
         return ranges.mapNotNull { it.dstIntersection(toMap) }
     }
 
@@ -65,6 +75,25 @@ data class RangeMap(val ranges: List<MappedTextRange>) {
         ranges.forEach {
             data.writeMappedTextRange(it)
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RangeMap
+
+        if (ranges != other.ranges) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return ranges.hashCode()
+    }
+
+    enum class StickTo {
+        LEFT, RIGHT, ANY
     }
 
     companion object {
@@ -106,9 +135,15 @@ val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
 val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
 
 val MappedTextRange.srcRange: TextRange get() = TextRange(srcOffset, srcOffset + length)
+@Suppress("unused")
+val MappedTextRange.dstRange: TextRange get() = TextRange(dstOffset, dstOffset + length)
 
 fun MappedTextRange.srcShiftLeft(delta: Int) = copy(srcOffset = srcOffset - delta)
 fun MappedTextRange.dstShiftRight(delta: Int) = copy(dstOffset = dstOffset + delta)
+
+fun MappedTextRange.shiftRight(delta: Int) = copy(srcOffset = srcOffset + delta, dstOffset = dstOffset + delta)
+
+fun MappedTextRange.withLength(length: Int) = copy(length = length)
 
 private fun MappedTextRange.dstIntersection(range: TextRange): MappedTextRange? {
     val newDstStart = max(dstOffset, range.startOffset)

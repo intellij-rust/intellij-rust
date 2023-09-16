@@ -29,6 +29,8 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.ui.JBUI
 import org.apache.commons.lang.StringEscapeUtils
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.ide.docs.signature
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
@@ -48,6 +50,7 @@ class RsMoveTopLevelItemsDialog(
     private val sourceMod: RsMod
 ) : RefactoringDialog(project, false) {
 
+    @Nls
     private val sourceFilePath: String = sourceMod.containingFile.virtualFile.path
     private val sourceFileField: JBTextField = JBTextField(sourceFilePath).apply { isEnabled = false }
     private val targetFileChooser: TextFieldWithBrowseButton = createTargetFileChooser(project)
@@ -60,13 +63,14 @@ class RsMoveTopLevelItemsDialog(
     private var searchForReferences: Boolean = true
 
     init {
+        check(!isUnitTestMode)
         super.init()
-        title = "Move Module Items"
+        title = RsBundle.message("dialog.title.move.module.items")
         validateButtons()
     }
 
     private fun createTargetFileChooser(project: Project): TextFieldWithBrowseButton {
-        return pathToRsFileTextField(disposable, "Choose Destination File", project, ::validateButtons)
+        return pathToRsFileTextField(disposable, RsBundle.message("dialog.title.choose.destination.file"), project, ::validateButtons)
             .also {
                 it.text = sourceFilePath
                 it.textField.caretPosition = sourceFilePath.removeSuffix(".rs").length
@@ -94,16 +98,16 @@ class RsMoveTopLevelItemsDialog(
             }
             .filter { it.member in itemsToMove }
 
-        return RsMoveMemberSelectionPanel(project, "Items to move", nodesAll, nodesSelected)
+        return RsMoveMemberSelectionPanel(project, RsBundle.message("separator.items.to.move"), nodesAll, nodesSelected)
             .also { it.tree.setInclusionListener { validateButtons() } }
     }
 
     override fun createCenterPanel(): JComponent {
         return panel {
-            row("From:") {
+            row(RsBundle.message("from")) {
                 fullWidthCell(sourceFileField)
             }
-            row("To:") {
+            row(RsBundle.message("to")) {
                 fullWidthCell(targetFileChooser).focused()
             }
             row {
@@ -138,7 +142,7 @@ class RsMoveTopLevelItemsDialog(
             .filterIsInstance<RsMoveMemberInfo>()
             .mapToSet { it.member }
 
-    public override fun doAction() {
+    override fun doAction() {
         // we want that file creation is undo together with actual move
         CommandProcessor.getInstance().executeCommand(
             project,
@@ -151,60 +155,52 @@ class RsMoveTopLevelItemsDialog(
     private fun doActionUndoCommand() {
         val itemsToMove = getSelectedItems()
         val targetFilePath = targetFileChooser.text.toPath()
-        val targetMod = getOrCreateTargetMod(targetFilePath) ?: return
+        val targetMod = getOrCreateTargetMod(targetFilePath, project, sourceMod.crateRoot) ?: return
         try {
             val processor = RsMoveTopLevelItemsProcessor(project, itemsToMove, targetMod, searchForReferences)
             invokeRefactoring(processor)
         } catch (e: Exception) {
-            if (isUnitTestMode) throw e
             if (e !is IncorrectOperationException) {
                 Logger.getInstance(RsMoveTopLevelItemsDialog::class.java).error(e)
             }
-            showErrorMessage(e.message)
+            project.showErrorMessage(e.message)
         }
     }
 
-    private fun getOrCreateTargetMod(targetFilePath: Path): RsMod? {
-        if (isUnitTestMode) {
-            val sourceFile = sourceMod.containingFile
-            return sourceFile.getUserData(MOVE_TARGET_MOD_KEY)
-                ?: doGetOrCreateTargetMod(sourceFile.getUserData(MOVE_TARGET_FILE_PATH_KEY)!!)!!
-        }
-        return doGetOrCreateTargetMod(targetFilePath)
-    }
-
-    private fun doGetOrCreateTargetMod(targetFilePath: Path): RsMod? {
-        val targetFile = LocalFileSystem.getInstance().findFileByNioFile(targetFilePath)
-        return if (targetFile != null) {
-            targetFile.toPsiFile(project) as? RsMod
-                ?: run {
-                    showErrorMessage("Target file must be a Rust file")
-                    null
-                }
-        } else {
-            try {
-                createNewRustFile(targetFilePath, project, sourceMod.crateRoot, this)
+    companion object {
+        fun getOrCreateTargetMod(targetFilePath: Path, project: Project, crateRoot: RsMod?): RsMod? {
+            val targetFile = LocalFileSystem.getInstance().findFileByNioFile(targetFilePath)
+            return if (targetFile != null) {
+                targetFile.toPsiFile(project) as? RsMod
                     ?: run {
-                        showErrorMessage("Can't create new Rust file or attach it to module tree")
+                        project.showErrorMessage(RsBundle.message("dialog.message.target.file.must.be.rust.file"))
                         null
                     }
-            } catch (e: Exception) {
-                showErrorMessage("Error during creating new Rust file: ${e.message}")
-                null
+            } else {
+                try {
+                    createNewRustFile(targetFilePath, project, crateRoot, this)
+                        ?: run {
+                            project.showErrorMessage(RsBundle.message("dialog.message.can.t.create.new.rust.file.or.attach.it.to.module.tree"))
+                            null
+                        }
+                } catch (e: Exception) {
+                    project.showErrorMessage(RsBundle.message("dialog.message.error.during.creating.new.rust.file", e.message?:""))
+                    null
+                }
             }
         }
-    }
 
-    private fun showErrorMessage(@Suppress("UnstableApiUsage") @DialogMessage message: String?) {
-        val title = RefactoringBundle.message("error.title")
-        CommonRefactoringUtil.showErrorMessage(title, message, null, project)
+        private fun Project.showErrorMessage(@DialogMessage message: String?) {
+            val title = RefactoringBundle.message("error.title")
+            CommonRefactoringUtil.showErrorMessage(title, message, null, this)
+        }
     }
 }
 
 class RsMoveMemberInfo(val member: RsItemElement) : RsMoveNodeInfo {
     override fun render(renderer: ColoredTreeCellRenderer) {
         val description = if (member is RsModItem) {
-            "mod ${member.modName}"
+            RsBundle.message("mod.0", member.modName?:"")
         } else {
             val descriptionHTML = buildString { member.signature(this) }
             val description = StringEscapeUtils.unescapeHtml(StringUtil.removeHtmlTags(descriptionHTML))
@@ -225,21 +221,21 @@ class RsMoveItemAndImplsInfo(
     override fun render(renderer: ColoredTreeCellRenderer) {
         val name = item.name
         val keyword = when (item) {
-            is RsStructItem -> "struct"
-            is RsEnumItem -> "enum"
-            is RsTypeAlias -> "type"
-            is RsTraitItem -> "trait"
+            is RsStructItem -> RsBundle.message("struct")
+            is RsEnumItem -> RsBundle.message("enum")
+            is RsTypeAlias -> RsBundle.message("type2")
+            is RsTraitItem -> RsBundle.message("trait")
             else -> null
         }
         if (name == null || keyword == null) {
-            renderer.append("item and impls", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            renderer.append(RsBundle.message("item.and.impls"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
             return
         }
 
         // "$keyword $name and impls"
         renderer.append("$keyword ", SimpleTextAttributes.REGULAR_ATTRIBUTES)
         renderer.append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-        renderer.append(" and impls", SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        renderer.append(RsBundle.message("and.impls"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
     }
 
     override val children: List<RsMoveMemberInfo> =
@@ -263,6 +259,7 @@ private fun createNewRustFile(filePath: Path, project: Project, crateRoot: RsMod
 
 /** Finds parent mod of [file] and adds mod declaration to it */
 private fun attachFileToParentMod(file: RsFile, project: Project, crateRoot: RsMod?): Boolean {
+    if (file.isCrateRoot) return true
     val (parentModOwningDirectory, modName) = if (file.name == RsConstants.MOD_RS_FILE) {
         file.parent?.parent to file.parent?.name
     } else {

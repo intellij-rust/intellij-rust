@@ -90,6 +90,7 @@ class RemoveImportFixTest : RsInspectionsTestBase(RsUnusedImportInspection::clas
 
         mod foo {
             use crate::{<warning>A/*caret*/</warning>, inner::B};
+
             fn foo(b: B) {}
         }
     """, """
@@ -100,6 +101,7 @@ class RemoveImportFixTest : RsInspectionsTestBase(RsUnusedImportInspection::clas
 
         mod foo {
             use crate::inner::B;
+
             fn foo(b: B) {}
         }
     """)

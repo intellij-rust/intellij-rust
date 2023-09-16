@@ -49,7 +49,7 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
     /**
      * User visible string representation of a type
      */
-    final override fun toString(): String = render(useAliasNames = false, skipUnchangedDefaultTypeArguments = false)
+    final override fun toString(): String = render(useAliasNames = false, skipUnchangedDefaultGenericArguments = false)
 
     /**
      * Use it instead of [equals] if you want to check that the types are the same from the Rust perspective.
@@ -78,6 +78,11 @@ enum class Mutability {
 
         val DEFAULT_MUTABILITY = MUTABLE
     }
+}
+
+sealed class AutoBorrowMutability {
+    data class Mutable(val allowTwoPhaseBorrow: Boolean) : AutoBorrowMutability()
+    object Immutable : AutoBorrowMutability()
 }
 
 enum class BorrowKind {
@@ -136,18 +141,26 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
             stack.push(parentTy.elementType)
         is TyTuple ->
             parentTy.types.asReversed().forEach(stack::push)
-        is TyFunction -> {
+        is TyFunctionBase -> {
             stack.push(parentTy.retType)
             parentTy.paramTypes.asReversed().forEach(stack::push)
         }
     }
 }
 
-fun Ty.builtinDeref(items: KnownItems, explicit: Boolean = true): Pair<Ty, Mutability>? =
+fun Ty.builtinDeref(items: KnownItems?, explicit: Boolean = true): Pair<Ty, Mutability>? =
     when {
-        this is TyAdt && item == items.Box -> Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
+        this is TyAdt && item == (items ?: item.knownItems).Box ->
+            Pair(typeArguments.firstOrNull() ?: TyUnknown, Mutability.IMMUTABLE)
         this is TyReference -> Pair(referenced, mutability)
         this is TyPointer && explicit -> Pair(referenced, mutability)
+        else -> null
+    }
+
+fun Ty.builtinIndex(): Ty? =
+    when (this) {
+        is TyArray -> base
+        is TySlice -> elementType
         else -> null
     }
 
@@ -190,8 +203,8 @@ fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
         is TyArray -> base.isMovesByDefault(lookup)
         is TySlice -> elementType.isMovesByDefault(lookup)
-        is TyTypeParameter -> !(parameter == TyTypeParameter.Self || lookup.isCopy(this))
-        else -> !lookup.isCopy(this)
+        is TyTypeParameter -> parameter != TyTypeParameter.Self && lookup.isCopy(this).isFalse
+        else -> lookup.isCopy(this).isFalse
     }
 
 val Ty.isBox: Boolean
@@ -204,10 +217,10 @@ val Ty.isFloat: Boolean
     get() = this is TyFloat || this is TyInfer.FloatVar
 
 val Ty.isScalar: Boolean
-    get() = isIntegral ||
-        isFloat ||
-        this is TyBool ||
-        this is TyChar ||
-        this is TyUnit ||
-        this is TyFunction || // really TyFnDef & TyFnPtr
-        this is TyPointer
+    get() = isIntegral
+        || isFloat
+        || this is TyBool
+        || this is TyChar
+        || this is TyFunctionDef
+        || this is TyFunctionPointer
+        || this is TyPointer

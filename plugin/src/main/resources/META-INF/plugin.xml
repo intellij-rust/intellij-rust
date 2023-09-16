@@ -5,8 +5,8 @@
     <vendor>JetBrains</vendor>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2023/01/16/changelog-186.html">
-                 https://intellij-rust.github.io/2023/01/16/changelog-186.html
+        <a href="https://intellij-rust.github.io/2023/07/24/changelog-199.html">
+                 https://intellij-rust.github.io/2023/07/24/changelog-199.html
     ]]>
     </change-notes>
 
@@ -20,7 +20,6 @@
     </dependencies>
 
     <content>
-        <module name="org.rust.toml"/>
         <module name="org.rust.idea"/>
         <module name="org.rust.debugger"/>
         <module name="org.rust.profiler"/>

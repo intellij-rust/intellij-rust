@@ -7,10 +7,10 @@
 
 package org.rust.cargo.runconfig.buildtool
 
-import com.google.common.annotations.VisibleForTesting
 import com.google.gson.JsonObject
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartEvent
 import com.intellij.build.events.impl.*
@@ -18,7 +18,10 @@ import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.quantizeAnsiColors
 import org.rust.cargo.runconfig.removeEscapeSequences
 import org.rust.cargo.toolchain.impl.CargoMetadata
@@ -60,7 +63,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
 
     private fun tryHandleRustcMessage(jsonObject: JsonObject, messageConsumer: Consumer<in BuildEvent>): Boolean {
         val topMessage = CargoTopMessage.fromJson(jsonObject) ?: return false
-        val rustcMessage = topMessage.message
+        @NlsSafe val rustcMessage = topMessage.message
 
         val detailedMessage = rustcMessage.rendered?.let { quantizeAnsiColors(it) }
         if (detailedMessage != null) {
@@ -79,13 +82,14 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
         val messageEvent = createMessageEvent(context.workingDirectory, parentEventId, kind, message, detailedMessage, filePosition)
         if (messageEvents.add(messageEvent)) {
             if (startEvents.none { it.id == parentEventId }) {
-                handleCompilingMessage("Compiling $parentEventId", false, messageConsumer)
+                handleCompilingMessage(RsBundle.message("build.event.message.compiling.0", parentEventId), false, messageConsumer)
             }
 
             messageConsumer.accept(messageEvent)
 
             if (kind == MessageEvent.Kind.ERROR) {
                 context.errors.incrementAndGet()
+                rustcMessage.code?.code?.let(context.errorCodes::add)
             } else {
                 context.warnings.incrementAndGet()
             }
@@ -103,7 +107,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
                 // TODO: support cases when crate types list contains not only binary
                 rustcArtifact.target.cleanCrateTypes.singleOrNull() == CargoMetadata.CrateType.BIN
             }
-            CargoMetadata.TargetKind.TEST -> true
+            CargoMetadata.TargetKind.TEST, CargoMetadata.TargetKind.BENCH -> true
             CargoMetadata.TargetKind.LIB -> rustcArtifact.profile.test
             else -> false
         }
@@ -114,14 +118,14 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
         return true
     }
 
-    private fun tryHandleCargoMessage(line: String, messageConsumer: Consumer<in BuildEvent>): Boolean {
+    private fun tryHandleCargoMessage(@NlsSafe line: String, messageConsumer: Consumer<in BuildEvent>): Boolean {
         val cleanLine = decoder.removeEscapeSequences(line)
         if (cleanLine.isEmpty()) return true
 
         val kind = getMessageKind(cleanLine.substringBefore(":"))
-        val message = cleanLine
+        @Suppress("HardCodedStringLiteral") val message = cleanLine
             .let { if (kind in ERROR_OR_WARNING) it.substringAfter(":") else it }
-            .removePrefix(" internal compiler error:")
+            .removePrefix(RsBundle.message("build.event.message.internal.compiler.error"))
             .trim()
             .capitalized()
             .trimEnd('.')
@@ -155,11 +159,11 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
     }
 
     private fun handleCompilingMessage(
-        originalMessage: String,
+        @BuildEventsNls.Message originalMessage: String,
         isUpToDate: Boolean,
         messageConsumer: Consumer<in BuildEvent>
     ) {
-        val message = originalMessage.replace("Fresh", "Compiling").substringBefore("(").trimEnd()
+        val message = originalMessage.replace(RsBundle.message("build.event.message.fresh"), RsBundle.message("build.event.message.compiling")).substringBefore("(").trimEnd()
         val eventId = message.substringAfter(" ").replace(" v", " ")
         val startEvent = StartEventImpl(eventId, context.parentId, System.currentTimeMillis(), message)
         messageConsumer.accept(startEvent)
@@ -205,7 +209,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
             return Progress(current, total)
         }
 
-        fun ProgressIndicator.update(title: String, description: String, progress: Progress) {
+        fun ProgressIndicator.update(title: @Nls String, description: @Nls String, progress: Progress) {
             isIndeterminate = progress.total < 0
             text = title
             text2 = description
@@ -240,8 +244,8 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
 
     private fun handleProblemMessage(
         kind: MessageEvent.Kind,
-        message: String,
-        detailedMessage: String?,
+        @BuildEventsNls.Message message: String,
+        @Nls detailedMessage: String?,
         messageConsumer: Consumer<in BuildEvent>
     ) {
         if (message in MESSAGES_TO_IGNORE) return
@@ -275,8 +279,6 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
     }
 
     companion object {
-        @VisibleForTesting
-        const val RUSTC_MESSAGE_GROUP: String = "Rust compiler"
 
         private val PROGRESS_TOTAL_RE: Regex = """(\d+)/(\d+)""".toRegex()
 
@@ -289,9 +291,10 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
         private val StartEvent.taskName: String?
             get() = (id as? String)?.substringBefore(" ")?.substringBefore("(")?.trimEnd()
 
+        @NlsSafe
         private fun String.withNewLine(): String = if (StringUtil.endsWithLineBreak(this)) this else this + '\n'
 
-        private fun Consumer<in BuildEvent>.acceptText(parentId: Any?, text: String) =
+        private fun Consumer<in BuildEvent>.acceptText(parentId: Any?, @BuildEventsNls.Message text: String) =
             accept(OutputBuildEventImpl(parentId, text, true))
 
         private fun getMessageKind(kind: String): MessageEvent.Kind =
@@ -305,13 +308,13 @@ class RsBuildEventsConverter(private val context: CargoBuildContextBase) : Build
             workingDirectory: Path,
             parentEventId: Any,
             kind: MessageEvent.Kind,
-            message: String,
-            detailedMessage: String?,
+            @BuildEventsNls.Message message: String,
+            @Nls detailedMessage: String?,
             filePosition: FilePosition? = null
         ): MessageEvent = FileMessageEventImpl(
             parentEventId,
             kind,
-            RUSTC_MESSAGE_GROUP,
+            RsBundle.message("rust.compiler"),
             message,
             detailedMessage,
 

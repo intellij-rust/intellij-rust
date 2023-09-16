@@ -29,8 +29,14 @@ abstract class RsMoveFileTestBase : RsTestBase() {
             getElementsToMoveAndTargetDirectory(elementsToMove, rootDirectory, targetDirectory)
         val psiElementsToMoveAdjusted = RsMoveFilesOrDirectoriesHandler()
             .adjustForMove(project, psiElementsToMove, psiTargetDirectory)!!
-        RsMoveFilesOrDirectoriesDialog(project, psiElementsToMoveAdjusted, null, null)
-            .doPerformMove(psiTargetDirectory, searchForReferences, EmptyRunnable.INSTANCE)
+        RsMoveFilesOrDirectoriesDialog.doPerformMove(
+            project,
+            psiElementsToMoveAdjusted,
+            moveCallback = null,
+            psiTargetDirectory,
+            searchForReferences,
+            EmptyRunnable.INSTANCE
+        )
     }
 
     protected fun getElementsToMoveAndTargetDirectory(

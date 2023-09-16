@@ -1,0 +1,24 @@
+const FOO: () = {
+    let mut _0: ();                      // return place in scope 0 at src/main.rs:3:12: 3:14
+    let _1: S;                           // in scope 0 at src/main.rs:4:9: 4:11
+    scope 1 {
+        debug s1 => _1;                  // in scope 1 at src/main.rs:4:9: 4:11
+        let _2: S;                       // in scope 1 at src/main.rs:5:9: 5:11
+        scope 2 {
+            debug s2 => _2;              // in scope 2 at src/main.rs:5:9: 5:11
+        }
+    }
+
+    bb0: {
+        StorageLive(_1);                 // scope 0 at src/main.rs:4:9: 4:11
+        _1 = S;                          // scope 0 at src/main.rs:4:14: 4:15
+        FakeRead(ForLet(None), _1);      // scope 0 at src/main.rs:4:9: 4:11
+        StorageLive(_2);                 // scope 1 at src/main.rs:5:9: 5:11
+        _2 = move _1;                    // scope 1 at src/main.rs:5:14: 5:16
+        FakeRead(ForLet(None), _2);      // scope 1 at src/main.rs:5:9: 5:11
+        _0 = const ();                   // scope 0 at src/main.rs:3:17: 6:2
+        StorageDead(_2);                 // scope 1 at src/main.rs:6:1: 6:2
+        StorageDead(_1);                 // scope 0 at src/main.rs:6:1: 6:2
+        return;                          // scope 0 at src/main.rs:3:1: 6:3
+    }
+}

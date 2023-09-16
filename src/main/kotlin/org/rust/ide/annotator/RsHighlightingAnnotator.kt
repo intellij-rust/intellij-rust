@@ -213,7 +213,13 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsEnumItem -> RsColor.ENUM
     is RsEnumVariant -> RsColor.ENUM_VARIANT
     is RsExternCrateItem -> RsColor.CRATE
-    is RsConstant -> RsColor.CONSTANT
+    is RsConstant -> {
+        when (element.kind) {
+            RsConstantKind.STATIC -> RsColor.STATIC
+            RsConstantKind.MUT_STATIC -> RsColor.MUT_STATIC
+            RsConstantKind.CONST -> RsColor.CONSTANT
+        }
+    }
     is RsNamedFieldDecl -> RsColor.FIELD
     is RsFunction -> when (element.owner) {
         is RsAbstractableOwner.Foreign, is RsAbstractableOwner.Free -> RsColor.FUNCTION

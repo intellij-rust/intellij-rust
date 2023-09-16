@@ -56,7 +56,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                platform-version: [ 223, 231 ]
+                platform-version: [ 231, 232 ]
         env:
             ORG_GRADLE_PROJECT_buildNumber: ${{ needs.generate-build-number.outputs.build_number }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}

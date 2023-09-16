@@ -7,11 +7,10 @@
 package org.rust.stdext
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.lang.RandomStringUtils
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -59,13 +58,11 @@ fun Path.list(): Sequence<Path> = Files.list(this).asSequence()
 
 fun String.pluralize(): String = StringUtil.pluralize(this)
 
+@NlsActions.ActionText
 fun String.capitalized(): String = StringUtil.capitalize(this)
 
 fun randomLowercaseAlphabetic(length: Int): String =
     RandomStringUtils.random(length, "0123456789abcdefghijklmnopqrstuvwxyz")
-
-fun ByteArray.getLeading64bits(): Long =
-    ByteBuffer.wrap(this).also { it.order(ByteOrder.BIG_ENDIAN) }.getLong(0)
 
 fun numberSuffix(number: Int): String {
     if ((number % 100) in 11..13) {
@@ -77,4 +74,8 @@ fun numberSuffix(number: Int): String {
         3 -> "rd"
         else -> "th"
     }
+}
+
+fun Long.isPowerOfTwo(): Boolean {
+    return this > 0 && (this.and(this - 1)) == 0L
 }

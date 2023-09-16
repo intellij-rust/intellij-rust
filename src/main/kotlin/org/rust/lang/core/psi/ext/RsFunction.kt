@@ -14,6 +14,8 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
+import org.rust.lang.core.CompilerFeature
+import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFunctionStub
@@ -33,12 +35,13 @@ val RsFunction.isTest: Boolean
     get() = queryAttributes.isTest
 
 val RsFunction.isMain: Boolean get() {
-    if (name != "main") return false
-    val parent = parent
+    val parent = context
     if (parent !is RsFile || !parent.isCrateRoot) return false
     if (parent.queryAttributes.hasAttribute("no_main")) return false
     val targetKind = containingCargoTarget?.kind ?: return false
-    return targetKind.isBin || targetKind.isExampleBin || targetKind.isCustomBuild
+    if (!(targetKind.isBin || targetKind.isExampleBin || targetKind.isCustomBuild)) return false
+    val hasStartFeature = CompilerFeature.START.availability(parent) == FeatureAvailability.AVAILABLE
+    return (hasStartFeature && queryAttributes.hasAtomAttribute("start")) || name == "main"
 }
 
 private val QueryAttributes<*>.isTest
@@ -70,11 +73,20 @@ val RsFunction.isVariadic: Boolean
         return stub?.isVariadic ?: (valueParameterList?.variadic != null)
     }
 
-val RsFunction.abiName: String?
+val RsFunction.literalAbiName: String?
     get() {
         val stub = greenStub
-        return stub?.abiName ?: abi?.litExpr?.stringValue
+        if (stub != null) {
+            return stub.abiName
+        }
+        return abi?.litExpr?.stringValue
     }
+
+val RsFunction.actualAbiName: String
+    get() = literalAbiName ?: abi?.let { "C" } ?: "Rust"
+
+val RsFunction.isCOrCdeclAbi
+    get() = actualAbiName == "C" || actualAbiName == "cdecl"
 
 /**
  * Those function parameters that are not disabled by cfg attributes.
@@ -160,13 +172,20 @@ val RsFunction.isActuallyUnsafe: Boolean
                 // See https://github.com/rustwasm/wasm-bindgen
                 context.queryAttributes.hasAttribute("wasm_bindgen") -> false
                 // Some Rust intrinsics are safe. This info is hardcoded in compiler
-                context.externAbi.litExpr?.stringValue == "rust-intrinsic" -> name !in SAFE_INTRINSICS
+                isIntrinsic -> name !in SAFE_INTRINSICS
                 else -> true
             }
         } else {
             false
         }
     }
+
+val RsFunction.isIntrinsic: Boolean
+    get() {
+        val context = context
+        return context is RsForeignModItem && context.effectiveAbi == "rust-intrinsic"
+    }
+
 
 // Taken from https://github.com/rust-lang/rust/blob/6b4563bf93f4b103ed22507ed825008b89e4f5d9/compiler/rustc_typeck/src/check/intrinsic.rs#L65-L108
 private val SAFE_INTRINSICS: Set<String> = hashSetOf(
@@ -311,8 +330,8 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         val baseIcon = when (val owner = if (allowNameResolution) owner else ownerBySyntaxOnly) {
             is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
                 when {
-                    isTest -> RsIcons.FUNCTION.addTestMark()
-                    isProcMacroDef -> RsIcons.MACRO
+                    allowNameResolution && isTest -> RsIcons.FUNCTION.addTestMark()
+                    allowNameResolution && isProcMacroDef -> RsIcons.PROC_MACRO
                     else -> RsIcons.FUNCTION
                 }
 
@@ -380,3 +399,14 @@ private fun RsMetaItem.canBeAttrProcMacro(): Boolean =
 /** See also [procMacroName] */
 val RsFunction.functionName: String?
     get() = (this as RsFunctionImplMixin).functionName
+
+private val RS_FN_KEYWORDS = tokenSetOf(
+    RsElementTypes.VIS, RsElementTypes.DEFAULT, RsElementTypes.ASYNC, RsElementTypes.CONST,
+    RsElementTypes.UNSAFE, RsElementTypes.EXTERN_ABI
+)
+
+val RsFunction.firstKeyword: PsiElement
+    get() = node.findChildByType(RS_FN_KEYWORDS)?.psi ?: fn
+
+val RsFunction.async: PsiElement?
+    get() = node.findChildByType(RsElementTypes.ASYNC)?.psi

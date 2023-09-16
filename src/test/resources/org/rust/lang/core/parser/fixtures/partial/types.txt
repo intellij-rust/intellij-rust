@@ -46,7 +46,7 @@ FILE
     RsUnitTypeImpl(UNIT_TYPE)
       PsiElement(()('(')
       PsiElement())(')')
-    PsiErrorElement:';' expected, got '+'
+    PsiErrorElement:';' or where expected, got '+'
       <empty list>
   PsiWhiteSpace(' ')
   PsiElement(+)('+')

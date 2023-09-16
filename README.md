@@ -1,7 +1,6 @@
 # Rust plugin for the IntelliJ Platform
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![Join the chat at https://gitter.im/intellij-rust/intellij-rust][gitter-chat-svg]][gitter-chat]
 [![JetBrains plugins][plugin-version-svg]][plugin-repo]
 [![JetBrains plugins][plugin-downloads-svg]][plugin-repo]
 
@@ -65,8 +64,6 @@ understand the high-level structure of the codebase. If you are not sure where t
 [toml]: https://github.com/JetBrains/intellij-community/tree/master/plugins/toml
 
 <!-- Badges -->
-[gitter-chat]: https://gitter.im/intellij-rust/intellij-rust
-[gitter-chat-svg]: https://badges.gitter.im/Join%20Chat.svg
 
 [plugin-repo]: https://plugins.jetbrains.com/plugin/8182-rust
 [plugin-version-svg]: https://img.shields.io/jetbrains/plugin/v/8182-rust.svg

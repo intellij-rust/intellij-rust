@@ -7,6 +7,7 @@ package org.rust.lang
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.RsBundle
 import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
@@ -20,5 +21,5 @@ object RsFileType : LanguageFileType(RsLanguage) {
 
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
-    override fun getDescription(): String = "Rust files"
+    override fun getDescription(): String = RsBundle.message("label.rust.files")
 }

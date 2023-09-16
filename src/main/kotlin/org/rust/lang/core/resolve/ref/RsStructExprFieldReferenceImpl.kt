@@ -10,8 +10,12 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsFieldDecl
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.isShorthand
+import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.collectResolveVariants
+import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.processStructLiteralFieldResolveVariants
 
 class RsStructLiteralFieldReferenceImpl(
@@ -24,6 +28,12 @@ class RsStructLiteralFieldReferenceImpl(
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processStructLiteralFieldResolveVariants(element, false, it) }
+
+    override fun isReferenceTo(target: PsiElement): Boolean {
+        val canBeReferenceTo = target is RsFieldDecl
+            || element.isShorthand && target is RsNamedElement && Namespace.Values in target.namespaces
+        return canBeReferenceTo && super.isReferenceTo(target)
+    }
 
     override fun handleElementRename(newName: String): PsiElement {
         return if (!element.isShorthand) {

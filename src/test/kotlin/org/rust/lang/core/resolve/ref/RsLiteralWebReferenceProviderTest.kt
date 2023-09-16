@@ -7,9 +7,9 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.openapi.paths.WebReference
 import org.intellij.lang.annotations.Language
-import org.rust.StdlibLikeProjectDescriptor
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.StdlibLikeProjectDescriptor
 
 class RsLiteralWebReferenceProviderTest : RsTestBase() {
 

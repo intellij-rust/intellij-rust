@@ -11,7 +11,7 @@ import org.rust.ide.annotator.*
 class DoctestFixTest : RsAnnotationTestBase() {
     // Issue https://github.com/intellij-rust/intellij-rust/issues/6790
     fun `test in doctest fix const`() = doTest("Add type i32", """
-        <error descr="Missing type for `const` item">const CONST/*caret*/ = 1;</error>
+        const <error descr="Missing type for `const` item">CONST/*caret*/</error> = 1;
     """, """
         const CONST:i32/*caret*/ = 1;
     """)
@@ -42,7 +42,7 @@ class DoctestFixTest : RsAnnotationTestBase() {
     fun `test in doctest add missing tuple fields`() = doTest("Fill missing arguments", """
         struct S(i32, i32);
         fn main() {
-            let _ = S <error descr="This function takes 2 parameters but 1 parameter was supplied [E0061]">(2, <error descr="null">/*caret*/)</error></error>;
+            let _ = S (2, <error descr="This function takes 2 parameters but 1 parameter was supplied [E0061]">/*caret*/)</error>;
         }
     """, """
         struct S(i32, i32);
@@ -55,7 +55,7 @@ class DoctestFixTest : RsAnnotationTestBase() {
     fun `test in doctest fill function arguments`() = doTest("Fill missing arguments", """
         fn foo(a: u32) {}
         fn main() {
-            foo<error>(<error>/*caret*/)</error></error>;
+            foo(<error>/*caret*/)</error>;
         }
     """, """
         fn foo(a: u32) {}

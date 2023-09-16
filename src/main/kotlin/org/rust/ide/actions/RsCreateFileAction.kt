@@ -13,6 +13,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDirectory
+import org.jetbrains.annotations.Nls
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.ide.icons.RsIcons
 
@@ -34,10 +36,11 @@ class RsCreateFileAction : CreateFileFromTemplateAction(CAPTION, "", RsIcons.RUS
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(CAPTION)
-            .addKind("Empty file", RsIcons.RUST_FILE, "Rust File")
+            .addKind(RsBundle.message("list.item.empty.file"), RsIcons.RUST_FILE, "Rust File")
     }
 
     private companion object {
-        private const val CAPTION = "Rust File"
+        @Nls
+        private val CAPTION = RsBundle.message("rust.file")
     }
 }

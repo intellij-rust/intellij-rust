@@ -5,12 +5,12 @@
 
 package org.rust.ide.refactoring.implementMembers
 
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.RsBundle
 import org.rust.ide.presentation.*
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
@@ -24,18 +24,13 @@ import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.normType
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.openapiext.checkReadAccessAllowed
-import org.rust.openapiext.checkWriteAccessAllowed
-import org.rust.openapiext.checkWriteAccessNotAllowed
-import org.rust.openapiext.selectElement
+import org.rust.openapiext.*
 import kotlin.math.max
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     checkWriteAccessNotAllowed()
-    val (implInfo, trait) = findMembersToImplement(impl) ?: run {
-        if (editor != null) {
-            HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
-        }
+    val (implInfo, trait) = findMembersToImplement(impl, impl.traitRef) ?: run {
+        editor?.showErrorHint(RsBundle.message("hint.text.no.members.to.implement.have.been.found"))
         return
     }
 
@@ -50,18 +45,18 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
 /**
  * Generates missing trait members in a non-interactive way.
  */
-fun generateMissingTraitMembers(impl: RsImplItem, editor: Editor?) {
-    val (implInfo, trait) = findMembersToImplement(impl) ?: return
+fun generateMissingTraitMembers(impl: RsImplItem, traitRef: RsTraitRef, editor: Editor?) {
+    val (implInfo, trait) = findMembersToImplement(impl, traitRef) ?: return
 
     IntentionPreviewUtils.write<Throwable> {
         insertNewTraitMembers(implInfo.missingImplementations, impl, trait, editor)
     }
 }
 
-private fun findMembersToImplement(impl: RsImplItem): Pair<TraitImplementationInfo, BoundElement<RsTraitItem>>? {
+private fun findMembersToImplement(impl: RsImplItem, traitRef: RsTraitRef?): Pair<TraitImplementationInfo, BoundElement<RsTraitItem>>? {
     checkReadAccessAllowed()
 
-    val trait = impl.traitRef?.resolveToBoundTrait() ?: return null
+    val trait = traitRef?.resolveToBoundTrait() ?: return null
     val implInfo = TraitImplementationInfo.create(trait.element, impl) ?: return null
     if (implInfo.declared.isEmpty()) return null
     return implInfo to trait

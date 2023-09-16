@@ -7,12 +7,13 @@ package org.rust.ide.surroundWith.statement
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsWithIfSurrounder : RsStatementsSurrounderBase.BlockWithCondition<RsIfExpr>() {
-    override fun getTemplateDescription(): String = "if { }"
+    override fun getTemplateDescription(): String = RsBundle.message("action.if.text")
 
     override fun createTemplate(project: Project): Pair<RsIfExpr, RsBlock> {
         val i = RsPsiFactory(project).createExpression("if a {}") as RsIfExpr

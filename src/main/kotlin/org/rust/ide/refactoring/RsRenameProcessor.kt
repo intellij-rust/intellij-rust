@@ -169,7 +169,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
         return null
     }
 
-    override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: RenameCallback) =
+    override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<in PsiElement>) =
         renameCallback.pass(substituteElementToRename(element, editor))
 
     override fun findReferences(element: PsiElement, searchScope: SearchScope, searchInCommentsAndStrings: Boolean): Collection<PsiReference> {

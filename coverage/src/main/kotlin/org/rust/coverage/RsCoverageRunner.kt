@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
+import org.rust.RsBundle
 import org.rust.coverage.LcovCoverageReport.Serialization.readLcov
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.openapiext.isDispatchThread
@@ -32,7 +33,7 @@ class RsCoverageRunner : CoverageRunner() {
         if (baseCoverageSuite !is RsCoverageSuite) return null
         return try {
             if (isDispatchThread) {
-                baseCoverageSuite.project.computeWithCancelableProgress("Loading Coverage Data...") {
+                baseCoverageSuite.project.computeWithCancelableProgress(RsBundle.message("progress.title.loading.coverage.data")) {
                     readProjectData(sessionDataFile, baseCoverageSuite)
                 }
             } else {

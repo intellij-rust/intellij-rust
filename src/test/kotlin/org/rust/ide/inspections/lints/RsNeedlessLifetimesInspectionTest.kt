@@ -118,11 +118,11 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
     fun `test output trait type`() = doTest("""
         trait T<'a> {}
         impl <'a> T<'a> for () {}
-        <weak_warning>fn <caret>foo<'a>(a: &'a str) -> impl T<'a></weak_warning> { unimplemented!() }
+        /*weak_warning*/fn /*caret*/foo<'a>(a: &'a str) -> impl T<'a>/*weak_warning**/ { unimplemented!() }
     """, """
         trait T<'a> {}
         impl <'a> T<'a> for () {}
-        fn <caret>foo(a: &str) -> impl T { unimplemented!() }
+        fn /*caret*/foo(a: &str) -> impl T { unimplemented!() }
     """)
 
     fun `test input struct with implicit lifetime`() = doTest("""
@@ -395,7 +395,7 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
 
         #[allow(clippy)]
         fn foo5<'a>(_: &'a str) {}
-    """)
+    """, checkWeakWarn = true)
 
     fun `test global allow`() = checkByText("""
         #![allow(clippy::needless_lifetimes)]
@@ -403,7 +403,15 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn foo1<'a>(_: &'a str) {}
 
         fn foo2<'a>(_: &'a str) {}
-    """)
+    """, checkWeakWarn = true)
+
+    fun `test async fn`() = checkByText("""
+        struct S<'a>(&'a str);
+
+        async fn foo1<'a>(a: S<'a>) -> S<'a> {}
+
+        async <weak_warning>fn foo2<'a>(a: &'a str) -> &'a str</weak_warning> {}
+    """, checkWeakWarn = true)
 
     private fun doTest(
         @Language("Rust") text: String

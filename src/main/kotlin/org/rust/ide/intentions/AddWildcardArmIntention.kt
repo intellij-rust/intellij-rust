@@ -8,8 +8,8 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
+import org.rust.ide.fixes.AddRemainingArmsFix
+import org.rust.ide.fixes.AddWildcardArmFix
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.ext.arms

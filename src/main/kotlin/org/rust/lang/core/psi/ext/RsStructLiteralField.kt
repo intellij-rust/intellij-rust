@@ -5,8 +5,8 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsStructLiteral
 import org.rust.lang.core.psi.RsStructLiteralField
@@ -39,7 +39,7 @@ fun RsStructLiteralField.resolveToBinding(): RsPatBinding? = resolveToElement()
  */
 val RsStructLiteralField.isShorthand: Boolean get() = colon == null
 
-abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node), RsStructLiteralField {
+abstract class RsStructLiteralFieldImplMixin(type: IElementType) : RsElementImpl(type), RsStructLiteralField {
 
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)
 

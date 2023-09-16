@@ -1,0 +1,34 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+    let mut _1: ();                      // in scope 0 at src/main.rs:1:1: 1:36
+    let mut _2: !;                       // in scope 0 at src/main.rs:1:25: 1:33
+
+    bb0: {
+        goto -> bb1;                     // scope 0 at src/main.rs:1:18: 1:35
+    }
+
+    bb1: {
+        falseUnwind -> [real: bb2, unwind: bb6]; // scope 0 at src/main.rs:1:18: 1:35
+    }
+
+    bb2: {
+        _0 = const 43_i32;               // scope 0 at src/main.rs:1:31: 1:33
+        goto -> bb5;                     // scope 0 at src/main.rs:1:25: 1:33
+    }
+
+    bb3: {
+        unreachable;                     // scope 0 at src/main.rs:1:25: 1:33
+    }
+
+    bb4: {
+        goto -> bb1;                     // scope 0 at src/main.rs:1:18: 1:35
+    }
+
+    bb5: {
+        return;                          // scope 0 at src/main.rs:1:1: 1:36
+    }
+
+    bb6 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:36
+    }
+}

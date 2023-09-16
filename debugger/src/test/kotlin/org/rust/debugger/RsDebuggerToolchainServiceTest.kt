@@ -5,15 +5,21 @@
 
 package org.rust.debugger
 
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ThrowableRunnable
 import org.rust.RsTestBase
-import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
-import java.io.File
+import org.rust.setRegistryOptionEnabled
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
 
 class RsDebuggerToolchainServiceTest : RsTestBase() {
 
-    private var lldbDir: File? = null
+    private var debuggerDir: Path? = null
 
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         @Suppress("UnstableApiUsage")
@@ -22,44 +28,77 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
         }
     }
 
+    override fun setUp() {
+        super.setUp()
+        setRegistryOptionEnabled(Registry.get("org.rust.debugger.gdb.setup.v2"), true, testRootDisposable)
+    }
+
     override fun tearDown() {
-        lldbDir?.deleteRecursively()
-        lldbDir = null
+        debuggerDir?.toFile()?.deleteRecursively()
+        debuggerDir = null
         super.tearDown()
     }
 
     fun `test lldb loading and update`() {
-        val toolchainService = RsDebuggerToolchainService.getInstance()
-        assertEquals(LLDBStatus.NeedToDownload, toolchainService.getLLDBStatus())
-
-        downloadDebugger()
-
-        val version = toolchainService.loadLLDBVersions()
-        version[RsDebuggerToolchainService.LLDB_FRONTEND_PROPERTY_NAME] = "lldbfrontend-1234567890-mac-x64"
-        toolchainService.saveLLDBVersions(version)
-
-        assertEquals(LLDBStatus.NeedToUpdate, toolchainService.getLLDBStatus(lldbDir?.absolutePath))
-
-        downloadDebugger()
+        checkDebuggerLoadingAndUpdate(DebuggerKind.LLDB)
     }
 
-    private fun downloadDebugger() {
+    fun `test gdb loading and update`() {
+        if (ApplicationInfo.getInstance().build < BUILD_232 || SystemInfo.isMac) return
+        checkDebuggerLoadingAndUpdate(DebuggerKind.GDB)
+    }
+
+    private fun checkDebuggerLoadingAndUpdate(kind: DebuggerKind) {
         val toolchainService = RsDebuggerToolchainService.getInstance()
-        val result = toolchainService.downloadDebugger()
+        assertEquals(DebuggerAvailability.NeedToDownload, toolchainService.debuggerAvailability(kind))
+
+        downloadDebugger(kind)
+
+        // Emulate an outdated version
+        val version = toolchainService.loadDebuggerVersions(kind)
+        val propertyName = version.stringPropertyNames().first()
+        val value = version.getProperty(propertyName)
+        version[propertyName] = "$value!"
+        toolchainService.saveDebuggerVersions(kind, version)
+
+        assertEquals(DebuggerAvailability.NeedToUpdate, toolchainService.debuggerAvailability(kind))
+
+        downloadDebugger(kind)
+    }
+
+    private fun downloadDebugger(kind: DebuggerKind) {
+        val result = RsDebuggerToolchainService.getInstance().downloadDebugger(null, kind)
         check(result is RsDebuggerToolchainService.DownloadResult.Ok) {
             val message = (result as? RsDebuggerToolchainService.DownloadResult.Failed)?.message.orEmpty()
             "Failed to load debugger\n$message"
         }
-        lldbDir = result.lldbDir
-        val lldbStatus = toolchainService.getLLDBStatus(result.lldbDir.absolutePath)
-        check(lldbStatus is LLDBStatus.Binaries) {
-            "Unexpected lldb status after downloading: $lldbStatus"
+        debuggerDir = result.baseDir
+        checkAvailability(kind)
+    }
+
+    private fun checkAvailability(kind: DebuggerKind) {
+        val availability = RsDebuggerToolchainService.getInstance().debuggerAvailability(kind)
+        check(availability is DebuggerAvailability.Binaries) {
+            "Unexpected ${kind.name.lowercase()} availability after downloading: $availability"
         }
 
-        fun checkFileExist(file: File) {
-            check(file.exists()) { "Failed to find `${file.absoluteFile}`" }
+        val binaries = availability.binaries
+        val expectedFiles = when (kind) {
+            DebuggerKind.LLDB -> listOf((binaries as LLDBBinaries).frameworkFile, binaries.frontendFile)
+            DebuggerKind.GDB -> listOf((binaries as GDBBinaries).gdbFile)
         }
-        checkFileExist(lldbStatus.frontendFile)
-        checkFileExist(lldbStatus.frameworkFile)
+
+        fun Path.checkExistence() {
+            check(exists()) { "Failed to find `${absolutePathString()}`" }
+        }
+
+        for (expectedFile in expectedFiles) {
+            expectedFile.checkExistence()
+        }
+    }
+
+    companion object {
+        // BACKCOMPAT: 2023.1
+        private val BUILD_232 = BuildNumber.fromString("232")!!
     }
 }

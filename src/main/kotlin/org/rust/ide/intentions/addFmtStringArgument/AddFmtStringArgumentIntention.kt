@@ -11,7 +11,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
 import org.rust.ide.intentions.RsElementBaseIntentionAction
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.macros.isExprOrStmtContext
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
@@ -21,11 +24,15 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.moveCaretToOffset
 import org.rust.openapiext.runWriteCommandAction
 
 class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringArgumentIntention.Context>() {
-    override fun getText(): String = "Add format string argument"
+    override fun getText(): String = RsBundle.message("intention.name.add.format.string.argument")
     override fun getFamilyName(): String = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_EXPANSION
+    override val functionLikeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_EXPANSION
 
     override fun startInWriteAction(): Boolean = false
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiFile = currentFile
@@ -114,8 +121,9 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         )
 
         project.runWriteCommandAction(text) {
-            macroCall.replace(newMacroCall) as RsMacroCall
-            editor.caretModel.moveToOffset(editor.caretModel.offset + newPlaceholder.length)
+            IntentionInMacroUtil.finishActionInMacroExpansionCopy(editor)
+            val inserted = macroCall.replace(newMacroCall) as RsMacroCall
+            editor.moveCaretToOffset(inserted, editor.caretModel.offset + newPlaceholder.length)
         }
     }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndE
 import com.intellij.openapi.util.NlsContexts.Button
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.util.PlatformUtils.*
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.hasRemoteTarget
@@ -57,7 +58,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         val options = Messages.showDialog(
             project,
             action.message,
-            "Unable to Run Debugger",
+            RsBundle.message("dialog.title.unable.to.run.debugger"),
             arrayOf(action.actionName),
             Messages.OK,
             Messages.getErrorIcon()

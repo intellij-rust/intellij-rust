@@ -9,7 +9,6 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import org.rust.lang.core.macros.tt.FlatTree
 import org.rust.lang.core.macros.tt.FlatTreeJsonSerializer
-import org.rust.stdext.exhaustive
 import org.rust.util.RsJacksonSerializer
 
 // This is a sealed class because there is `ListMacro` request kind which we don't use for now
@@ -23,6 +22,8 @@ sealed class Request {
         val env: List<List<String>>,
         val currentDir: String?,
     ) : Request()
+
+    object ApiVersionCheck : Request()
 }
 
 class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) {
@@ -42,7 +43,11 @@ class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) 
                     writeStringField("current_dir", request.currentDir)
                 }
             }
-        }.exhaustive
+
+            Request.ApiVersionCheck -> gen.writeJsonObjectWithSingleField("ApiVersionCheck") {
+                writeJsonObject {}
+            }
+        }
     }
 
 }

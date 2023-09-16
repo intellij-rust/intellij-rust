@@ -33,8 +33,10 @@ class RsHighlighter : SyntaxHighlighterBase() {
             BYTE_LITERAL -> RsColor.CHAR
             STRING_LITERAL -> RsColor.STRING
             BYTE_STRING_LITERAL -> RsColor.STRING
+            CSTRING_LITERAL -> RsColor.STRING
             RAW_STRING_LITERAL -> RsColor.STRING
             RAW_BYTE_STRING_LITERAL -> RsColor.STRING
+            RAW_CSTRING_LITERAL -> RsColor.STRING
             INTEGER_LITERAL -> RsColor.NUMBER
             FLOAT_LITERAL -> RsColor.NUMBER
 

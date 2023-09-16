@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.indexing.FileBasedIndexProjectHandler
+import org.rust.RsBundle
 import org.rust.RsTask
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
@@ -56,7 +57,7 @@ class MacroExpansionTask(
     private val lastUpdatedMacrosAt: MutableMap<CratePersistentId, Long>,
     private val projectDirectoryName: String,
     override val taskType: RsTask.TaskType,
-) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false),
+) : Task.Backgroundable(project, RsBundle.message("progress.title.expanding.rust.macros"), /* canBeCancelled = */ false),
     RsTask {
     private val expansionFileSystem: MacroExpansionFileSystem = MacroExpansionFileSystem.getInstance()
     private val defMapService = project.defMapService
@@ -69,7 +70,7 @@ class MacroExpansionTask(
         val start1 = System.currentTimeMillis()
 
         val allDefMaps = try {
-            indicator.text = "Preparing resolve data"
+            indicator.text = RsBundle.message("progress.text.preparing.resolve.data")
             defMapService.updateDefMapForAllCratesWithWriteActionPriority(subTaskIndicator)
         } catch (e: ProcessCanceledException) {
             throw e
@@ -79,7 +80,7 @@ class MacroExpansionTask(
         val elapsed1 = start2 - start1
         MACRO_LOG.debug("Finished building DefMaps for all crates in $elapsed1 ms")
 
-        indicator.text = "Save macro expansions"
+        indicator.text = RsBundle.message("progress.text.save.macro.expansions")
         updateMacrosFiles(allDefMaps)
 
         val elapsed2 = System.currentTimeMillis() - start2

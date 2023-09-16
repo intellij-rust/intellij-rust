@@ -29,9 +29,15 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
+import org.rust.cargo.runconfig.test.CargoBenchRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.tools.rustc
 
 abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
+    protected val channel: RustChannel
+        get() = rustupFixture.toolchain?.rustc()?.queryVersion()?.channel
+            ?: error("Can't get toolchain channel")
 
     override fun setUp() {
         super.setUp()
@@ -57,6 +63,10 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
     protected fun createTestRunConfigurationFromContext(
         location: Location<PsiElement>? = null
     ): CargoCommandConfiguration = createRunConfigurationFromContext(CargoTestRunConfigurationProducer(), location)
+
+    protected fun createBenchRunConfigurationFromContext(
+        location: Location<PsiElement>? = null
+    ): CargoCommandConfiguration = createRunConfigurationFromContext(CargoBenchRunConfigurationProducer(), location)
 
     private fun createRunConfigurationFromContext(
         producer: RunConfigurationProducer<CargoCommandConfiguration>,

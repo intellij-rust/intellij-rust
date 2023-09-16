@@ -5,6 +5,9 @@
 
 package org.rust.ide.annotator
 
+import org.rust.SkipTestWrapping
+
+@SkipTestWrapping
 class RsExpressionAnnotatorTest : RsAnnotatorTestBase(RsExpressionAnnotator::class) {
 
     fun `test unnecessary parens`() = checkWarnings("""
@@ -143,15 +146,6 @@ class RsExpressionAnnotatorTest : RsAnnotatorTestBase(RsExpressionAnnotator::cla
         #[cfg(unix)]
         fn unix_only() {
             let w = Win { foo: 92 };
-        }
-    """)
-
-    fun `test union`() = checkWarnings("""
-        union U { a: i32, b: f32 }
-
-        fn main() {
-            let _ = U { a: 92 };
-            let _ = U <error descr="Union expressions should have exactly one field">{ a: 92, b: 92.0}</error>;
         }
     """)
 }

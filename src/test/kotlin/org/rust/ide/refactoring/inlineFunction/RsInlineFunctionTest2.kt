@@ -6,6 +6,8 @@
 package org.rust.ide.refactoring.inlineFunction
 
 import junit.framework.ComparisonFailure
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.refactoring.RsInlineTestBase
 
 class RsInlineFunctionTest2 : RsInlineTestBase() {
@@ -418,6 +420,38 @@ class RsInlineFunctionTest2 : RsInlineTestBase() {
     """, """
         fn main() {
             let a = (2 + 2).abs;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test call used as try expr (return value is Some)`() = doTest("""
+        fn test() -> Option<i32> {
+            let x = foo()?;
+            Some(x)
+        }
+        fn /*caret*/foo() -> Option<i32> {
+            Some(0)
+        }
+    """, """
+        fn test() -> Option<i32> {
+            let x = 0;
+            Some(x)
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test call used as try expr (return value is Ok)`() = doTest("""
+        fn test() -> Result<i32, ()> {
+            let x = foo()?;
+            Ok(x)
+        }
+        fn /*caret*/foo() -> Result<i32, ()> {
+            Ok(0)
+        }
+    """, """
+        fn test() -> Result<i32, ()> {
+            let x = 0;
+            Ok(x)
         }
     """)
 
@@ -998,5 +1032,86 @@ class RsInlineFunctionTest2 : RsInlineTestBase() {
         fn main() {
             let _ = (2 + 1) + 1;
         }
+    """)
+
+    fun `test async function used as stmt 1`() = doTest("""
+        async fn test() {
+            foo().await;
+        }
+        async fn /*caret*/foo() {
+            println!();
+        }
+    """, """
+        async fn test() {
+            println!();
+        }
+    """)
+
+    fun `test async function used as stmt 2`() = doTest("""
+        async fn test() {
+            foo().await;
+        }
+        async fn /*caret*/foo() {
+            bar().await;
+            bar().await;
+        }
+        async fn bar() {}
+    """, """
+        async fn test() {
+            bar().await;
+            bar().await;
+        }
+
+        async fn bar() {}
+    """)
+
+    fun `test async function used as expr 1`() = doTest("""
+        async fn test() {
+            consume(foo().await);
+        }
+        async fn /*caret*/foo() -> i32 {
+            0
+        }
+    """, """
+        async fn test() {
+            consume(0);
+        }
+    """)
+
+    fun `test async function used as expr 2`() = doTest("""
+        async fn test() {
+            consume(foo().await);
+        }
+        async fn /*caret*/foo() -> i32 {
+            bar().await
+        }
+        async fn bar() -> i32 { 0 }
+    """, """
+        async fn test() {
+            consume(bar().await);
+        }
+
+        async fn bar() -> i32 { 0 }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test non-async function returning Future`() = doTest("""
+        use std::future::Future;
+        async fn test() {
+            let x = foo().await;
+        }
+        fn /*caret*/foo() -> impl Future<Output=i32> {
+            println!();
+            bar()
+        }
+        async fn bar() -> i32 { 0 }
+    """, """
+        use std::future::Future;
+        async fn test() {
+            println!();
+            let x = bar().await;
+        }
+
+        async fn bar() -> i32 { 0 }
     """)
 }

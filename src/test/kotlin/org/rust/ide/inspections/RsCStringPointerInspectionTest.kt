@@ -14,7 +14,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsCStringPointerInspectionTest : RsInspectionsTestBase(RsCStringPointerInspection::class) {
 
-    fun testInspection() = checkByText("""
+    fun `test inspection`() = checkByText("""
         use std::ffi::{CString};
 
         fn main() {

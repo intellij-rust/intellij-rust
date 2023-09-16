@@ -11,6 +11,7 @@ import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.wsl.RsWslToolchain
+import org.rust.cargo.util.parseSemVer
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.experiments.RsExperiments.ATTR_PROC_MACROS
 import org.rust.ide.experiments.RsExperiments.DERIVE_PROC_MACROS
@@ -46,7 +47,10 @@ class RsProcMacroExpanderTest : RsTestBase() {
             ?: error("Toolchain is not available")
         val expanderExecutable = cargoProject.procMacroExpanderPath
             ?: error("proc macro expander is not found")
-        val server = ProcMacroServerPool.new(toolchain, expanderExecutable, testRootDisposable)
+        val rustcVersion = cargoProject.rustcInfo?.version?.semver
+        val needsVersionCheck = rustcVersion != null
+            && rustcVersion >= "1.70.0".parseSemVer()
+        val server = ProcMacroServerPool.new(toolchain, needsVersionCheck, expanderExecutable, testRootDisposable)
         val expander = ProcMacroExpander.new(project, server)
 
         with(expander) {
@@ -74,7 +78,7 @@ class RsProcMacroExpanderTest : RsTestBase() {
         val toolchain = project.toolchain!!
         val nonExistingFile = "/non/existing/file".toPath()
         assertFalse(nonExistingFile.exists())
-        val invalidServer = ProcMacroServerPool.new(toolchain, nonExistingFile, testRootDisposable)
+        val invalidServer = ProcMacroServerPool.new(toolchain, true, nonExistingFile, testRootDisposable)
         val expander = ProcMacroExpander.new(project, server = invalidServer)
         expander.checkError<ProcMacroExpansionError.CantRunExpander>("", "", "")
     }

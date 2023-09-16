@@ -72,6 +72,10 @@ class RsPsiFactory(
             ?: error("Failed to create macro call")
     }
 
+    fun createFormatMacroArg(argument: String): RsFormatMacroArg =
+        createFromText("print!($argument)")
+            ?: error("Failed to create format macro argument")
+
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
@@ -79,6 +83,11 @@ class RsPsiFactory(
 
     fun createSelfReference(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
+            ?: error("Failed to create self element")
+    }
+
+    fun createSelfWithType(text: String): RsSelfParameter {
+        return createFromText<RsFunction>("fn main(self: $text){}")?.selfParameter
             ?: error("Failed to create self element")
     }
 
@@ -197,9 +206,12 @@ class RsPsiFactory(
         return createFromText("struct S($fieldsText)") ?: error("Failed to create tuple fields")
     }
 
-    @Suppress("unused")
-    fun createEnum(text: String): RsEnumItem =
+    private fun createEnum(text: String): RsEnumItem =
         createFromText(text)
+            ?: error("Failed to create enum from text: `$text`")
+
+    fun createEnumVariant(text: String): RsEnumVariant =
+        createEnum("enum E { $text }").variants.singleOrNull()
             ?: error("Failed to create enum from text: `$text`")
 
     fun createStruct(text: String): RsStructItem =
@@ -228,8 +240,8 @@ class RsPsiFactory(
         ?: error("Failed to create method param from text: `$text`")
     }
 
-    fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
+    fun createReferenceType(innerTypeText: String, mutability: Mutability): RsRefLikeType =
+        createType("&${if (mutability.isMut) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
         tryCreateModDeclItem(modName) ?: error("Failed to create mod decl with name: `$modName`")
@@ -302,7 +314,7 @@ class RsPsiFactory(
             }?.joinToString(", ", "<", ">")
             .orEmpty()
 
-        return createFromText("impl $typeParameterListText $text $typeArgumentListText $whereText {  }")
+        return createFromText("impl$typeParameterListText $text $typeArgumentListText $whereText {  }")
             ?: error("Failed to create an trait impl with text: `$text`")
     }
 
@@ -367,6 +379,10 @@ class RsPsiFactory(
         createFromText("#![$text]")
             ?: error("Failed to create an inner attribute from text: `$text`")
 
+    fun createMetaItem(text: String): RsMetaItem =
+        createFromText("#[$text] fn f(){}")
+            ?: error("Failed to create a meta item from text: `$text`")
+
     fun createMatchBody(patterns: List<Pattern>, ctx: RsElement? = null): RsMatchBody {
         val arms = patterns.joinToString("\n") { "${it.text(ctx)} => {}" }
         return createExpressionOfType<RsMatchExpr>("match x { $arms }").matchBody
@@ -403,6 +419,9 @@ class RsPsiFactory(
     fun createColon(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.colon!!
 
+    fun createDotDotEq(): PsiElement =
+        createFromText<RsRangeExpr>("fn main() { for i in 1..=2 {}}")!!.dotdoteq!!
+
     fun createColonColon(): PsiElement =
         tryCreatePath("::x")!!.coloncolon!!
 
@@ -432,20 +451,27 @@ class RsPsiFactory(
     fun createFunction(text: String): RsFunction =
         tryCreateFunction(text) ?: error("Failed to create function element: $text")
 
-    fun tryCreateFunction(text: String): RsFunction? = createFromText(text)
+    private fun tryCreateFunction(text: String): RsFunction? = createFromText(text)
 
     fun createLambda(text: String): RsLambdaExpr =
         tryCreateLambda(text) ?: error("Failed to create lambda element: $text")
+
+    fun createLabelDeclaration(name: String): RsLabelDecl = createFromText("fn main() { '$name: while true {} }")!!
+
+    fun createLabel(name: String): RsLabel = createFromText("fn main() { break '$name; }")!!
+
+    fun createLoop(blockText: String, labelName: String? = null): RsLoopExpr {
+        val labelText = if (labelName != null) "$labelName:" else ""
+        return createFromText("fn main() { $labelText loop $blockText }")!!
+    }
+
+    fun createBox(exprText: String): RsCallExpr = createFromText("fn main() { Box::new($exprText); }")!!
 
     private fun tryCreateLambda(text: String): RsLambdaExpr? = createFromText("fn main() { let _ = $text }")
 
     fun createRetType(ty: String): RsRetType =
         createFromText("fn foo() -> $ty {}")
             ?: error("Failed to create function return type: $ty")
-
-    fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
-        createFromText("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
-            ?: error("Failed to create RsImplItem element")
 
     fun createSimpleValueParameterList(name: String, type: RsTypeReference): RsValueParameterList {
         return createFromText<RsFunction>("fn main($name: ${type.text}){}")

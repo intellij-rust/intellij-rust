@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import org.rust.RsBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
 import org.rust.cargo.project.settings.rustSettings
@@ -130,7 +131,9 @@ interface CargoProject : UserDataHolderEx {
     sealed class UpdateStatus(private val priority: Int) {
         object UpToDate : UpdateStatus(0)
         object NeedsUpdate : UpdateStatus(1)
-        class UpdateFailed(@Suppress("UnstableApiUsage") @Tooltip val reason: String) : UpdateStatus(2)
+        class UpdateFailed(@Suppress("UnstableApiUsage") @Tooltip val reason: String) : UpdateStatus(2) {
+            override fun toString(): String = reason
+        }
 
         fun merge(status: UpdateStatus): UpdateStatus = if (priority >= status.priority) this else status
     }
@@ -140,7 +143,13 @@ data class RustcInfo(
     val sysroot: String,
     val version: RustcVersion?,
     val rustupActiveToolchain: String? = null,
-    val targets: List<String>? = null
+    val targets: List<String>? = null,
+
+    /**
+     * In production environments it is always equal to [version].
+     * In unit tests it is real, non-mocked toolchain version
+     */
+    val realVersion: RustcVersion? = version,
 )
 
 fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
@@ -182,8 +191,8 @@ private fun discoverToolchain(project: Project) {
             project.rustSettings.modify { it.toolchain = toolchain }
         }
 
-        val tool = if (toolchain.isRustupAvailable) "rustup" else "Cargo at ${toolchain.presentableLocation}"
-        project.showBalloon("Using $tool", NotificationType.INFORMATION)
+        val tool = if (toolchain.isRustupAvailable) RsBundle.message("notification.content.rustup") else RsBundle.message("notification.content.cargo.at", toolchain.presentableLocation)
+        project.showBalloon(RsBundle.message("notification.content.using", tool), NotificationType.INFORMATION)
         project.cargoProjects.discoverAndRefresh()
     }
 }

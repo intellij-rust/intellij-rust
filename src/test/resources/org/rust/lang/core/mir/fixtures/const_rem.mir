@@ -1,0 +1,28 @@
+const FOO: i32 = {
+    let mut _0: i32;                     // return place in scope 0 at src/main.rs:1:12: 1:15
+    let mut _1: bool;                    // in scope 0 at src/main.rs:1:18: 1:23
+    let mut _2: bool;                    // in scope 0 at src/main.rs:1:18: 1:23
+    let mut _3: bool;                    // in scope 0 at src/main.rs:1:18: 1:23
+    let mut _4: bool;                    // in scope 0 at src/main.rs:1:18: 1:23
+
+    bb0: {
+        _1 = Eq(const 3_i32, const 0_i32); // scope 0 at src/main.rs:1:18: 1:23
+        assert(!move _1, "attempt to calculate the remainder of `{}` with a divisor of zero", const 7_i32) -> [success: bb1, unwind: bb3]; // scope 0 at src/main.rs:1:18: 1:23
+    }
+
+    bb1: {
+        _2 = Eq(const 3_i32, const -1_i32); // scope 0 at src/main.rs:1:18: 1:23
+        _3 = Eq(const 7_i32, const i32::MIN); // scope 0 at src/main.rs:1:18: 1:23
+        _4 = BitAnd(move _2, move _3);   // scope 0 at src/main.rs:1:18: 1:23
+        assert(!move _4, "attempt to compute the remainder of `{} % {}`, which would overflow", const 7_i32, const 3_i32) -> [success: bb2, unwind: bb3]; // scope 0 at src/main.rs:1:18: 1:23
+    }
+
+    bb2: {
+        _0 = Rem(const 7_i32, const 3_i32); // scope 0 at src/main.rs:1:18: 1:23
+        return;                          // scope 0 at src/main.rs:1:1: 1:24
+    }
+
+    bb3 (cleanup): {
+        resume;                          // scope 0 at src/main.rs:1:1: 1:24
+    }
+}

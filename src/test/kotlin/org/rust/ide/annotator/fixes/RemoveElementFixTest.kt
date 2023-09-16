@@ -7,6 +7,7 @@ package org.rust.ide.annotator.fixes
 
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
+import org.rust.ide.annotator.RsSyntaxErrorsAnnotator
 
 class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -19,13 +20,6 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test inline(always) on enum`() = checkFixByText("Remove attribute `inline`", """
         #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>(always)]
-        enum Test {}
-    """, """
-        enum Test {}
-    """)
-
-    fun `test repr on empty enum`() = checkFixByText("Remove attribute `repr`", """
-        #[<error descr="Enum with no variants can't have `repr` attribute [E0084]">repr/*caret*/</error>(u8)]
         enum Test {}
     """, """
         enum Test {}
@@ -66,7 +60,7 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """, checkWeakWarn = true)
 
     fun `test derive on function`() = checkFixByText("Remove attribute `derive`","""
-        <error descr="`derive` may only be applied to structs, enums and unions [E0774]">#[derive(Debug)]</error>
+        <error descr="`derive` may only be applied to structs, enums and unions [E0774]">/*caret*/#[derive(Debug)]</error>
         fn foo() { }
     """, """
         fn foo() { }
@@ -74,7 +68,7 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test remove visibility qualifier impl`() = checkFixByText("Remove visibility qualifier", """
         struct S;
-        <error descr="Unnecessary visibility qualifier [E0449]">pub/*caret*/</error> impl S {
+        /*error descr="Unnecessary visibility qualifier [E0449]"*/pub/*caret*//*error**/ impl S {
             fn foo() {}
         }
     """, """
@@ -92,5 +86,45 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         enum E {
             V
         }
+    """)
+}
+
+class RemoveElementFixSyntaxTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator::class) {
+    fun `test default parameter values (fn)`() = checkFixByText("Remove default parameter value", """
+        fn foo(x: i32 = <error descr="Default parameter values are not supported in Rust">0/*caret*/</error>) {}
+    """, """
+        fn foo(x: i32) {}
+    """)
+
+    fun `test default parameter values (struct)`() = checkFixByText("Remove default parameter value", """
+        struct S { x: i32 = <error descr="Default parameter values are not supported in Rust">0/*caret*/</error> }
+    """, """
+        struct S { x: i32 }
+    """)
+
+    fun `test default parameter values (tuple)`() = checkFixByText("Remove default parameter value", """
+        struct T(i32 = <error descr="Default parameter values are not supported in Rust">0/*caret*/</error>);
+    """, """
+        struct T(i32);
+    """)
+
+    fun `test remove impl in type bound`() = checkFixByText("Remove `impl` keyword", """
+        fn foo<U: <error descr="Expected trait bound, found `impl Trait` type">impl/*caret*/</error> T>() {}
+    """, """
+        fn foo<U: T>() {}
+    """)
+
+    fun `test remove dyn in type bound`() = checkFixByText("Remove `dyn` keyword", """
+        fn foo<U: <error descr="Invalid `dyn` keyword">dyn/*caret*/</error> T>() {}
+    """, """
+        fn foo<U: T>() {}
+    """)
+
+    fun `test struct inheritance`() = checkFixByText("Remove super structs", """
+        struct A; struct B;
+        struct C : <error descr="Struct inheritance is not supported in Rust">A,/*caret*/ B</error>;
+    """, """
+        struct A; struct B;
+        struct C;
     """)
 }

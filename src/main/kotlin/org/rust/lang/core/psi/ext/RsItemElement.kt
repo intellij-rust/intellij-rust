@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.TYPES
-import org.rust.lang.core.resolve.createProcessor
+import org.rust.lang.core.resolve.createStoppableProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 
 /**
@@ -20,7 +20,7 @@ interface RsItemElement : RsVisibilityOwner, RsOuterAttributeOwner, RsExpandedEl
 
 fun <T : RsItemElement> Iterable<T>.filterInScope(scope: RsElement): List<T> {
     val set = toMutableSet()
-    val processor = createProcessor {
+    val processor = createStoppableProcessor {
         set.remove(it.element)
         set.isEmpty()
     }

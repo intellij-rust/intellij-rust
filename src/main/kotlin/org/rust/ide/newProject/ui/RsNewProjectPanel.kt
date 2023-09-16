@@ -23,6 +23,7 @@ import com.intellij.ui.components.Link
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
+import org.rust.RsBundle
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.cargo
@@ -35,6 +36,8 @@ import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.fullWidthCell
 import org.rust.stdext.unwrapOrThrow
+import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.DefaultListModel
 import javax.swing.JList
 import javax.swing.ListSelectionModel
@@ -42,10 +45,11 @@ import kotlin.math.min
 
 class RsNewProjectPanel(
     private val showProjectTypeSelection: Boolean,
+    cargoProjectDir: Path = Paths.get("."),
     private val updateListener: (() -> Unit)? = null
 ) : Disposable {
 
-    private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
+    private val rustProjectSettings = RustProjectSettingsPanel(cargoProjectDir, updateListener)
 
     private val cargo: Cargo?
         get() = rustProjectSettings.data.toolchain?.cargo()
@@ -110,15 +114,15 @@ class RsNewProjectPanel(
     private var needInstallCargoGenerate = false
 
     @Suppress("DialogTitleCapitalization")
-    private val downloadCargoGenerateLink = Link("Install cargo-generate using Cargo") {
+    private val downloadCargoGenerateLink = Link(RsBundle.message("label.install.cargo.generate.using.cargo")) {
         val cargo = cargo ?: return@Link
 
-        object : Task.Modal(null, "Installing cargo-generate", true) {
+        object : Task.Modal(null, RsBundle.message("dialog.title.installing.cargo.generate"), true) {
             var exitCode: Int = Int.MIN_VALUE
 
             override fun onFinished() {
                 if (exitCode != 0) {
-                    templateList.showBalloon("Failed to install cargo-generate", MessageType.ERROR, this@RsNewProjectPanel)
+                    templateList.showBalloon(RsBundle.message("notification.content.failed.to.install.cargo.generate"), MessageType.ERROR, this@RsNewProjectPanel)
                 }
 
                 update()
@@ -128,7 +132,7 @@ class RsNewProjectPanel(
                 indicator.isIndeterminate = true
                 cargo.installCargoGenerate(this@RsNewProjectPanel, listener = object : ProcessAdapter() {
                     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                        indicator.text = "Installing using Cargo..."
+                        indicator.text = RsBundle.message("progress.text.installing.using.cargo")
                         indicator.text2 = event.text.trim()
                     }
 
@@ -148,7 +152,7 @@ class RsNewProjectPanel(
         rustProjectSettings.attachTo(this)
 
         if (showProjectTypeSelection) {
-            groupRowsRange(title = "Project Template", indent = false) {
+            groupRowsRange(title = RsBundle.message("border.title.project.template"), indent = false) {
                 row {
                     resizableRow()
                     fullWidthCell(templateToolbar.createPanel())
@@ -197,7 +201,7 @@ class RsNewProjectPanel(
 
         if (needInstallCargoGenerate) {
             @Suppress("DialogTitleCapitalization")
-            throw ConfigurationException("cargo-generate is needed to create a project from a custom template")
+            throw ConfigurationException(RsBundle.message("dialog.message.cargo.generate.needed.to.create.project.from.custom.template"))
         }
     }
 

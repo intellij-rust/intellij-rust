@@ -83,7 +83,7 @@ object RsImplTraitMemberCompletionProvider : RsCompletionProvider() {
             val memberGenerator = MembersGenerator(RsPsiFactory(element.project), implBlock, trait)
             val lookup = getCompletion(item, implBlock, subst, memberGenerator, keyword?.first)
             result.addElement(
-                lookup.toRsLookupElement(RsLookupElementProperties(isImplMemberFullLineCompletion = true))
+                lookup.toRsLookupElement(RsLookupElementProperties(isFullLineCompletion = true))
             )
         }
     }
@@ -189,7 +189,7 @@ private fun <T: RsElement>reformat(element: T): T? {
 }
 
 private fun runTemplate(element: RsElement, editor: Editor) {
-    editor.buildAndRunTemplate(element.parent, listOf(element.createSmartPointer()))
+    editor.buildAndRunTemplate(element.parent, listOf(element))
 }
 
 private fun removePrefix(text: String, keyword: PsiElement?): String {

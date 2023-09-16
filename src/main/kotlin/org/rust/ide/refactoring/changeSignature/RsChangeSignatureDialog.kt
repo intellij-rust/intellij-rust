@@ -24,6 +24,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.ide.utils.import.createVirtualImportContext
 import org.rust.lang.RsFileType
@@ -126,7 +127,7 @@ private class TableModel(
 ) : ParameterTableModelBase<SignatureParameter, ModelItem>(
     descriptor.function,
     descriptor.function,
-    NameColumn<SignatureParameter, ModelItem>(descriptor.function.project, "Pattern:"),
+    NameColumn<SignatureParameter, ModelItem>(descriptor.function.project, RsBundle.message("column.name.pattern")),
     SignatureTypeColumn(descriptor),
     SignatureDefaultValueColumn(descriptor)
 ) {
@@ -219,7 +220,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
 
         if (config.allowsVisibilityChange) {
             val visibilityPanel = JPanel(BorderLayout(0, 2))
-            val visibilityLabel = JLabel("Visibility:")
+            val visibilityLabel = JLabel(RsBundle.message("visibility"))
             visibilityPanel.add(visibilityLabel, BorderLayout.NORTH)
 
             val visibility = VisibilityComboBox(project, config.visibility) { updateSignature() }
@@ -251,12 +252,12 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
     }
 
     override fun createSouthAdditionalPanel(): JPanel {
-        val asyncBox = CheckBox("Async", config.isAsync)
+        val asyncBox = CheckBox(RsBundle.message("checkbox.async"), config.isAsync)
         asyncBox.addChangeListener {
             config.isAsync = asyncBox.isSelected
             updateSignature()
         }
-        val unsafeBox = CheckBox("Unsafe", config.isUnsafe)
+        val unsafeBox = CheckBox(RsBundle.message("checkbox.unsafe"), config.isUnsafe)
         unsafeBox.addChangeListener {
             config.isUnsafe = unsafeBox.isSelected
             updateSignature()
@@ -328,7 +329,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
             val functionName = myNameField.text
             if (validateName(functionName)) {
                 config.name = functionName
-            } else return "Function name must be a valid Rust identifier"
+            } else return RsBundle.message("dialog.message.function.name.must.be.valid.rust.identifier")
         }
 
         if (myReturnTypeField != null) {
@@ -341,7 +342,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
             if (returnType != null) {
                 config.returnTypeDisplay = returnType
             } else {
-                return "Function return type must be a valid Rust type"
+                return RsBundle.message("dialog.message.function.return.type.must.be.valid.rust.type")
             }
         }
 
@@ -350,22 +351,22 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
             if (visField.hasValidVisibility) {
                 config.visibility = visField.visibility
             } else {
-                return "Function visibility must be a valid visibility specifier"
+                return RsBundle.message("dialog.message.function.visibility.must.be.valid.visibility.specifier")
             }
         }
 
         for ((index, parameter) in config.parameters.withIndex()) {
             if (!parameter.hasValidPattern()) {
-                return "Parameter $index has invalid pattern"
+                return RsBundle.message("dialog.message.parameter.has.invalid.pattern", index)
             }
             if (parameter.type is ParameterProperty.Empty) {
-                return "Please enter type for parameter $index"
+                return RsBundle.message("dialog.message.please.enter.type.for.parameter", index)
             }
             if (parameter.type is ParameterProperty.Invalid) {
-                return "Type entered for parameter $index is invalid"
+                return RsBundle.message("dialog.message.type.entered.for.parameter.invalid", index)
             }
             if (parameter.defaultValue is ParameterProperty.Invalid) {
-                return "Default value entered for parameter $index is invalid"
+                return RsBundle.message("dialog.message.default.value.entered.for.parameter.invalid", index)
             }
         }
 

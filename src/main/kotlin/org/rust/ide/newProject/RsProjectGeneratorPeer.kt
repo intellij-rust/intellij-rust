@@ -11,12 +11,14 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.GeneratorPeerImpl
 import com.intellij.ui.dsl.builder.panel
 import org.rust.ide.newProject.ui.RsNewProjectPanel
+import java.nio.file.Path
+import java.nio.file.Paths
 import javax.swing.JComponent
 
-class RsProjectGeneratorPeer : GeneratorPeerImpl<ConfigurationData>() {
+class RsProjectGeneratorPeer(cargoProjectDir: Path = Paths.get(".")) : GeneratorPeerImpl<ConfigurationData>() {
 
-    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = true) { checkValid?.run() }
-    private var checkValid: Runnable? = null
+    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = true, cargoProjectDir) { checkValid?.run() }
+    var checkValid: Runnable? = null
 
     override fun getSettings(): ConfigurationData = newProjectPanel.data
 

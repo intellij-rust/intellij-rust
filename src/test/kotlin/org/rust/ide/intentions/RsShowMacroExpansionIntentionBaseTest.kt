@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.SkipTestWrapping
 import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
 
 class RsShowMacroExpansionIntentionBaseTest : RsIntentionTestBase(RsShowMacroExpansionIntention::class) {
@@ -22,6 +23,7 @@ class RsShowMacroExpansionIntentionBaseTest : RsIntentionTestBase(RsShowMacroExp
         super.tearDown()
     }
 
+    @SkipTestWrapping
     fun `test availability range`() = checkAvailableInSelectionOnly("""
         <selection>foo!</selection> {
             bar baz
@@ -42,7 +44,9 @@ class RsShowMacroExpansionIntentionBaseTest : RsIntentionTestBase(RsShowMacroExp
     """)
 }
 
-object RsShowMacroExpansionIntention : RsShowMacroExpansionIntentionBase(expandRecursively = true) {
+object RsShowMacroExpansionIntention : RsShowMacroExpansionIntentionBase() {
+    override val expandRecursively: Boolean get() = true
+
     override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {
         // do not show anything
     }

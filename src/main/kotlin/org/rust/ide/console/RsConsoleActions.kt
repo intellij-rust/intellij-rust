@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import org.rust.RsBundle
 
 class RestartAction(private val consoleRunner: RsConsoleRunner) : AnAction() {
 
@@ -23,8 +24,7 @@ class RestartAction(private val consoleRunner: RsConsoleRunner) : AnAction() {
     override fun actionPerformed(e: AnActionEvent) = consoleRunner.rerun()
 }
 
-class StopAction(private val processHandler: RsConsoleProcessHandler)
-    : DumbAwareAction("Stop Console", "Stop Rust console", AllIcons.Actions.Suspend) {
+class StopAction(private val processHandler: RsConsoleProcessHandler) : DumbAwareAction(RsBundle.message("action.stop.console.text"), RsBundle.message("action.stop.rust.console.description"), AllIcons.Actions.Suspend) {
 
     init {
         val eofAction = ActionManager.getInstance().getAction(EOFAction.ACTION_ID)
@@ -102,8 +102,7 @@ class PrintAction(private val consoleView: RsConsoleView) : DumbAwareAction() {
     }
 }
 
-class ShowVariablesAction(private val consoleView: RsConsoleView)
-    : ToggleAction("Show Variables", "Shows active console variables", AllIcons.Debugger.Watch), DumbAware {
+class ShowVariablesAction(private val consoleView: RsConsoleView) : ToggleAction(RsBundle.message("action.show.variables.text"), RsBundle.message("action.shows.active.console.variables.description"), AllIcons.Debugger.Watch), DumbAware {
 
     override fun isSelected(e: AnActionEvent): Boolean = consoleView.isShowVariables
 

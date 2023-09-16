@@ -25,10 +25,9 @@ val RsTypeParameter.owner: RsGenericDeclaration?
  * Don't use it for stub creation because it will cause [com.intellij.openapi.project.IndexNotReadyException]!
  */
 val RsTypeParameter.bounds: List<RsPolybound> get() {
-    val whereBounds =
-        owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() == this }
-            .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+    val whereBounds = owner?.wherePreds.orEmpty()
+        .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.reference?.resolve() == this }
+        .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
 
     return typeParamBounds?.polyboundList.orEmpty() + whereBounds
 }
@@ -47,11 +46,9 @@ val RsTypeParameter.bounds: List<RsPolybound> get() {
 val RsTypeParameter.isSized: Boolean
     get() {
         // We just check `?` before trait name in bound because at this moment only `Sized` trait can have `?` modifier
-        val owner = parent?.parent as? RsGenericDeclaration
-        val whereBounds =
-            owner?.whereClause?.wherePredList.orEmpty()
-                .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.referenceName == name }
-                .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
+        val whereBounds = owner?.wherePreds.orEmpty()
+            .filter { (it.typeReference?.skipParens() as? RsPathType)?.path?.referenceName == name }
+            .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
         val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
         return bounds.none { it.hasQ }
     }

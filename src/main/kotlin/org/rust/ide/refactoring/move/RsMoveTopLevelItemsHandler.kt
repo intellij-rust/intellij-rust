@@ -80,13 +80,22 @@ class RsMoveTopLevelItemsHandler : MoveHandlerDelegate() {
 
         val relatedImplItems = collectRelatedImplItems(containingMod, itemsToMove)
         val itemsToMoveAll = itemsToMove + relatedImplItems
-        val dialog = RsMoveTopLevelItemsDialog(project, itemsToMoveAll, containingMod)
         if (isUnitTestMode) {
-            dialog.doAction()
+            doMoveInUnitTestMode(project, itemsToMoveAll, containingMod)
         } else {
+            val dialog = RsMoveTopLevelItemsDialog(project, itemsToMoveAll, containingMod)
             dialog.show()
         }
         return true
+    }
+
+    private fun doMoveInUnitTestMode(project: Project, itemsToMove: Set<RsItemElement>, sourceMod: RsMod) {
+        val sourceFile = sourceMod.containingFile
+        val targetMod = sourceFile.getUserData(MOVE_TARGET_MOD_KEY)
+            ?: RsMoveTopLevelItemsDialog.getOrCreateTargetMod(sourceFile.getUserData(MOVE_TARGET_FILE_PATH_KEY)!!, project, sourceMod.crateRoot)!!
+
+        val processor = RsMoveTopLevelItemsProcessor(project, itemsToMove, targetMod, searchForReferences = true)
+        processor.run()
     }
 
     private fun collectInitialItems(project: Project, editor: Editor): Pair<Set<RsItemElement>, RsMod>? {

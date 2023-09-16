@@ -8,10 +8,11 @@ package org.rust.ml
 import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy
 import com.intellij.lang.Language
+import org.rust.RsBundle
 import org.rust.lang.RsLanguage
 
 @Suppress("UnstableApiUsage")
-class RsMLRankingProvider : CatBoostJarCompletionModelProvider("Rust", "rust_features", "rust_model") {
+class RsMLRankingProvider : CatBoostJarCompletionModelProvider(RsBundle.message("rust"), "rust_features", "rust_model") {
     override fun isLanguageSupported(language: Language): Boolean = language == RsLanguage
     override fun getDecoratingPolicy(): DecoratingItemsPolicy = DecoratingItemsPolicy.Composite(
         DecoratingItemsPolicy.ByAbsoluteThreshold(3.0),

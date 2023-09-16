@@ -18,6 +18,11 @@ class RsMSVCTypeNameDecoratorVisitor : RsTypeNameBaseVisitor<Unit>() {
         builder.append("&str")
     }
 
+    // str$ -> str
+    override fun visitMsvcStrDollar(ctx: MsvcStrDollarContext) {
+        builder.append("str")
+    }
+
     // never$ -> !
     override fun visitMsvcNever(ctx: MsvcNeverContext) {
         builder.append("!")
@@ -31,15 +36,43 @@ class RsMSVCTypeNameDecoratorVisitor : RsTypeNameBaseVisitor<Unit>() {
     }
 
     // ptr_const$<MyType> -> *const MyType
+    // ptr_const$<str> -> *const str
+    // ptr_const$<slice$<MyType> > -> *const [MyType]
+    @Suppress("DuplicatedCode")
     override fun visitMsvcPtr_const(ctx: MsvcPtr_constContext) {
         builder.append("*const ")
-        ctx.type.accept(this)
+
+        // BACKCOMPAT: Rust 1.66. Get rid of if-else, replace with `ctx.type.accept(this)`
+        val msvcTypeName = ctx.type.msvcTypeName()
+        if (msvcTypeName?.msvcStr() != null) {
+            builder.append("str")
+        } else if (msvcTypeName?.msvcSlice() != null) {
+            builder.append("[")
+            msvcTypeName.msvcSlice().type.accept(this)
+            builder.append("]")
+        } else {
+            ctx.type.accept(this)
+        }
     }
 
     // ptr_mut$<MyType> -> *mut MyType
+    // ptr_mut$<str> -> *mut str
+    // ptr_mut$<slice$<MyType> > -> *mut [MyType]
+    @Suppress("DuplicatedCode")
     override fun visitMsvcPtr_mut(ctx: MsvcPtr_mutContext) {
         builder.append("*mut ")
-        ctx.type.accept(this)
+
+        // BACKCOMPAT: Rust 1.66. Get rid of if-else, replace with `ctx.type.accept(this)`
+        val msvcTypeName = ctx.type.msvcTypeName()
+        if (msvcTypeName?.msvcStr() != null) {
+            builder.append("str")
+        } else if (msvcTypeName?.msvcSlice() != null) {
+            builder.append("[")
+            msvcTypeName.msvcSlice().type.accept(this)
+            builder.append("]")
+        } else {
+            ctx.type.accept(this)
+        }
     }
 
     // ref$<MyType> -> &MyType
@@ -66,6 +99,13 @@ class RsMSVCTypeNameDecoratorVisitor : RsTypeNameBaseVisitor<Unit>() {
     // slice$<MyType> -> &[MyType]
     override fun visitMsvcSlice(ctx: MsvcSliceContext) {
         builder.append("&[")
+        ctx.type.accept(this)
+        builder.append("]")
+    }
+
+    // slice2$<MyType> -> [MyType]
+    override fun visitMsvcSlice2(ctx: MsvcSlice2Context) {
+        builder.append("[")
         ctx.type.accept(this)
         builder.append("]")
     }

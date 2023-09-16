@@ -10,9 +10,6 @@ object RsExperiments {
     const val BUILD_TOOL_WINDOW = "org.rust.cargo.build.tool.window"
 
     @EnabledInStable
-    const val TEST_TOOL_WINDOW = "org.rust.cargo.test.tool.window"
-
-    @EnabledInStable
     const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
 
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
@@ -34,6 +31,15 @@ object RsExperiments {
     const val WSL_TOOLCHAIN = "org.rust.wsl"
 
     const val EMULATE_TERMINAL = "org.rust.cargo.emulate.terminal"
+
+    const val INTENTIONS_IN_FN_LIKE_MACROS = "org.rust.ide.intentions.macros.function-like"
+
+    const val SSR = "org.rust.ssr"
+
+    const val SOURCE_BASED_COVERAGE = "org.rust.coverage.source"
+
+    const val MIR_MOVE_ANALYSIS = "org.rust.mir.move-analysis"
+    const val MIR_BORROW_CHECK = "org.rust.mir.borrow-check"
 }
 
 /**

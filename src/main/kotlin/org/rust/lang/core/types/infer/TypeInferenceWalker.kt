@@ -5,9 +5,11 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.fixes.RemoveStructLiteralFieldFix
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -52,13 +54,8 @@ class RsTypeInferenceWalker(
     private val fulfill get() = ctx.fulfill
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration()?.typeReference?.rawType ?: TyUnknown
 
-    private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
-        if (!ty.needsInfer) return ty
-        val tyRes = ctx.resolveTypeVarsIfPossible(ty)
-        if (!tyRes.needsInfer) return tyRes
-        selectObligationsWherePossible()
-        return ctx.resolveTypeVarsIfPossible(tyRes)
-    }
+    private fun resolveTypeVarsWithObligations(ty: Ty): Ty =
+        ctx.resolveTypeVarsWithObligations(ty)
 
     private fun selectObligationsWherePossible() {
         fulfill.selectWherePossible()
@@ -90,12 +87,15 @@ class RsTypeInferenceWalker(
 
     private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr, expected: Expectation = NoExpectation): Ty {
         require(blockExpr.isAsync)
-        val retTy = expected
+        val resolvedExpectedType = expected
             .tyAsNullable(ctx)
             ?.let(::resolveTypeVarsWithObligations)
             .takeUnless { it is TyInfer.TyVar }
-            ?.lookupFutureOutputTy(lookup)
-            ?: TyInfer.TyVar()
+        val retTy = if (resolvedExpectedType != null) {
+            lookup.lookupFutureOutputTy(resolvedExpectedType, strict = false).register()
+        } else {
+            TyInfer.TyVar()
+        }
         RsTypeInferenceWalker(ctx, retTy).apply {
             blockExpr.block.inferType(ExpectHasType(retTy), coerce = true)
         }
@@ -205,6 +205,9 @@ class RsTypeInferenceWalker(
             is RsRetExpr -> inferRetExprType(this)
             is RsBreakExpr -> inferBreakExprType(this)
             is RsLetExpr -> inferLetExprType(this)
+            is RsPrefixIncExpr -> inferPrefixIncExprType(this, expected)
+            is RsPostfixIncExpr -> inferPostfixIncExprType(this, expected)
+            is RsPostfixDecExpr -> inferPostfixDecExprType(this, expected)
             is RsContExpr -> TyNever
             else -> TyUnknown
         }
@@ -246,6 +249,7 @@ class RsTypeInferenceWalker(
         return when (val result = ctx.tryCoerce(inferred, expected)) {
             is Ok -> {
                 ctx.applyAdjustments(element, result.ok.adjustments)
+                fulfill.registerPredicateObligations(result.ok.obligations)
                 true
             }
 
@@ -292,12 +296,17 @@ class RsTypeInferenceWalker(
             is RsStubLiteralKind.Char -> if (stubKind.isByte) TyInteger.U8.INSTANCE else TyChar.INSTANCE
             is RsStubLiteralKind.String -> {
                 // TODO infer the actual lifetime
-                if (stubKind.isByte) {
-                    val size = stubKind.value?.length?.toLong()
-                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize.INSTANCE).toConst() } ?: CtUnknown
-                    TyReference(TyArray(TyInteger.U8.INSTANCE, const), IMMUTABLE, ReStatic)
-                } else {
-                    TyReference(TyStr.INSTANCE, IMMUTABLE, ReStatic)
+                when {
+                    stubKind.isByte -> {
+                        val size = stubKind.value?.length?.toLong()
+                        val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize.INSTANCE).toConst() } ?: CtUnknown
+                        TyReference(TyArray(TyInteger.U8.INSTANCE, const), IMMUTABLE, ReStatic)
+                    }
+                    stubKind.isCStr -> {
+                        val cstrTy = expr.knownItems.CStr.asTy()
+                        TyReference(cstrTy, IMMUTABLE, ReStatic)
+                    }
+                    else -> TyReference(TyStr.INSTANCE, IMMUTABLE, ReStatic)
                 }
             }
             is RsStubLiteralKind.Integer -> {
@@ -305,7 +314,7 @@ class RsTypeInferenceWalker(
                 ty ?: when (val ety = expected.tyAsNullable(ctx)) {
                     is TyInteger -> ety
                     is TyChar -> TyInteger.U8.INSTANCE
-                    is TyPointer, is TyFunction -> TyInteger.USize.INSTANCE
+                    is TyPointer, is TyFunctionBase -> TyInteger.USize.INSTANCE
                     else -> TyInfer.IntVar()
                 }
             }
@@ -348,7 +357,7 @@ class RsTypeInferenceWalker(
             resolveVariants
         }
 
-        ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it, expr) })
+        ctx.writePath(expr, filteredVariants.map { ResolvedPath.from(it, expr) })
 
         val first = filteredVariants.singleOrNull() ?: return TyUnknown
         return instantiatePath(first.element, first, expr)
@@ -412,11 +421,10 @@ class RsTypeInferenceWalker(
     ): Ty {
         if (element is RsImplItem) {
             val implForTy = element.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown
-            val tupleFields = ((implForTy as? TyAdt)?.item as? RsFieldsOwner)?.tupleFields
+            val item = (implForTy as? TyAdt)?.item
+            val tupleFields = (item as? RsFieldsOwner)?.tupleFields
             return if (tupleFields != null) {
-                // Treat tuple constructor as a function
-                TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy)
-                    .substitute(implForTy.typeParameterValues)
+                callableTy(tupleFields, implForTy, item).substitute(implForTy.typeParameterValues)
             } else {
                 implForTy
             }.foldWith(associatedTypeNormalizer)
@@ -496,11 +504,20 @@ class RsTypeInferenceWalker(
         }
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
-            // Treat tuple constructor as a function
-            TyFunction(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, type)
+            callableTy(tupleFields, type, element)
         } else {
             type
         }.substitute(typeParameters).foldWith(associatedTypeNormalizer)
+    }
+
+    private fun callableTy(tupleFields: RsTupleFields, implForTy: Ty, item: RsFieldsOwner): TyFunctionBase {
+        // Treat tuple constructor as a function
+        val fnSig = FnSig(tupleFields.tupleFieldDeclList.map { it.typeReference.rawType }, implForTy)
+        return when (item) {
+            is RsEnumVariant -> TyFunctionDef(RsCallable.EnumVariant(item), fnSig)
+            is RsStructItem -> TyFunctionDef(RsCallable.StructItem(item), fnSig)
+            else -> TyFunctionPointer(fnSig)
+        }
     }
 
     private fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T): T {
@@ -567,6 +584,16 @@ class RsTypeInferenceWalker(
 
         inferStructTypeArguments(expr, typeParameters)
 
+        if (element is RsStructItem && element.kind == RsStructKind.UNION
+            && expr.structLiteralBody.structLiteralFieldList.size != 1
+        ) {
+            val fixes = mutableListOf<LocalQuickFix>()
+            for (e in expr.structLiteralBody.structLiteralFieldList) {
+                fixes.add(RemoveStructLiteralFieldFix(e))
+            }
+            ctx.addDiagnostic(RsDiagnostic.UnionExprWithWrongFieldCount(expr, fixes))
+        }
+
         // Handle struct update syntax { ..expression }
         expr.structLiteralBody.expr?.inferTypeCoercableTo(type)
 
@@ -607,10 +634,13 @@ class RsTypeInferenceWalker(
     private fun inferCallExprType(expr: RsCallExpr, expected: Expectation): Ty {
         val calleeExpr = expr.expr
         val baseTy = resolveTypeVarsWithObligations(calleeExpr.inferType()) // or error
-        // TODO add adjustment
-        val derefTy = lookup.coercionSequence(baseTy).mapNotNull {
+        val coercionSequence = lookup.coercionSequence(baseTy)
+        val derefTy = coercionSequence.mapNotNull {
             lookup.asTyFunction(it)
-        }.firstOrNull()
+        }.lastOrNull()
+        fulfill.registerPredicateObligations(coercionSequence.obligations())
+        ctx.applyAdjustments(calleeExpr, coercionSequence.steps().toAdjustments(items))
+
         if (baseTy != TyUnknown && derefTy == null) {
             ctx.addDiagnostic(RsDiagnostic.ExpectedFunction(expr))
         }
@@ -618,7 +648,7 @@ class RsTypeInferenceWalker(
         val calleeType = ctx.resolveTypeVarsIfPossible(
             (derefTy?.register() ?: unknownTyFunction(argExprs.size))
                 .foldWith(associatedTypeNormalizer)
-        ) as TyFunction
+        ) as TyFunctionBase
         val expectedInputTys = expectedInputsForExpectedOutput(expected, calleeType.retType, calleeType.paramTypes)
         inferArgumentTypes(calleeType.paramTypes, expectedInputTys, argExprs)
         return calleeType.retType
@@ -669,6 +699,8 @@ class RsTypeInferenceWalker(
             return methodType.retType
         }
 
+        fulfill.registerPredicateObligations(callee.obligations)
+
         val adjustments: MutableList<Adjustment> = callee.derefSteps.toAdjustments(items).toMutableList()
         val lastDerefTy = adjustments.lastOrNull()?.target ?: receiver
         if (callee.autorefOrPtrAdjustment is Autoref) {
@@ -688,7 +720,6 @@ class RsTypeInferenceWalker(
         inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
 
         var newSubst = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
-
         newSubst = ctx.instantiateBounds(callee.element, callee.formalSelfTy, newSubst)
 
         val typeParameters = callee.element.typeParameters.map { TyTypeParameter.named(it) }
@@ -708,7 +739,7 @@ class RsTypeInferenceWalker(
 
         val methodType = (callee.element.type)
             .substitute(newSubst)
-            .foldWith(associatedTypeNormalizer) as TyFunction
+            .foldWith(associatedTypeNormalizer) as TyFunctionBase
         // drop first element of paramTypes because it's `self` param
         // and it doesn't have value in `methodCall.valueArgumentList.exprList`
         val formalInputTys = methodType.paramTypes.drop(1)
@@ -775,8 +806,9 @@ class RsTypeInferenceWalker(
                 val autorefOrPtrAdjustment = lazy(LazyThreadSafetyMode.NONE) {
                     borrow?.let { Autoref(it, autoderefSteps.value.lastOrNull()?.getKind(items) == ArrayToSlice) }
                 }
+                val autoderefObligations = lazy(LazyThreadSafetyMode.NONE) { autoderef.obligations() }
                 return list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
-                    .map { MethodPick.from(it, ty, autoderefSteps.value, autorefOrPtrAdjustment.value) }
+                    .map { MethodPick.from(it, ty, autoderefSteps.value, autorefOrPtrAdjustment.value, autoderefObligations.value) }
             }
 
             // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
@@ -815,15 +847,17 @@ class RsTypeInferenceWalker(
                         TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait),
                         first.derefSteps,
                         first.autorefOrPtrAdjustment,
-                        first.isValid
+                        first.isValid,
+                        emptyList()
                     )
                 }
             }
         }
     }
 
-    private fun unknownTyFunction(arity: Int): TyFunction =
-        TyFunction(generateSequence { TyUnknown }.take(arity).toList(), TyUnknown)
+    // TODO: return FnSig
+    private fun unknownTyFunction(arity: Int): TyFunctionPointer =
+        TyFunctionPointer(FnSig(generateSequence { TyUnknown }.take(arity).toList(), TyUnknown))
 
     private fun inferArgumentTypes(
         formalInputTys: List<Ty>,
@@ -862,7 +896,7 @@ class RsTypeInferenceWalker(
 
     fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsElement>) {
         val argDefs = constParameters.asSequence()
-            .map { it.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown }
+            .map { p -> p.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: TyUnknown }
             .infiniteWithTyUnknown()
         for ((type, expr) in argDefs.zip(constArguments.asSequence())) {
             when (expr) {
@@ -881,7 +915,7 @@ class RsTypeInferenceWalker(
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
         if (fieldLookup.identifier?.text == "await" && fieldLookup.isAtLeastEdition2018) {
-            return receiver.lookupFutureOutputTy(lookup)
+            return lookup.lookupFutureOutputTy(receiver, strict = false).register()
         }
 
         val variants = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup)
@@ -891,6 +925,7 @@ class RsTypeInferenceWalker(
             val autoderef = lookup.coercionSequence(receiver)
             for (type in autoderef) {
                 if (type is TyTuple) {
+                    fulfill.registerPredicateObligations(autoderef.obligations())
                     ctx.applyAdjustments(fieldLookup.parentDotExpr.expr, autoderef.steps().toAdjustments(items))
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
@@ -898,6 +933,7 @@ class RsTypeInferenceWalker(
             }
             return TyUnknown
         }
+        fulfill.registerPredicateObligations(field.obligations)
         ctx.applyAdjustments(fieldLookup.parentDotExpr.expr, field.derefSteps.toAdjustments(items))
 
         val fieldElement = field.element
@@ -982,6 +1018,15 @@ class RsTypeInferenceWalker(
         }
     }
 
+    private fun inferPrefixIncExprType(expr: RsPrefixIncExpr, expected: Expectation): Ty =
+        expr.expr?.inferType(expected) ?: TyUnknown
+
+    private fun inferPostfixIncExprType(expr: RsPostfixIncExpr, expected: Expectation): Ty =
+        expr.expr.inferType(expected)
+
+    private fun inferPostfixDecExprType(expr: RsPostfixDecExpr, expected: Expectation): Ty =
+        expr.expr.inferType(expected)
+
     private fun inferDerefExprType(expr: RsUnaryExpr, operandExpr: RsExpr): Ty {
         // expectation must NOT be used for deref
         val operandTy = resolveTypeVarsWithObligations(operandExpr.inferType())
@@ -997,7 +1042,11 @@ class RsTypeInferenceWalker(
             ctx.applyAdjustment(operandExpr, Adjustment.BorrowReference(TyReference(operandTy, IMMUTABLE)))
             ctx.writeOverloadedOperator(expr)
         }
-        return overloadedDeref ?: TyUnknown
+        if (overloadedDeref != null) {
+            fulfill.registerPredicateObligations(overloadedDeref.obligations)
+            return overloadedDeref.value
+        }
+        return TyUnknown
     }
 
     private fun inferRefType(expr: RsExpr, expected: Expectation, mutable: Mutability, kind: BorrowKind): Ty {
@@ -1210,6 +1259,8 @@ class RsTypeInferenceWalker(
             ?.takeIf { it !is TyUnknown }
             ?: return TyUnknown
 
+        fulfill.registerPredicateObligations(autoderef.obligations())
+
         val steps = autoderef.steps()
         val lastStep = steps.lastOrNull()
         val adjustedTy = lastStep?.to ?: containerType
@@ -1233,7 +1284,7 @@ class RsTypeInferenceWalker(
         val origin = definition?.containingCrate?.origin
         if (origin != null && origin != PackageOrigin.STDLIB) {
             inferChildExprsRecursively(macroCall)
-            return inferMacroAsExpr(macroCall)
+            return inferMacroAsExpr(macroCall, expected)
         }
 
         val name = macroCall.macroName
@@ -1274,7 +1325,7 @@ class RsTypeInferenceWalker(
         inferChildExprsRecursively(macroCall)
         return when {
             macroCall.assertMacroArgument != null -> TyUnit.INSTANCE
-            macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall)
+            macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall, expected)
             macroCall.includeMacroArgument != null -> inferIncludeMacro(macroCall)
             name == "env" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr.INSTANCE, IMMUTABLE))
@@ -1284,7 +1335,7 @@ class RsTypeInferenceWalker(
             name == "stringify" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "module_path" -> TyReference(TyStr.INSTANCE, IMMUTABLE)
             name == "cfg" -> TyBool.INSTANCE
-            else -> inferMacroAsExpr(macroCall)
+            else -> inferMacroAsExpr(macroCall, expected)
         }
     }
 
@@ -1296,11 +1347,12 @@ class RsTypeInferenceWalker(
         }
     }
 
-    private fun inferMacroAsExpr(macroCall: RsMacroCall): Ty
-        = (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
+    private fun inferMacroAsExpr(macroCall: RsMacroCall, expected: Expectation = NoExpectation): Ty {
+        return (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType(expected) ?: TyUnknown
+    }
 
-    private fun inferFormatMacro(macroCall: RsMacroCall): Ty {
-        val inferredTy = inferMacroAsExpr(macroCall)
+    private fun inferFormatMacro(macroCall: RsMacroCall, expected: Expectation): Ty {
+        val inferredTy = inferMacroAsExpr(macroCall, expected)
         val name = macroCall.macroName
         return when {
             "print" in name -> TyUnit.INSTANCE
@@ -1324,7 +1376,7 @@ class RsTypeInferenceWalker(
         val expectedFnTy = expected
             .tyAsNullable(ctx)
             ?.let(this::deduceLambdaType)
-            ?: TyFunction(generateSequence { TyInfer.TyVar() }.take(params.size).toList(), TyUnknown)
+            ?: TyClosure(expr, FnSig(generateSequence { TyInfer.TyVar() }.take(params.size).toList(), TyUnknown))
         val extendedArgs = expectedFnTy.paramTypes.asSequence().infiniteWithTyUnknown()
         val paramTypes = extendedArgs.zip(params.asSequence()).map { (expectedArg, actualArg) ->
             val paramTy = actualArg.typeReference?.rawType?.let { normalizeAssociatedTypesIn(it) } ?: expectedArg
@@ -1344,13 +1396,13 @@ class RsTypeInferenceWalker(
 
         val yieldTy = lambdaBodyContext.yieldTy
         return if (yieldTy == null) {
-            TyFunction(paramTypes, if (expr.isAsync) items.makeFuture(actualRetTy) else actualRetTy)
+            TyClosure(expr, FnSig(paramTypes, if (expr.isAsync) items.makeFuture(actualRetTy) else actualRetTy))
         } else {
             items.makeGenerator(yieldTy, actualRetTy)
         }
     }
 
-    private fun deduceLambdaType(expected: Ty): TyFunction? {
+    private fun deduceLambdaType(expected: Ty): TyFunctionBase? {
         return when (expected) {
             is TyInfer.TyVar -> {
                 fulfill.pendingObligations
@@ -1359,7 +1411,7 @@ class RsTypeInferenceWalker(
                     ?.let { lookup.asTyFunction(it.trait.trait) }
             }
             is TyTraitObject -> lookup.asTyFunction(expected.traits.first()) // TODO: Use all trait bounds
-            is TyFunction -> expected
+            is TyFunctionBase -> expected
             is TyAnon -> {
                 val trait = expected.traits.find { it.element in listOf(items.Fn, items.FnMut, items.FnOnce) }
                 trait?.let { lookup.asTyFunction(it) }
@@ -1488,26 +1540,6 @@ class RsTypeInferenceWalker(
         return ctx.getResolvedPath(expr)
     }
 
-    private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
-        val outputTy = this.lookupRawFutureOutputTy(lookup)
-        if (outputTy !is TyUnknown) return outputTy
-        return this.lookupIntoFutureOutputTy(lookup)
-    }
-
-    private fun Ty.lookupRawFutureOutputTy(lookup: ImplLookup): Ty {
-        val futureTrait = lookup.items.Future ?: return TyUnknown
-        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType.withSubst())
-        return selection.ok()?.register() ?: TyUnknown
-    }
-
-    private fun Ty.lookupIntoFutureOutputTy(lookup: ImplLookup): Ty {
-        val intoFutureTrait = lookup.items.IntoFuture ?: return TyUnknown
-        val outputType = intoFutureTrait.findAssociatedType("Output") ?: return TyUnknown
-        val selection = lookup.selectProjection(TraitRef(this, intoFutureTrait.withSubst()), outputType.withSubst())
-        return selection.ok()?.register() ?: TyUnknown
-    }
-
     companion object {
         // ignoring possible false-positives (it's only basic experimental type checking)
 
@@ -1534,11 +1566,6 @@ class RsTypeInferenceWalker(
 private enum class Needs {
     MutPlace,
     None;
-
-    fun toMutability(): Mutability = when (this) {
-        MutPlace -> MUTABLE
-        None -> IMMUTABLE
-    }
 
     companion object {
         fun maybeMutPlace(mutability: Mutability): Needs = when (mutability) {
@@ -1590,19 +1617,8 @@ private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
 
 }
 
-val RsFunction.type: TyFunction
-    get() {
-        val paramTypes = mutableListOf<Ty>()
-
-        val self = selfParameter
-        if (self != null) {
-            paramTypes += self.typeOfValue
-        }
-
-        paramTypes += valueParameters.map { it.typeReference?.rawType ?: TyUnknown }
-
-        return TyFunction(paramTypes, if (isAsync) knownItems.makeFuture(rawReturnType) else rawReturnType)
-    }
+val RsFunction.type: TyFunctionDef
+    get() = TyFunctionDef(RsCallable.Function(this))
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }
@@ -1653,13 +1669,13 @@ private fun KnownItems.makeGenerator(yieldTy: Ty, returnTy: Ty): Ty {
     val boundGenerator = generatorTrait
         .substAssocType("Yield", yieldTy)
         .substAssocType("Return", returnTy)
-    return TyAnon(null, listOf(boundGenerator))
+    return TyAnon(null, listOfNotNull(boundGenerator, Sized?.withSubst()))
 }
 
-private fun KnownItems.makeFuture(outputTy: Ty): Ty {
+fun KnownItems.makeFuture(outputTy: Ty): Ty {
     val futureTrait = Future ?: return TyUnknown
     val boundFuture = futureTrait.substAssocType("Output", outputTy)
-    return TyAnon(null, listOf(boundFuture))
+    return TyAnon(null, listOfNotNull(boundFuture, Sized?.withSubst()))
 }
 
 fun isBuiltinIndex(baseType: Ty, indexType: Ty) =

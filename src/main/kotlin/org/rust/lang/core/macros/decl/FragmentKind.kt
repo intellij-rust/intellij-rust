@@ -11,9 +11,9 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.parser.clearFrame
+import org.rust.lang.core.parser.rollbackIfFalse
 import org.rust.lang.core.psi.RS_IDENTIFIER_TOKENS
-import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
-import org.rust.lang.core.psi.RsElementTypes.TT
+import org.rust.lang.core.psi.RsElementTypes.*
 
 enum class FragmentKind(private val kind: String) {
     Ident("ident"),
@@ -66,7 +66,14 @@ enum class FragmentKind(private val kind: String) {
     }
 
     private fun parseLiteral(b: PsiBuilder): Boolean {
-        return RustParser.LitExprWithoutAttrs(b, 0)
+        return b.rollbackIfFalse {
+            val hasMinus = GeneratedParserUtilBase.consumeTokenFast(b, MINUS)
+            if (!hasMinus || b.tokenType == INTEGER_LITERAL || b.tokenType == FLOAT_LITERAL) {
+                RustParser.LitExprWithoutAttrs(b, 0)
+            } else {
+                false
+            }
+        }
     }
 
     private fun PsiBuilder.consumeToken(tokenSet: TokenSet): Boolean {

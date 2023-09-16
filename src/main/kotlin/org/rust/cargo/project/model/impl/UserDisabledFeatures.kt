@@ -6,7 +6,6 @@
 package org.rust.cargo.project.model.impl
 
 import org.rust.cargo.project.workspace.*
-import org.rust.stdext.exhaustive
 
 abstract class UserDisabledFeatures {
     abstract val pkgRootToDisabledFeatures: Map<PackageRoot, Set<FeatureName>>
@@ -62,10 +61,11 @@ class MutableUserDisabledFeatures(
             FeatureState.Enabled -> {
                 pkgRootToDisabledFeatures[packageRoot]?.remove(feature.name)
             }
+
             FeatureState.Disabled -> {
                 pkgRootToDisabledFeatures.getOrPut(packageRoot) { hashSetOf() }
                     .add(feature.name)
             }
-        }.exhaustive
+        }
     }
 }

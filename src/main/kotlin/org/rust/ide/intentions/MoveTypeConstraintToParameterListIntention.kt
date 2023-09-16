@@ -8,13 +8,17 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.moveCaretToOffset
 
 class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<RsWhereClause>() {
-
-    override fun getText() = "Move type constraint to parameter list"
+    override fun getText() = RsBundle.message("intention.name.move.type.constraint.to.parameter.list")
     override fun getFamilyName() = text
+
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsWhereClause? {
         val whereClause = element.ancestorStrict<RsWhereClause>() ?: return null
@@ -48,10 +52,9 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
             }
 
         val newElement = RsPsiFactory(project).createTypeParameterList(generics)
-        val offset = typeParameterList.startOffset + newElement.textLength
-        typeParameterList.replace(newElement)
+        val insertedParameterList = typeParameterList.replace(newElement)
         ctx.delete()
-        editor.caretModel.moveToOffset(offset)
+        editor.moveCaretToOffset(insertedParameterList, insertedParameterList.endOffset)
     }
 
     private fun typeParameterText(param: RsTypeParameter): String = buildString {

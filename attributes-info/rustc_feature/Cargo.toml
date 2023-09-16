@@ -8,4 +8,4 @@ rustc_span = { path = "../rustc_span" }
 rustc_data_structures = { path = "../rustc_data_structures" }
 
 [build-dependencies]
-reqwest = { version = "0.11.10", features = ["blocking"] }
+reqwest = { version = "0.11.14", features = ["blocking"] }

@@ -7,12 +7,13 @@ package org.rust.ide.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.rust.RsBundle
 import org.rust.ide.utils.addMissingFieldsToStructLiteral
 import org.rust.lang.core.psi.RsPsiFactory
 
 class AddStructFieldsLiteralRecursiveIntention : AddStructFieldsLiteralIntention() {
 
-    override fun getText() = "Recursively replace .. with actual fields"
+    override fun getText() = RsBundle.message("intention.name.recursively.replace.with.actual.fields")
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val structLiteral = ctx.structLiteral

@@ -13,6 +13,8 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
+import org.rust.ide.intentions.util.macros.InvokeInside
 import org.rust.ide.presentation.render
 import org.rust.ide.refactoring.findBinding
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
@@ -22,10 +24,15 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
+import org.rust.openapiext.createSmartPointer
 
 class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.Context>() {
-    override fun getText(): String = "Use destructuring declaration"
+    override fun getText(): String = RsBundle.message("intention.name.use.destructuring.declaration")
     override fun getFamilyName(): String = text
+
+    // TODO should be InvokeInside.MACRO_EXPANSION, but reference search (needed for `renameNewBindings`)
+    //  is not handled well inside macro expansions for now
+    override val attributeMacroHandlingStrategy: InvokeInside get() = InvokeInside.MACRO_CALL
 
     sealed class Context(val patIdent: RsPatIdent) {
         class Struct(patIdent: RsPatIdent, val struct: RsStructItem, val type: TyAdt) : Context(patIdent)
@@ -127,17 +134,19 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
          * Then shows a live template and initiates the editing process.
          */
         private fun renameNewBindings(context: RsElement, editor: Editor, toBeRenamed: List<RsPatBinding>) {
+            val toBeRenamedPtrs = toBeRenamed.map { it.createSmartPointer() }
             val project = context.project
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
-            val builder = editor.newTemplateBuilder(context.containingFile) ?: return
-            for (binding in toBeRenamed) {
-                val variable = builder.introduceVariable(binding)
+            val tpl = editor.newTemplateBuilder(context.containingFile)
+            for (bindingPtr in toBeRenamedPtrs) {
+                val binding = bindingPtr.element ?: continue
+                val variable = tpl.introduceVariable(binding)
                 ReferencesSearch.search(binding, binding.getSearchScope()).forEach {
                     variable.replaceElementWithVariable(it.element)
                 }
             }
-            builder.runInline()
+            tpl.runInline()
         }
     }
 }

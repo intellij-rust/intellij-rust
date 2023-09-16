@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
@@ -52,12 +53,21 @@ class RsExtractTraitHandler : RefactoringActionHandler {
         if (members.isEmpty()) return
         val memberInfos = members.map { RsMemberInfo(it, false) }
 
-        val dialog = RsExtractTraitDialog(project, traitOrImpl, memberInfos)
         if (isUnitTestMode) {
-            dialog.doAction()
+            invokeInUnitTestMode(traitOrImpl)
         } else {
+            val dialog = RsExtractTraitDialog(project, traitOrImpl, memberInfos)
             dialog.show()
         }
+    }
+
+    private fun invokeInUnitTestMode(traitOrImpl: RsTraitOrImpl) {
+        val members = traitOrImpl.members
+            ?.childrenOfType<RsItemElement>()
+            .orEmpty()
+            .filter { it.getUserData(RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED) != null }
+        val processor = RsExtractTraitProcessor(traitOrImpl, "Trait", members)
+        processor.run()
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
@@ -76,6 +86,7 @@ class RsExtractTraitDialog(
     }
 
     init {
+        check(!isUnitTestMode)
         super.init()
         title = RsBundle.message("action.Rust.RsExtractTrait.dialog.title")
         validateButtons()
@@ -83,7 +94,7 @@ class RsExtractTraitDialog(
 
     override fun createCenterPanel(): JComponent = panel {
         row {
-            label("Trait name:")
+            label(RsBundle.message("label.trait.name"))
         }
         row {
             fullWidthCell(traitNameField).focused()
@@ -91,7 +102,7 @@ class RsExtractTraitDialog(
 
         row {
             resizableRow()
-            val members = RsMemberSelectionPanel("Members to form trait", memberInfos)
+            val members = RsMemberSelectionPanel(RsBundle.message("separator.members.to.form.trait"), memberInfos)
             members.minimumSize = JBUI.size(0, 200)
             members.table.addMemberInfoChangeListener { validateButtons() }
             fullWidthCell(members)
@@ -107,7 +118,7 @@ class RsExtractTraitDialog(
     override fun areButtonsValid(): Boolean =
         isValidRustVariableIdentifier(traitNameField.text) && memberInfos.any { it.isChecked }
 
-    public override fun doAction() {
+    override fun doAction() {
         try {
             CommandProcessor.getInstance().executeCommand(
                 project,
@@ -116,36 +127,23 @@ class RsExtractTraitDialog(
                 null
             )
         } catch (e: Exception) {
-            if (isUnitTestMode) throw e
             logger<RsExtractTraitHandler>().error(e)
             project.showRefactoringError(e.message)
         }
     }
 
     private fun doActionUndoCommand() {
-        val (traitName, members) = getTraitNameAndSelectedMembers()
+        val members = memberInfos.filter { it.isChecked }.map { it.member }
+        val traitName = traitNameField.text
         val processor = RsExtractTraitProcessor(traitOrImpl, traitName, members)
         invokeRefactoring(processor)
-    }
-
-    private fun getTraitNameAndSelectedMembers(): Pair<String, List<RsItemElement>> {
-        return if (isUnitTestMode) {
-            val members = traitOrImpl.members
-                ?.childrenOfType<RsItemElement>()
-                .orEmpty()
-                .filter { it.getUserData(RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED) != null }
-            "Trait" to members
-        } else {
-            val members = memberInfos.filter { it.isChecked }.map { it.member }
-            traitNameField.text to members
-        }
     }
 }
 
 @TestOnly
 val RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED: Key<Boolean> = Key("RS_EXTRACT_TRAIT_MEMBER_IS_SELECTED")
 
-private fun Project.showRefactoringError(message: String?, helpId: String? = null) {
+private fun Project.showRefactoringError(@NlsContexts.DialogMessage message: String?, helpId: String? = null) {
     val title = RefactoringBundle.message("error.title")
     CommonRefactoringUtil.showErrorMessage(title, message, helpId, this)
 }

@@ -8,17 +8,24 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.ide.actions.macroExpansion.expandMacroForView
+import org.rust.ide.actions.macroExpansion.reformatMacroExpansion
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.ide.presentation.render
 import org.rust.lang.core.crate.crateGraph
+import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.resolveTypeAliasToImpl
@@ -30,6 +37,7 @@ import org.rust.lang.doc.psi.RsDocComment
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.escaped
 import org.rust.openapiext.hitOnFalse
+import org.rust.stdext.RsResult
 import org.rust.stdext.joinToWithBuffer
 import java.util.function.Consumer
 
@@ -37,10 +45,11 @@ import java.util.function.Consumer
 class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
-        val buffer = StringBuilder()
+        @NlsSafe val buffer = StringBuilder()
         when (element) {
             is RsTypeParameter -> definition(buffer) { generateDoc(element, it) }
-            is RsDocAndAttributeOwner -> generateDoc(element, buffer)
+            is RsConstParameter -> definition(buffer) { generateDoc(element, it) }
+            is RsDocAndAttributeOwner -> generateDoc(element, buffer, originalElement)
             is RsPatBinding -> definition(buffer) { generateDoc(element, it) }
             is RsPath -> generateDoc(element, buffer)
             else -> generateCustomDoc(element, buffer)
@@ -48,20 +57,25 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         return if (buffer.isEmpty()) null else buffer.toString()
     }
 
-    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? = buildString {
-        when (element) {
-            is RsPatBinding -> generateDoc(element, this)
-            is RsTypeParameter -> generateDoc(element, this)
-            is RsConstant -> this += element.presentationInfo?.quickDocumentationText
-            is RsMod -> this += element.presentationInfo?.quickDocumentationText
-            is RsItemElement,
-            is RsMacro -> {
-                (element as RsDocAndAttributeOwner).header(this)
-                element.signature(this)
+    override fun getQuickNavigateInfo(element: PsiElement, originalElement: PsiElement?): String? {
+        @NlsSafe val string = buildString {
+            when (element) {
+                is RsPatBinding -> generateDoc(element, this)
+                is RsTypeParameter -> generateDoc(element, this)
+                is RsConstParameter -> generateDoc(element, this)
+                is RsConstant -> this += element.presentationInfo?.quickDocumentationText
+                is RsMod -> this += element.presentationInfo?.quickDocumentationText
+                is RsItemElement,
+                is RsMacro -> {
+                    (element as RsDocAndAttributeOwner).header(this)
+                    element.signature(this)
+                }
+
+                is RsNamedElement -> this += element.presentationInfo?.quickDocumentationText
+                else -> return null
             }
-            is RsNamedElement -> this += element.presentationInfo?.quickDocumentationText
-            else -> return null
         }
+        return string
     }
 
     override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
@@ -73,7 +87,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
     }
 
-    private fun generateDoc(element: RsDocAndAttributeOwner, buffer: StringBuilder) {
+    private fun generateDoc(element: RsDocAndAttributeOwner, buffer: StringBuilder, originalElement: PsiElement?) {
         definition(buffer) {
             element.header(it)
             element.signature(it)
@@ -87,6 +101,44 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         if (text.isNullOrEmpty()) return
         buffer += "\n" // Just for more pretty html text representation
         content(buffer) { it += text }
+        buffer += "\n" // Just for more pretty html text representation
+        val possiblyExpandedElement = originalElement?.findExpansionElementOrSelf()
+        val macroCall = possiblyExpandedElement?.contextMacroCall
+        if (macroCall != null) {
+            generateExpansion(macroCall, buffer)
+        }
+    }
+
+    private fun generateExpansion(call: RsPossibleMacroCall, buffer: StringBuilder) {
+        val macroPreview = expandMacroForView(
+            macroToExpand = call,
+            expandRecursively = true,
+            sizeLimit = macroExpansionLimitInBytes,
+            hasWriteAccess = false,
+        )
+        content(buffer) { builder ->
+            builder.h2 { em { append(RsBundle.message("quick.doc.macro.expansion")) } }
+            when (macroPreview) {
+                is RsResult.Ok -> builder.p {
+                    val details = macroPreview.ok
+                    val expanded = reformatMacroExpansion(details.macroToExpand, details.expansion, false)
+                        .elements
+                        .joinToString(separator = "\n") { it.text }
+                    HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
+                        builder,
+                        call.project,
+                        call.language,
+                        expanded,
+                        DocumentationSettings.getHighlightingSaturation(false),
+                    )
+                }
+                is RsResult.Err -> builder.p("grayed") {
+                    em {
+                        append(RsBundle.message("quick.doc.expansion.is.unavailable"))
+                    }
+                }
+            }
+        }
     }
 
     private fun generateDoc(element: RsPatBinding, buffer: StringBuilder) {
@@ -110,11 +162,23 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         element.typeReference?.generateDocumentation(buffer, " = ")
     }
 
+    private fun generateDoc(element: RsConstParameter, buffer: StringBuilder) {
+        val name = element.name ?: return
+        buffer += "const parameter "
+        buffer.b { it += name }
+        element.typeReference?.generateDocumentation(buffer, ": ")
+        element.expr?.generateDocumentation(buffer, " = ")
+    }
+
     private fun generateDoc(element: RsPath, buffer: StringBuilder) {
         val primitive = TyPrimitive.fromPath(element) ?: return
         val primitiveDocs = element.project.findFileInStdCrate("primitive_docs.rs") ?: return
 
         val mod = primitiveDocs.childrenOfType<RsModItem>().find {
+            it.queryAttributes.hasAttributeWithValue("rustc_doc_primitive", primitive.name) ||
+            // BACKCOMPAT: Rust 1.71.
+            // Since Rust 1.71 `#[doc(primitive = "primitive_name")]` is replace with `#[rustc_doc_primitive = "primitive_name"]`
+            // https://github.com/rust-lang/rust/commit/364e961417c4308f8a1d3b7ec69ead9d98af2a01
             it.queryAttributes.hasAttributeWithKeyValue("doc", "primitive", primitive.name)
         } ?: return
 
@@ -256,6 +320,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     companion object {
         const val STD_DOC_HOST = "https://doc.rust-lang.org"
+        const val macroExpansionLimitInBytes: Int = 4096
     }
 
     object Testmarks {
@@ -266,7 +331,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 }
 
-private const val EXTERNAL_DOCUMENTATION_URL_SETTING_KEY: String = "org.rust.external.doc.url"
+const val EXTERNAL_DOCUMENTATION_URL_SETTING_KEY: String = "org.rust.external.doc.url"
 
 /**
  * Returns the base URL used for creating external code and crate documentation links.
@@ -322,7 +387,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
             typeParameterList?.generateDocumentation(buffer)
             valueParameterList?.generateDocumentation(buffer)
             retType?.generateDocumentation(buffer)
-            listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+            listOf(buffer.toString()) + wherePreds.documentationText
         }
         is RsConstant -> {
             val buffer = StringBuilder()
@@ -341,7 +406,7 @@ fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
                 buffer.b { it += name }
                 (this as RsGenericDeclaration).typeParameterList?.generateDocumentation(buffer)
                 (this as? RsTypeAlias)?.typeReference?.generateDocumentation(buffer, " = ")
-                listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+                listOf(buffer.toString()) + wherePreds.documentationText
             } else emptyList()
         }
         is RsMacro -> listOf("macro <b>$name</b>")
@@ -370,7 +435,7 @@ private val RsImplItem.declarationText: List<String>
             buffer += " for "
         }
         typeRef.generateDocumentation(buffer)
-        return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+        return listOf(buffer.toString()) + wherePreds.documentationText
     }
 
 private val RsTraitItem.declarationText: List<String>
@@ -378,7 +443,7 @@ private val RsTraitItem.declarationText: List<String>
         val name = presentableQualifiedName ?: return emptyList()
         val buffer = StringBuilder(name)
         typeParameterList?.generateDocumentation(buffer)
-        return listOf(buffer.toString()) + whereClause?.documentationText.orEmpty()
+        return listOf(buffer.toString()) + wherePreds.documentationText
     }
 
 private val RsItemElement.declarationModifiers: List<String>
@@ -398,7 +463,7 @@ private val RsItemElement.declarationModifiers: List<String>
                 }
                 if (isActuallyExtern) {
                     modifiers += "extern"
-                    abiName?.let { modifiers += "\"$it\"" }
+                    literalAbiName?.let { modifiers += "\"$it\"" }
                 }
                 modifiers += "fn"
             }
@@ -418,9 +483,10 @@ private val RsItemElement.declarationModifiers: List<String>
         return modifiers
     }
 
-private val RsWhereClause.documentationText: List<String>
+private val List<RsWherePred>.documentationText: List<String>
     get() {
-        return listOf("where") + wherePredList.mapNotNull {
+        if (isEmpty()) return emptyList()
+        return listOf("where") + this.mapNotNull {
             val buffer = StringBuilder()
             val lifetime = it.lifetime
             val typeReference = it.typeReference
@@ -465,7 +531,8 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
             }
             (bound.lifetime ?: bound.traitRef)?.generateDocumentation(buffer)
         }
-        is RsTypeArgumentList -> (lifetimeList + typeReferenceList + assocTypeBindingList)
+        is RsTypeArgumentList -> (lifetimeList + typeReferenceList + exprList + assocTypeBindingList)
+            .sortedBy { it.startOffset }
             .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
         is RsTypeParameterList -> getGenericParameters()
             .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
@@ -620,4 +687,26 @@ private inline fun StringBuilder.b(action: (StringBuilder) -> Unit) {
     append("<b>")
     action(this)
     append("</b>")
+}
+
+private inline fun StringBuilder.h2(action: StringBuilder.() -> Unit) {
+    append("<h2>")
+    action(this)
+    append("</h2>")
+}
+
+private inline fun StringBuilder.em(action: StringBuilder.() -> Unit) {
+    append("<em>")
+    action(this)
+    append("</em>")
+}
+
+private inline fun StringBuilder.p(clazz: String? = null, action: StringBuilder.() -> Unit) {
+    append("<p")
+    if (clazz != null) {
+        append(" class='$clazz'")
+    }
+    append(">")
+    action(this)
+    append("</p>")
 }

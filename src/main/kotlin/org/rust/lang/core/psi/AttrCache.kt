@@ -7,6 +7,7 @@ package org.rust.lang.core.psi
 
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.ext.RsAttrProcMacroOwner
+import java.util.*
 
 /**
  * A simple single-thread cache used for caching of attribute macros
@@ -17,18 +18,18 @@ sealed class AttrCache {
 
     object NoCache : AttrCache() {
         override fun cachedGetProcMacroAttribute(owner: RsAttrProcMacroOwner): RsMetaItem? =
-            owner.procMacroAttribute.attr
+            owner.procMacroAttribute?.attr
     }
 
     class HashMapCache(
         private val crate: Crate?
     ): AttrCache() {
-        private val cache: MutableMap<RsAttrProcMacroOwner, ProcMacroAttribute<RsMetaItem>> = hashMapOf()
+        private val cache: MutableMap<RsAttrProcMacroOwner, Optional<RsMetaItem>> = hashMapOf()
 
         override fun cachedGetProcMacroAttribute(owner: RsAttrProcMacroOwner): RsMetaItem? {
             return cache.getOrPut(owner) {
-                ProcMacroAttribute.getProcMacroAttribute(owner, explicitCrate = crate)
-            }.attr
+                Optional.ofNullable(ProcMacroAttribute.getProcMacroAttribute(owner, explicitCrate = crate)?.attr)
+            }.orElse(null)
         }
     }
 }

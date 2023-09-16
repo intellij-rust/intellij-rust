@@ -12,11 +12,16 @@ import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTem
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.ext.EqualityOp
+import org.rust.lang.core.psi.ext.UnaryOperator
 import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.implLookup
-import org.rust.lang.core.types.ty.TyPointer
-import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.toTypeSubst
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 abstract class AssertPostfixTemplateBase(
@@ -122,8 +127,44 @@ class SomePostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostf
 class OkPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("ok", "Ok(expr)", provider)
 class ErrPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("err", "Err(expr)", provider)
 
+class SlicePostfixTemplate(name: String, provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate(
+        name,
+        "&list[i..j]",
+        RsExprParentsSelector {
+            val rangeType = it.knownItems.Range?.declaredType ?: return@RsExprParentsSelector false
+            val idx = rangeType.getTypeParameter("Idx") ?: return@RsExprParentsSelector false
+            val subst = mapOf(idx to TyInteger.USize.INSTANCE).toTypeSubst()
+            pred(it.type, rangeType.substitute(subst), it.implLookup)
+        },
+        provider
+    ) {
+
+    override fun getTemplateString(element: PsiElement): String {
+        val isRef = element is RsUnaryExpr && element.operatorType in listOf(UnaryOperator.REF, UnaryOperator.REF_MUT)
+        val prefix = if (isRef) "" else "&"
+        return "$prefix${element.text}[\$from\$..\$to\$]\$END\$"
+    }
+
+    override fun setVariables(template: Template, element: PsiElement) {
+        template.addVariable("from", TextExpression("i"), true)
+        template.addVariable("to", TextExpression("j"), true)
+    }
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+
+    companion object {
+        private fun pred(ty: Ty, indexTy: Ty, implLookup: ImplLookup): Boolean =
+            when (ty) {
+                is TyStr, is TySlice -> true
+                is TyReference -> pred(ty.referenced, indexTy, implLookup)
+                else -> implLookup.isIndex(ty, indexTy).isTrue
+            }
+    }
+}
+
 private val RsExpr.isIntoIterator: Boolean
-    get() = implLookup.isIntoIterator(type)
+    get() = implLookup.isIntoIterator(type).isTrue
 
 private val RsExpr.implementsDeref: Boolean
-    get() = implLookup.isDeref(this.type)
+    get() = implLookup.isDeref(this.type).isTrue

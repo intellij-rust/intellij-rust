@@ -53,3 +53,5 @@ type GatSimple<T> = ();
 type GatBound<T>: Bound = ();
 type GatWhere<T> where T: Bound = ();
 type GatBoundWhere<T>: Bound where T: Bound = ();
+type GatBoundWhere2<T>: Bound = () where T: Bound;
+type GatBoundWhere3<T>: Bound where T: Bound = () where T: Bound;

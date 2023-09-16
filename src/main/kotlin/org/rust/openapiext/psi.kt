@@ -16,7 +16,6 @@ import org.rust.lang.core.psi.ProcMacroAttribute
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.*
-import org.rust.stdext.exhaustive
 
 
 /**
@@ -74,7 +73,7 @@ fun processElementsWithMacros(element: PsiElement, processor: PsiTreeProcessor):
             TreeStatus.VISIT_CHILDREN -> Unit
             TreeStatus.SKIP_CHILDREN -> return true
             TreeStatus.ABORT -> return false
-        }.exhaustive
+        }
         for (child in element.children) {
             if (child is RsMacroCall && child.macroArgument != null) {
                 child.expansion?.elements?.forEach {
@@ -123,7 +122,7 @@ private class RsWithMacrosRecursiveElementWalkingVisitor(
                 stopWalking()
                 result = false
             }
-        }.exhaustive
+        }
     }
 
     private fun shouldExpandMacro(element: RsMacroCall): Boolean {

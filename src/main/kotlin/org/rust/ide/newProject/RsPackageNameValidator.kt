@@ -7,6 +7,7 @@ package org.rust.ide.newProject
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.SystemInfo
+import org.rust.RsBundle
 
 /**
  * Validates package name while new project creation.
@@ -39,13 +40,13 @@ object RsPackageNameValidator {
     @Suppress("UnstableApiUsage")
     @DialogMessage
     fun validate(name: String, isBinary: Boolean): String? = when {
-        name.isEmpty() -> "Package name can't be empty"
-        name in KEYWORDS_BLACKLIST || name == "test" -> "The name `$name` cannot be used as a crate name"
-        isBinary && name in BINARY_BLACKLIST -> "The name `$name` cannot be used as a crate name"
-        name[0].isDigit() -> "Package names starting with a digit cannot be used as a crate name"
+        name.isEmpty() -> RsBundle.message("dialog.message.package.name.can.t.be.empty")
+        name in KEYWORDS_BLACKLIST || name == "test" -> RsBundle.message("dialog.message.name.cannot.be.used.as.crate.name2", name)
+        isBinary && name in BINARY_BLACKLIST -> RsBundle.message("dialog.message.name.cannot.be.used.as.crate.name", name)
+        name[0].isDigit() -> RsBundle.message("dialog.message.package.names.starting.with.digit.cannot.be.used.as.crate.name")
         !name.all { it.isLetterOrDigit() || it == '-' || it == '_' } ->
-            "Package names should contain only letters, digits, `-` and `_`"
-        SystemInfo.isWindows && name.lowercase() in WINDOWS_BLACKLIST -> "The name `$name` is a reserved Windows filename"
+            RsBundle.message("dialog.message.package.names.should.contain.only.letters.digits")
+        SystemInfo.isWindows && name.lowercase() in WINDOWS_BLACKLIST -> RsBundle.message("dialog.message.name.reserved.windows.filename", name)
         else -> null
     }
 }

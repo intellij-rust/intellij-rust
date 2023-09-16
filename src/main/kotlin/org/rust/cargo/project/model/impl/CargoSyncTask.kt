@@ -28,7 +28,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.util.text.SemVer
+import com.intellij.openapi.util.NlsContexts
+import org.rust.RsBundle
 import org.rust.RsTask
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.project.model.CargoProject
@@ -47,7 +48,6 @@ import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.*
 import org.rust.cargo.util.DownloadResult
 import org.rust.cargo.util.UnitTestRustcCacheService
-import org.rust.cargo.util.parseSemVer
 import org.rust.openapiext.TaskResult
 import org.rust.stdext.RsResult
 import org.rust.stdext.mapNotNullToSet
@@ -61,7 +61,7 @@ class CargoSyncTask(
     project: Project,
     private val cargoProjects: List<CargoProjectImpl>,
     private val result: CompletableFuture<List<CargoProjectImpl>>
-) : Task.Backgroundable(project, "Reloading Cargo projects", true), RsTask {
+) : Task.Backgroundable(project, RsBundle.message("progress.title.reloading.cargo.projects"), true), RsTask {
 
     override val taskType: RsTask.TaskType
         get() = RsTask.TaskType.CARGO_SYNC
@@ -109,24 +109,22 @@ class CargoSyncTask(
 
         @Suppress("UnnecessaryVariable")
         val refreshedProjects = if (toolchain == null) {
-            syncProgress.fail(System.currentTimeMillis(), "Cargo project update failed:\nNo Rust toolchain")
+            syncProgress.fail(System.currentTimeMillis(), RsBundle.message("build.event.message.cargo.project.update.failed.no.rust.toolchain"))
             cargoProjects
         } else {
             cargoProjects.map { cargoProject ->
                 syncProgress.runWithChildProgress(
-                    "Sync ${cargoProject.presentableName} project",
+                    RsBundle.message("build.event.title.sync.project", cargoProject.presentableName),
                     createContext = { it },
                     action = { childProgress ->
                         if (!cargoProject.workingDirectory.exists()) {
                             childProgress.message(
-                                "Project directory does not exist",
-                                "Project directory `${cargoProject.workingDirectory}` does not exist.\n" +
-                                    "Consider detaching the project `${cargoProject.presentableName}` " +
-                                    "from the Cargo tool window",
+                                RsBundle.message("tooltip.project.directory.does.not.exist"),
+                                RsBundle.message("build.event.message.project.directory.does.not.exist.consider.detaching.project.from.cargo.tool.window", cargoProject.workingDirectory, cargoProject.presentableName),
                                 MessageEvent.Kind.ERROR,
                                 null
                             )
-                            val stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
+                            val stdlibStatus = CargoProject.UpdateStatus.UpdateFailed(RsBundle.message("tooltip.project.directory.does.not.exist"))
                             CargoProjectWithStdlib(cargoProject.copy(stdlibStatus = stdlibStatus), null)
                         } else {
                             val context = SyncContext(project, cargoProject, toolchain, indicator, syncProgress.id, childProgress)
@@ -149,18 +147,49 @@ class CargoSyncTask(
     }
 
     private fun createSyncProgressDescriptor(progress: ProgressIndicator): BuildProgressDescriptor {
-        val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "Cargo")
+        val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, RsBundle.message("build.event.title.cargo"))
         buildContentDescriptor.isActivateToolWindowWhenFailed = true
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
         buildContentDescriptor.isNavigateToError = project.rustSettings.autoShowErrorsInEditor
         val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
-        val descriptor = DefaultBuildDescriptor(Any(), "Cargo", project.basePath!!, System.currentTimeMillis())
+        val descriptor = DefaultBuildDescriptor(Any(), RsBundle.message("build.event.title.cargo"), project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(refreshAction)
             .withRestartAction(StopAction(progress))
         return object : BuildProgressDescriptor {
             override fun getTitle(): String = descriptor.title
             override fun getBuildDescriptor(): BuildDescriptor = descriptor
+        }
+    }
+
+    private fun fetchRustcInfo(context: SyncContext): TaskResult<RustcInfo> {
+        return context.runWithChildProgress(RsBundle.message("progress.text.getting.toolchain.version")) { childContext ->
+            if (!childContext.toolchain.looksLikeValidToolchain()) {
+                val location = childContext.toolchain.presentableLocation
+                return@runWithChildProgress TaskResult.Err(RsBundle.message("invalid.rust.toolchain.02", location))
+            }
+
+            val workingDirectory = childContext.oldCargoProject.workingDirectory
+
+            val listener = RustcVersionProcessAdapter(childContext)
+            val rustcVersion = childContext.toolchain.rustc()
+                .queryVersion(workingDirectory, context.project, listener)
+                .unwrapOrElse {
+                    LOG.warn("Failed to fetch rustc version", it)
+                    context.error(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"), it.message.orEmpty())
+                    null
+                }
+            val sysroot = UnitTestRustcCacheService.cached(rustcVersion) {
+                childContext.toolchain.rustc().getSysroot(workingDirectory)
+            } ?: return@runWithChildProgress TaskResult.Err(RsBundle.message("failed.to.get.project.sysroot"))
+            val rustupActiveToolchain = UnitTestRustcCacheService.cached(rustcVersion) {
+                childContext.toolchain.rustup(workingDirectory)?.activeToolchainName()
+            }
+            val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) {
+                childContext.toolchain.rustc().getTargets(workingDirectory)
+            }
+
+            TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustupActiveToolchain, rustcTargets))
         }
     }
 
@@ -192,7 +221,7 @@ class CargoSyncTask(
         val id: Any get() = syncProgress.id
 
         fun <T> runWithChildProgress(
-            title: String,
+            @NlsContexts.ProgressText title: String,
             action: (SyncContext) -> TaskResult<T>
         ): TaskResult<T> {
             progress.checkCanceled()
@@ -209,7 +238,7 @@ class CargoSyncTask(
             }
         }
 
-        fun withProgressText(text: String) {
+        fun withProgressText(@NlsContexts.ProgressText @NlsContexts.ProgressTitle text: String) {
             progress.text = text
             syncProgress.progress(text)
         }
@@ -308,66 +337,41 @@ private fun List<CargoProjectImpl>.deduplicateProjects(): List<CargoProjectImpl>
     return projects.filter { it !in projectsToRemove }
 }
 
-private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<RustcInfo> {
-    return context.runWithChildProgress("Getting toolchain version") { childContext ->
-        if (!childContext.toolchain.looksLikeValidToolchain()) {
-            return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${childContext.toolchain.presentableLocation}")
-        }
-
-        val workingDirectory = childContext.oldCargoProject.workingDirectory
-
-        val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
-        val sysroot = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getSysroot(workingDirectory) }
-            ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
-        val rustupActiveToolchain = UnitTestRustcCacheService.cached(rustcVersion) {
-            childContext.toolchain.rustup(workingDirectory)?.activeToolchainName()
-        }
-        val rustcTargets = UnitTestRustcCacheService.cached(rustcVersion) { childContext.toolchain.rustc().getTargets(workingDirectory) }
-
-        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustupActiveToolchain, rustcTargets))
-    }
-}
-
 private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<CargoWorkspace> {
-    return context.runWithChildProgress("Updating workspace info") { childContext ->
+    return context.runWithChildProgress(RsBundle.message("progress.text.updating.workspace.info")) { childContext ->
 
         val toolchain = childContext.toolchain
         if (!toolchain.looksLikeValidToolchain()) {
-            return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${toolchain.presentableLocation}")
+            return@runWithChildProgress TaskResult.Err(RsBundle.message("invalid.rust.toolchain.0", toolchain.presentableLocation))
         }
         val projectDirectory = childContext.oldCargoProject.workingDirectory
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
-        val rustcVersion = rustcInfo?.version?.semver
 
-        val cargoConfig = if (rustcVersion == null || rustcVersion >= RUST_1_53) {
-            val cargoConfigResult = UnitTestRustcCacheService.cached(
-                rustcInfo?.version,
-                cacheIf = { !projectDirectory.resolve(".cargo").exists() }
-            ) { cargo.getConfig(childContext.project, projectDirectory) }
-
-            when (cargoConfigResult) {
-                is RsResult.Ok -> cargoConfigResult.ok
-                is RsResult.Err -> {
-                    val message = "Fetching Cargo Config failed.\n\n" + cargoConfigResult.err.message.orEmpty()
-                    childContext.warning("Fetching Cargo Config", message)
-                    CargoConfig.DEFAULT
-                }
+        val cargoConfigResult = UnitTestRustcCacheService.cached(
+            rustcInfo?.version,
+            cacheIf = { !projectDirectory.resolve(".cargo").exists() }
+        ) { cargo.getConfig(childContext.project, projectDirectory) }
+        val cargoConfig = when (cargoConfigResult) {
+            is RsResult.Ok -> cargoConfigResult.ok
+            is RsResult.Err -> {
+                val message = RsBundle.message("build.event.message.fetching.cargo.config.failed", cargoConfigResult.err.message.orEmpty())
+                childContext.warning(RsBundle.message("build.event.title.fetching.cargo.config"), message)
+                CargoConfig.DEFAULT
             }
-        } else {
-            CargoConfig.DEFAULT
         }
 
         CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
+        val buildTargets = cargoConfig.buildTargets.ifEmpty { listOfNotNull(rustcInfo?.version?.host) }
         val (projectDescriptionData, status) = cargo.fullProjectDescription(
             childContext.project,
             projectDirectory,
-            cargoConfig.buildTarget ?: rustcInfo?.version?.host,
+            buildTargets,
             rustcInfo?.version,
         ) {
             when (it) {
                 CargoCallType.METADATA -> SyncProcessAdapter(childContext)
-                CargoCallType.BUILD_SCRIPT_CHECK ->  {
-                    val childProgress = childContext.syncProgress.startChildProgress("Build scripts evaluation")
+                CargoCallType.BUILD_SCRIPT_CHECK -> {
+                    val childProgress = childContext.syncProgress.startChildProgress(RsBundle.message("build.event.title.build.scripts.evaluation"))
                     val syncContext = childContext.copy(syncProgress = childProgress)
 
                     val buildContext = SyncCargoBuildContext(
@@ -380,10 +384,12 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
                     SyncCargoBuildAdapter(syncContext, buildContext)
                 }
             }
-        }.unwrapOrElse { return@runWithChildProgress TaskResult.Err("Failed to run Cargo", it.message) }
+        }.unwrapOrElse { return@runWithChildProgress TaskResult.Err(RsBundle.message("failed.to.run.cargo"), it.message) }
         if (status == ProjectDescriptionStatus.BUILD_SCRIPT_EVALUATION_ERROR) {
-            childContext.warning("Build scripts evaluation failed",
-                "Build scripts evaluation failed. Features based on generated info by build scripts may not work in your IDE")
+            childContext.warning(
+                RsBundle.message("build.event.title.build.scripts.evaluation.failed"),
+                RsBundle.message("build.event.message.build.scripts.evaluation.failed.features.based.on.generated.info.by.build.scripts.may.not.work.in.your.ide")
+            )
         }
 
         val manifestPath = projectDirectory.resolve("Cargo.toml")
@@ -396,11 +402,8 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val cfgOptions = when (cfgOptionsResult) {
             is RsResult.Ok -> cfgOptionsResult.ok
             is RsResult.Err -> {
-                if (rustcVersion == null || rustcVersion > RUST_1_51) {
-                    val message = "Fetching target specific `cfg` options failed. Fallback to host options.\n\n" +
-                        cfgOptionsResult.err.message.orEmpty()
-                    childContext.warning("Fetching target specific `cfg` options", message)
-                }
+                val message = RsBundle.message("build.event.message.fetching.target.specific.cfg.options.failed.fallback.to.host.options", cfgOptionsResult.err.message.orEmpty())
+                childContext.warning(RsBundle.message("build.event.title.fetching.target.specific.cfg.options"), message)
                 toolchain.rustc().getCfgOptions(projectDirectory)
             }
         }
@@ -411,7 +414,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
 }
 
 private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoProjectImpl, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
-    return context.runWithChildProgress("Getting Rust stdlib") { childContext ->
+    return context.runWithChildProgress(RsBundle.message("progress.text.getting.rust.stdlib")) { childContext ->
 
         val workingDirectory = cargoProject.workingDirectory
         if (cargoProject.doesProjectLooksLikeRustc()) {
@@ -434,8 +437,8 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, cargoProject: CargoP
                 ?: childContext.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
             val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it, rustcInfo, cargoConfig) }
             return@runWithChildProgress when {
-                explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")
-                lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
+                explicitPath == null -> TaskResult.Err(RsBundle.message("no.explicit.stdlib.or.rustup.found"))
+                lib == null -> TaskResult.Err(RsBundle.message("invalid.standard.library.0", explicitPath))
                 else -> TaskResult.Ok(lib)
             }
         }
@@ -454,17 +457,17 @@ private fun Rustup.fetchStdlib(
         is DownloadResult.Ok -> {
             val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context))
             if (lib == null) {
-                TaskResult.Err("Corrupted standard library: ${download.value.presentableUrl}")
+                TaskResult.Err(RsBundle.message("corrupted.standard.library.0", download.value.presentableUrl))
             } else {
                 TaskResult.Ok(lib)
             }
         }
-        is DownloadResult.Err -> TaskResult.Err("Download failed: ${download.error}")
+        is DownloadResult.Err -> TaskResult.Err(RsBundle.message("download.failed.0", download.error))
     }
 }
 
 private fun <T, R> BuildProgress<BuildProgressDescriptor>.runWithChildProgress(
-    title: String,
+    @BuildEventsNls.Title title: String,
     createContext: (BuildProgress<BuildProgressDescriptor>) -> T,
     action: (T) -> R,
     onResult: (BuildProgress<BuildProgressDescriptor>, R) -> Unit = { progress, _ -> progress.finish() }
@@ -508,12 +511,23 @@ private class SyncProcessAdapter(
     override fun warning(title: String, message: String) = context.warning(title, message)
 }
 
+private class RustcVersionProcessAdapter(
+    private val context: CargoSyncTask.SyncContext
+) : ProcessAdapter() {
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
+        val text = event.text.trim { it <= ' ' }
+        if (text.startsWith("info:")) {
+            context.withProgressText(text.removePrefix(RsBundle.message("progress.text.info")).trim())
+        }
+    }
+}
+
 private class SyncCargoBuildContext(
     cargoProject: CargoProject,
     buildId: Any,
     parentId: Any,
     progressIndicator: ProgressIndicator
-) : CargoBuildContextBase(cargoProject, "Building...", false, buildId, parentId) {
+) : CargoBuildContextBase(cargoProject, RsBundle.message("progress.text.building"), false, buildId, parentId) {
     init {
         indicator = progressIndicator
     }
@@ -551,6 +565,3 @@ private fun CargoSyncTask.SyncContext.warning(
 ) {
     syncProgress.message(title, message, MessageEvent.Kind.WARNING, null)
 }
-
-private val RUST_1_51: SemVer = "1.51.0".parseSemVer()
-private val RUST_1_53: SemVer = "1.53.0".parseSemVer()

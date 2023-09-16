@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.testFramework.PlatformTestUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -31,6 +32,7 @@ abstract class RsStructureViewTestBase : RsTestBase() {
         actions: StructureViewComponent.() -> Unit,
     ) {
         myFixture.configureByText(fileName, code)
+        myFixture.project.macroExpansionManagerIfCreated?.updateInUnitTestMode()
         myFixture.testStructureView {
             it.actions()
         }

@@ -35,11 +35,12 @@ class RsInlineTypeAliasHandler : InlineActionHandler() {
     override fun inlineElement(project: Project, editor: Editor, element: PsiElement) {
         val typeAlias = element as RsTypeAlias
         val reference = TargetElementUtil.findReference(editor, editor.caretModel.offset) as? RsReference
-        val dialog = RsInlineTypeAliasDialog(typeAlias, reference)
         if (!isUnitTestMode) {
+            val dialog = RsInlineTypeAliasDialog(typeAlias, reference)
             dialog.show()
         } else {
-            dialog.doAction()
+            val processor = RsInlineTypeAliasProcessor(project, typeAlias, reference, inlineThisOnly = false)
+            processor.run()
         }
     }
 }

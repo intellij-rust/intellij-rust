@@ -7,14 +7,13 @@ package org.rust.profiler
 
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.profiler.clion.ProfilerExecutor
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.profiler.dtrace.RsDTraceConfigurationExtension
 import org.rust.profiler.perf.RsPerfConfigurationExtension
 
-private const val ERROR_MESSAGE_TITLE: String = "Unable to run profiler"
-
-class RsProfilerRunner : RsExecutableRunner(ProfilerExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
+class RsProfilerRunner : RsExecutableRunner(ProfilerExecutor.EXECUTOR_ID, RsBundle.message("dialog.title.unable.to.run.profiler")) {
     override fun getRunnerId(): String = RUNNER_ID
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {

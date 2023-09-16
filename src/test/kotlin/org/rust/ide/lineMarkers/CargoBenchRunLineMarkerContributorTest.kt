@@ -5,9 +5,11 @@
 
 package org.rust.ide.lineMarkers
 
-import org.rust.*
+import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithExperimentalFeatures
+import org.rust.WithProcMacroRustProjectDescriptor
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 
 /**
  * Tests for Bench Function Line Marker.
@@ -90,7 +92,6 @@ class CargoBenchRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn no_icon() { assert(true) }
     """)
 
-    @ExpandMacros(MacroExpansionScope.WORKSPACE)
     @WithExperimentalFeatures(RsExperiments.PROC_MACROS)
     @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
     fun `test bench function under a proc macro attribute`() = doTestByText("""

@@ -6,14 +6,17 @@
 package org.rust.profiler.legacy
 
 import com.intellij.execution.configurations.RunProfile
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.profiler.clion.ProfilerExecutor
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowAvailable
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 import org.rust.profiler.dtrace.RsDTraceConfigurationExtension
 import org.rust.profiler.perf.RsPerfConfigurationExtension
 
-private const val ERROR_MESSAGE_TITLE: String = "Unable to run profiler"
+@NlsContexts.DialogTitle
+private val ERROR_MESSAGE_TITLE: String = RsBundle.message("dialog.title.unable.to.run.profiler")
 
 /**
  * This runner is used if [isBuildToolWindowAvailable] is false.

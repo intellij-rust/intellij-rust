@@ -12,7 +12,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
+import org.rust.ide.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.AVAILABLE
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.or

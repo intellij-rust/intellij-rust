@@ -17,11 +17,15 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.BitUtil
 import com.intellij.util.containers.Stack
+import org.rust.RsBundle
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.MacroBraces
+import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
+import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.tokenSetOf
 import org.rust.stdext.makeBitMask
 import kotlin.math.max
 
@@ -69,20 +73,23 @@ object RustParserUtil : GeneratedParserUtilBase() {
      */
     enum class StmtMode { ON, OFF }
 
-    enum class RestrictedConstExprMode { ON, OFF }
+    enum class RestrictedConstExprMode { ON, @Suppress("unused") OFF }
 
-    enum class ConditionMode { ON, OFF }
+    enum class ConditionMode { ON, @Suppress("unused") OFF }
 
     enum class MacroCallParsingMode(
         val attrsAndVis: Boolean,
         val semicolon: Boolean,
         val pin: Boolean,
-        val forbidExprSpecialMacros: Boolean
+        val specialMacros: SpecialMacroParsingMode
     ) {
-        ITEM(attrsAndVis = false, semicolon = true, pin = true, forbidExprSpecialMacros = false),
-        BLOCK(attrsAndVis = true, semicolon = true, pin = false, forbidExprSpecialMacros = true),
-        EXPR(attrsAndVis = true, semicolon = false, pin = true, forbidExprSpecialMacros = false)
+        ITEM(attrsAndVis = false, semicolon = true, pin = true, specialMacros = SpecialMacroParsingMode.PARSE_AS_SPECIAL),
+        BLOCK(attrsAndVis = true, semicolon = true, pin = false, specialMacros = SpecialMacroParsingMode.FORBID),
+        EXPR(attrsAndVis = true, semicolon = false, pin = true, specialMacros = SpecialMacroParsingMode.PARSE_AS_SPECIAL),
+        META(attrsAndVis = false, semicolon = false, pin = false, specialMacros = SpecialMacroParsingMode.PARSE_AS_USUAL),
     }
+
+    enum class SpecialMacroParsingMode { FORBID, PARSE_AS_SPECIAL, PARSE_AS_USUAL }
 
     private val FLAGS: Key<Int> = Key("RustParserUtil.FLAGS")
     private var PsiBuilder.flags: Int
@@ -571,7 +578,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
 
         val macroName = getMacroName(b, -2)
-        if (mode.forbidExprSpecialMacros && macroName in SPECIAL_EXPR_MACROS) return false
+        if (mode.specialMacros == SpecialMacroParsingMode.FORBID && macroName in SPECIAL_EXPR_MACROS) return false
 
         // foo! bar {}
         //      ^ this ident
@@ -579,11 +586,14 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
         val braceKind = b.tokenType?.let { MacroBraces.fromToken(it) }
 
-        if (macroName != null && !hasIdent && braceKind != null) { // try special macro
+        val trySpecialMacro = mode.specialMacros == SpecialMacroParsingMode.PARSE_AS_SPECIAL
+            && macroName != null
+            && !hasIdent
+        if (trySpecialMacro && braceKind != null) {
             val specialParser = SPECIAL_MACRO_PARSERS[macroName]
             if (specialParser != null && specialParser(b, level + 1)) {
                 if (braceKind.needsSemicolon && mode.semicolon && !consumeToken(b, SEMICOLON)) {
-                    b.error("`;` expected, got '${b.tokenText}'")
+                    b.error(RsBundle.message("parsing.error.expected.got2", b.tokenText?:""))
                     return mode.pin
                 }
                 return true
@@ -591,11 +601,11 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
 
         if (braceKind == null || !parseMacroArgumentLazy(b, level + 1)) {
-            b.error("<macro argument> expected, got '${b.tokenText}'")
+            b.error(RsBundle.message("parsing.error.macro.argument.expected.got", b.tokenText?:""))
             return mode.pin
         }
         if (braceKind.needsSemicolon && mode.semicolon && !consumeToken(b, SEMICOLON)) {
-            b.error("`;` expected, got '${b.tokenText}'")
+            b.error(RsBundle.message("parsing.error.expected.got", b.tokenText?:""))
             return mode.pin
         }
         return true
@@ -682,6 +692,21 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic
     fun rawKeyword(b: PsiBuilder, level: Int): Boolean = contextualKeywordWithRollback(b, "raw", RAW)
+
+    @JvmStatic
+    fun parseSecondPlusInIncrement(b: PsiBuilder, level: Int): Boolean = noWhiteSpaceBefore(b, PLUS)
+
+    @JvmStatic
+    fun parseSecondMinusInDecrement(b: PsiBuilder, level: Int): Boolean = noWhiteSpaceBefore(b, MINUS)
+
+    @JvmStatic
+    private fun noWhiteSpaceBefore(b: PsiBuilder, token: IElementType): Boolean =
+        if (b.tokenType == token && b.rawLookup(-1) == token) {
+            b.advanceLexer()
+            true
+        } else {
+            false
+        }
 
     @JvmStatic
     private fun collapse(b: PsiBuilder, tokenType: IElementType, vararg parts: IElementType): Boolean {
@@ -821,7 +846,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
             val lastToken = b.tokenType
             if (lastToken == null || lastToken !in RIGHT_BRACES) {
-                b.error("'${leftBrace.closeText}' expected")
+                b.error(RsBundle.message("parsing.error.expected2", leftBrace.closeText))
                 return pos.close(lastToken == null)
             }
 
@@ -829,7 +854,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             if (rightBrace == leftBrace) {
                 b.advanceLexer() // Consume '}' or ')' or ']'
             } else {
-                b.error("'${leftBrace.closeText}' expected")
+                b.error(RsBundle.message("parsing.error.expected", leftBrace.closeText))
                 if (leftBrace == rootBrace) {
                     // Recovery loop. Consume everything until [rightBrace] is [leftBrace]
                     while (rightBrace != leftBrace && !b.eof()) {

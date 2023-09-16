@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints.naming
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.lints.RsStructNamingInspection
 
@@ -19,6 +20,7 @@ class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspect
         struct struct_foo {}
     """)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test structs fix`() = checkFixByText("Rename to `StructFoo`", """
         struct <warning descr="Type `Struct_foo` should have a camel case name such as `StructFoo`">Stru<caret>ct_foo</warning> {}
         fn struct_use() {
@@ -31,6 +33,7 @@ class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspect
         }
     """, preview = null)
 
+    @SkipTestWrapping // TODO support `RenameFix` in macros
     fun `test struct with raw identifier`() = checkFixByText("Rename to `FooBar`", """
         struct <warning descr="Type `foo_bar` should have a camel case name such as `FooBar`">r#foo_bar/*caret*/</warning>;
         fn main() {

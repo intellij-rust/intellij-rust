@@ -77,6 +77,6 @@ fun RsMacro2.prepareMacroBody(): String {
     return if (macroPatternContents != null && macroExpansionContents != null) {
         "{(${macroPatternContents.text}) => {${macroExpansionContents.text}}}"
     } else {
-        macroCaseList.joinToString(prefix = "{", postfix = "}") { it.text }
+        macroCaseList.joinToString(prefix = "{", postfix = "}", separator = "") { it.text }
     }
 }

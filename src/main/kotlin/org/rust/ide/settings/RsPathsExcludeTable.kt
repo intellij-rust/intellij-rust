@@ -14,11 +14,14 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 import com.intellij.openapi.ui.cellvalidators.ValidationUtils
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
+import org.rust.RsBundle
 import org.rust.ide.settings.RsPathsExcludeTable.ExclusionScope
 import org.rust.ide.settings.RsPathsExcludeTable.Item
 import java.util.function.Supplier
@@ -70,7 +73,7 @@ class RsPathsExcludeTable(project: Project) : ListTableWithButtons<Item>() {
 }
 
 @Suppress("DialogTitleCapitalization")
-private val PATH_COLUMN: ColumnInfo<Item, String> = object : ColumnInfo<Item, String>("Item or module") {
+private val PATH_COLUMN: ColumnInfo<Item, String> = object : ColumnInfo<Item, String>(RsBundle.message("column.name.item.or.module")) {
     override fun valueOf(item: Item): String = item.path
 
     override fun isCellEditable(item: Item): Boolean = true
@@ -101,18 +104,18 @@ private val PATH_COLUMN: ColumnInfo<Item, String> = object : ColumnInfo<Item, St
 
     private fun getValidationInfo(path: String?, component: JComponent?): ValidationInfo? {
         if (path.isNullOrEmpty() || path.matches(PATH_PATTERN)) return null
-        val errorText = "Illegal path: $path"
+        val errorText = RsBundle.message("dialog.message.illegal.path", path)
         return ValidationInfo(errorText, component)
     }
 }
 
 private val PATH_PATTERN: Regex = Regex("(\\w+::)*\\w+(::\\*)?")
 
-private val TYPE_COLUMN: ColumnInfo<Item, ExclusionType> = object : ComboboxColumnInfo<ExclusionType>(ExclusionType.values(), "Apply to") {
+private val TYPE_COLUMN: ColumnInfo<Item, ExclusionType> = object : ComboboxColumnInfo<ExclusionType>(ExclusionType.values(), RsBundle.message("column.name.apply.to")) {
 
     override fun ExclusionType.displayText(): String = when (this) {
-        ExclusionType.ItemsAndMethods -> "Everything"
-        ExclusionType.Methods -> "Methods only"
+        ExclusionType.ItemsAndMethods -> RsBundle.message("label.everything")
+        ExclusionType.Methods -> RsBundle.message("label.methods.only")
     }
 
     override fun valueOf(item: Item): ExclusionType = item.type
@@ -122,7 +125,7 @@ private val TYPE_COLUMN: ColumnInfo<Item, ExclusionType> = object : ComboboxColu
     }
 }
 
-private val SCOPE_COLUMN: ColumnInfo<Item, ExclusionScope> = object : ComboboxColumnInfo<ExclusionScope>(ExclusionScope.values(), "Scope") {
+private val SCOPE_COLUMN: ColumnInfo<Item, ExclusionScope> = object : ComboboxColumnInfo<ExclusionScope>(ExclusionScope.values(), RsBundle.message("column.name.scope")) {
 
     override fun valueOf(item: Item): ExclusionScope = item.scope
 
@@ -133,10 +136,14 @@ private val SCOPE_COLUMN: ColumnInfo<Item, ExclusionScope> = object : ComboboxCo
 
 private abstract class ComboboxColumnInfo<T : Any>(
     private val values: Array<T>,
-    name: String,
+    @NlsContexts.ColumnName name: String,
 ) : ColumnInfo<Item, T>(name) {
 
-    open fun T.displayText(): String = toString()
+    @NlsContexts.Label
+    open fun T.displayText(): String {
+        @NlsSafe val toString = toString()
+        return toString
+    }
 
     override fun isCellEditable(item: Item): Boolean = true
 

@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
 import gnu.trove.TObjectHashingStrategy
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.rust.cargo.project.settings.getMaximumRecursionLimit
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.crate.CratePersistentId
@@ -26,9 +27,6 @@ import org.rust.lang.core.resolve2.util.PerNsHashMap
 import org.rust.lang.core.resolve2.util.SmartListMap
 import org.rust.openapiext.fileId
 import org.rust.stdext.HashCode
-import org.rust.stdext.writeVarInt
-import java.io.DataOutput
-import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.math.min
@@ -83,7 +81,7 @@ class CrateDefMap(
 
     val globImportGraph: GlobImportGraph = GlobImportGraph()
 
-    val expansionNameToMacroCall: MutableMap<String, MacroCallLightInfo> = THashMap()
+    val expansionNameToMacroCall: MutableMap<String, MacroCallLightInfo> = Object2ObjectOpenHashMap()
     val macroCallToExpansionName: MutableMap<MacroIndex, String> = THashMap(object : TObjectHashingStrategy<MacroIndex> {
         override fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = MacroIndex.equals(index1, index2)
         override fun computeHashCode(index: MacroIndex): Int = MacroIndex.hashCode(index)
@@ -220,23 +218,14 @@ class FileInfo(
  *   to determine modules to which propagate
  */
 @JvmInline
-value class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
+value class MacroIndex(val indices: IntArray) : Comparable<MacroIndex> {
 
     val parent: MacroIndex get() = MacroIndex(indices.copyOfRange(0, indices.size - 1))
     val last: Int get() = indices.last()
 
     fun append(index: Int): MacroIndex = MacroIndex(indices + index)
-    fun append(index: MacroIndex): MacroIndex = MacroIndex(indices + index.indices)
 
     override fun compareTo(other: MacroIndex): Int = Arrays.compare(indices, other.indices)
-
-    @Throws(IOException::class)
-    fun writeTo(data: DataOutput) {
-        data.writeVarInt(indices.size)
-        for (index in indices) {
-            data.writeVarInt(index)
-        }
-    }
 
     companion object {
         /** Equivalent to `call < mod && !isPrefix(call, mod)` */
@@ -316,13 +305,13 @@ class ModData(
     val legacyMacros: SmartListMap<String, MacroDefInfo> = SmartListMap()
 
     /** Explicitly declared macros 2.0 (`pub macro $name ...`) */
-    val macros2: MutableMap<String, DeclMacro2DefInfo> = THashMap()
+    val macros2: MutableMap<String, DeclMacro2DefInfo> = Object2ObjectOpenHashMap()
 
     /** Explicitly declared proc macros */
     val procMacros: MutableMap<String, RsProcMacroKind> = hashMapOf()
 
     /** Traits imported via `use Trait as _;` */
-    val unnamedTraitImports: MutableMap<ModPath, Visibility> = THashMap()
+    val unnamedTraitImports: MutableMap<ModPath, Visibility> = Object2ObjectOpenHashMap()
 
     /**
      * Make sense only for files ([isRsFile] == true).

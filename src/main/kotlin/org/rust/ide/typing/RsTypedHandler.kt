@@ -19,7 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.core.psi.RsDotExpr
-import org.rust.lang.core.psi.RsElementTypes.COLONCOLON
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsPat
 
@@ -73,6 +73,19 @@ class RsTypedHandler : TypedHandlerDelegate() {
                     leaf?.parent !is RsPat
                 }
                 return Result.STOP
+            }
+        }
+
+        // struct literal `Foo {/*caret*/}`
+        if (charTyped == '{') {
+            AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
+            return Result.STOP
+        }
+
+        if (charTyped == 'i' || charTyped == 'u' || charTyped == 'f') {
+            AutoPopupController.getInstance(project).scheduleAutoPopup(editor, CompletionType.BASIC) { f ->
+                val leaf = f.findElementAt(offset)
+                leaf?.elementType == INTEGER_LITERAL || leaf?.elementType == FLOAT_LITERAL
             }
         }
 

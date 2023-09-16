@@ -6,6 +6,16 @@
 package org.rust.ide.intentions
 
 class ConvertUFCSToMethodCallIntentionTest : RsIntentionTestBase(ConvertUFCSToMethodCallIntention::class) {
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        struct S;
+        impl S {
+            fn foo(&self, _: u32, _: u32) {}
+        }
+        fn foo(s: &S) {
+            <selection>S::foo</selection>(&s, 1, 2);
+        }
+    """)
+
     fun `test not available for methods`() = doUnavailableTest("""
         struct S;
         impl S {

@@ -264,7 +264,7 @@ class ConvertMethodCallToUFCSIntentionTest : RsIntentionTestBase(ConvertMethodCa
         }
     """)
 
-    fun `test target in a different mod `() = doAvailableTest("""
+    fun `test target in a different mod`() = doAvailableTest("""
         mod foo {
             pub struct Foo;
             impl Foo {

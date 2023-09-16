@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.formatter.FormatterUtil
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.project.settings.toolchain
@@ -29,13 +30,12 @@ import org.rust.openapiext.runProcess
 import org.rust.stdext.enumSetOf
 import org.rust.stdext.unwrapOrThrow
 
-@Suppress("UnstableApiUsage")
 class RustfmtFormattingService : AsyncDocumentFormattingService() {
 
     override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
 
     override fun canFormat(file: PsiFile): Boolean =
-        file is RsFile && file.project.rustfmtSettings.state.useRustfmt && getFormattingReason() == FormattingReason.ReformatCode
+        file is RsFile && file.project.rustfmtSettings.useRustfmt && getFormattingReason() == FormattingReason.ReformatCode
 
     override fun createFormattingTask(request: AsyncFormattingRequest): FormattingTask? {
         val context = request.context
@@ -66,7 +66,7 @@ class RustfmtFormattingService : AsyncDocumentFormattingService() {
                                 if (exitCode == 0) {
                                     request.onTextReady(output.stdout)
                                 } else {
-                                    request.onError("Rustfmt", output.stderr)
+                                    request.onError(RsBundle.message("notification.title.rustfmt"), output.stderr)
                                 }
                             }
                         })

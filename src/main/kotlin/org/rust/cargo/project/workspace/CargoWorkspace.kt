@@ -20,7 +20,6 @@ import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.openapiext.CachedVirtualFile
-import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.mapToSet
 import java.nio.file.Path
@@ -207,6 +206,8 @@ interface CargoWorkspace {
         val isCustomBuild: Boolean get() = this == CustomBuild
         val isProcMacro: Boolean
             get() = this is Lib && this.kinds.contains(LibKind.PROC_MACRO)
+        val canHaveMainFunction: Boolean
+            get() = isBin || isExampleBin || isCustomBuild
     }
 
     enum class LibKind {
@@ -454,40 +455,6 @@ private class WorkspaceImpl(
         }
     }
 
-    /** A kind of test for [inferFeatureState]: check that our features inference works the same way as Cargo's */
-    private fun checkFeaturesInference() {
-        if (!isUnitTestMode) return
-        val enabledByCargo = packages.flatMap { pkg ->
-            pkg.cargoEnabledFeatures.map { PackageFeature(pkg, it) }
-        }
-        for ((feature, state) in inferFeatureState(UserDisabledFeatures.EMPTY)) {
-            when (feature.pkg.origin) {
-                STDLIB -> {
-                    // All features of stdlib package should be considered as enabled by default.
-                    // If `RsExperiments.FETCH_ACTUAL_STDLIB_METADATA` is enabled,
-                    // the plugin invokes `cargo metadata` for `test` crate of stdlib to get actual info.
-                    // And since stdlib packages are not a single workspace,
-                    // `cargo` considers that all stdlib crates except test one are dependencies and
-                    // as a result, enabled only features required by `test` package (i.e. `pkg.cargoEnabledFeatures` are not expected)
-                    // It doesn't make sense to fix `pkg.cargoEnabledFeatures` so let's just adjust this check
-                    if (!state.isEnabled) {
-                        error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
-                    }
-                }
-                // `cargoEnabledFeatures` are not source of truth here when `RsExperiments.FETCH_ACTUAL_STDLIB_METADATA` is enabled
-                // because only `test` crate is considered as part of workspace where all features are enabled by default (see comment above).
-                // As a result, state of stdlib dependencies can differ from `cargoEnabledFeatures`.
-                // Skip check here for now
-                STDLIB_DEPENDENCY -> Unit
-                else -> {
-                    if (feature in enabledByCargo != state.isEnabled) {
-                        error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
-                    }
-                }
-            }
-        }
-    }
-
     @TestOnly
     override fun withImplicitDependency(pkgToAdd: CargoWorkspaceData.Package): CargoWorkspace {
         val newPackagesData = packages.map { it.asPackageData() } + listOf(pkgToAdd)
@@ -519,7 +486,9 @@ private class WorkspaceImpl(
                         val dependencyPackage = newIdToPackage[dep.pkg.id] ?: return@mapNotNull null
                         dep.withPackage(dependencyPackage)
                     })
-                    pkg.dependencies.add(pkgToAddDependency)
+                    if (pkg.origin != STDLIB && pkg.origin != STDLIB_DEPENDENCY) {
+                        pkg.dependencies.add(pkgToAddDependency)
+                    }
                 }
             }
         }

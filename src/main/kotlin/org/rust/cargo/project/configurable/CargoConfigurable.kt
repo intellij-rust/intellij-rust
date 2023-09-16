@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.rust.RsBundle
 import org.rust.cargo.project.model.isNewProjectModelImportEnabled
+import org.rust.cargo.project.settings.rustSettings
 import java.awt.Component
 
 class CargoConfigurable(
@@ -29,6 +30,9 @@ class CargoConfigurable(
     }
 
     private fun createSettingsPanel(): DialogPanel = panel {
+        val settings = project.rustSettings
+        val state = settings.state.copy()
+
         // Rider doesn't provide `Build, Execution, Deployment | Build Tools` settings panel at all.
         // Let's add the corresponding settings manually as a temporary workaround
         if (isNewProjectModelImportEnabled && !buildToolsConfigurableExists(project)) {
@@ -62,6 +66,15 @@ class CargoConfigurable(
             checkBox(RsBundle.message("settings.rust.cargo.offline.mode.label"))
                 .comment(RsBundle.message("settings.rust.cargo.offline.mode.comment"))
                 .bindSelected(state::useOffline)
+        }
+
+        onApply {
+            settings.modify {
+                it.autoShowErrorsInEditor = state.autoShowErrorsInEditor
+                it.autoUpdateEnabled = state.autoUpdateEnabled
+                it.compileAllTargets = state.compileAllTargets
+                it.useOffline = state.useOffline
+            }
         }
     }
 

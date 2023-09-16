@@ -9,14 +9,12 @@ import com.intellij.openapi.util.text.StringUtil
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.ide.experiments.RsExperiments
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.isMacroCall
 
 @MinRustcVersion("1.46.0")
-@ExpandMacros(MacroExpansionScope.WORKSPACE)
 @ProjectDescriptor(WithProcMacroRustProjectDescriptor::class)
 @WithExperimentalFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, RsExperiments.PROC_MACROS)
 class RsProcMacroSyntaxFixupTest : RsTestBase() {
@@ -102,6 +100,20 @@ class RsProcMacroSyntaxFixupTest : RsTestBase() {
         fn main() {
             let a = 1;
             let b = a + (__ij__fixup);
+            let c = 2;
+        }
+    """)
+
+    fun `test no extra semicolon for if statement`() = checkSyntaxFixup("""
+        fn main() {
+            let a = 1;
+            if true { 1; } else { 2; }
+            let c = 2;
+        }
+    """, """
+        fn main() {
+            let a = 1;
+            if true { 1; } else { 2; }
             let c = 2;
         }
     """)

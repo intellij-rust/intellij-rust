@@ -195,6 +195,19 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn bar() {}
     """)
 
+    fun `test meta with a macro call`() = doTest("""
+        macro_rules! foo {
+            ($ i:meta) => (
+                #[$ i]
+                fn bar() {}
+            )
+        }
+        foo! { doc = concat!("foo", "bar") }
+    """, """
+        #[doc = concat!("foo", "bar")]
+         fn bar() {}
+    """)
+
     fun `test tt block`() = doTest("""
         macro_rules! foo {
             ($ i:tt) => { fn foo() $ i }
@@ -271,6 +284,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo!(f64 0.);
         foo!(f32 0.0f32);
         foo!(f32 0.1e-3f32);
+        foo!(i32 -123);
+        foo!(f64 -123.456);
     """, """
         const VALUE: u8 = 0;
     """, """
@@ -283,6 +298,10 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         const VALUE: f32 = 0.0f32;
     """, """
         const VALUE: f32 = 0.1e-3f32;
+    """, """
+        const VALUE: i32 = -123;
+    """, """
+        const VALUE: f64 = -123.456;
     """)
 
     fun `test tt group`() = doTest("""
@@ -852,7 +871,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         val rustcVersion = project.cargoProjects.singleProject().rustcInfo?.version?.semver!!
         // language=Rust
         val expansion = when {
-            rustcVersion < RUST_1_51 -> "<[_]>::into_vec(box [1, 2, 3])"
             rustcVersion < RUST_1_63 -> "(<[_]>::into_vec(box [1, 2, 3]))"
             else -> """(<[_]>::into_vec(
                 #[rustc_box]
@@ -1277,9 +1295,117 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
     """)
 
+    fun `test reserved keywords`() = doTest("""
+        macro_rules! foo {
+            ($ i:ident) => { fn foo () { let _ = stringify!($ i); } };
+        }
+
+        foo!(abstract);
+        foo!(become);
+        foo!(do);
+        foo!(final);
+        foo!(override);
+        foo!(priv);
+        foo!(typeof);
+        foo!(unsized);
+        foo!(virtual);
+    """, """
+        fn foo () { let _ = stringify!(abstract); }
+    """, """
+        fn foo () { let _ = stringify!(become); }
+    """, """
+        fn foo () { let _ = stringify!(do); }
+    """, """
+        fn foo () { let _ = stringify!(final); }
+    """, """
+        fn foo () { let _ = stringify!(override); }
+    """, """
+        fn foo () { let _ = stringify!(priv); }
+    """, """
+        fn foo () { let _ = stringify!(typeof); }
+    """, """
+        fn foo () { let _ = stringify!(unsized); }
+    """, """
+        fn foo () { let _ = stringify!(virtual); }
+    """)
+
+    fun `test macro call in an attribute`() = checkSingleMacro("""
+        macro_rules! foo {
+            () => {"bar"}
+        }
+
+        #[doc = foo!()]
+              //^
+        fn foo() {}
+    """, """
+        "bar"
+    """)
+
+    fun `test marker_impls using macro 2`() = doTest("""
+        macro marker_impls {
+            ( $(#[$($ meta:tt)*])* $ Trait:ident for $({$($ bounds:tt)*})? $ T:ty $(, $($ rest:tt)*)? ) => {
+                    $(#[$($ meta)*])* impl< $($($ bounds)*)? > $ Trait for $ T {}
+                    marker_impls! { $(#[$($ meta)*])* $ Trait for $($($ rest)*)? }
+                },
+            ( $(#[$($ meta:tt)*])* $ Trait:ident for ) => {},
+
+            ( $(#[$($ meta:tt)*])* unsafe $ Trait:ident for $({$($ bounds:tt)*})? $ T:ty $(, $($ rest:tt)*)? ) => {
+                    $(#[$($ meta)*])* unsafe impl< $($($ bounds)*)? > $ Trait for $ T {}
+                    marker_impls! { $(#[$($ meta)*])* unsafe $ Trait for $($($ rest)*)? }
+                },
+            ( $(#[$($ meta:tt)*])* unsafe $ Trait:ident for ) => {},
+        }
+        marker_impls! {
+            #[stable(feature = "rust1", since = "1.0.0")]
+            Copy for
+                usize, u8, u16, u32, u64, u128,
+                isize, i8, i16, i32, i64, i128,
+                f32, f64,
+                bool, char,
+                {T: ?Sized} *const T,
+                {T: ?Sized} *mut T,
+
+        }
+    """, """
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for usize {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u8 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u16 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u32 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u64 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for u128 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for isize {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i8 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i16 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i32 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i64 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for i128 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for f32 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for f64 {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for bool {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<> Copy for char {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<T: ?Sized> Copy for *const T {}
+        #[stable(feature = "rust1", since = "1.0.0")]
+        impl<T: ?Sized> Copy for *mut T {}
+    """)
+
     companion object {
-        // BACKCOMPAT: Rust 1.50
-        private val RUST_1_51 = "1.51.0".parseSemVer()
         // BACKCOMPAT: Rust 1.62
         private val RUST_1_63 = "1.63.0".parseSemVer()
     }

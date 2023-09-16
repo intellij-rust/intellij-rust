@@ -11,19 +11,23 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.BatchQuickFix
 import com.intellij.codeInspection.CommonProblemDescriptor
 import com.intellij.codeInspection.HintAction
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.RsBundle
+import org.rust.ide.fixes.RsQuickFixBase
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
+import org.rust.ide.intentions.util.macros.IntentionInMacroUtil
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.ImportCandidatesCollector
 import org.rust.ide.utils.import.ImportContext
 import org.rust.ide.utils.import.import
+import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.ResolvedPath
@@ -33,32 +37,28 @@ import org.rust.openapiext.checkWriteAccessNotAllowed
 import org.rust.openapiext.runWriteCommandAction
 
 class AutoImportFix(element: RsElement, private val context: Context) :
-    LocalQuickFixOnPsiElement(element), BatchQuickFix, PriorityAction, HintAction {
+    RsQuickFixBase<RsElement>(element), BatchQuickFix, PriorityAction, HintAction {
 
     private var isConsumed: Boolean = false
 
     override fun getFamilyName(): String = NAME
     override fun getText(): String = familyName
 
-    public override fun isAvailable(): Boolean = super.isAvailable() && !isConsumed
+    override fun isAvailable(): Boolean = super.isAvailable() && !isConsumed
 
     override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.TOP
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-        invoke(project)
-    }
-
-    fun invoke(project: Project) {
+    override fun invoke(project: Project, editor: Editor?, element: RsElement) {
         checkWriteAccessNotAllowed()
-        val element = startElement as? RsElement ?: return
         val candidates = context.candidates
         if (candidates.size == 1) {
             project.runWriteCommandAction(text) {
                 candidates.first().import(element)
+                editor?.let(IntentionInMacroUtil::finishActionInMacroExpansionCopy)
             }
         } else {
             DataManager.getInstance().dataContextFromFocusAsync.onSuccess {
-                chooseItemAndImport(project, it, candidates, element)
+                chooseItemAndImport(project, editor, it, candidates, element)
             }
         }
         isConsumed = true
@@ -74,7 +74,9 @@ class AutoImportFix(element: RsElement, private val context: Context) :
             for (descriptor in descriptors) {
                 val fix = descriptor.fixes?.filterIsInstance<AutoImportFix>()?.singleOrNull() ?: continue
                 val candidate = fix.context.candidates.singleOrNull() ?: continue
+                @Suppress("DEPRECATION")
                 val context = fix.startElement as? RsElement ?: continue
+                if (context.isExpandedFromMacro) continue // Quick fixes don't work inside macros for now anyway
                 candidate.import(context)
             }
         }
@@ -83,6 +85,7 @@ class AutoImportFix(element: RsElement, private val context: Context) :
 
     private fun chooseItemAndImport(
         project: Project,
+        editor: Editor?,
         dataContext: DataContext,
         items: List<ImportCandidate>,
         context: RsElement
@@ -90,13 +93,10 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         showItemsToImportChooser(project, dataContext, items) { selectedValue ->
             project.runWriteCommandAction(text) {
                 selectedValue.import(context)
+                editor?.let(IntentionInMacroUtil::finishActionInMacroExpansionCopy)
             }
         }
     }
-
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = isAvailable
-
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = invoke(project)
 
     override fun startInWriteAction(): Boolean = false
 
@@ -106,29 +106,23 @@ class AutoImportFix(element: RsElement, private val context: Context) :
         if (!RsCodeInsightSettings.getInstance().showImportPopup) return false
         if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) return false
 
+        @Suppress("DEPRECATION")
+        val element = startElement as? RsElement ?: return false
+        if (element.isExpandedFromMacro) return false // TODO support the hint action in macros
         val candidates = context.candidates
         val hint = candidates[0].info.usePath
         val multiple = candidates.size > 1
         val message = ShowAutoImportPass.getMessage(multiple, hint)
-        val element = startElement
         HintManager.getInstance().showQuestionHint(editor, message, element.textOffset, element.endOffset) {
-            invoke(element.project)
+            invoke(element.project, editor, element)
             true
         }
         return true
     }
 
-    override fun fixSilently(editor: Editor): Boolean {
-        if (!RsCodeInsightSettings.getInstance().addUnambiguousImportsOnTheFly) return false
-        val candidates = context.candidates
-        if (candidates.size != 1) return false
-        val project = editor.project ?: return false
-        invoke(project)
-        return true
-    }
-
     companion object {
-        const val NAME = "Import"
+        @IntentionFamilyName
+        val NAME = RsBundle.message("intention.name.import")
 
         fun findApplicableContext(path: RsPath, type: ImportContext.Type = ImportContext.Type.AUTO_IMPORT): Context? {
             if (path.reference == null) return null

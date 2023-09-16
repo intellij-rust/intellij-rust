@@ -5,6 +5,9 @@
 
 package org.rust.ide.intentions
 
+import org.rust.SkipTestWrapping
+
+@SkipTestWrapping
 class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsIntention::class) {
     fun `test simple use statements`() = doAvailableTest("""
         use /*caret*/std::error;

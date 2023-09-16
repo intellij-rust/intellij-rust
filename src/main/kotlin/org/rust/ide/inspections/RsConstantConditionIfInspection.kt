@@ -5,12 +5,13 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.prevLeaf
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.RsBundle
+import org.rust.ide.fixes.RsQuickFixBase
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.asBool
@@ -19,7 +20,7 @@ import org.rust.lang.utils.evaluation.evaluate
 /** See also [RsRedundantElseInspection]. */
 class RsConstantConditionIfInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
-        object : RsVisitor() {
+        object : RsWithMacrosInspectionVisitor() {
             override fun visitIfExpr(ifExpr: RsIfExpr) {
                 val condition = ifExpr.condition ?: return
                 if (condition.expr?.descendantOfTypeOrSelf<RsLetExpr>() != null) return
@@ -31,10 +32,10 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
                     if (isUsedAsExpression && !isInsideCascadeIf) return
                     createDeleteElseBranchFix(ifExpr, isInsideCascadeIf)
                 } else {
-                    SimplifyFix(conditionValue)
+                    SimplifyFix(condition, conditionValue)
                 }
 
-                holder.registerProblem(condition, "Condition is always ''$conditionValue''", fix)
+                holder.registerProblem(condition, RsBundle.message("inspection.message.condition.always", conditionValue), fix)
             }
         }
 
@@ -48,7 +49,7 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
             ifRange
         }
         return SubstituteTextFix.delete(
-            "Delete expression",
+            RsBundle.message("intention.name.delete.expression"),
             ifExpr.containingFile,
             deletionRange
         )
@@ -56,14 +57,14 @@ class RsConstantConditionIfInspection : RsLocalInspectionTool() {
 }
 
 private class SimplifyFix(
+    element: RsCondition,
     private val conditionValue: Boolean,
-) : LocalQuickFix {
+) : RsQuickFixBase<RsCondition>(element) {
+    override fun getText(): String = RsBundle.message("intention.name.simplify.expression")
     override fun getFamilyName(): String = name
 
-    override fun getName(): String = "Simplify expression"
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val ifExpr = descriptor.psiElement.ancestorStrict<RsIfExpr>() ?: return
+    override fun invoke(project: Project, editor: Editor?, element: RsCondition) {
+        val ifExpr = element.ancestorStrict<RsIfExpr>() ?: return
 
         // `if false {} else if ... {} else ...`
         ifExpr.elseBranch?.ifExpr?.let { elseIfExpr ->
@@ -76,7 +77,7 @@ private class SimplifyFix(
         val branch = (if (conditionValue) ifExpr.block else ifExpr.elseBranch?.block) ?: return
         val replaced = ifExpr.replaceWithBlockContent(branch)
         if (replaced != null) {
-            descriptor.findExistingEditor()?.caretModel?.moveToOffset(replaced.startOffset)
+            editor?.caretModel?.moveToOffset(replaced.startOffset)
         }
     }
 }

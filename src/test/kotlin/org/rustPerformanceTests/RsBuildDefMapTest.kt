@@ -21,7 +21,7 @@ class RsBuildDefMapTest : RsRealProjectTestBase() {
     fun `test build Cargo`() = doTest(CARGO)
     fun `test build mysql_async`() = doTest(MYSQL_ASYNC)
     fun `test build tokio`() = doTest(TOKIO)
-    fun `test build amethyst`() = doTest(AMETHYST)
+    fun `test build bevy`() = doTest(BEVY)
     fun `test build clap`() = doTest(CLAP)
     fun `test build diesel`() = doTest(DIESEL)
     fun `test build rust_analyzer`() = doTest(RUST_ANALYZER)

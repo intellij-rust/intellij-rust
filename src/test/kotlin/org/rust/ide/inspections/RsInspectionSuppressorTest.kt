@@ -5,21 +5,24 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.lints.RsSelfConventionInspection
 
 /**
  * Tests for inspections suppression
  */
+@ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
 
-    fun testWithoutSuppression() = checkByText("""
+    fun `test without suppression`() = checkByText("""
         struct S;
         impl S {
             fn is_foo(<warning>s<caret>elf</warning>) { }
         }
     """)
 
-    fun testSuppression() = checkByText("""
+    fun `test suppression`() = checkByText("""
         struct S;
         impl S {
             //noinspection RsSelfConvention

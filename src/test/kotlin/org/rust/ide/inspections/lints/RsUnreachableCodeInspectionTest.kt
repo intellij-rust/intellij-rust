@@ -136,6 +136,18 @@ class RsUnreachableCodeInspectionTest : RsInspectionsTestBase(RsUnreachableCodeI
         }
     """)
 
+    fun `test else branch of let-else statement`() = checkByText("""
+        fn main() {
+            1;
+            let Some(_) = None::<i32> else {
+                2;
+                return;
+                <warning descr="Unreachable code">3;</warning>
+            };
+            4;
+        }
+    """)
+
     fun `test if else tail expr unconditional return`() = checkByText("""
         fn foo(flag: bool) {
             if flag {
@@ -299,6 +311,15 @@ class RsUnreachableCodeInspectionTest : RsInspectionsTestBase(RsUnreachableCodeI
             match a {
                 42 => todo!(),
                 _ => return 123,
+            }
+        }
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/9681
+    fun `test no false-positive when let-else statement inside loop block`() = checkByText("""
+        fn main() {
+            loop {
+                let Some(_) = None::<i32> else { break; };
             }
         }
     """)

@@ -5,7 +5,6 @@
 
 package org.rust.ide.refactoring.move
 
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithEnabledInspections
 import org.rust.WithStdlibRustProjectDescriptor
@@ -349,7 +348,6 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2/*target*/ {}
     """)
 
-    @ExpandMacros
     fun `test no exception when source file has reference to expanded item`() = doTestNoConflicts("""
     //- lib.rs
         mod mod1 {
@@ -3022,5 +3020,20 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod foo;
     //- inner/foo/mod.rs
         fn func() {}
+    """)
+
+    fun `test don't add mod decl when created file is crate root`() = doTestCreateFile("lib.rs", """
+    //- main.rs
+        fn main() {
+            func();
+        }
+        fn func/*caret*/() {}
+    """, """
+    //- main.rs
+        fn main() {
+            test_package::func();
+        }
+    //- lib.rs
+        pub fn func() {}
     """)
 }

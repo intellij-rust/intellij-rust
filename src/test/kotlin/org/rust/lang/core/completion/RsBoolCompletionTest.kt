@@ -43,4 +43,22 @@ class RsBoolCompletionTest : RsCompletionTestBase() {
             test = false/*caret*/;
         }
     """)
+
+    fun `test complete true in variable decl without type`() = doSingleCompletion("""
+        fn main() { let a = tr/*caret*/; }
+    """, """
+        fn main() { let a = true/*caret*/; }
+    """)
+
+    fun `test complete true for fun return value`() = checkCompletion("true", """
+        fn main() -> bool { tr/*caret*/ }
+    """, """
+        fn main() -> bool { true/*caret*/ }
+    """)
+
+    fun `test complete true in match`() = doSingleCompletion("""
+        fn main() { match tr/*caret*/ { } }
+    """, """
+        fn main() { match true/*caret*/ { } }
+    """)
 }

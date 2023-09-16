@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
@@ -19,7 +20,7 @@ import org.rust.lang.core.types.type
 class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
 
     @Suppress("DialogTitleCapitalization")
-    override fun getTemplateDescription(): String = "if expr"
+    override fun getTemplateDescription(): String = RsBundle.message("action.if.expr.text")
 
     override fun createTemplate(project: Project): RsIfExpr =
         RsPsiFactory(project).createExpression("if a {stmt;}") as RsIfExpr

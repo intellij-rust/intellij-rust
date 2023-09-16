@@ -25,7 +25,7 @@ class RsErrorAnnotatorWithToolchainOverrideTest : RsWithToolchainAnnotatorTestBa
 
                 /*caret*/
                 fn main() {
-                    let world = box "world";
+                    let world = <error descr="`box` expression syntax has been removed">box</error> "world";
                     println!("Hello, {}!", world);
                 }
             """)

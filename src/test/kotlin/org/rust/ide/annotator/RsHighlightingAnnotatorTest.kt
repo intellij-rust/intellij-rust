@@ -12,7 +12,7 @@ import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
-@ExpandMacros
+@SkipTestWrapping
 class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class, RsAttrHighlightingAnnotator::class) {
 
     override fun setUp() {
@@ -21,8 +21,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     }
 
     fun `test attributes`() = checkHighlighting("""
-        <ATTRIBUTE>#[foo(foo)]</ATTRIBUTE>
-        <ATTRIBUTE>#[foo(<STRING>"bar"</STRING>)]</ATTRIBUTE>
+        <ATTRIBUTE>#[doc = <STRING>"bar"</STRING>]</ATTRIBUTE>
         fn <FUNCTION>main</FUNCTION>() {
             <ATTRIBUTE>#![crate_type = <STRING>"lib"</STRING>]</ATTRIBUTE>
         }
@@ -199,11 +198,13 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     )
 
     fun `test const and static`() = checkHighlightingWithMacro("""
-        const <CONST>FOO</CONST>: i32 = 0;
-        static <CONST>BAR</CONST>: i32 = 0;
+        const <CONSTANT>FOO</CONSTANT>: i32 = 0;
+        static <STATIC>BAR</STATIC>: i32 = 0;
+        static mut <MUT_STATIC>BAZ</MUT_STATIC>: i32 = 0;
         fn main() {
-            <CONST>FOO</CONST>;
-            <CONST>BAR</CONST>;
+            <CONSTANT>FOO</CONSTANT>;
+            <STATIC>BAR</STATIC>;
+            <MUT_STATIC>BAZ</MUT_STATIC>;
         }
     """)
 

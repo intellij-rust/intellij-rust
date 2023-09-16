@@ -14,6 +14,10 @@
           <option name="issueRegexp" value="#(\d+)" />
           <option name="linkRegexp" value="https://github.com/intellij-rust/intellij-rust/issues/$1" />
         </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="[A-Z]+\-\d+" />
+          <option name="linkRegexp" value="https://youtrack.jetbrains.com/issue/$0" />
+        </IssueNavigationLink>
       </list>
     </option>
   </component>

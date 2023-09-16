@@ -93,7 +93,7 @@ class RsExtractStructFieldsProcessor(
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 
         editor.caretModel.moveToOffset(newField.identifier.startOffset)
-        RsInPlaceVariableIntroducer(newField, editor, project, "choose field name").performInplaceRefactoring(null)
+        RsInPlaceVariableIntroducer(newField, editor, project, RsBundle.message("command.name.choose.field.name")).performInplaceRefactoring(null)
     }
 
     override fun getCommandName(): String = RsBundle.message("action.Rust.RsExtractStructFields.command.name")

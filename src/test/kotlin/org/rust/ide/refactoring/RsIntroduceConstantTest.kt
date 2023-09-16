@@ -6,19 +6,16 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.refactoring.introduceConstant.ExtractConstantUi
 import org.rust.ide.refactoring.introduceConstant.InsertionCandidate
 import org.rust.ide.refactoring.introduceConstant.withMockExtractConstantChooser
-import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.psi.RsExpr
 
 class RsIntroduceConstantTest : RsTestBase() {
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test insertion binary expression`() = doTest("""
         fn foo() {
             let x = /*caret*/5 + 5;
@@ -151,7 +148,6 @@ class RsIntroduceConstantTest : RsTestBase() {
     """, replaceAll = true)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @ExpandMacros(MacroExpansionScope.ALL, "std")
     fun `test expression containing a constant`() = doTest("""
         const C: i32 = 1;
 

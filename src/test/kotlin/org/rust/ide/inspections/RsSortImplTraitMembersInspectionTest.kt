@@ -108,7 +108,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn test3(&self) -> i32;
         }
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Trait for Struct</weak_warning> {
+        /*weak_warning descr="Different impl member order from the trait"*//*caret*/impl Trait for Struct/*weak_warning**/ {
             type T2 = T;
             const ID2: i32 = 2;
             fn test3(&self) -> i32 {
@@ -164,9 +164,8 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn bar();
         }
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/impl Foo for ()</weak_warning> {
-            fn bar() {
-            }
+        /*weak_warning descr="Different impl member order from the trait"*//*caret*/impl Foo for ()/*weak_warning**/ {
+            fn bar() {}
             type bar = ();
         }
     """, """
@@ -177,8 +176,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
 
         impl Foo for () {
             type bar = ();
-            fn bar() {
-            }
+            fn bar() {}
         }
     """, checkWeakWarn = true)
 
@@ -188,7 +186,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn bar();
         }
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/unsafe impl Foo for ()</weak_warning> {
+        /*weak_warning descr="Different impl member order from the trait"*//*caret*/unsafe impl Foo for ()/*weak_warning**/ {
             fn bar() {
             }
             fn foo() {
@@ -202,7 +200,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
             fn bar();
         }
 
-        <weak_warning descr="Different impl member order from the trait">/*caret*/default unsafe impl Foo for ()</weak_warning> {
+        /*weak_warning descr="Different impl member order from the trait"*//*caret*/default unsafe impl Foo for ()/*weak_warning**/ {
             fn bar() {
             }
             fn foo() {

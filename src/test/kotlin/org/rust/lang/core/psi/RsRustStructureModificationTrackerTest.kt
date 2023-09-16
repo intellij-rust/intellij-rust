@@ -11,7 +11,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
@@ -167,16 +166,10 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         macro foo { () => { /*caret*/ } }
     """)
 
-    fun `test macro call (old engine)`() = checkModCount(INC, """
+    fun `test macro call`() = checkModCount(NOT_INC, """
         foo! { /*caret*/ }
     """, "a")
 
-    @ExpandMacros
-    fun `test macro call (new engine)`() = checkModCount(NOT_INC, """
-        foo! { /*caret*/ }
-    """, "a")
-
-    @ExpandMacros
     fun `test macro expanded call`() = checkModCount(INC, """
         macro_rules! foo {
             ($ i:ident) => { fn $ i() {} };
@@ -188,7 +181,6 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         fn wrapped() { foo! { /*caret*/ } }
     """, "a")
 
-    @ExpandMacros
     fun `test macro call a function (new engine)`() = checkModCount(NOT_INC, """
         fn wrapped() { foo! { /*caret*/ } }
     """, "a")

@@ -13,7 +13,9 @@ import org.rust.lang.core.crate.asNotFake
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.childOfType
+import org.rust.lang.core.psi.ext.processExpandedItemsExceptImplsAndUses
+import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
@@ -26,7 +28,7 @@ class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
                     if (file.childOfType<PsiErrorElement>() != null) return
 
                     val crate = file.crate.asNotFake ?: return
-                    if (!(crate.kind.isBin || crate.kind.isExampleBin || crate.kind.isCustomBuild)) return
+                    if (!crate.kind.canHaveMainFunction) return
                     if (!file.isCrateRoot) return
 
                     if (file.queryAttributes.hasAttribute("no_main")) return

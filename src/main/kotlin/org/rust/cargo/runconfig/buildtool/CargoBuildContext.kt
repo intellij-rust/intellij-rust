@@ -12,21 +12,26 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolderEx
+import org.rust.RsBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifacts
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
+import org.rust.ide.statistics.CargoErrorCodesCollector
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentHashMap.KeySetView
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class CargoBuildContextBase(
     val cargoProject: CargoProject,
-    val progressTitle: String,
+    @NlsContexts.ProgressText val progressTitle: String,
     val isTestBuild: Boolean,
     val buildId: Any,
     val parentId: Any
@@ -38,6 +43,7 @@ abstract class CargoBuildContextBase(
     var indicator: ProgressIndicator? = null
 
     val errors: AtomicInteger = AtomicInteger()
+    val errorCodes: KeySetView<String, Boolean> = ConcurrentHashMap.newKeySet()
     val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
@@ -47,8 +53,8 @@ abstract class CargoBuildContextBase(
 class CargoBuildContext(
     cargoProject: CargoProject,
     val environment: ExecutionEnvironment,
-    val taskName: String,
-    progressTitle: String,
+    @NlsContexts.ProgressTitle val taskName: String,
+    @NlsContexts.ProgressText progressTitle: String,
     isTestBuild: Boolean,
     buildId: Any,
     parentId: Any
@@ -70,7 +76,7 @@ class CargoBuildContext(
     fun waitAndStart(): Boolean {
         indicator?.pushState()
         try {
-            indicator?.text = "Waiting for the current build to finish..."
+            indicator?.text = RsBundle.message("progress.text.waiting.for.current.build.to.finish")
             indicator?.text2 = ""
             while (true) {
                 indicator?.checkCanceled()
@@ -105,16 +111,16 @@ class CargoBuildContext(
 
         // We report successful builds with errors or warnings correspondingly
         val messageType = if (isCanceled) {
-            finishMessage = "$taskName canceled"
+            finishMessage = RsBundle.message("system.notification.title.canceled", taskName)
             finishDetails = null
             MessageType.INFO
         } else {
             val hasWarningsOrErrors = errors > 0 || warnings > 0
-            finishMessage = if (isSuccess) "$taskName finished" else "$taskName failed"
+            finishMessage = if (isSuccess) RsBundle.message("system.notification.title.finished", taskName) else RsBundle.message("system.notification.title.failed", taskName)
             finishDetails = if (hasWarningsOrErrors) {
                 val errorsString = if (errors == 1) "error" else "errors"
                 val warningsString = if (warnings == 1) "warning" else "warnings"
-                "$errors $errorsString and $warnings $warningsString"
+                RsBundle.message("system.notification.text.", errors, errorsString, warnings, warningsString)
             } else {
                 null
             }
@@ -124,6 +130,10 @@ class CargoBuildContext(
                 hasWarningsOrErrors -> MessageType.WARNING
                 else -> MessageType.INFO
             }
+        }
+
+        if (!isCanceled && !isSuccess) {
+            CargoErrorCodesCollector.logErrorsAfterBuild(project, errorCodes)
         }
 
         result.complete(CargoBuildResult(

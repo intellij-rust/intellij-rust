@@ -6,9 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
 
-@ExpandMacros
 class RsIncludeMacroResolveTest : RsResolveTestBase() {
 
     fun `test resolve struct to included file`() = checkResolve("""
@@ -333,6 +331,13 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     //- bar/foo.rs
         #[derive(Debug)]
         struct Foo;
+    """)
+
+    fun `test illegal included file path`() = checkResolve("""
+    //- lib.rs
+        include!("inner/fo<>\0.rs");
+        type T = Foo;
+               //^ unresolved
     """)
 
     private fun checkResolve(@Language("Rust") code: String) {

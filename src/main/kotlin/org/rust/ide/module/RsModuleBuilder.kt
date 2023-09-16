@@ -5,6 +5,7 @@
 
 package org.rust.ide.module
 
+import com.intellij.ide.NewProjectWizardLegacy
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -33,12 +34,16 @@ class RsModuleBuilder : ModuleBuilder() {
 
     override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean = true
 
+    override fun isAvailable(): Boolean = NewProjectWizardLegacy.isAvailable()
+
     override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep =
         CargoConfigurationWizardStep(context).apply {
             Disposer.register(parentDisposable, this::disposeUIResources)
         }
 
-    override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
+    override fun setupRootModel(modifiableRootModel: ModifiableRootModel) = createProject(modifiableRootModel, "git")
+
+    fun createProject(modifiableRootModel: ModifiableRootModel, vcs: String? = null) {
         val root = doAddContentEntry(modifiableRootModel)?.file ?: return
         modifiableRootModel.inheritSdk()
         val toolchain = configurationData?.settings?.toolchain
@@ -60,7 +65,8 @@ class RsModuleBuilder : ModuleBuilder() {
                 modifiableRootModel.module,
                 root,
                 name,
-                template
+                template,
+                vcs
             ).unwrapOrElse {
                 LOG.error(it)
                 throw ConfigurationException(it.message)

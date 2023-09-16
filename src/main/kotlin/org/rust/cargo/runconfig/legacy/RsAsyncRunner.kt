@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogTitle
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
@@ -71,7 +72,7 @@ abstract class RsAsyncRunner(
         val (commandArguments, executableArguments) = parseArgs(commandLine.command, commandLine.additionalArguments)
         val additionalBuildArgs = state.runConfiguration.localBuildArgsForRemoteRun
 
-        val isTestRun = commandLine.command == "test"
+        val isTestRun = commandLine.command in listOf("test", "bench")
         val cmdHasNoRun = "--no-run" in commandLine.additionalArguments
         val buildCommand = if (isTestRun) {
             if (cmdHasNoRun) commandLine else commandLine.prependArgument("--no-run")
@@ -160,7 +161,7 @@ abstract class RsAsyncRunner(
                         return@withAfterCompletion
                     }
 
-                    object : Task.Backgroundable(project, "Building Cargo project") {
+                    object : Task.Backgroundable(project, RsBundle.message("progress.title.building.cargo.project")) {
                         var result: BuildResult? = null
 
                         override fun run(indicator: ProgressIndicator) {
@@ -190,7 +191,7 @@ abstract class RsAsyncRunner(
                                             // TODO: support cases when crate types list contains not only binary
                                             target.cleanCrateTypes.singleOrNull() == CargoMetadata.CrateType.BIN
                                         }
-                                        CargoMetadata.TargetKind.TEST -> true
+                                        CargoMetadata.TargetKind.TEST, CargoMetadata.TargetKind.BENCH -> true
                                         CargoMetadata.TargetKind.LIB -> profile.test
                                         else -> false
                                     }
@@ -209,13 +210,12 @@ abstract class RsAsyncRunner(
                                     val binaries = result.paths
                                     when {
                                         binaries.isEmpty() -> {
-                                            project.showErrorDialog("Can't find a binary")
+                                            project.showErrorDialog(RsBundle.message("dialog.message.can.t.find.binary"))
                                             promise.setResult(null)
                                         }
                                         binaries.size > 1 -> {
                                             project.showErrorDialog(
-                                                "More than one binary was produced. " +
-                                                    "Please specify `--bin`, `--lib`, `--test` or `--example` flag explicitly."
+                                                RsBundle.message("dialog.message.more.than.one.binary.was.produced.please.specify.bin.lib.test.or.example.flag.explicitly")
                                             )
                                             promise.setResult(null)
                                         }

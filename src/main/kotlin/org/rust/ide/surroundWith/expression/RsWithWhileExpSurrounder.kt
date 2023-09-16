@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsWhileExpr
@@ -19,7 +20,7 @@ import org.rust.lang.core.types.type
 class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
 
     @Suppress("DialogTitleCapitalization")
-    override fun getTemplateDescription(): String = "while expr"
+    override fun getTemplateDescription(): String = RsBundle.message("action.while.expr.text")
 
     override fun createTemplate(project: Project): RsWhileExpr =
         RsPsiFactory(project).createExpression("while a {stmt;}") as RsWhileExpr

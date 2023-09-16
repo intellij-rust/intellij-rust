@@ -133,19 +133,33 @@ class TyLowering private constructor(
             }
 
             is RsFnPointerType -> {
-                val paramTypes = type.valueParameters.map { p -> p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
-                TyFunction(paramTypes, type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown } ?: TyUnit.INSTANCE)
+                val paramTypes = type.valueParameters.map { p ->
+                    p.typeReference?.let { lowerTy(it, null) } ?: TyUnknown
+                }
+                TyFunctionPointer(
+                    FnSig(
+                        paramTypes,
+                        type.retType?.let { it -> it.typeReference?.let { lowerTy(it, null) } ?: TyUnknown }
+                            ?: TyUnit.INSTANCE,
+                        Unsafety.fromBoolean(type.isUnsafe)
+                    )
+                )
             }
 
             is RsTraitType -> {
                 var hasSizedUnbound = false
+                var hasUnresolvedBound = false
                 val traitBounds = type.polyboundList.mapNotNull {
                     if (it.hasQ) {
                         hasSizedUnbound = true
                         null
                     } else {
                         val path = it.bound.traitRef?.path ?: return@mapNotNull null
-                        val res = rawMultiResolvePath(path).singleOrNull() ?: return@mapNotNull null
+                        val res = rawMultiResolvePath(path).singleOrNull()
+                        if (res == null) {
+                            hasUnresolvedBound = true
+                            return@mapNotNull null
+                        }
                         instantiatePathGenerics(path, res.element, res.resolvedSubst, PathExprResolver.default, withAssoc = true)
                             .downcast<RsTraitItem>()
                     }
@@ -162,7 +176,7 @@ class TyLowering private constructor(
                 if (traitBounds.isEmpty()) return TyUnknown
                 val lifetimeBounds = type.polyboundList.mapNotNull { it.bound.lifetime }
                 val regionBound = lifetimeBounds.firstOrNull()?.resolve() ?: defaultTraitObjectRegion ?: ReStatic
-                TyTraitObject(traitBounds, regionBound)
+                TyTraitObject(traitBounds, regionBound, hasUnresolvedBound)
             }
 
             is RsMacroType -> {
@@ -247,6 +261,7 @@ class TyLowering private constructor(
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                     psiValue.value.toConst(expectedTy, resolver)
                 }
+
                 is RsPsiSubstitution.Value.DefaultValue -> {
                     val expectedTy = psiParam.typeReference?.normType ?: TyUnknown
                     psiValue.value.toConst(expectedTy, resolver).substitute(constSubst.toConstSubst())
@@ -329,6 +344,6 @@ private fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteWithTraitObjectRegio
             1 -> bounds.single().substitute(subst)
             else -> ReUnknown
         }
-        return TyTraitObject(ty.traits, region)
+        return TyTraitObject(ty.traits, region, ty.hasUnresolvedBound)
     }
 }).tryEvaluate()

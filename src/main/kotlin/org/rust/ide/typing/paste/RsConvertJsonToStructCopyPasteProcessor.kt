@@ -117,6 +117,7 @@ class RsConvertJsonToStructCopyPasteProcessor : CopyPastePostProcessor<TextBlock
     }
 }
 
+const val CONVERT_JSON_TO_STRUCT_SETTING_KEY: String = "org.rust.convert.json.to.struct"
 private var CONVERT_JSON_SERDE_PRESENT: Boolean = false
 
 @TestOnly
@@ -153,7 +154,7 @@ private fun shouldConvertJson(project: Project): Boolean {
     return if (isUnitTestMode) {
         true
     } else {
-        when (AdvancedSettings.getEnum("org.rust.convert.json.to.struct", StoredPreference::class.java)) {
+        when (AdvancedSettings.getEnum(CONVERT_JSON_TO_STRUCT_SETTING_KEY, StoredPreference::class.java)) {
             StoredPreference.YES -> true
             StoredPreference.NO -> false
             StoredPreference.ASK_EVERY_TIME -> {
@@ -171,7 +172,7 @@ private fun shouldConvertJson(project: Project): Boolean {
                                     Messages.YES -> StoredPreference.YES
                                     else -> StoredPreference.NO
                                 }
-                                AdvancedSettings.setEnum("org.rust.convert.json.to.struct", value)
+                                AdvancedSettings.setEnum(CONVERT_JSON_TO_STRUCT_SETTING_KEY, value)
 
                                 // `exitCode != Messages.CANCEL` is always true since we don't override `shouldSaveOptionsOnCancel`
                                 RsConvertJsonToStructUsagesCollector.logRememberChoiceResult(value == StoredPreference.YES)
@@ -370,7 +371,7 @@ private fun replacePlaceholders(
             RsBundle.message("copy.paste.convert.json.to.struct.dialog.title")
         ) {
             if (!file.isValid) return@runWriteCommandAction
-            val template = editor.newTemplateBuilder(file) ?: return@runWriteCommandAction
+            val tpl = editor.newTemplateBuilder(file)
 
             // Gather usages of structs in fields
             val structNames = nameMap.values.toSet()
@@ -384,7 +385,7 @@ private fun replacePlaceholders(
             for (item in items) {
                 val identifier = item.identifier
                 if (identifier != null) {
-                    val variable = template.introduceVariable(identifier)
+                    val variable = tpl.introduceVariable(identifier)
                     for (usage in nameUsages[identifier.text].orEmpty()) {
                         variable.replaceElementWithVariable(usage)
                     }
@@ -394,11 +395,11 @@ private fun replacePlaceholders(
                 item.accept(underscoreVisitor)
 
                 for (wildcard in underscoreVisitor.types) {
-                    template.replaceElement(wildcard)
+                    tpl.replaceElement(wildcard)
                 }
             }
 
-            template.runInline()
+            tpl.runInline()
         }
     }
 }

@@ -10,10 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubBase
 import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsExprStmt
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsExprStmtStub
 
 abstract class RsStmtMixin : RsStubbedElementImpl<StubBase<*>>, RsStmt {
@@ -35,3 +32,15 @@ fun RsExprStmt.addSemicolon() {
     if (hasSemicolon) return
     add(RsPsiFactory(project).createSemicolon())
 }
+
+fun RsExprStmt.addSemicolonIfNeeded() {
+    if (needsSemicolon()) {
+        addSemicolon()
+    }
+}
+
+fun RsExprStmt.needsSemicolon(): Boolean =
+    expr.needsSemicolon()
+
+private fun RsExpr.needsSemicolon(): Boolean =
+    this !is RsWhileExpr && this !is RsIfExpr && this !is RsForExpr && this !is RsLoopExpr && this !is RsMatchExpr

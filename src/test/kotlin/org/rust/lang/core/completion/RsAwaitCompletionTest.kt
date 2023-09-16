@@ -6,6 +6,8 @@
 package org.rust.lang.core.completion
 
 import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsAwaitCompletionTest : RsCompletionTestBase() {
@@ -87,6 +89,19 @@ class RsAwaitCompletionTest : RsCompletionTestBase() {
         struct S;
         impl IntoFuture for S { type Output = i32; }
         fn foo() -> S { unimplemented!() }
+        fn main() {
+            foo().await/*caret*/;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async fn with stdlib`() = doSingleCompletion("""
+        async fn foo() { unimplemented!() }
+        fn main() {
+            foo().aw/*caret*/;
+        }
+    """, """
+        async fn foo() { unimplemented!() }
         fn main() {
             foo().await/*caret*/;
         }

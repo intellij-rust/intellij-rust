@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.SkipTestWrapping
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsExpressionAnnotator
 
+@SkipTestWrapping
 class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class) {
 
     fun `test basic`() = checkFixByText("Create field", """

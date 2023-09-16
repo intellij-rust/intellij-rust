@@ -15,7 +15,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.profiler.ProfilerToolWindowManager
-import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.clion.perf.PerfProfilerSettings
 import com.intellij.profiler.clion.perf.PerfUtils
 import com.intellij.profiler.statistics.ProfilerUsageTriggerCollector
@@ -23,6 +22,7 @@ import com.intellij.util.text.nullize
 import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -51,10 +51,10 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         val toolchain = configuration.clean().ok?.toolchain ?: return
 
         if (isUnsupportedWSL(toolEnvironment)) {
-            throw ExecutionException("Perf profiler is not available for selected WSL distribution\nTry updating WSL to the newer one")
+            throw ExecutionException(RsBundle.message("dialog.message.perf.profiler.not.available.for.selected.wsl.distribution.try.updating.wsl.to.newer.one"))
         }
         if (isUnsupportedToolchain(toolEnvironment)) {
-            throw ExecutionException("Perf profiler is not available for selected toolchain")
+            throw ExecutionException(RsBundle.message("dialog.message.perf.profiler.not.available.for.selected.toolchain"))
         }
 
         val project = configuration.project
@@ -80,18 +80,17 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
 
         if (isUnsupportedWSL(toolEnvironment) || isUnsupportedToolchain(toolEnvironment)) return
         if (handler !is BaseProcessHandler<*>)
-            throw ExecutionException("Can't detect target process id")
+            throw ExecutionException(RsBundle.message("dialog.message.can.t.detect.target.process.id"))
         //since we executing `perf record` instead of original app, we should kill it softly to be able finish correctly
         if (handler is KillableProcessHandler) {
             handler.setShouldKillProcessSoftly(true)
         }
         val outputFile = context.getUserData(PERF_OUTPUT_FILE_KEY)
-            ?: throw ExecutionException("Can't get output perf data file")
+            ?: throw ExecutionException(RsBundle.message("dialog.message.can.t.get.output.perf.data.file"))
 
         val project = configuration.project
-        val profilerProcess = PerfProfilerProcess(
+        val profilerProcess = createProfilerProcess(
             handler,
-            false,
             outputFile,
             configuration.name,
             project,

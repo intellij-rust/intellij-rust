@@ -13,6 +13,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.tree.IElementType
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsPsiFactory
@@ -26,10 +27,10 @@ interface RsNameIdentifierOwner : RsNamedElement, PsiNameIdentifierOwner
 
 val RsNamedElement.escapedName: String? get() = name?.escapeIdentifierIfNeeded()
 
-abstract class RsNamedElementImpl(node: ASTNode) : RsElementImpl(node),
-                                                   RsNameIdentifierOwner {
+abstract class RsNamedElementImpl(type: IElementType) : RsElementImpl(type),
+                                                        RsNameIdentifierOwner {
 
-    override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
+    override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)?.psi
 
     override fun getName(): String? = nameIdentifier?.unescapedText
 

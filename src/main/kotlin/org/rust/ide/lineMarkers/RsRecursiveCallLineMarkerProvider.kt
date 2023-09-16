@@ -6,21 +6,25 @@
 package org.rust.ide.lineMarkers
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import org.rust.RsBundle
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.document
-import java.util.*
+import javax.swing.Icon
 
 /**
  * Line marker provider that annotates recursive function and method calls with
  * an icon on the gutter.
  */
-class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
+class RsRecursiveCallLineMarkerProvider : LineMarkerProviderDescriptor() {
+
+    override fun getName(): String = RsBundle.message("gutter.rust.recursive.call.name")
+    override fun getIcon(): Icon = RsIcons.RECURSIVE_CALL
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
@@ -46,10 +50,10 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
                 result.add(RsLineMarkerInfoUtils.create(
                     el,
                     el.textRange,
-                    RsIcons.RECURSIVE_CALL,
+                    icon,
                     null,
                     GutterIconRenderer.Alignment.RIGHT
-                ) { "Recursive call" })
+                ) { RsBundle.message("gutter.rust.recursive.call.name") })
             }
         }
     }

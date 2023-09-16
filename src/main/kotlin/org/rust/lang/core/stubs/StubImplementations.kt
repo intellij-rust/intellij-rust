@@ -86,9 +86,10 @@ class RsFileStub(
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        private const val STUB_VERSION = 232
+        private const val STUB_VERSION = 234
 
-        override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
+        override fun getStubVersion(): Int =
+            RustParserDefinition.PARSER_VERSION + RS_BUILTIN_ATTRIBUTES_VERSION + STUB_VERSION
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> {
@@ -166,6 +167,7 @@ private object BlockMayHaveStubsHeuristic {
 
     // TODO remove `USE`
     private val ITEM_DEF_KWS = tokenSetOf(STATIC, ENUM, IMPL, MACRO_KW, MOD, STRUCT, UNION, TRAIT, TYPE_KW, USE)
+    private val UNEXPECTED_NEXT_CONST_TOKENS = tokenSetOf(LBRACE, MOVE, OR)
 
     fun computeAndCache(node: ASTNode): Boolean {
         assertIsBlock(node)
@@ -198,9 +200,9 @@ private object BlockMayHaveStubsHeuristic {
         while (true) {
             val token = b.tokenType ?: break
             val looksLikeStubElement = token in ITEM_DEF_KWS
-                // `const` but not `*const`, `raw const` or `const {}`
-                || token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
-                    && b.lookAhead(1) != LBRACE
+                // `const` but not `*const`, `raw const`, const lambdas or `const {}`
+                || (token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
+                    && !UNEXPECTED_NEXT_CONST_TOKENS.contains(b.lookAhead(1)))
                 // `#!`
                 || token == EXCL && prevToken == SHA
                 // `macro_rules!`
@@ -342,9 +344,18 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "UNARY_EXPR" -> RsUnaryExprStub.Type
     "UNIT_EXPR" -> RsExprStubType("UNIT_EXPR", ::RsUnitExprImpl)
     "WHILE_EXPR" -> RsExprStubType("WHILE_EXPR", ::RsWhileExprImpl)
+    "UNDERSCORE_EXPR" -> RsExprStubType("UNDERSCORE_EXPR", ::RsUnderscoreExprImpl)
+    "PREFIX_INC_EXPR" -> RsExprStubType("PREFIX_INC_EXPR", ::RsPrefixIncExprImpl)
+    "POSTFIX_INC_EXPR" -> RsExprStubType("POSTFIX_INC_EXPR", ::RsPostfixIncExprImpl)
+    "POSTFIX_DEC_EXPR" -> RsExprStubType("POSTFIX_DEC_EXPR", ::RsPostfixDecExprImpl)
+
+    "INC" -> RsPlaceholderStub.Type("INC", ::RsIncImpl)
+    "DEC" -> RsPlaceholderStub.Type("DEC", ::RsDecImpl)
 
     "VIS" -> RsVisStub.Type
     "VIS_RESTRICTION" -> RsPlaceholderStub.Type("VIS_RESTRICTION", ::RsVisRestrictionImpl)
+
+    "DEFAULT_PARAMETER_VALUE" -> RsPlaceholderStub.Type("DEFAULT_PARAMETER_VALUE", ::RsDefaultParameterValueImpl)
 
     else -> error("Unknown element $name")
 }
@@ -511,8 +522,6 @@ class RsUseSpeckStub(
 
         override fun createStub(psi: RsUseSpeck, parentStub: StubElement<*>?) =
             RsUseSpeckStub(parentStub, this, psi.isStarImport, psi.hasColonColon)
-
-        override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) = sink.indexUseSpeck(stub)
     }
 
     companion object : BitFlagsBuilder(BYTE) {
@@ -949,7 +958,7 @@ class RsFunctionStub(
                 parentStub,
                 this,
                 name = psi.name,
-                abiName = psi.abiName,
+                abiName = psi.literalAbiName,
                 flags = flags,
                 procMacroInfo = procMacroInfo,
             )
@@ -1101,7 +1110,7 @@ class RsForeignModStub(
             return RsForeignModStub(
                 parentStub, this,
                 flags, procMacroInfo,
-                abi = psi.externAbi.litExpr?.stringValue,
+                abi = psi.abi,
             )
         }
     }
@@ -2122,7 +2131,7 @@ class RsUnaryExprStub(
 sealed class RsStubLiteralKind(val kindOrdinal: Int) {
     class Boolean(val value: kotlin.Boolean) : RsStubLiteralKind(0)
     class Char(val value: kotlin.String?, val isByte: kotlin.Boolean) : RsStubLiteralKind(1)
-    class String(val value: kotlin.String?, val isByte: kotlin.Boolean) : RsStubLiteralKind(2)
+    class String(val value: kotlin.String?, val isByte: kotlin.Boolean, val isCStr: kotlin.Boolean) : RsStubLiteralKind(2)
     class Integer(val value: Long?, val ty: TyInteger?) : RsStubLiteralKind(3)
     class Float(val value: Double?, val ty: TyFloat?) : RsStubLiteralKind(4)
 
@@ -2132,7 +2141,7 @@ sealed class RsStubLiteralKind(val kindOrdinal: Int) {
                 return when (readByte().toInt()) {
                     0 -> Boolean(readBoolean())
                     1 -> Char(readUTFFastAsNullable(), readBoolean())
-                    2 -> String(readUTFFastAsNullable(), readBoolean())
+                    2 -> String(readUTFFastAsNullable(), readBoolean(), readBoolean())
                     3 -> Integer(readLongAsNullable(), TyInteger.VALUES.getOrNull(readByte().toInt()))
                     4 -> Float(readDoubleAsNullable(), TyFloat.VALUES.getOrNull(readByte().toInt()))
                     else -> null
@@ -2157,6 +2166,7 @@ private fun RsStubLiteralKind?.serialize(dataStream: StubOutputStream) {
         is RsStubLiteralKind.String -> {
             dataStream.writeUTFFastAsNullable(value)
             dataStream.writeBoolean(isByte)
+            dataStream.writeBoolean(isCStr)
         }
         is RsStubLiteralKind.Integer -> {
             dataStream.writeLongAsNullable(value)

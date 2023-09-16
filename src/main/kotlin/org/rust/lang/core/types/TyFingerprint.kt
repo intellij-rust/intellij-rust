@@ -21,7 +21,7 @@ import java.io.DataOutput
  *  * fingerprint can be computed without name resolution.
  */
 data class TyFingerprint constructor(
-    private val name: String
+    val name: String
 ) {
     companion object {
 
@@ -75,7 +75,7 @@ data class TyFingerprint constructor(
             is TyReference -> create(type.referenced)
             is TyTuple -> TyFingerprint("(tuple)")
             is TyPrimitive -> TyFingerprint(type.toString())
-            is TyFunction -> TyFingerprint("fn()")
+            is TyFunctionBase -> TyFingerprint("fn()")
             is TyTraitObject -> TyFingerprint("dyn T")
             is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
             is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT

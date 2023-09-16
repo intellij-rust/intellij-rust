@@ -5,7 +5,10 @@
 
 package org.rust.ide.inspections
 
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.RsPathType
 import org.rust.lang.core.psi.ext.RsConstContextKind
 import org.rust.lang.core.psi.ext.classifyConstContext
 import org.rust.lang.core.psi.ext.isConst
@@ -16,7 +19,7 @@ import org.rust.lang.utils.addToHolder
  * Inspection that detects the E0013 error.
  */
 class RsConstReferStaticInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsWithMacrosInspectionVisitor() {
         override fun visitPathExpr(pathExpr: RsPathExpr) {
             val constContext = pathExpr.classifyConstContext
             if (constContext != null) {

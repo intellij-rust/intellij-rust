@@ -8,8 +8,10 @@ package org.rust.ide.inspections.lints
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import org.rust.RsBundle
+import org.rust.ide.fixes.SubstituteTextFix
 import org.rust.ide.inspections.RsProblemsHolder
-import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.ide.inspections.RsWithMacrosInspectionVisitor
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -18,7 +20,7 @@ import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
 class RsUnnecessaryQualificationsInspection : RsLintInspection() {
     override fun getLint(element: PsiElement): RsLint = RsLint.UnusedQualifications
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsWithMacrosInspectionVisitor() {
         override fun visitPath(path: RsPath) {
             val shouldCheckPath = path.parentOfType<RsUseItem>() == null
                 && path.parentOfType<RsVisRestriction>() == null
@@ -32,11 +34,11 @@ class RsUnnecessaryQualificationsInspection : RsLintInspection() {
                     val range = TextRange(0, unnecessaryLength)
 
                     val fix = SubstituteTextFix.delete(
-                        "Remove unnecessary path prefix",
+                        RsBundle.message("intention.name.remove.unnecessary.path.prefix"),
                         path.containingFile,
                         TextRange(path.startOffset, pathRestStart)
                     )
-                    holder.registerLintProblem(path, "Unnecessary qualification", range, RsLintHighlightingType.UNUSED_SYMBOL, listOf(fix))
+                    holder.registerLintProblem(path, RsBundle.message("inspection.message.unnecessary.qualification"), range, RsLintHighlightingType.UNUSED_SYMBOL, listOf(fix))
                 }
             }
             super.visitPath(path)

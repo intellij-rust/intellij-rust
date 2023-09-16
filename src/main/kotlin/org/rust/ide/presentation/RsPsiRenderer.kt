@@ -5,6 +5,7 @@
 
 package org.rust.ide.presentation
 
+import com.intellij.openapi.util.NlsSafe
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.ide.utils.import.ImportCandidatesCollector
 import org.rust.ide.utils.import.ImportContext
@@ -26,11 +27,10 @@ import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.utils.escapeRust
 import org.rust.lang.utils.evaluation.evaluate
-import org.rust.stdext.exhaustive
 import org.rust.stdext.joinToWithBuffer
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
-fun RsTypeReference.getStubOnlyText(
+@NlsSafe fun RsTypeReference.getStubOnlyText(
     subst: Substitution = emptySubstitution,
     renderLifetimes: Boolean = true,
     shortPaths: Boolean = true,
@@ -45,6 +45,11 @@ fun RsValueParameterList.getStubOnlyText(
     renderLifetimes: Boolean = true
 ): String = TypeSubstitutingPsiRenderer(PsiRenderingOptions(renderLifetimes), subst).renderValueParameterList(this)
 
+fun RsExpr.getStubOnlyText(
+    subst: Substitution = emptySubstitution,
+    expectedTy: Ty = type
+): String = TypeSubstitutingPsiRenderer(PsiRenderingOptions(), subst).renderConstExpr(this, expectedTy)
+
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
 fun RsTraitRef.getStubOnlyText(subst: Substitution = emptySubstitution, renderLifetimes: Boolean = true): String =
     buildString { TypeSubstitutingPsiRenderer(PsiRenderingOptions(renderLifetimes), subst).appendPath(this, path) }
@@ -54,6 +59,9 @@ fun RsPsiRenderer.renderTypeReference(ref: RsTypeReference): String =
 
 fun RsPsiRenderer.renderTraitRef(ref: RsTraitRef): String =
     buildString { appendPath(this, ref.path) }
+
+fun RsPsiRenderer.renderConstExpr(expr: RsExpr, expectedTy: Ty = expr.type): String =
+    buildString { appendConstExpr(this, expr, expectedTy) }
 
 fun RsPsiRenderer.renderValueParameterList(list: RsValueParameterList): String =
     buildString { appendValueParameterList(this, list) }
@@ -92,7 +100,7 @@ open class RsPsiRenderer(
         }
         if (fn.isActuallyExtern) {
             sb.append("extern ")
-            val abiName = fn.abiName
+            val abiName = fn.literalAbiName
             if (abiName != null) {
                 sb.append("\"")
                 sb.append(abiName)
@@ -130,9 +138,10 @@ open class RsPsiRenderer(
         if (typeParameterList != null && renderGenericsAndWhere) {
             appendTypeParameterList(sb, typeParameterList)
         }
-        val whereClause = ta.whereClause
-        if (whereClause != null && renderGenericsAndWhere) {
-            appendWhereClause(sb, whereClause)
+        if (renderGenericsAndWhere) {
+            for (whereClause in ta.whereClauseList) {
+                appendWhereClause(sb, whereClause)
+            }
         }
         val typeParamBounds = ta.typeParamBounds
         if (typeParamBounds != null && renderBounds) {
@@ -209,6 +218,11 @@ open class RsPsiRenderer(
                     if (type != null) {
                         sb.append(": ")
                         appendTypeReference(sb, type)
+                    }
+                    val defaultValue = expr
+                    if (defaultValue != null) {
+                        sb.append(" = ")
+                        appendConstExpr(sb, defaultValue)
                     }
                 }
             }
@@ -488,7 +502,7 @@ open class RsPsiRenderer(
         }
     }
 
-    protected open fun appendConstExpr(
+    open fun appendConstExpr(
         sb: StringBuilder,
         expr: RsExpr,
         expectedTy: Ty = expr.type
@@ -517,15 +531,16 @@ open class RsPsiRenderer(
                 sb.append("'")
             }
             is RsStubLiteralKind.String -> {
-                if (kind.isByte) {
-                    sb.append("b")
+                when {
+                    kind.isByte -> sb.append("b")
+                    kind.isCStr -> sb.append("c")
                 }
                 sb.append('"')
                 sb.append(kind.value.orEmpty().escapeRust())
                 sb.append('"')
             }
-            null -> "{}"
-        }.exhaustive
+            null -> Unit
+        }
     }
 
     protected open fun appendBlockExpr(sb: StringBuilder, expr: RsBlockExpr) {
@@ -651,13 +666,13 @@ open class PsiSubstitutingPsiRenderer(
             is RsTypeParameter -> when (val s = typeSubst(resolved)) {
                 is RsPsiSubstitution.Value.Present -> when (s.value) {
                     is RsPsiSubstitution.TypeValue.InAngles -> {
-                        super.appendTypeReference(sb, s.value.value)
+                        appendTypeReferenceInPathContext(sb, s.value.value, path)
                         true
                     }
                     is RsPsiSubstitution.TypeValue.FnSugar -> false
                 }
                 is RsPsiSubstitution.Value.DefaultValue -> {
-                    super.appendTypeReference(sb, s.value.value)
+                    appendTypeReferenceInPathContext(sb, s.value.value, path)
                     true
                 }
                 else -> false
@@ -666,7 +681,7 @@ open class PsiSubstitutingPsiRenderer(
                 is RsPsiSubstitution.Value.Present -> {
                     when (s.value) {
                         is RsExpr -> appendConstExpr(sb, s.value)
-                        is RsTypeReference -> appendTypeReference(sb, s.value)
+                        is RsTypeReference -> appendTypeReferenceInPathContext(sb, s.value, path)
                     }
                     true
                 }
@@ -680,6 +695,16 @@ open class PsiSubstitutingPsiRenderer(
         }
         if (!replaced) {
             super.appendPathWithoutArgs(sb, path)
+        }
+    }
+
+    private fun appendTypeReferenceInPathContext(sb: StringBuilder, type: RsTypeReference, path: RsPath) {
+        if (type !is RsPathType && path.context is RsPath) {
+            sb.append('<')
+            super.appendTypeReference(sb, type)
+            sb.append('>')
+        } else {
+            super.appendTypeReference(sb, type)
         }
     }
 
@@ -719,14 +744,13 @@ class ImportingPsiRenderer(
         val nameToElement = mutableMapOf<Pair<String, Namespace>, RsElement>()
         val elementToName = mutableMapOf<RsElement, String>()
         processNestedScopesUpwards(context, TYPES_N_VALUES, createProcessor {
-            val element = it.element as? RsNamedElement ?: return@createProcessor false
-            for (namespace in element.namespaces) {
+            val element = it.element as? RsNamedElement ?: return@createProcessor
+            for (namespace in it.namespaces) {
                 nameToElement[it.name to namespace] = element
                 if (it.name != "_" && element !in elementToName) {
                     elementToName[element] = it.name
                 }
             }
-            false
         })
         nameToElement to elementToName
     }
@@ -747,6 +771,7 @@ class ImportingPsiRenderer(
             val resolved = path.reference?.resolve()
             val tryImportPath2 = resolved !is RsTypeParameter
                 && resolved !is RsConstParameter
+                && (resolved !is RsAbstractable || !resolved.owner.isImplOrTrait)
                 && resolved !is RsMacroDefinitionBase
                 && resolved !is RsMod
             if (tryImportPath2 && resolved is RsQualifiedNamedElement) {

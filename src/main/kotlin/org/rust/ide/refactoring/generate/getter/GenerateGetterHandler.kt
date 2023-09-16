@@ -57,7 +57,7 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
             val fnBody = "${borrow}self.$fieldName"
 
             val accessor = RsPsiFactory(project).createTraitMethodMember("$fnSignature {\n$fnBody\n}")
-            impl.members?.addBefore(accessor, impl.members?.rbrace) as RsFunction
+            impl.members?.addBefore(accessor, impl.members?.rbrace) as? RsFunction
         }
     }
 

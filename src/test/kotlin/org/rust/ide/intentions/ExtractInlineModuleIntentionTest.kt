@@ -7,8 +7,10 @@ package org.rust.ide.intentions
 
 import org.rust.CheckTestmarkHit
 import org.rust.FileTree
+import org.rust.SkipTestWrapping
 import org.rust.fileTree
 
+@SkipTestWrapping
 class ExtractInlineModuleIntentionTest : RsIntentionTestBase(ExtractInlineModuleIntention::class) {
     override val dataPath = "org/rust/ide/intentions/fixtures/"
     override val previewExpected: Boolean get() = false

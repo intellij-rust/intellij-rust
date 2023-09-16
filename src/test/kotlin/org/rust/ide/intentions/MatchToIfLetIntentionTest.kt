@@ -11,7 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::class) {
     fun `test availability range`() = checkAvailableInSelectionOnly("""
-        enum MyOption { Some(x) }
+        enum MyOption { Some(u32) }
 
         fn main() {
             let color = MyOption::Some(52);
@@ -25,39 +25,17 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """)
 
-    fun `test unavailable all void arms`() = doUnavailableTest("""
-        enum MyOption {
-            Nothing,
-            Some(x),
-        }
+    fun `test unavailability empty match`() = doUnavailableTest("""
+        enum MyOption { Some(u32) }
 
         fn main() {
-            let a = MyOption::Some(52);
+            let color = MyOption::Some(52);
 
-            /*caret*/match a {
-                MyOption::Some(x) => {}
-                Nothing => {}
-            }
+            /*caret*/match color {};
         }
     """)
 
-    fun `test unavailable all not void arms`() = doUnavailableTest("""
-        enum MyOption {
-            Nothing,
-            Some(x),
-        }
-
-        fn main() {
-            let a = MyOption::Some(52);
-
-            match a {
-                MyOption::Some(x) => {42}
-                Nothing => {43}/*caret*/
-            }
-        }
-    """)
-
-    fun `test unavailable pattern`() = doAvailableTest("""
+    fun `test block expr without line`() = doAvailableTest("""
         enum OptionColor {
             NoColor,
             Color(i32, i32, i32),
@@ -67,8 +45,9 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
             let color = OptionColor::Color(255, 255, 255);
 
             /*caret*/match color {
-                OptionColor::Color(_, _, _) => {}
-                _ => {print!("No color")}
+                OptionColor::Color(255, 255, 255) => { 1 },
+                OptionColor::Color(_, _, _) => { 2 }
+                OptionColor::NoColor => { 3 }
             };
         }
     """, """
@@ -80,13 +59,90 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         fn main() {
             let color = OptionColor::Color(255, 255, 255);
 
-            if let _ = color { print!("No color") };
+            if let OptionColor::Color(255, 255, 255) = color {
+                1
+            } else if let OptionColor::Color(_, _, _) = color {
+                2
+            } else {
+                3
+            };
         }
     """)
 
-    fun `test simple 1`() = doAvailableTest("""
+    fun `test block expr with line`() = doAvailableTest("""
+        enum OptionColor {
+            NoColor,
+            Color(i32, i32, i32),
+        }
+
+        fn main() {
+            let color = OptionColor::Color(255, 255, 255);
+
+            /*caret*/match color {
+                OptionColor::Color(255, 255, 255) => {
+                    1
+                },
+                OptionColor::Color(_, _, _) => {
+                    2
+                }
+                OptionColor::NoColor => {
+                    3
+                }
+            };
+        }
+    """, """
+        enum OptionColor {
+            NoColor,
+            Color(i32, i32, i32),
+        }
+
+        fn main() {
+            let color = OptionColor::Color(255, 255, 255);
+
+            if let OptionColor::Color(255, 255, 255) = color {
+                1
+            } else if let OptionColor::Color(_, _, _) = color {
+                2
+            } else {
+                3
+            };
+        }
+    """)
+
+    fun `test add braces to expr`() = doAvailableTest("""
+        enum Enum {
+            A,
+            B
+        }
+
+        fn main() {
+            let a = Enum::A;
+
+            /*caret*/match a {
+                Enum::A => 1,
+                Enum::B => 2
+            };
+        }
+    """, """
+        enum Enum {
+            A,
+            B
+        }
+
+        fn main() {
+            let a = Enum::A;
+
+            if let Enum::A = a {
+                1
+            } else {
+                2
+            };
+        }
+    """)
+
+    fun `test skip empty last arm`() = doAvailableTest("""
         enum MyOption {
-            Some(x)
+            Some(u32)
         }
 
         fn main() {
@@ -103,7 +159,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """, """
         enum MyOption {
-            Some(x)
+            Some(u32)
         }
 
         fn main() {
@@ -117,33 +173,40 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         }
     """)
 
-    fun `test simple 2`() = doAvailableTest("""
-        enum OptionColor {
-            NoColor,
-            Color(i32, i32, i32),
+    fun `test shorten last wild pat`() = doAvailableTest("""
+        enum MyOption {
+            Some(u32)
         }
 
         fn main() {
-            let color = OptionColor::Color(255, 255, 255);
+            let color = MyOption::Some(52);
 
             /*caret*/match color {
-                OptionColor::Color(255, 255, 255) => print!("White"),
-                OptionColor::Color(_,   _,   _  ) => {}
-                OptionColor::NoColor => {}
-            };
+                MyOption::Some(42) => {
+                    let a = x + 1;
+                    let b = x + 2;
+                    let c = a + b;
+                }
+                _ => {
+                    let d = 5;
+                }
+            }
         }
     """, """
-        enum OptionColor {
-            NoColor,
-            Color(i32, i32, i32),
+        enum MyOption {
+            Some(u32)
         }
 
         fn main() {
-            let color = OptionColor::Color(255, 255, 255);
+            let color = MyOption::Some(52);
 
-            if let OptionColor::Color(255, 255, 255) = color {
-                print!("White")
-            };
+            if let MyOption::Some(42) = color {
+                let a = x + 1;
+                let b = x + 2;
+                let c = a + b;
+            } else {
+                let d = 5;
+            }
         }
     """)
 
@@ -558,7 +621,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
             /*caret*/match v {
-                V1(x) | V2(x) => {
+                V::V1(x) | V::V2(x) => {
                     println!("{}", x);
                 }
                 _ => {}
@@ -567,7 +630,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     """, """
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
-            if let V1(x) | V2(x) = v {
+            if let V::V1(x) | V::V2(x) = v {
                 println!("{}", x);
             }
         }
@@ -577,7 +640,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
             /*caret*/match v {
-                | V1(x) | V2(x) => {
+                | V::V1(x) | V::V2(x) => {
                     println!("{}", x);
                 }
                 _ => {}
@@ -586,9 +649,117 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     """, """
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
-            if let | V1(x) | V2(x) = v {
+            if let | V::V1(x) | V::V2(x) = v {
                 println!("{}", x);
             }
+        }
+    """)
+
+    fun `test multiple arms exhaustive no bindings in last arm`() = doAvailableTest("""
+        enum Enum {
+            A,
+            B
+        }
+
+        fn foo(e: Enum) -> u32 {
+            /*caret*/match e {
+                Enum::A => 1,
+                Enum::B => 2
+            }
+        }
+    """, """
+        enum Enum {
+            A,
+            B
+        }
+
+        fn foo(e: Enum) -> u32 {
+            if let Enum::A = e {
+                1
+            } else {
+                2
+            }
+        }
+    """)
+
+    fun `test multiple arms exhaustive bindings in last arm`() = doAvailableTest("""
+        enum Enum {
+            A,
+            B(u32)
+        }
+
+        fn foo(e: Enum) -> u32 {
+            /*caret*/match e {
+                Enum::A => 1,
+                Enum::B(x) => x
+            }
+        }
+    """, """
+        enum Enum {
+            A,
+            B(u32)
+        }
+
+        fn foo(e: Enum) -> u32 {
+            if let Enum::A = e {
+                1
+            } else if let Enum::B(x) = e {
+                x
+            } else {
+                unreachable!()
+            }
+        }
+    """)
+
+    fun `test multiple arms exhaustive last arm empty block`() = doAvailableTest("""
+        enum Enum {
+            A,
+            B
+        }
+
+        fn foo(e: Enum) {
+            /*caret*/match e {
+                Enum::A => { 1 },
+                Enum::B => {}
+            };
+        }
+    """, """
+        enum Enum {
+            A,
+            B
+        }
+
+        fn foo(e: Enum) {
+            if let Enum::A = e {
+                1
+            } else {
+                unreachable!()
+            };
+        }
+    """)
+
+    fun `test skip empty last arm when expression type is unit`() = doAvailableTest("""
+        enum Enum {
+            A,
+            B
+        }
+
+        fn foo(e: Enum) {
+            /*caret*/match e {
+                Enum::A => { println!("foo"); },
+                Enum::B => {}
+            };
+        }
+    """, """
+        enum Enum {
+            A,
+            B
+        }
+
+        fn foo(e: Enum) {
+            if let Enum::A = e {
+                println!("foo");
+            };
         }
     """)
 }

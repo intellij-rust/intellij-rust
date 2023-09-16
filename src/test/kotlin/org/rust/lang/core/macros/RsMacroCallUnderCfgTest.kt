@@ -19,7 +19,6 @@ import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.expansion
 
-@ExpandMacros
 class RsMacroCallUnderCfgTest : RsTestBase() {
     @MockCargoFeatures("feature_foo")
     fun `test simple`() = checkResolvedOnlyWhenFeatureIsEnabled("feature_foo", """

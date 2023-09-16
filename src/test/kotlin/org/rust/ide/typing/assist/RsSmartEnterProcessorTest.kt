@@ -203,8 +203,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn main() {
             let a = true;
             match a {
-                true =>,
-                /*caret*/
+                true =>,/*caret*/
             }
         }
     """)
@@ -224,8 +223,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn main() {
             let a = true;
             match a {
-                true => test(),
-                /*caret*/
+                true => test(),/*caret*/
             }
         }
     """)
@@ -241,8 +239,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn main() {
             let a = true;
             match a {
-                true => "test".as_bytes(),
-                /*caret*/
+                true => "test".as_bytes(),/*caret*/
             }
         }
     """)
@@ -258,8 +255,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn main() {
             let a = true;
             match a {
-                true => (),
-                /*caret*/
+                true => (),/*caret*/
             }
         }
     """)
@@ -275,8 +271,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn main() {
             let a = true;
             match a {
-                true => println!("test"),
-                /*caret*/
+                true => println!("test"),/*caret*/
             }
         }
     """)
@@ -369,6 +364,79 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             
             /*caret*/
         }
+    """)
+
+    fun `test top-level type alias`() = doTest("""
+        type Foo = /*caret*/i32
+    """, """
+        type Foo = i32;/*caret*/
+    """)
+
+    fun `test top-level type alias with semicolon`() = doTest("""
+        type Foo = /*caret*/i32;
+    """, """
+        type Foo = i32;
+        /*caret*/
+    """)
+
+    fun `test top-level trait alias`() = doTest("""
+        trait Foo = /*caret*/Bar
+    """, """
+        trait Foo = Bar;/*caret*/
+    """)
+
+    fun `test type alias inside trait (no default value)`() = doTest("""
+        trait Trait {
+            type /*caret*/Foo
+        }
+    """, """
+        trait Trait {
+            type Foo;/*caret*/
+        }
+    """)
+
+    fun `test type alias inside trait (with default value)`() = doTest("""
+        trait Trait {
+            type Foo = /*caret*/i32
+        }
+    """, """
+        trait Trait {
+            type Foo = i32;/*caret*/
+        }
+    """)
+
+    fun `test type alias inside trait (with where clause)`() = doTest("""
+        trait Iterable {
+            type Iter<'a> where /*caret*/Self: 'a
+        }
+    """, """
+        trait Iterable {
+            type Iter<'a> where Self: 'a;/*caret*/
+        }
+    """)
+
+    fun `test top-level constant`() = doTest("""
+        const C: i32 = /*caret*/0
+    """, """
+        const C: i32 = 0;/*caret*/
+    """)
+
+    fun `test top-level constant (with block expr) 1`() = doTest("""
+        const C: i32 = /*caret*/{ 0 }
+    """, """
+        const C: i32 = { 0 };/*caret*/
+    """)
+
+    fun `test top-level constant (with block expr) 2`() = doTest("""
+        const C: i32 = { 0/*caret*/ }
+    """, """
+        const C: i32 = { 0;/*caret*/ }
+    """)
+
+    fun `test top-level extern crate`() = doTest("""
+        extern crate /*caret*/std
+    """, """
+        extern crate std;/*caret*/
     """)
 
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =

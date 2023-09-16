@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.project.DumbAwareAction
+import org.rust.RsBundle
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.ide.notifications.showBalloonWithoutProject
 
@@ -23,7 +24,7 @@ class RunRustConsoleAction : DumbAwareAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project
-            ?: return showBalloonWithoutProject("Project not found", NotificationType.ERROR)
+            ?: return showBalloonWithoutProject(RsBundle.message("notification.content.project.not.found"), NotificationType.ERROR)
 
         val runner = RsConsoleRunner(project)
         // BACKCOMPAT: 2019.3

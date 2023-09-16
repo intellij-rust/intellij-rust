@@ -156,7 +156,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         mod foo { }
 
-        use self::foo::{self/*caret*/};
+        use self::foo::{self::/*caret*/};
     """)
 
     fun `test use glob global`() = doSingleCompletion("""
@@ -307,7 +307,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete self method`() = doSingleCompletion("""
+    fun `test complete self method`() = doFirstCompletion("""
         struct S;
         impl S { fn foo(&se/*caret*/) {}}
     """, """
@@ -489,7 +489,71 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete enum variants 1`() = doSingleCompletion("""
+    fun `test associated type completion without Self`() = doSingleCompletion("""
+        trait Foo {
+            type Bar;
+            fn foo(bar: Ba/*caret*/);
+        }
+    """, """
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Bar/*caret*/);
+        }
+    """)
+
+    fun `test associated type completion without Self as type argument`() = doSingleCompletion("""
+        struct O<T>;
+        trait Foo {
+            type Bar;
+            fn foo(bar: O<Ba/*caret*/>);
+        }
+    """, """
+        struct O<T>;
+        trait Foo {
+            type Bar;
+            fn foo(bar: O<Self::Bar/*caret*/>);
+        }
+    """)
+
+    fun `test associated type completion without Self in impl`() = doSingleCompletion("""
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Bar);
+        }
+        struct Struct;
+        impl Foo for Struct {
+            type Bar = ();
+            fn foo(bar: Ba/*caret*/) { todo!() }
+        }
+    """, """
+        trait Foo {
+            type Bar;
+            fn foo(bar: Self::Bar);
+        }
+        struct Struct;
+        impl Foo for Struct {
+            type Bar = ();
+            fn foo(bar: Self::Bar/*caret*/) { todo!() }
+        }
+    """)
+
+    fun `test associated type completion without Self in from parent trait`() = doSingleCompletion("""
+        trait Foo {
+            type Bar;
+        }
+        trait Qux : Foo {
+            fn baz() -> Ba/*caret*/;
+        }
+    """, """
+        trait Foo {
+            type Bar;
+        }
+        trait Qux : Foo {
+            fn baz() -> Self::Bar/*caret*/;
+        }
+    """)
+
+    fun `test complete enum variants 1`() = doFirstCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
@@ -507,7 +571,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete enum variants 2`() = doSingleCompletion("""
+    fun `test complete enum variants 2`() = doFirstCompletion("""
         enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
         fn foo(e: Expr) {
             use self::Expr::*;
@@ -730,14 +794,18 @@ class RsCompletionTest : RsCompletionTestBase() {
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test complete proc macro in use item`() = checkContainsCompletionByFileTree(
-        listOf("macro_function", "macro_attr", "macro_derive"), """
+        listOf("macro_function", "macro_attr", "MacroDerive", "MacroDeriveHidden"), """
     //- dep-proc-macro/lib.rs
         #[proc_macro]
         pub fn macro_function(input: TokenStream) -> TokenStream { input }
         #[proc_macro_attribute]
         pub fn macro_attr(_attr: TokenStream, item: TokenStream) -> TokenStream { item }
-        #[proc_macro_derive(macro_derive)]
+        #[proc_macro_derive(MacroDerive)]
         pub fn macro_derive(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
+
+        #[doc(hidden)]
+        #[proc_macro_derive(MacroDeriveHidden)]
+        pub fn macro_derive_hidden(_item: TokenStream) -> TokenStream { "".parse().unwrap() }
     //- lib.rs
         use dep_proc_macro::/*caret*/
     """)
@@ -963,7 +1031,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         pub use dep_lib_target::st/*caret*/
     """)
 
-    fun `test complete with identifier escaping`() = doSingleCompletion("""
+    fun `test complete with identifier escaping (keyword)`() = doSingleCompletion("""
         fn r#else() {}
         fn main() {
             els/*caret*/
@@ -974,6 +1042,19 @@ class RsCompletionTest : RsCompletionTestBase() {
             r#else()/*caret*/
         }
     """)
+
+    fun `test complete with identifier escaping (reserved keyword)`() = doSingleCompletion("""
+        fn r#become() {}
+        fn main() {
+            bec/*caret*/
+        }
+    """, """
+        fn r#become() {}
+        fn main() {
+            r#become()/*caret*/
+        }
+    """)
+
 
     fun `test complete lifetime`() = doSingleCompletion("""
         fn foo<'aaaaaa>(x:&'a/*caret*/ str) {}
@@ -1375,6 +1456,58 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { foo(MyOtherEnum::Variant(/*caret*/)) }
     """)
 
+    fun `test enum with variants in match arm pattern`() = checkContainsCompletion(listOf("E", "E::A", "E::B"), """
+        enum E { A, B }
+        fn test(e: E) {
+            match e {
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test enum with variants in if let pattern`() = checkContainsCompletion(listOf("E", "E::A", "E::B"), """
+        enum E { A, B }
+        fn test(e: E) {
+            if let /*caret*/
+        }
+    """)
+
+    fun `test enum with variants in pat tuple struct 1`() = checkContainsCompletion(listOf("E", "E::B"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/() => {},
+            }
+        }
+    """)
+
+    fun `test enum with variants in pat tuple struct 2`() = checkNotContainsCompletion(listOf("E::A", "E::C"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/() => {},
+            }
+        }
+    """)
+
+    fun `test enum with variants in pat struct 1`() = checkContainsCompletion(listOf("E", "E::C"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/ {} => {},
+            }
+        }
+    """)
+
+    fun `test enum with variants in pat struct 2`() = checkNotContainsCompletion(listOf("E::A", "E::B"), """
+        enum E { A, B(i32), C { f: i32 } }
+        fn test(e: E) {
+            match e {
+                E/*caret*/ {} => {},
+            }
+        }
+    """)
+
     fun `test do not complete non-mod items in vis restriction path`() = checkNoCompletion("""
         pub mod bar {
             pub mod foo {
@@ -1475,6 +1608,129 @@ class RsCompletionTest : RsCompletionTestBase() {
             use self::foo::r#break;/*caret*/
 
             r#break();
+        }
+    """)
+
+    fun `test don't suggest labels from blocks`() {
+        val code = """
+            fn f() {
+                'b1: loop {
+                    'b2: {
+                        'b3: loop {
+                            continue 'b/*caret*/;
+                        }
+                    }
+                }
+            }
+        """
+        checkNotContainsCompletion("'b2", code)
+        checkContainsCompletion(listOf("'b1", "'b3"), code)
+    }
+
+    fun `test fn main 1`() = checkContainsCompletionPrefixes(listOf("fn main() {"), """
+        /*caret*/
+    """)
+
+    fun `test fn main 2`() = checkContainsCompletionPrefixes(listOf("fn main() {"), """
+        f/*caret*/
+    """)
+
+    fun `test fn main 3`() = checkContainsCompletionPrefixes(listOf("fn main() {"), """
+        fn/*caret*/
+    """)
+
+    fun `test fn main 4`() = doFirstCompletion("""
+        fn /*caret*/
+    """, """
+        fn main() {
+            /*caret*/
+        }
+    """)
+
+    fun `test fn main 5`() = doFirstCompletion("""
+        fn m/*caret*/
+    """, """
+        fn main() {
+            /*caret*/
+        }
+    """)
+
+    fun `test no fn main inside impl`() = checkNoCompletion("""
+        impl Foo {
+            fn ma/*caret*/
+        }
+    """)
+
+    fun `test no fn main inside library crate`() = checkNoCompletionByFileTree("""
+    //- lib.rs
+        fn ma/*caret*/
+    """)
+
+    fun `test no fn main if already have fn main`() = checkNoCompletion("""
+        fn main() {}
+        fn ma/*caret*/
+    """)
+
+    fun `test no fn main inside other function 1`() = checkNoCompletion("""
+        fn /*caret*/func() {}
+    """)
+
+    fun `test no fn main inside other function 2`() = checkNoCompletion("""
+        fn func()/*caret*/ {}
+    """)
+
+    fun `test no fn main inside other function 3`() = checkNoCompletion("""
+        fn func() /*caret*/{}
+    """)
+
+    fun `test match completion 1`() = doSingleCompletionWithLiveTemplate("""
+        enum E { A, B }
+        fn main() {
+            let x = E::A;
+            mat/*caret*/
+        }
+    """, "x\t", """
+        enum E { A, B }
+        fn main() {
+            let x = E::A;
+            match x {
+                E::A => {/*caret*/}
+                E::B => {}
+            }
+        }
+    """)
+
+    fun `test match completion 2`() = doSingleCompletionWithLiveTemplate("""
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            mat/*caret*/
+        }
+    """, "x\ty\t", """
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            match x {
+                E::A => {/*caret*/}
+                E::B(y) => {}
+            }
+        }
+    """)
+
+    fun `test match completion 3`() = doSingleCompletionWithLiveTemplate("""
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            let a = mat/*caret*/
+        }
+    """, "x\ty\t", """
+        enum E { A, B(i32) }
+        fn main() {
+            let x = E::A;
+            let a = match x {
+                E::A => {/*caret*/}
+                E::B(y) => {}
+            };
         }
     """)
 }

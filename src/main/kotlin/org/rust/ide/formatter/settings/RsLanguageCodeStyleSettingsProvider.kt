@@ -45,7 +45,6 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
         }
 
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (settingsType) {
             BLANK_LINES_SETTINGS -> {
                 consumer.showStandardOptions(

@@ -38,7 +38,7 @@ FILE
         RsPathTypeImpl(PATH_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('i32')
-      PsiErrorElement:'!', '+', ',', '::', <path parameters>, <type argument list> or '}' expected, got 'f2'
+      PsiErrorElement:'!', '+', ',', '::', <path parameters>, <type argument list>, '=' or '}' expected, got 'f2'
         <empty list>
       PsiWhiteSpace('\n    ')
       RsNamedFieldDeclImpl(NAMED_FIELD_DECL)
@@ -88,7 +88,7 @@ FILE
         RsPathTypeImpl(PATH_TYPE)
           RsPathImpl(PATH)
             PsiElement(identifier)('i32')
-      PsiErrorElement:'!', ')', '+', ',', '::', <path parameters> or <type argument list> expected, got 'i32'
+      PsiErrorElement:'!', ')', '+', ',', '::', <path parameters>, <type argument list> or '=' expected, got 'i32'
         <empty list>
       PsiWhiteSpace(' ')
       RsTupleFieldDeclImpl(TUPLE_FIELD_DECL)

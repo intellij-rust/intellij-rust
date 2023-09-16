@@ -159,7 +159,7 @@ fun createLookupElement(
     return lookup.toRsLookupElement(properties)
 }
 
-private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
+fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
     when (scopeEntry) {
         is AssocItemScopeEntryBase<*> ->
             instantiateMethodOwnerSubstitution(scopeEntry)
@@ -206,8 +206,17 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
             base
         }
 
-        is RsConstant -> base
-            .withTypeText(typeReference?.getStubOnlyText(subst))
+        is RsConstant -> {
+            val tailText = run {
+                val expr = expr ?: return@run null
+                val expectedTy = typeReference?.normType ?: expr.type
+                val text = expr.getStubOnlyText(subst, expectedTy)
+                if (text == "{}") null else " = $text"
+            }
+            base
+                .withTypeText(typeReference?.getStubOnlyText(subst))
+                .withTailText(tailText)
+        }
         is RsConstParameter -> base
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsFieldDecl -> base
@@ -271,7 +280,12 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
     ) {
         val document = context.document
 
-        if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
+        val shouldEscapeName = element is RsNameIdentifierOwner
+            && !RsNamesValidator.isIdentifier(scopeName)
+            && scopeName.canBeEscaped
+            /** Hack for [RsCommonCompletionProvider.addIteratorMethods] */
+            && !scopeName.startsWith("iter().")
+        if (shouldEscapeName) {
             document.insertString(context.startOffset, RS_RAW_PREFIX)
             context.commitDocument() // Fixed PSI element escape
         }
@@ -287,14 +301,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         when (element) {
             is RsMod -> {
                 when (scopeName) {
-                    "self",
-                    "super" -> {
-                        val inSelfParam = context.getElementOfType<RsSelfParameter>() != null
-                        if (!(context.isInUseGroup || inSelfParam)) {
-                            context.addSuffix("::")
-                        }
-                    }
-                    "crate" -> context.addSuffix("::")
+                    "self", "super", "crate" -> context.addSuffix("::")
                 }
             }
 

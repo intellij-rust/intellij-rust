@@ -5,10 +5,7 @@
 
 package org.rust.ide.annotator
 
-import org.rust.MockAdditionalCfgOptions
-import org.rust.MockRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
 
 class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
@@ -55,14 +52,14 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         }
     """)
 
-    fun `test lifetime name duplication in generic params E0263`() = checkErrors("""
+    fun `test lifetime name duplication in generic params E0403`() = checkErrors("""
         fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
         struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }
         impl<'a, 'b> Str<'a, 'b> {}
         enum Direction<'a, 'b> { LEFT(&'a str), RIGHT(&'b str) }
         trait Trait<'a, 'b> {}
 
-        fn bar<<error descr="Lifetime name `'a` declared twice in the same scope [E0263]">'a</error>, 'b, <error>'a</error>>(x: &'a str, y: &'b str) { }
+        fn bar<<error descr="The name `'a` is already used for a generic parameter in this item's generic parameters [E0403]">'a</error>, 'b, <error>'a</error>>(x: &'a str, y: &'b str) { }
         struct St<<error>'a</error>, 'b, <error>'a</error>> { a: &'a u32, b: &'b f64 }
         impl<<error>'a</error>, 'b, <error>'a</error>> Str<'a, 'b> {}
         enum Dir<<error>'a</error>, 'b, <error>'a</error>> { LEFT(&'a str), RIGHT(&'b str) }
@@ -267,7 +264,10 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         }
     """)
 
+    @MockRustcVersion("1.0.0-nightly")
     fun `test respects namespaces E0428`() = checkErrors("""
+        #![feature(decl_macro)]
+
         mod m {
             // Consts and types are in different namespaces
             type  NO_C_DUP = bool;
@@ -451,6 +451,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         struct foo2 {}
     """)
 
+    @SkipTestWrapping
     fun `test duplicates item vs extern crate E0260`() = checkErrors("""
         <error descr="The name `foo1` is defined multiple times [E0260]">extern crate std as foo1;</error>
         struct <error descr="The name `foo1` is defined multiple times [E0260]">foo1</error> {}
@@ -459,6 +460,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         fn foo2() {}
     """)
 
+    @SkipTestWrapping
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test E0260 respects crate aliases`() = checkErrors("""
         extern crate core as core_alias;
@@ -468,6 +470,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         mod <error descr="The name `alloc` is defined multiple times [E0260]">alloc</error> {}
     """)
 
+    @SkipTestWrapping
     fun `test duplicates import vs extern crate E0254`() = checkErrors("""
         mod inner {
             pub struct foo1 {}
@@ -481,6 +484,7 @@ class RsDuplicateDefinitionAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator:
         use inner::foo2;
     """)
 
+    @SkipTestWrapping
     fun `test duplicates extern crate vs extern crate E0259`() = checkErrors("""
         <error descr="The name `std` is defined multiple times [E0259]">extern crate std;</error>
         <error descr="The name `std` is defined multiple times [E0259]">extern crate core as std;</error>
