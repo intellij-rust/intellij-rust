@@ -23,15 +23,15 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.ui.JBUI
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 import org.jetbrains.annotations.Nls
 import org.rust.RsBundle
-import org.rust.ide.docs.signature
+import org.rust.ide.docs.ColoredDocumentationGenerator
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -113,7 +113,7 @@ class RsMoveTopLevelItemsDialog(
             row {
                 resizableRow()
                 fullWidthCell(memberPanel)
-                    .verticalAlign(VerticalAlign.FILL)
+                    .align(AlignY.FILL)
             }
             row {
                 checkBox(RefactoringBundle.message("search.for.references"))
@@ -202,8 +202,12 @@ class RsMoveMemberInfo(val member: RsItemElement) : RsMoveNodeInfo {
         val description = if (member is RsModItem) {
             RsBundle.message("mod.0", member.modName?:"")
         } else {
-            val descriptionHTML = buildString { member.signature(this) }
-            val description = StringEscapeUtils.unescapeHtml(StringUtil.removeHtmlTags(descriptionHTML))
+            val descriptionHTML = buildString {
+                with(ColoredDocumentationGenerator(member.containingCrate, this@buildString)) {
+                    member.signature()
+                }
+            }
+            val description = StringEscapeUtils.unescapeHtml4(StringUtil.removeHtmlTags(descriptionHTML))
             description.replace("(?U)\\s+".toRegex(), " ")
         }
         renderer.append(description, SimpleTextAttributes.REGULAR_ATTRIBUTES)

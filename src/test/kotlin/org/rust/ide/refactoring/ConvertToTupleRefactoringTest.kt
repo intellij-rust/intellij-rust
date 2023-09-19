@@ -7,7 +7,7 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.launchAction
+import org.rust.launchAnAction
 
 class ConvertToTupleRefactoringTest : RsTestBase() {
     fun `test simple`() = doAvailableTest("""
@@ -190,7 +190,7 @@ class ConvertToTupleRefactoringTest : RsTestBase() {
 
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
-        myFixture.launchAction("Rust.RsConvertToTuple")
+        myFixture.launchAnAction("Rust.RsConvertToTuple")
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 }
