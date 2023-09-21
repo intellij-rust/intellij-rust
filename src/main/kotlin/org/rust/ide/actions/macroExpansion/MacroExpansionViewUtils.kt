@@ -82,14 +82,8 @@ fun showMacroExpansionPopup(project: Project, editor: Editor, expansionDetails: 
     PopupPositionManager.positionPopupInBestPosition(popup, editor, null)
 }
 
-fun expandMacroForView(
-    macroToExpand: RsPossibleMacroCall,
-    expandRecursively: Boolean,
-    sizeLimit: Int = Int.MAX_VALUE,
-    hasWriteAccess: Boolean = true,
-): RsResult<MacroExpansionViewDetails, GetMacroExpansionError> {
-    val expansions = getMacroExpansions(macroToExpand, expandRecursively, sizeLimit, hasWriteAccess)
-        .unwrapOrElse { return Err(it) }
+private fun expandMacroForView(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): RsResult<MacroExpansionViewDetails, GetMacroExpansionError> {
+    val expansions = getMacroExpansions(macroToExpand, expandRecursively).unwrapOrElse { return Err(it) }
     return Ok(
         MacroExpansionViewDetails(
             macroToExpand,
@@ -117,38 +111,28 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expan
     }
 }
 
-private fun getMacroExpansions(
-    macroToExpand: RsPossibleMacroCall,
-    expandRecursively: Boolean,
-    sizeLimit: Int = Int.MAX_VALUE,
-    hasWriteAccess: Boolean = true,
-): RsResult<MacroExpansion, GetMacroExpansionError> {
+private fun getMacroExpansions(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): RsResult<MacroExpansion, GetMacroExpansionError> {
     val singleStepExpansion = macroToExpand.expansionResult
     if (singleStepExpansion is Err) {
         return singleStepExpansion
     }
 
     val depthLimit = if (expandRecursively) Int.MAX_VALUE else 1
-    val expansionText = macroToExpand.expandMacrosRecursively(
-        depthLimit = depthLimit,
-        replaceDollarCrate = true,
-        sizeLimit = sizeLimit,
-    ) ?: return Err(GetMacroExpansionError.TooLargeExpansion)
+    val expansionText = macroToExpand.expandMacrosRecursively(depthLimit, replaceDollarCrate = true)
 
     return parseExpandedTextWithContext(
         macroToExpand.expansionContext,
         // Without `eventSystemEnabled` file reformatting (that will be performed later) is too slow
-        RsPsiFactory(macroToExpand.project, markGenerated = false, eventSystemEnabled = hasWriteAccess),
+        RsPsiFactory(macroToExpand.project, markGenerated = false, eventSystemEnabled = true),
         expansionText
     ).toResult().mapErr {
         GetMacroExpansionError.MemExpParsingError(expansionText, macroToExpand.expansionContext)
     }
 }
 
-fun reformatMacroExpansion(
+private fun reformatMacroExpansion(
     macroToExpand: RsPossibleMacroCall,
-    expansion: MacroExpansion,
-    hasWriteAccess: Boolean = true,
+    expansion: MacroExpansion
 ): MacroExpansion {
     val file = expansion.file
         .takeIf { it.virtualFile == null }
@@ -156,13 +140,7 @@ fun reformatMacroExpansion(
         ?: RsPsiFactory(expansion.file.project, eventSystemEnabled = true).createFile(expansion.file.text)
 
     RsPsiManager.withIgnoredPsiEvents(file) {
-        if (hasWriteAccess) {
-            DocumentUtil.writeInRunUndoTransparentAction {
-                formatPsiFile(file)
-            }
-        } else {
-            formatPsiFile(file)
-        }
+        DocumentUtil.writeInRunUndoTransparentAction { formatPsiFile(file) }
     }
 
     return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)
