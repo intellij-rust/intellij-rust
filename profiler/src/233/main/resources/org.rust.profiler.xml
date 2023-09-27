@@ -11,7 +11,7 @@
         <programRunner implementation="org.rust.profiler.legacy.RsProfilerRunnerLegacy"/>
 
         <profiler.clion.profilerRunChecker implementation="org.rust.profiler.RsProfilerRunChecker"/>
-        <profiler.clion.profilerEnvironmentHost implementation="org.rust.profiler.RsProfilerEnvironmentHost"/>
+        <profiler.clion.profilerEnvironmentHostProvider implementation="org.rust.profiler.RsProfilerEnvironmentHostProvider"/>
         <profiler.clion.navigatableSymbolSearcher implementation="org.rust.profiler.RsNavigatableSymbolSearcher"/>
         <profiler.clion.profilerPresentationGroup implementation="org.rust.profiler.RsProfilerPresentationGroup"/>
     </extensions>

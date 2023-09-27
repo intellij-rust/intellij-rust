@@ -19,7 +19,6 @@ import com.intellij.profiler.ProfilerToolWindowManager
 import com.intellij.profiler.clion.DTraceProfilerConfigurationExtension
 import com.intellij.profiler.clion.NativeTargetProcess
 import com.intellij.profiler.clion.ProfilerConfigurationExtension
-import com.intellij.profiler.clion.ProfilerEnvironmentHost
 import com.intellij.profiler.dtrace.legacyDTraceProfilerConfiguration
 import com.intellij.profiler.installErrorHandlers
 import com.intellij.profiler.statistics.ProfilerUsageTriggerCollector
@@ -27,6 +26,7 @@ import org.rust.RsBundle
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.profiler.RsProfilerEnvironmentHost
 import org.rust.profiler.RsProfilerRunner
 import org.rust.profiler.RsProfilerRunner.Companion.IJ_RUNNER_ID
 import org.rust.profiler.legacy.RsProfilerRunnerLegacy
@@ -40,7 +40,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
     override fun isEnabledFor(
         applicableConfiguration: CargoCommandConfiguration,
         runnerSettings: RunnerSettings?
-    ): Boolean = delegate.isEnabledFor(applicableConfiguration, runnerSettings)
+    ): Boolean = delegate.isEnabledFor(applicableConfiguration, RsProfilerEnvironmentHost(), runnerSettings)
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
@@ -49,7 +49,14 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         context: ConfigurationExtensionContext
     ) {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
-        delegate.patchCommandLine(configuration, environment.runnerSettings, cmdLine, IJ_RUNNER_ID, context)
+        delegate.patchCommandLine(
+            configuration,
+            RsProfilerEnvironmentHost(),
+            environment.runnerSettings,
+            cmdLine,
+            IJ_RUNNER_ID,
+            context
+        )
     }
 
     override fun attachToProcess(
@@ -60,10 +67,14 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
     ) {
         val project = configuration.project
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
-        if (ProfilerEnvironmentHost.isRemote(project)) return
+        if (RsProfilerEnvironmentHost().isRemote(project)) return
         val targetProcess = (handler as? BaseProcessHandler<*>)?.process
             ?: throw ExecutionException(RsBundle.message("dialog.message.profiler.connection.error.can.t.detect.target.process.id"))
-        ProfilerUsageTriggerCollector.logRecordingStarted(project, legacyDTraceProfilerConfiguration.configurationTypeId, configuration.type.id)
+        ProfilerUsageTriggerCollector.logRecordingStarted(
+            project,
+            legacyDTraceProfilerConfiguration.configurationTypeId,
+            configuration.type.id
+        )
         val namedProcess = NativeTargetProcess(OSProcessUtil.getProcessID(targetProcess), configuration.name)
         RsDTraceProfilerProcess.attach(namedProcess, PerformInBackgroundOption.ALWAYS_BACKGROUND, 10000, project)
             .installErrorHandlers(project)

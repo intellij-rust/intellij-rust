@@ -14,6 +14,7 @@ import com.intellij.profiler.clion.perf.PerfProfilerConfigurationExtension
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.profiler.RsProfilerEnvironmentHost
 import org.rust.profiler.RsProfilerRunner
 import org.rust.profiler.RsProfilerRunner.Companion.IJ_RUNNER_ID
 import org.rust.profiler.legacy.RsProfilerRunnerLegacy
@@ -27,7 +28,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
     override fun isEnabledFor(
         applicableConfiguration: CargoCommandConfiguration,
         runnerSettings: RunnerSettings?
-    ): Boolean = delegate.isEnabledFor(applicableConfiguration, runnerSettings)
+    ): Boolean = delegate.isEnabledFor(applicableConfiguration, RsProfilerEnvironmentHost(), runnerSettings)
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
@@ -36,7 +37,14 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         context: ConfigurationExtensionContext
     ) {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
-        delegate.patchCommandLine(configuration, environment.runnerSettings, cmdLine, IJ_RUNNER_ID, context)
+        delegate.patchCommandLine(
+            configuration,
+            RsProfilerEnvironmentHost(),
+            environment.runnerSettings,
+            cmdLine,
+            IJ_RUNNER_ID,
+            context
+        )
         val toolchain = configuration.clean().ok?.toolchain ?: return
         toolchain.patchCommandLine(cmdLine, withSudo = false)
     }
@@ -48,7 +56,14 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         context: ConfigurationExtensionContext
     ) {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
-        delegate.attachToProcess(configuration, handler, environment.runnerSettings, IJ_RUNNER_ID, context)
+        delegate.attachToProcess(
+            configuration,
+            handler,
+            RsProfilerEnvironmentHost(),
+            environment.runnerSettings,
+            IJ_RUNNER_ID,
+            context
+        )
     }
 
     companion object {
