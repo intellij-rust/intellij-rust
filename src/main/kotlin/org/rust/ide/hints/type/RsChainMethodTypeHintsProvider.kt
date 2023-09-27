@@ -37,6 +37,7 @@ import org.rust.lang.core.types.ty.TyAnon
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.openapiext.escaped
+import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -78,11 +79,8 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
         return object : FactoryInlayHintsCollector(editor) {
             val typeHintsFactory = RsTypeHintsPresentationFactory(factory, true)
 
-            private val lookupAndIteratorTrait: Pair<ImplLookup?, BoundElement<RsTraitItem>?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-                val (lookup, items) = (file as? RsFile)?.implLookupAndKnownItems ?: (null to null)
-                val iterator = items?.Iterator?.let { BoundElement(it) }
-                lookup to iterator
-            }
+            val lookupAndIteratorTrait: ThreadLocal<WeakReference<Pair<ImplLookup?, BoundElement<RsTraitItem>?>>?> =
+                ThreadLocal()
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (DumbService.isDumb(project)) return true
@@ -94,7 +92,13 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                     else -> false
                 }
 
-                val (lookup, iterator) = lookupAndIteratorTrait
+                val (lookup, iterator) = lookupAndIteratorTrait.get()?.get() ?: run {
+                    val (lookup, items) = (file as? RsFile)?.implLookupAndKnownItems ?: (null to null)
+                    val iterator = items?.Iterator?.let { BoundElement(it) }
+                    val result = lookup to iterator
+                    lookupAndIteratorTrait.set(WeakReference(result))
+                    result
+                }
 
                 val chain = collectChain(element)
                 val chainExpanded = if (isAttrProcMacro) {
