@@ -37,6 +37,8 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
     ) {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
         delegate.patchCommandLine(configuration, environment.runnerSettings, cmdLine, IJ_RUNNER_ID, context)
+        val toolchain = configuration.clean().ok?.toolchain ?: return
+        toolchain.patchCommandLine(cmdLine, withSudo = false)
     }
 
     override fun attachToProcess(
