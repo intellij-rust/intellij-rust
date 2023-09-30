@@ -13,6 +13,7 @@ import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.openapiext.isUnitTestMode
 
 class CargoExecutableRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
@@ -23,7 +24,14 @@ class CargoExecutableRunLineMarkerContributor : RunLineMarkerContributor() {
         val actions = ExecutorAction.getActions(0)
         return Info(
             AllIcons.RunConfigurations.TestState.Run,
-            { psiElement -> actions.mapNotNull { getText(it, psiElement) }.joinToString("\n") },
+            { psiElement ->
+                val texts = actions.mapNotNull { getText(it, psiElement) }
+                if (isUnitTestMode) {
+                    texts.firstOrNull().orEmpty()
+                } else {
+                    texts.joinToString("\n")
+                }
+            },
             *actions
         )
     }
