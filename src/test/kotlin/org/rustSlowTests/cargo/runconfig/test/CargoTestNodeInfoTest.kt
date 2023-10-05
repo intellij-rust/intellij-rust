@@ -12,48 +12,120 @@ import com.intellij.execution.testframework.Printer
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.ui.ConsoleViewContentType
 import org.intellij.lang.annotations.Language
+import org.rust.MaxRustcVersion
+import org.rust.MinRustcVersion
 import org.rust.cargo.toolchain.RustChannel
 
 class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
 
-    fun `test int diff`() = checkErrors("""
-       assert_eq!(1, 2);
-    """, "", Diff("1", "2"))
+    @MaxRustcVersion("1.72.1")
+    fun `test int diff (old)`() = checkErrors("""
+        assert_eq!(1, 2);
+    """, """
+        assertion failed: `(left == right)`
+          left: `1`,
+         right: `2`
+    """, Diff("1", "2"))
 
-    fun `test char diff`() = checkErrors("""
-       assert_eq!('a', 'c');
-    """, "", Diff("a", "c"))
+    @MinRustcVersion("1.73.0")
+    fun `test int diff (new)`() = checkErrors("""
+        assert_eq!(1, 2);
+    """, """
+        assertion failed: `(left == right)`
+          left: `1`,
+         right: `2`
+    """, Diff("1", "2"))
 
-    fun `test string diff`() = checkErrors("""
-       assert_eq!("aaa", "bbb");
-    """, "", Diff("aaa", "bbb"))
+    @MaxRustcVersion("1.72.1")
+    fun `test char diff (old)`() = checkErrors("""
+        assert_eq!('a', 'c');
+    """, """
+        assertion failed: `(left == right)`
+          left: `'a'`,
+         right: `'c'`
+    """, Diff("a", "c"))
 
-    fun `test multiline string diff`() = checkErrors("""
-       assert_eq!("a\naa", "bbb");
-    """, "", Diff("a\naa", "bbb"))
+    @MinRustcVersion("1.73.0")
+    fun `test char diff (new)`() = checkErrors("""
+        assert_eq!('a', 'c');
+    """, """
+        assertion failed: `(left == right)`
+          left: `'a'`,
+         right: `'c'`
+    """, Diff("a", "c"))
+
+    @MaxRustcVersion("1.72.1")
+    fun `test string diff (old)`() = checkErrors("""
+        assert_eq!("aaa", "bbb");
+    """, """
+        assertion failed: `(left == right)`
+          left: `"aaa"`,
+         right: `"bbb"`
+    """, Diff("aaa", "bbb"))
+
+    @MinRustcVersion("1.73.0")
+    fun `test string diff (new)`() = checkErrors("""
+        assert_eq!("aaa", "bbb");
+    """, """
+        assertion failed: `(left == right)`
+          left: `"aaa"`,
+         right: `"bbb"`
+    """, Diff("aaa", "bbb"))
+
+    @MaxRustcVersion("1.72.1")
+    fun `test multiline string diff (old)`() = checkErrors("""
+        assert_eq!("a\naa", "bbb");
+    """, """
+        assertion failed: `(left == right)`
+          left: `"a\naa"`,
+         right: `"bbb"`
+    """, Diff("a\naa", "bbb"))
+
+    @MinRustcVersion("1.73.0")
+    fun `test multiline string diff (new)`() = checkErrors("""
+        assert_eq!("a\naa", "bbb");
+    """, """
+        assertion failed: `(left == right)`
+          left: `"a\naa"`,
+         right: `"bbb"`
+    """, Diff("a\naa", "bbb"))
 
     fun `test assert_eq with message`() = checkErrors("""
-       assert_eq!(1, 2, "`1` != `2`");
+        assert_eq!(1, 2, "`1` != `2`");
     """, "`1` != `2`", Diff("1", "2"))
 
     fun `test no diff`() = checkErrors("""
-       assert!(1 != 1);
+        assert!(1 != 1);
     """, """assertion failed: 1 != 1""")
 
     fun `test assert with message`() = checkErrors("""
-       assert!("aaa" != "aaa", "message");
+        assert!("aaa" != "aaa", "message");
     """, "message")
 
-    fun `test assert_ne`() = checkErrors("""
-       assert_ne!(123, 123);
-    """, "")
+    @MaxRustcVersion("1.72.1")
+    fun `test assert_ne (old)`() = checkErrors("""
+        assert_ne!(123, 123);
+    """, """
+        assertion failed: `(left != right)`
+          left: `123`,
+         right: `123`
+    """)
+
+    @MinRustcVersion("1.73.0")
+    fun `test assert_ne (new)`() = checkErrors("""
+        assert_ne!(123, 123);
+    """, """
+        assertion failed: `(left != right)`
+          left: `123`,
+         right: `123`
+    """)
 
     fun `test assert_ne with message`() = checkErrors("""
-       assert_ne!(123, 123, "123 == 123");
+        assert_ne!(123, 123, "123 == 123");
     """, "123 == 123")
 
     fun `test unescape error messages`() = checkErrors("""
-       assert_eq!("a\\\\b", "a\\b", "`a\\\\b` != `a\\b`");
+        assert_eq!("a\\\\b", "a\\b", "`a\\\\b` != `a\\b`");
     """, "`a\\\\b` != `a\\b`", Diff("a\\\\b", "a\\b"))
 
     fun `test don't unescape test output`() = checkOutput("""
@@ -185,7 +257,7 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
         shouldPass: Boolean = false
     ) {
         val testNode = getTestNode(testFnText, shouldPass)
-        assertEquals(message, testNode.errorMessage)
+        assertEquals(message.trimIndent(), testNode.errorMessage)
         if (diff != null) {
             val diffProvider = testNode.diffViewerProvider ?: error("Diff should be not null")
             assertEquals(diff.actual, diffProvider.left)
