@@ -31,9 +31,9 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
     fun `test int diff (new)`() = checkErrors("""
         assert_eq!(1, 2);
     """, """
-        assertion failed: `(left == right)`
-          left: `1`,
-         right: `2`
+        assertion `left == right` failed
+          left: 1
+         right: 2
     """, Diff("1", "2"))
 
     @MaxRustcVersion("1.72.1")
@@ -49,9 +49,9 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
     fun `test char diff (new)`() = checkErrors("""
         assert_eq!('a', 'c');
     """, """
-        assertion failed: `(left == right)`
-          left: `'a'`,
-         right: `'c'`
+        assertion `left == right` failed
+          left: 'a'
+         right: 'c'
     """, Diff("a", "c"))
 
     @MaxRustcVersion("1.72.1")
@@ -67,9 +67,9 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
     fun `test string diff (new)`() = checkErrors("""
         assert_eq!("aaa", "bbb");
     """, """
-        assertion failed: `(left == right)`
-          left: `"aaa"`,
-         right: `"bbb"`
+        assertion `left == right` failed
+          left: "aaa"
+         right: "bbb"
     """, Diff("aaa", "bbb"))
 
     @MaxRustcVersion("1.72.1")
@@ -85,9 +85,9 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
     fun `test multiline string diff (new)`() = checkErrors("""
         assert_eq!("a\naa", "bbb");
     """, """
-        assertion failed: `(left == right)`
-          left: `"a\naa"`,
-         right: `"bbb"`
+        assertion `left == right` failed
+          left: "a\naa"
+         right: "bbb"
     """, Diff("a\naa", "bbb"))
 
     fun `test assert_eq with message`() = checkErrors("""
@@ -115,9 +115,9 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
     fun `test assert_ne (new)`() = checkErrors("""
         assert_ne!(123, 123);
     """, """
-        assertion failed: `(left != right)`
-          left: `123`,
-         right: `123`
+        assertion `left != right` failed
+          left: 123
+         right: 123
     """)
 
     fun `test assert_ne with message`() = checkErrors("""
@@ -257,7 +257,7 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
         shouldPass: Boolean = false
     ) {
         val testNode = getTestNode(testFnText, shouldPass)
-        assertEquals(message.trimIndent(), testNode.errorMessage)
+        assertEquals(message.trimIndent(), testNode.errorMessage?.trimEnd())
         if (diff != null) {
             val diffProvider = testNode.diffViewerProvider ?: error("Diff should be not null")
             assertEquals(diff.actual, diffProvider.left)
