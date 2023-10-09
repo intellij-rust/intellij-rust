@@ -74,8 +74,7 @@ class RsProfilerEnvironmentHost : ProfilerEnvironmentHost {
                 .withConsoleMode(false)
         }
 
-        val toolchain = project.toolchain as? RsWslToolchain
-            ?: throw ExecutionException(RsBundle.message("dialog.message.current.rust.toolchain.not.on.wsl"))
+        val toolchain = project.toolchain ?: throw ExecutionException(RsBundle.message("dialog.message.rust.toolchain.is.not.set"))
         tmpCommandLine = toolchain.patchCommandLine(tmpCommandLine, withElevated ?: false)
 
         @Suppress("UnstableApiUsage")
