@@ -34,12 +34,30 @@ import org.rust.stdext.*
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
 
-fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
+fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult =
+    inferTypesInWithOptions(element, TypeInferenceOptions.DEFAULT).second
+
+fun inferTypesInWithOptions(
+    element: RsInferenceContextOwner,
+    options: TypeInferenceOptions,
+): Pair<RsInferenceContext, RsInferenceResult> {
     val items = element.knownItems
     val paramEnv = if (element is RsItemElement) ParamEnv.buildFor(element) else ParamEnv.EMPTY
-    val lookup = ImplLookup(element.project, element.containingCrate, items, paramEnv, element)
-    return recursionGuard(element, { lookup.ctx.infer(element) }, memoize = false)
+    val lookup = ImplLookup(element.project, element.containingCrate, items, paramEnv, element, options)
+    return recursionGuard(element, { lookup.ctx to lookup.ctx.infer(element) }, memoize = false)
         ?: error("Can not run nested type inference")
+}
+
+data class TypeInferenceOptions(
+    /**
+     * If `true`, fills [FulfillmentContext.rootNodes] and [FulfillmentContext.parentToChildren],
+     * so that they can be used later.
+     */
+    val traceObligations: Boolean = false
+) {
+    companion object {
+        val DEFAULT = TypeInferenceOptions()
+    }
 }
 
 sealed class Adjustment: TypeFoldable<Adjustment> {
@@ -206,9 +224,10 @@ class RsInferenceResult(
 class RsInferenceContext(
     val project: Project,
     val lookup: ImplLookup,
-    val items: KnownItems
+    val items: KnownItems,
+    options: TypeInferenceOptions
 ) : RsInferenceData {
-    val fulfill: FulfillmentContext = FulfillmentContext(this, lookup)
+    val fulfill: FulfillmentContext = FulfillmentContext(this, lookup, options.traceObligations)
     private val exprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
     private val patTypes: MutableMap<RsPat, Ty> = hashMapOf()
     private val patFieldTypes: MutableMap<RsPatField, Ty> = hashMapOf()
@@ -869,7 +888,7 @@ class RsInferenceContext(
                 when (val selection = lookup.select(predicate.trait, obligation.recursionDepth)) {
                     SelectionResult.Err -> return null
                     is SelectionResult.Ok -> queue += selection.result.nestedObligations
-                    SelectionResult.Ambiguous -> if (predicate.trait.trait.element == unsizeTrait) {
+                    is SelectionResult.Ambiguous -> if (predicate.trait.trait.element == unsizeTrait) {
                         val selfTy = predicate.trait.selfTy
                         val unsizeTy = predicate.trait.trait.singleParamValue
                         if (selfTy is TyInfer.TyVar && unsizeTy is TyTraitObject && typeVarIsSized(selfTy)) {
