@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.type
 
+import org.junit.Test
+
 class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
 
     fun `test const expr`() = stubOnlyTypeInfer("""
@@ -373,5 +375,32 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
             let f: unsafe fn(i8) -> u64 = foo;
             f;
         } //^ unsafe fn(i8) -> u64
+    """)
+
+    // TODO RUST-12502
+    @Test(expected = Throwable::class)
+    fun `test infinite recursion in const evaluation`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        pub struct Uint<const LIMBS: usize> { }
+
+        impl<const LIMBS: usize> Uint<LIMBS> {
+            pub const LIMBS: usize = LIMBS;
+        }
+
+        pub type U896 = Uint<{ 896 / 64 }>;
+
+        pub trait Tr<T> {}
+
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS}> {}
+    //- main.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let a = foo(U896{});
+            a;
+        } //^ Uint<7>
+
+        fn foo<A: Tr<B>, B>(a: A) -> B { todo!() }
     """)
 }

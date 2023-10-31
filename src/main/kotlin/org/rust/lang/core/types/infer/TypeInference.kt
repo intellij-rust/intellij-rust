@@ -45,7 +45,7 @@ fun inferTypesInWithOptions(
     val paramEnv = if (element is RsItemElement) ParamEnv.buildFor(element) else ParamEnv.EMPTY
     val lookup = ImplLookup(element.project, element.containingCrate, items, paramEnv, element, options)
     return recursionGuard(element, { lookup.ctx to lookup.ctx.infer(element) }, memoize = false)
-        ?: error("Can not run nested type inference")
+        ?: (lookup.ctx to RsInferenceResult.EMPTY)
 }
 
 data class TypeInferenceOptions(
