@@ -46,7 +46,6 @@ import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.isRustupAvailable
-import org.rust.ide.statistics.CargoCommandUsagesCollector
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -65,8 +64,7 @@ open class CargoCommandConfiguration(
 ) : RsCommandConfiguration(project, name, factory),
     InputRedirectAware.InputRedirectOptions,
     ConsolePropertiesProvider,
-    TargetEnvironmentAwareRunProfile,
-    FusAwareRunConfiguration {
+    TargetEnvironmentAwareRunProfile {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
@@ -350,12 +348,6 @@ open class CargoCommandConfiguration(
                 }
             }
         }
-    }
-
-    @Suppress("UnstableApiUsage")
-    override fun getAdditionalUsageData(): List<EventPair<*>> {
-        val parsed = ParsedCommand.parse(command) ?: return emptyList()
-        return listOf(EventPair(CargoCommandUsagesCollector.COMMAND, parsed.command))
     }
 }
 

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hints.VcsCodeVisionCurlyBracketLanguageContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
-import org.rust.ide.statistics.RsCodeVisionUsageCollector.Companion.logAuthorClicked
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsMacroDefinitionBase
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -42,6 +41,5 @@ class RsVcsCodeVisionContext : VcsCodeVisionCurlyBracketLanguageContext() {
     }
 
     override fun handleClick(mouseEvent: MouseEvent, editor: Editor, element: PsiElement) {
-        logAuthorClicked(element)
     }
 }

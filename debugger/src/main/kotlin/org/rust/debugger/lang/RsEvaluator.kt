@@ -5,25 +5,18 @@
 
 package org.rust.debugger.lang
 
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.jetbrains.cidr.execution.debugger.CidrEvaluator
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
-import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriver
-import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
-import org.rust.debugger.statistics.RsDebuggerUsageCollector
-import org.rust.debugger.statistics.RsDebuggerUsageCollector.ExpressionKind
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -58,32 +51,7 @@ class RsEvaluator(frame: CidrStackFrame) : CidrEvaluator(frame) {
         } catch (e: Throwable) {
             RsResult.Err(e)
         }
-        if (position != null) {
-            logEvaluatedElements(project, driver, expr, position, result.isOk)
-        }
         return result.unwrapOrThrow()
     }
 
-    private fun logEvaluatedElements(
-        project: Project,
-        driver: DebuggerDriver,
-        expr: XExpression,
-        position: XSourcePosition,
-        success: Boolean,
-    ) {
-        val debuggerKind = when (driver) {
-            is GDBDriver -> RsDebuggerUsageCollector.DebuggerKind.GDB
-            is LLDBDriver -> RsDebuggerUsageCollector.DebuggerKind.LLDB
-            else -> RsDebuggerUsageCollector.DebuggerKind.Unknown
-        }
-        ReadAction.nonBlocking<EnumSet<ExpressionKind>> {
-            RsDebuggerUsageCollector.collectUsedElements(project, expr, position)
-        }
-            .inSmartMode(project)
-            .finishOnUiThread(ModalityState.defaultModalityState()) {
-                features -> RsDebuggerUsageCollector.logEvaluated(success, debuggerKind, features)
-            }
-            .submit(NonUrgentExecutor.getInstance())
-
-    }
 }
