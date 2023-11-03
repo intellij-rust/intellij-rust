@@ -27,7 +27,6 @@
         <programRunner id="RsDebugRunnerLegacy"
                        implementation="org.rust.debugger.runconfig.legacy.RsDebugRunnerLegacy"/>
 
-        <statistics.counterUsagesCollector implementationClass="org.rust.debugger.statistics.RsDebuggerUsageCollector"/>
 
         <registryKey key="org.rust.debugger.gdb.setup.v2"
                      defaultValue="false"

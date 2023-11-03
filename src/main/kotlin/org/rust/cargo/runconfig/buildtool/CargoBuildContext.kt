@@ -20,7 +20,6 @@ import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifacts
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
-import org.rust.ide.statistics.CargoErrorCodesCollector
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -130,10 +129,6 @@ class CargoBuildContext(
                 hasWarningsOrErrors -> MessageType.WARNING
                 else -> MessageType.INFO
             }
-        }
-
-        if (!isCanceled && !isSuccess) {
-            CargoErrorCodesCollector.logErrorsAfterBuild(project, errorCodes)
         }
 
         result.complete(CargoBuildResult(
