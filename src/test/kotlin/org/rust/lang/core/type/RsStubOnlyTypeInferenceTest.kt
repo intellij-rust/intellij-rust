@@ -378,8 +378,35 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
     """)
 
     // TODO RUST-12502
-    @Test(expected = Throwable::class)
-    fun `test infinite recursion in const evaluation`() = stubOnlyTypeInfer("""
+    @Test(expected = IllegalStateException::class)
+    fun `test infinite recursion in const evaluation 1`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        pub struct Uint<const LIMBS: usize> { }
+
+        impl<const LIMBS: usize> Uint<LIMBS> {
+            pub const LIMBS: usize = LIMBS;
+        }
+
+        pub type U896 = Uint<{ 896 / 64 }>;
+
+        pub trait Tr<T> {}
+
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{14}> {}
+    //- main.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let a = foo(U896{});
+            a;
+        } //^ Uint<7>
+
+        fn foo<A: Tr<B>, B>(a: A) -> B { todo!() }
+    """)
+
+    // TODO RUST-12502
+    @Test(expected = IllegalStateException::class)
+    fun `test infinite recursion in const evaluation 2`() = stubOnlyTypeInfer("""
     //- foo.rs
         pub struct Uint<const LIMBS: usize> { }
 
@@ -392,6 +419,48 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
         pub trait Tr<T> {}
 
         impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS}> {}
+
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 1}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 2}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 3}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 4}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 5}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 6}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 7}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 8}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 9}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 10}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 11}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 12}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 13}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 14}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 15}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 16}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 17}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 18}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 19}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 20}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 21}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 22}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 23}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 24}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 25}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 26}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 27}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 28}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 29}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 30}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 31}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 32}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 33}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 34}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 35}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 36}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 37}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 38}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 39}> {}
+        impl Tr<Uint<{<U896>::LIMBS / 2}>> for Uint<{<U896>::LIMBS + 40}> {}
+
     //- main.rs
         mod foo;
         use foo::*;
@@ -402,5 +471,176 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
         } //^ Uint<7>
 
         fn foo<A: Tr<B>, B>(a: A) -> B { todo!() }
+    """)
+
+    // Issue RUST-11763. Here we test that there isn't a StackOverflowError.
+    // The code is invalid (it does not compile). The inferred types doesn't matter
+    fun `test no StackOverflow with infinite recursion in const evaluation`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        pub struct Uint<const LIMBS: usize> { }
+
+        pub type U128 = Uint<{ 128 }>;
+
+        impl Uint<0> {
+            const NEXT: usize = 32;
+        }
+
+        impl Uint<32> {
+            const NEXT: usize = 64;
+        }
+
+        impl Uint<{ <Uint<{32}>>::NEXT }> { // Uint<64>
+            const NEXT: usize = 128;
+        }
+
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+        impl Uint<{ <Uint<{64}>>::NEXT }> { const NEXT: usize = 256; }
+    //- main.rs
+        mod foo;
+        use foo::*;
+
+        fn main() {
+            let a = Uint::<{ <Uint::<{ 64 }>>::NEXT }>{};
+            a;
+        } //^ Uint<<unknown>>
     """)
 }

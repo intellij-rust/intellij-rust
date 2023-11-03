@@ -285,6 +285,45 @@ class ImplLookup(
         ancestorItem.implsFromNestedMacros
     }
 
+    /**
+     * Returns `ImplsFilter.ConstBodyInsideImplSignatureFilter` during type inference in such const bodies:
+     *
+     * ```rust
+     * impl Foo< {0} > for Bar< {0} > {}
+     * //        ~~~            ~~~
+     * ```
+     *
+     * TODO RUST-12502 this is a hack to deal with infinite recursion in const eval (issues like RUST-11763)
+     */
+    private val implsFilter: ImplsFilter by lazy(NONE) {
+        val contextPath = context?.inferenceContextOwner as? RsPath ?: return@lazy ImplsFilter.AllowAll
+        val ancestorImpl = contextPath.contexts.withPrevious().find { (it, prev) ->
+            it is RsImplItem && (prev is RsTraitRef || prev == it.typeReference)
+        }?.first as? RsImplItem ?: return@lazy ImplsFilter.AllowAll
+
+        val isInsideTraitImpl = ancestorImpl.traitRef != null
+        ImplsFilter.ConstBodyInsideImplSignatureFilter(containingCrate, allowInherentImpls = isInsideTraitImpl)
+    }
+
+    // TODO RUST-12502 this is a hack to deal with infinite recursion in const eval (issues like RUST-11763)
+    private sealed interface ImplsFilter {
+        fun canProcessImpl(impl: RsCachedImplItem): Boolean
+
+        class ConstBodyInsideImplSignatureFilter(
+            private val containingCrate: Crate,
+            private val allowInherentImpls: Boolean,
+        ) : ImplsFilter {
+            override fun canProcessImpl(impl: RsCachedImplItem): Boolean {
+                return allowInherentImpls && impl.isInherent
+                    || containingCrate !in impl.containingCrates
+            }
+        }
+
+        data object AllowAll : ImplsFilter {
+            override fun canProcessImpl(impl: RsCachedImplItem): Boolean = true
+        }
+    }
+
     val ctx: RsInferenceContext by lazy(NONE) {
         RsInferenceContext(project, this, items, options)
     }
@@ -399,6 +438,7 @@ class ImplLookup(
             .asSequence()
             .filter { useImplsFromCrate(it.containingCrates) }
             .plus(implsFromNestedMacros[tyf].orEmpty())
+            .filter(implsFilter::canProcessImpl)
 
     private fun findPotentialAliases(tyf: TyFingerprint): List<String> =
         indexCache.findPotentialAliases(tyf)
