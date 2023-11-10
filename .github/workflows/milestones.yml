@@ -8,7 +8,7 @@ jobs:
     set_milestone:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - name: Set milestone
               if: github.event.pull_request.merged && github.event.pull_request.milestone == null

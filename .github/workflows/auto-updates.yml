@@ -9,7 +9,7 @@ jobs:
     update-nightly:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
@@ -22,7 +22,7 @@ jobs:
     update-stable:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
@@ -37,7 +37,7 @@ jobs:
     update-compiler-features:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
@@ -50,7 +50,7 @@ jobs:
     update-lints:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
@@ -64,7 +64,7 @@ jobs:
     update-evcxr-repl:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
               with:
                   token: ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
