@@ -7,6 +7,7 @@ package org.rustPerformanceTests
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.UIUtil
 import org.rust.WithExperimentalFeatures
@@ -46,6 +47,8 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
             if (file.isDirectory &&
                 file.name in EXCLUDED_DIRECTORY_NAMES &&
                 file.parent.findChild(CargoConstants.MANIFEST_FILE) != null) return false
+            // 4. Ignore too large files
+            if (FileUtilRt.isTooLarge(file.length)) return false
 
             // Otherwise, analyse it
             return true

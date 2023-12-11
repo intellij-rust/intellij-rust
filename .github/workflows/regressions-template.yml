@@ -89,6 +89,14 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install -y libasound2-dev libudev-dev
 
+            - name: Install bevy dependencies
+              if: matrix.batch.name == 'bevy'
+              run: sudo apt-get install -y libasound2-dev libudev-dev
+
+            - name: Install ruffle dependencies
+              if: matrix.batch.name == 'ruffle'
+              run: sudo apt-get install -y libgtk-3-dev
+
             - name: Checkout projects
               run: python scripts/fetch_projects.py --projects $'${{ toJSON(matrix.batch.projects) }}'
 
