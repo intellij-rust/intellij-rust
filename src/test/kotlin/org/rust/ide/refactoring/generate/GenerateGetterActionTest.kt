@@ -290,7 +290,7 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
-    fun `test filter fields with a getter`() = doTest("""
+    fun `test filter fields with a getter 1`() = doTest("""
         struct S {
             a: i32,
             b: i32,
@@ -314,6 +314,60 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             }
 
             pub fn b(&self) -> i32 {
+                self.b
+            }
+        }
+    """)
+
+    fun `test filter fields with a getter 2`() = doTest("""
+        struct S/*caret*/ {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            fn a(&self) -> f32 { self.a }
+        }
+    """, listOf(MemberSelection("b: f32")), """
+        struct S {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            fn a(&self) -> f32 { self.a }
+            pub fn /*caret*/b(&self) -> f32 {
+                self.b
+            }
+        }
+    """)
+
+    fun `test filter fields with a getter 3`() = doTest("""
+        struct S {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+            /*caret*/
+        }
+
+        impl S {
+            fn a(&self) -> f32 { self.a }
+        }
+    """, listOf(MemberSelection("b: f32")), """
+        struct S {
+            a: f32,
+            b: f32,
+        }
+
+        impl S {
+
+        }
+
+        impl S {
+            fn a(&self) -> f32 { self.a }
+            pub fn /*caret*/b(&self) -> f32 {
                 self.b
             }
         }
