@@ -66,6 +66,24 @@ abstract class RsCompletionTestFixtureBase<IN>(
         }
     }
 
+    fun checkCompletion(
+        lookupString: String,
+        tailText: String,
+        before: IN,
+        @Language("Rust") after: String,
+        completionChar: Char,
+    ) {
+        checkByText(before, after.trimIndent()) {
+            val items = myFixture.completeBasic()
+                ?: return@checkByText // single completion was inserted
+            val lookupItem = items
+                .find { it.lookupString == lookupString && it.presentation.tailText == tailText }
+                ?: error("Lookup string $lookupString not found")
+            myFixture.lookup.currentItem = lookupItem
+            myFixture.type(completionChar)
+        }
+    }
+
     fun checkNoCompletion(code: IN) {
         prepare(code)
         noCompletionCheck()
