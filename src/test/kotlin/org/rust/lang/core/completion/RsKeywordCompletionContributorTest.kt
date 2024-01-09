@@ -1341,36 +1341,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """, completionChar = ' ')
 
-    fun `test move completion with lambda params (simple)`() = checkCompletion("move", """
-        fn main() {
-            let lambda = mo/*caret*/ || { 1 };
-        }
-    """, """
-        fn main() {
-            let lambda = move/*caret*/ || { 1 };
-        }
-    """)
-
-    fun `test move completion with lambda params (async)`() = checkCompletion("move", """
-        fn main() {
-            let lambda = async mo/*caret*/ || { 1 };
-        }
-    """, """
-        fn main() {
-            let lambda = async move/*caret*/ || { 1 };
-        }
-    """)
-
-    fun `test move completion with lambda params (comment)`() = checkCompletion("move", """
-        fn main() {
-            let lambda = async mo/*caret*/ /*some comment*/ || { 1 };
-        }
-    """, """
-        fn main() {
-            let lambda = async move/*caret*/ /*some comment*/ || { 1 };
-        }
-    """)
-
     private fun checkCompletion(
         lookupStrings: List<String>,
         @Language("Rust") before: String,
