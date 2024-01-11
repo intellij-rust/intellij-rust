@@ -16,7 +16,6 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.xmlb.annotations.Transient
 import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustProjectSettings
-import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchainBase
 import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.openapiext.isUnitTestMode
@@ -64,12 +63,6 @@ class RustProjectSettingsService(
         // provide path to stdlib explicitly.
         @AffectsCargoMetadata
         var explicitPathToStdlib by string()
-        // BACKCOMPAT: 2023.1
-        var externalLinter by enum(ExternalLinter.DEFAULT)
-        // BACKCOMPAT: 2023.1
-        var runExternalLinterOnTheFly by property(false)
-        // BACKCOMPAT: 2023.1
-        var externalLinterArguments by property("") { it.isEmpty() }
         @AffectsHighlighting
         var compileAllTargets by property(true)
         var useOffline by property(false)

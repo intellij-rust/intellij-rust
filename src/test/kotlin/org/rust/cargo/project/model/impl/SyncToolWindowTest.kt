@@ -482,11 +482,11 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
     }
 
     private fun attachCargoProject(cargoProjectRoot: VirtualFile) {
-        myFixture.launchAction("Cargo.AttachCargoProject", PlatformDataKeys.VIRTUAL_FILE to cargoProjectRoot)
+        myFixture.launchAnAction("Cargo.AttachCargoProject", PlatformDataKeys.VIRTUAL_FILE to cargoProjectRoot)
     }
 
     private fun detachCargoProject(cargoProject: CargoProject) {
-        myFixture.launchAction("Cargo.DetachCargoProject", CargoToolWindow.SELECTED_CARGO_PROJECT to cargoProject)
+        myFixture.launchAnAction("Cargo.DetachCargoProject", CargoToolWindow.SELECTED_CARGO_PROJECT to cargoProject)
     }
 
     private fun checkSyncViewTree(expected: String) {

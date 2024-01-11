@@ -33,7 +33,7 @@ abstract class RsTool(toolName: String, val toolchain: RsToolchainBase) {
         .withParameters(parameters)
         .withEnvironment(environment)
         .withCharset(Charsets.UTF_8)
-        .also { toolchain.patchCommandLine(it) }
+        .also { toolchain.patchCommandLine(it, withSudo = false) }
 }
 
 abstract class CargoBinary(binaryName: String, toolchain: RsToolchainBase) : RsTool(binaryName, toolchain) {

@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.rust.FileTree
 import org.rust.RsTestBase
 import org.rust.fileTree
-import org.rust.launchAction
+import org.rust.launchAnAction
 
 class RsDowngradeModuleToFileTest : RsTestBase() {
     fun `test works on file`() = checkAvailable(
@@ -71,7 +71,7 @@ class RsDowngradeModuleToFileTest : RsTestBase() {
     }
 
     private fun testActionOnElement(element: PsiElement, shouldBeEnabled: Boolean) {
-        myFixture.launchAction(
+        myFixture.launchAnAction(
             "Rust.RsDowngradeModuleToFile",
             CommonDataKeys.PSI_ELEMENT to element,
             shouldBeEnabled = shouldBeEnabled

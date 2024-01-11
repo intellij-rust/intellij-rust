@@ -5,8 +5,6 @@
 
 package org.rust.debugger
 
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
@@ -44,7 +42,7 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
     }
 
     fun `test gdb loading and update`() {
-        if (ApplicationInfo.getInstance().build < BUILD_232 || SystemInfo.isMac) return
+        if (SystemInfo.isMac) return
         checkDebuggerLoadingAndUpdate(DebuggerKind.GDB)
     }
 
@@ -95,10 +93,5 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
         for (expectedFile in expectedFiles) {
             expectedFile.checkExistence()
         }
-    }
-
-    companion object {
-        // BACKCOMPAT: 2023.1
-        private val BUILD_232 = BuildNumber.fromString("232")!!
     }
 }

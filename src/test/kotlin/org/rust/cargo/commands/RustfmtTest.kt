@@ -18,7 +18,7 @@ import org.rust.cargo.project.settings.rustfmtSettings
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.fileTree
 import org.rust.ide.formatter.RustfmtTestmarks
-import org.rust.launchAction
+import org.rust.launchAnAction
 import org.rust.openapiext.RsProcessExecutionException
 import org.rust.openapiext.saveAllDocuments
 
@@ -530,11 +530,11 @@ class RustfmtTest : RsWithToolchainTestBase() {
     }
 
     private fun reformatFile() {
-        myFixture.launchAction("Cargo.RustfmtFile")
+        myFixture.launchAnAction("Cargo.RustfmtFile")
     }
 
     private fun reformatCargoProject() {
-        myFixture.launchAction("Cargo.RustfmtCargoProject")
+        myFixture.launchAnAction("Cargo.RustfmtCargoProject")
     }
 
     /**

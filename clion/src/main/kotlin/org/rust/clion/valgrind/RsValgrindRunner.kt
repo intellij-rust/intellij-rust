@@ -6,7 +6,6 @@
 package org.rust.clion.valgrind
 
 import com.intellij.execution.configurations.RunProfile
-import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
 import org.rust.RsBundle
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration

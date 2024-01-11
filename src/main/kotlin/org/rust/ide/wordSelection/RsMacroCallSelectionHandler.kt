@@ -118,7 +118,7 @@ private class FakeEditorEx(
     override fun getScrollPane(): JScrollPane { throw notImplemented() }
     override fun isRendererMode(): Boolean { throw notImplemented() }
     override fun setRendererMode(isRendererMode: Boolean) { throw notImplemented() }
-    override fun setFile(vFile: VirtualFile?) { throw notImplemented() }
+    override fun setFile(vFile: VirtualFile) { throw notImplemented() }
     override fun getDataContext(): DataContext { throw notImplemented() }
     override fun processKeyTyped(e: KeyEvent): Boolean { throw notImplemented() }
     override fun setFontSize(fontSize: Int) { throw notImplemented() }

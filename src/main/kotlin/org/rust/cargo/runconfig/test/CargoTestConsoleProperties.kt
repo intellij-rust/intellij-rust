@@ -14,10 +14,12 @@ import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsC
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.util.text.SemVer
 
 class CargoTestConsoleProperties(
     config: RunConfiguration,
-    executor: Executor
+    executor: Executor,
+    private val rustcVersion: SemVer?
 ) : SMTRunnerConsoleProperties(config, TEST_FRAMEWORK_NAME, executor), SMCustomMessagesParsing {
 
     init {
@@ -29,7 +31,11 @@ class CargoTestConsoleProperties(
     override fun createTestEventsConverter(
         testFrameworkName: String,
         consoleProperties: TestConsoleProperties
-    ): OutputToGeneralTestEventsConverter = CargoTestEventsConverter(testFrameworkName, consoleProperties)
+    ): OutputToGeneralTestEventsConverter = CargoTestEventsConverter(
+        testFrameworkName,
+        consoleProperties,
+        rustcVersion
+    )
 
     override fun printExpectedActualHeader(printer: Printer, expected: String, actual: String) {
         printer.print("\n", ConsoleViewContentType.ERROR_OUTPUT)

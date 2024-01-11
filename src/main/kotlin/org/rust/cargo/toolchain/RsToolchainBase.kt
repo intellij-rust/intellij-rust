@@ -34,7 +34,7 @@ abstract class RsToolchainBase(val location: Path) {
     /**
      * Patches passed command line to make it runnable in remote context.
      */
-    abstract fun patchCommandLine(commandLine: GeneralCommandLine): GeneralCommandLine
+    abstract fun patchCommandLine(commandLine: GeneralCommandLine, withSudo: Boolean): GeneralCommandLine
 
     abstract fun toLocalPath(remotePath: String): String
 
@@ -110,7 +110,7 @@ abstract class RsToolchainBase(val location: Path) {
         }
 
         if (patchToRemote) {
-            commandLine = patchCommandLine(commandLine)
+            commandLine = patchCommandLine(commandLine, withSudo)
         }
 
         return commandLine
