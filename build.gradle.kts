@@ -20,13 +20,12 @@ val isTeamcity = System.getenv("TEAMCITY_VERSION") != null
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion").toInt()
 val baseIDE = prop("baseIDE")
+val ideToRun = prop("ideToRun").ifEmpty { baseIDE }
 val ideaVersion = prop("ideaVersion")
 val clionVersion = prop("clionVersion")
-val baseVersion = when (baseIDE) {
-    "idea" -> ideaVersion
-    "clion" -> clionVersion
-    else -> error("Unexpected IDE name: `$baseIDE`")
-}
+val rustRoverVersion = prop("rustRoverVersion")
+val baseVersion = versionForIde(baseIDE)
+val baseVersionForRun = versionForIde(ideToRun)
 
 val tomlPlugin = "org.toml.lang"
 val nativeDebugPlugin = if (baseIDE == "idea") prop("nativeDebugPlugin") else "com.intellij.nativeDebug"
@@ -49,7 +48,7 @@ val basePluginArchiveName = "intellij-rust"
 plugins {
     idea
     kotlin("jvm") version "1.9.0"
-    id("org.jetbrains.intellij") version "1.16.0"
+    id("org.jetbrains.intellij") version "1.16.1"
     id("org.jetbrains.grammarkit") version "2022.3.1"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.5.3"
@@ -90,7 +89,7 @@ allprojects {
         updateSinceUntilBuild.set(true)
         instrumentCode.set(false)
         ideaDependencyCachePath.set(dependencyCachePath)
-        sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
+        sandboxDir.set(layout.buildDirectory.dir("$ideToRun-sandbox-$platformVersion").map { it.asFile.absolutePath })
     }
 
     configure<JavaPluginExtension> {
@@ -247,15 +246,28 @@ val Project.dependencyCachePath
 val pluginProjects: List<Project>
     get() = rootProject.allprojects.filter { it.name != grammarKitFakePsiDeps }
 
-val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
-val versionSuffix = "-$platformVersion$channelSuffix"
-val majorVersion = "0.4"
-val patchVersion = prop("patchVersion").toInt()
-
-// Special module with run, build and publish tasks
+// Special module with run, build, and publish tasks
 project(":plugin") {
-    version = "$majorVersion.$patchVersion.${prop("buildNumber")}$versionSuffix"
+    val pluginVersion = System.getenv("BUILD_NUMBER") ?: "${platformVersion}.${prop("buildNumber")}"
+    version = if (pluginVersion.contains(".")) {
+        val split = pluginVersion.split(".").toMutableList()
+        split[0] = platformVersion.toString()
+        // From 232 branch, plugin version `232.9921` and `233.9921` were published
+        // These versions were based on IJ platform `232.9921` build
+        //
+        // From 233 branch, plugin versions are `233.8264` and `232.8264`, which are based on IJ platform `233.8264` build
+        // Since we publish versions for 2 platform versions from a single branch, plugin versions has to be hacked this way,
+        // Otherwise newly published `233.8264` version would be considered lower than `233.9921` published earlier
+        //
+        // TODO: For `241`, come up with new plugin versioning to avoid this problem
+        split[1] = (split[1].toIntOrNull()?.plus(10000))?.toString() ?: split[1]
+        split.joinToString(".")
+    } else {
+        pluginVersion
+    }
+
     intellij {
+        version.set(baseVersionForRun)
         pluginName.set("intellij-rust")
         val pluginList = mutableListOf(
             tomlPlugin,
@@ -265,7 +277,7 @@ project(":plugin") {
             javaScriptPlugin,
             mlCompletionPlugin
         )
-        if (baseIDE == "idea") {
+        if (ideToRun == "idea") {
             pluginList += listOf(
                 copyrightPlugin,
                 javaPlugin,
@@ -414,7 +426,7 @@ project(":plugin") {
         // BACKCOMPAT: 2023.2. Update value to 233 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "231")
+        environment("IDEA_BUILD_NUMBER", "232")
     }
 }
 
@@ -743,6 +755,12 @@ fun prop(name: String): String =
     extra.properties[name] as? String
         ?: error("Property `$name` is not defined in gradle.properties")
 
+fun versionForIde(ideName: String): String = when (ideName) {
+    "idea" -> ideaVersion
+    "clion" -> clionVersion
+    "rustRover" -> rustRoverVersion
+    else -> error("Unexpected IDE name: `$baseIDE`")
+}
 
 inline operator fun <T : Task> T.invoke(a: T.() -> Unit): T = apply(a)
 
