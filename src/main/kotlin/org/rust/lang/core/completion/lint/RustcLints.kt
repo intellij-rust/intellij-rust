@@ -126,7 +126,6 @@ val RUSTC_LINTS: List<Lint> = listOf(
     Lint("patterns_in_fns_without_body", false),
     Lint("pointer_structural_match", false),
     Lint("private_bounds", false),
-    Lint("private_in_public", false),
     Lint("private_interfaces", false),
     Lint("proc_macro_back_compat", false),
     Lint("proc_macro_derive_resolution_fallback", false),
