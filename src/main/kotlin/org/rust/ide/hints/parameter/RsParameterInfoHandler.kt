@@ -8,6 +8,7 @@ package org.rust.ide.hints.parameter
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.ParameterInfoUtils
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.RsCallExpr
@@ -25,8 +26,8 @@ class RsParameterInfoHandler : RsAsyncParameterInfoHandler<RsValueArgumentList, 
     override fun findTargetElement(file: PsiFile, offset: Int): RsValueArgumentList? =
         file.findElementAt(offset)?.ancestorStrict()
 
-    override fun calculateParameterInfo(element: RsValueArgumentList): Array<RsArgumentsDescription>? {
-        return RsArgumentsDescription.findDescription(element)?.let { arrayOf(it) }
+    override fun calculateParameterInfo(element: RsValueArgumentList): Array<RsArgumentsDescription> {
+        return RsArgumentsDescription.findDescriptionList(element).toTypedArray()
     }
 
     override fun updateParameterInfo(parameterOwner: RsValueArgumentList, context: UpdateParameterInfoContext) {
@@ -57,16 +58,7 @@ class RsArgumentsDescription(
     val presentText = if (arguments.isEmpty()) "<no arguments>" else arguments.joinToString(", ")
 
     companion object {
-        /**
-         * Finds declaration of the func/method and creates description of its arguments
-         */
-        fun findDescription(args: RsValueArgumentList): RsArgumentsDescription? {
-            val call = args.parent
-            val callInfo = when (call) {
-                is RsCallExpr -> CallInfo.resolve(call)
-                is RsMethodCall -> CallInfo.resolve(call)
-                else -> null
-            } ?: return null
+        private fun getParams(call: PsiElement, callInfo: CallInfo): RsArgumentsDescription {
             val params = buildList {
                 if (callInfo.selfParameter != null && call is RsCallExpr) {
                     add(callInfo.selfParameter)
@@ -81,6 +73,19 @@ class RsArgumentsDescription(
                 })
             }
             return RsArgumentsDescription(params.toTypedArray())
+        }
+
+        /**
+         * Finds declarations of the func/method and creates description of its arguments
+         */
+        fun findDescriptionList(args: RsValueArgumentList): List<RsArgumentsDescription> {
+            val call = args.parent
+            val callInfos = when (call) {
+                is RsCallExpr -> CallInfo.multiResolve(call)
+                is RsMethodCall -> CallInfo.multiResolve(call)
+                else -> null
+            } ?: return emptyList()
+            return callInfos.map { getParams(call, it) }
         }
     }
 }
