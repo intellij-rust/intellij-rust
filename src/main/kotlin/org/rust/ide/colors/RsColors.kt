@@ -32,7 +32,10 @@ enum class RsColor(humanName: Supplier<@AttributeDescriptor String>, default: Te
     FUNCTION_CALL(RsBundle.messagePointer("settings.rust.color.function.call"), Default.FUNCTION_CALL),
     METHOD_CALL(RsBundle.messagePointer("settings.rust.color.method.call"), Default.FUNCTION_CALL),
     ASSOC_FUNCTION_CALL(RsBundle.messagePointer("settings.rust.color.associated.function.call"), Default.STATIC_METHOD),
-    MACRO(RsBundle.messagePointer("settings.rust.color.macro"), Default.IDENTIFIER),
+
+    MACRO_REPEATING(RsBundle.messagePointer("settings.rust.color.macro.repeating"), Default.IDENTIFIER),
+    MACRO_CALL(RsBundle.messagePointer("settings.rust.color.macro.call"), Default.FUNCTION_CALL),
+    MACRO_METAVARIABLE(RsBundle.messagePointer("settings.rust.color.macro.metavariable"), Default.IDENTIFIER),
 
     PARAMETER(RsBundle.messagePointer("settings.rust.color.parameter"), Default.PARAMETER),
     MUT_PARAMETER(RsBundle.messagePointer("settings.rust.color.mutable.parameter"), Default.PARAMETER),
