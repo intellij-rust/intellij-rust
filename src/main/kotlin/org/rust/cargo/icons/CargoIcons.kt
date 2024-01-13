@@ -26,6 +26,9 @@ object CargoIcons {
     val EXAMPLE_TARGET = load("/icons/targetExample.svg")
     val CUSTOM_BUILD_TARGET = load("/icons/targetCustomBuild.svg")
 
+    val BSP = load("/icons/bsp/bsp.svg")
+    val RUST = load("/icons/rust.svg")
+
     val RELOAD_ICON = load("/icons/rustReload.svg")
 
     private fun load(path: String): Icon = IconLoader.getIcon(path, CargoIcons::class.java)

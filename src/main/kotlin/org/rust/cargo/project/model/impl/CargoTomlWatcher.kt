@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.PathUtil
+import org.rust.bsp.BspConstants
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -84,6 +85,7 @@ class CargoTomlWatcher(
                         false
                     }
                 }
+                event.pathEndsWith(BspConstants.BSP_WORKSPACE) -> true
                 event is VFileContentChangeEvent -> false
                 !event.pathEndsWith(".rs") -> false
                 event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME -> false

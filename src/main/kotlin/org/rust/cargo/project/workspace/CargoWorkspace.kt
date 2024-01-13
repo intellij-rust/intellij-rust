@@ -5,17 +5,21 @@
 
 package org.rust.cargo.project.workspace
 
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
+import org.rust.cargo.project.model.isBspWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -49,6 +53,8 @@ interface CargoWorkspace {
 
     val featureGraph: FeatureGraph
 
+    val usesBSP: Boolean
+
     fun findPackageById(id: PackageId): Package? = packages.find { it.id == id }
     fun findPackageByName(name: String, isStd: ThreeState = ThreeState.UNSURE): Package? = packages.find {
         if (it.name != name && it.normName != name) return@find false
@@ -63,7 +69,7 @@ interface CargoWorkspace {
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
-    fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace
+    fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures, project: Project? = null): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == STDLIB }
 
     @TestOnly
@@ -242,7 +248,8 @@ private class WorkspaceImpl(
     packagesData: Collection<CargoWorkspaceData.Package>,
     override val cfgOptions: CfgOptions,
     override val cargoConfig: CargoConfig,
-    val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>
+    val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>,
+    override val usesBSP: Boolean
 ) : CargoWorkspace {
 
     override val workspaceRoot: VirtualFile? by CachedVirtualFile(workspaceRootUrl)
@@ -359,7 +366,8 @@ private class WorkspaceImpl(
             newPackagesData,
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         )
 
         run {
@@ -398,8 +406,8 @@ private class WorkspaceImpl(
         return this
     }
 
-    override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace {
-        val featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
+    override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures, project: Project?): CargoWorkspace {
+        val featuresState = inferFeatureState(userDisabledFeatures, usesBSP).associateByPackageRoot()
 
         return WorkspaceImpl(
             manifestPath,
@@ -407,7 +415,8 @@ private class WorkspaceImpl(
             packages.map { it.asPackageData() },
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         ).withDependenciesOf(this)
     }
 
@@ -418,7 +427,7 @@ private class WorkspaceImpl(
      * excluding [userDisabledFeatures] features.
      * Then we enable [DEPENDENCY] packages features transitively based on the initial state and features dependencies
      */
-    private fun inferFeatureState(userDisabledFeatures: UserDisabledFeatures): Map<PackageFeature, FeatureState> {
+    private fun inferFeatureState(userDisabledFeatures: UserDisabledFeatures, usesBSP: Boolean = false): Map<PackageFeature, FeatureState> {
         // Calculate features that should be enabled in the workspace, all by default (if `userDisabledFeatures` is empty)
         val workspaceFeatureState = featureGraph.apply(defaultState = FeatureState.Enabled) {
             disableAll(userDisabledFeatures.getDisabledFeatures(packages))
@@ -427,7 +436,7 @@ private class WorkspaceImpl(
         return featureGraph.apply(defaultState = FeatureState.Disabled) {
             for (pkg in packages) {
                 // Enable remained workspace features (transitively)
-                if (pkg.origin == WORKSPACE || pkg.origin == STDLIB) {
+                if (pkg.origin == WORKSPACE || pkg.origin == STDLIB || usesBSP) {
                     for (feature in pkg.features) {
                         if (workspaceFeatureState[feature] == FeatureState.Enabled) {
                             enable(feature)
@@ -465,7 +474,8 @@ private class WorkspaceImpl(
             newPackagesData,
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         )
 
         run {
@@ -506,7 +516,8 @@ private class WorkspaceImpl(
         },
         cfgOptions,
         cargoConfig,
-        featuresState
+        featuresState,
+        usesBSP
     ).withDependenciesOf(this)
 
     @TestOnly
@@ -516,7 +527,8 @@ private class WorkspaceImpl(
         packages.map { it.asPackageData() },
         cfgOptions,
         cargoConfig,
-        featuresState
+        featuresState,
+        usesBSP
     ).withDependenciesOf(this)
 
     @TestOnly
@@ -530,7 +542,8 @@ private class WorkspaceImpl(
             packages.map { it.asPackageData().copy(features = packageToFeatures[it].orEmpty(), enabledFeatures = packageToFeatures[it].orEmpty().keys) },
             cfgOptions,
             cargoConfig,
-            featuresState
+            featuresState,
+            usesBSP
         ).withDependenciesOf(this).withDisabledFeatures(UserDisabledFeatures.EMPTY)
     }
 
@@ -558,7 +571,8 @@ private class WorkspaceImpl(
                 data.packages,
                 cfgOptions,
                 cargoConfig,
-                emptyMap()
+                emptyMap(),
+                data.usesBSP
             )
 
             // Fill package dependencies

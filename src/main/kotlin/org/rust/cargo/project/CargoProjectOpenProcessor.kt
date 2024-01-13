@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
+import org.rust.bsp.BspConstants
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.guessAndSetupRustProject
@@ -23,7 +24,9 @@ class CargoProjectOpenProcessor : ProjectOpenProcessor() {
 
     override fun canOpenProject(file: VirtualFile): Boolean {
         return FileUtil.namesEqual(file.name, CargoConstants.MANIFEST_FILE) ||
-            file.isDirectory && file.findChild(CargoConstants.MANIFEST_FILE) != null
+            file.isDirectory && file.findChild(CargoConstants.MANIFEST_FILE) != null ||
+            FileUtil.namesEqual(file.name, BspConstants.BSP_WORKSPACE) ||
+            file.isDirectory && file.findChild(BspConstants.BSP_WORKSPACE) != null
     }
 
     override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceNewFrame: Boolean): Project? {

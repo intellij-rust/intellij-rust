@@ -72,9 +72,14 @@ data class StandardLibrary(
             rustcInfo: RustcInfo?,
             cargoConfig: CargoConfig = CargoConfig.DEFAULT,
             isPartOfCargoProject: Boolean = false,
-            listener: ProcessProgressListener? = null
+            listener: ProcessProgressListener? = null,
+            useBsp: Boolean = false
         ): StandardLibrary? {
             val srcDir = findSrcDir(sources) ?: return null
+
+            if (useBsp) {
+                return fetchHardcodedStdlib(srcDir)
+            }
 
             fun warn(message: @Nls String) {
                 LOG.warn(message)

@@ -41,7 +41,8 @@ data class CargoWorkspaceData(
     val dependencies: Map<PackageId, Set<Dependency>>,
     /** Dependencies as they listed in the package `Cargo.toml`, without package resolution or any additional data */
     val rawDependencies: Map<PackageId, List<CargoMetadata.RawDependency>>,
-    val workspaceRootUrl: String? = null
+    val workspaceRootUrl: String? = null,
+    val usesBSP: Boolean = false
 ) {
     data class Package(
         val id: PackageId,
@@ -60,6 +61,7 @@ data class CargoWorkspaceData(
         val env: Map<String, String>,
         val outDirUrl: String?,
         val procMacroArtifact: ProcMacroArtifact? = null,
+        val allTargets: Collection<Target> = targets,
     )
 
     data class Target(

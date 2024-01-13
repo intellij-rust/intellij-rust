@@ -17,6 +17,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -29,6 +30,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.bsp.service.BspConnectionService
 import org.rust.RsBundle
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.CargoConstants
@@ -168,6 +170,17 @@ class Cargo(
         rustcVersion: RustcVersion?,
         listenerProvider: (CargoCallType) -> ProcessListener? = { null }
     ): RsResult<ProjectDescription, RsProcessExecutionOrDeserializationException> {
+        //TODO: replace fetchBuildScriptsInfo with something more bsp specific
+        val useBSP: Boolean = owner.service<BspConnectionService>().hasBspServer()
+        if (useBSP) {
+            return try {
+                //TODO make returned status depend on bsp outcome
+                Ok(ProjectDescription(fetchViaBSP(owner, projectDirectory), OK))
+            } catch (e: JacksonException) {
+                Err(RsDeserializationException(e))
+            }
+        }
+
         val rawData = fetchMetadata(owner, projectDirectory, buildTargets, listener = listenerProvider(CargoCallType.METADATA))
             .unwrapOrElse { return Err(it) }
 
@@ -217,6 +230,17 @@ class Cargo(
         } catch (e: JacksonException) {
             Err(RsDeserializationException(e))
         }
+    }
+
+    private fun fetchViaBSP(
+        project: Project,
+        projectDirectory: Path,
+        buildTargets: List<String> = emptyList(),
+        toolchainOverride: String? = null,
+        listener: ProcessListener? = null,
+    ): CargoWorkspaceData {
+        val bspService = project.service<BspConnectionService>()
+        return bspService.getProjectData(projectDirectory)
     }
 
     fun vendorDependencies(

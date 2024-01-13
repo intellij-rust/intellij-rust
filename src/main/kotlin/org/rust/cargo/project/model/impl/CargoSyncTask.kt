@@ -30,7 +30,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import org.rust.RsBundle
+import com.intellij.openapi.vfs.VirtualFile
 import org.rust.RsTask
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConfig
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.ProcessProgressListener
@@ -63,6 +65,7 @@ class CargoSyncTask(
     private val result: CompletableFuture<List<CargoProjectImpl>>
 ) : Task.Backgroundable(project, RsBundle.message("progress.title.reloading.cargo.projects"), true), RsTask {
 
+    private val serviceName = if (project.service<BspConnectionService>().hasBspServer()) "bsp" else "cargo"
     override val taskType: RsTask.TaskType
         get() = RsTask.TaskType.CARGO_SYNC
 
@@ -98,7 +101,7 @@ class CargoSyncTask(
         result.complete(refreshedProjects)
 
         val elapsed = System.currentTimeMillis() - start
-        LOG.debug("Finished Cargo sync task in $elapsed ms")
+        LOG.debug("Finished $serviceName sync task in $elapsed ms")
     }
 
     private fun doRun(
@@ -109,6 +112,7 @@ class CargoSyncTask(
 
         @Suppress("UnnecessaryVariable")
         val refreshedProjects = if (toolchain == null) {
+            //todo: tg syncProgress.fail(System.currentTimeMillis(), "$serviceName project update failed:\nNo Rust toolchain")
             syncProgress.fail(System.currentTimeMillis(), RsBundle.message("build.event.message.cargo.project.update.failed.no.rust.toolchain"))
             cargoProjects
         } else {
@@ -152,7 +156,7 @@ class CargoSyncTask(
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
         buildContentDescriptor.isNavigateToError = project.rustSettings.autoShowErrorsInEditor
         val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
-        val descriptor = DefaultBuildDescriptor(Any(), RsBundle.message("build.event.title.cargo"), project.basePath!!, System.currentTimeMillis())
+        val descriptor = DefaultBuildDescriptor(Any(), RsBundle.message("build.event.title.$serviceName"), project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(refreshAction)
             .withRestartAction(StopAction(progress))
@@ -167,6 +171,25 @@ class CargoSyncTask(
             if (!childContext.toolchain.looksLikeValidToolchain()) {
                 val location = childContext.toolchain.presentableLocation
                 return@runWithChildProgress TaskResult.Err(RsBundle.message("invalid.rust.toolchain.02", location))
+            }
+
+            val bspService: BspConnectionService = context.project.service<BspConnectionService>()
+            if (bspService.hasBspServer()) {
+                try {
+                    val rustcVersion = bspService.getRustcVersion()
+                    val sysroot =
+                        bspService.getRustcSysroot()
+                            ?: return@runWithChildProgress TaskResult.Err(
+                                RsBundle.message("failed.to.get.project.sysroot")
+                            )
+                    return@runWithChildProgress TaskResult.Ok(
+                        RustcInfo(sysroot, rustcVersion, null, null)
+                    )
+                } catch (e: NoSuchElementException) {
+                    return@runWithChildProgress TaskResult.Err(
+                          RsBundle.message(RsBundle.message("build.event.title.failed.to.fetch.rustc.version"))
+                    )
+                }
             }
 
             val workingDirectory = childContext.oldCargoProject.workingDirectory
@@ -340,6 +363,7 @@ private fun List<CargoProjectImpl>.deduplicateProjects(): List<CargoProjectImpl>
 private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<CargoWorkspace> {
     return context.runWithChildProgress(RsBundle.message("progress.text.updating.workspace.info")) { childContext ->
 
+        val serviceName = if (context.project.service<BspConnectionService>().hasBspServer()) "cargo" else "bsp"
         val toolchain = childContext.toolchain
         if (!toolchain.looksLikeValidToolchain()) {
             return@runWithChildProgress TaskResult.Err(RsBundle.message("invalid.rust.toolchain.0", toolchain.presentableLocation))
@@ -354,8 +378,8 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
         val cargoConfig = when (cargoConfigResult) {
             is RsResult.Ok -> cargoConfigResult.ok
             is RsResult.Err -> {
-                val message = RsBundle.message("build.event.message.fetching.cargo.config.failed", cargoConfigResult.err.message.orEmpty())
-                childContext.warning(RsBundle.message("build.event.title.fetching.cargo.config"), message)
+                val message = RsBundle.message("build.event.message.fetching.$serviceName.config.failed", cargoConfigResult.err.message.orEmpty())
+                childContext.warning(RsBundle.message("build.event.title.fetching.$serviceName.config"), message)
                 CargoConfig.DEFAULT
             }
         }
@@ -399,11 +423,14 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext, rustcInfo: R
             cacheIf = { !projectDirectory.resolve(".cargo").exists() }
         ) { cargo.getCfgOption(childContext.project, projectDirectory) }
 
+        val useBSP: Boolean = childContext.project.service<BspConnectionService>().hasBspServer()
         val cfgOptions = when (cfgOptionsResult) {
             is RsResult.Ok -> cfgOptionsResult.ok
             is RsResult.Err -> {
-                val message = RsBundle.message("build.event.message.fetching.target.specific.cfg.options.failed.fallback.to.host.options", cfgOptionsResult.err.message.orEmpty())
-                childContext.warning(RsBundle.message("build.event.title.fetching.target.specific.cfg.options"), message)
+                if (!useBSP) {
+                    val message = RsBundle.message("build.event.message.fetching.target.specific.cfg.options.failed.fallback.to.host.options", cfgOptionsResult.err.message.orEmpty())
+                    childContext.warning(RsBundle.message("build.event.title.fetching.target.specific.cfg.options"), message)
+                }
                 toolchain.rustc().getCfgOptions(projectDirectory)
             }
         }
@@ -453,6 +480,24 @@ private fun Rustup.fetchStdlib(
     rustcInfo: RustcInfo?,
     cargoConfig: CargoConfig
 ): TaskResult<StandardLibrary> {
+    val bspService = context.project.service<BspConnectionService>()
+    if (bspService.hasBspServer()) {
+        val stdlib: VirtualFile? = try {
+            bspService.getStdLibPath()
+        } catch (e: NoSuchElementException) {
+            return TaskResult.Err(RsBundle.message("failed.to.get.standard.library.0", e.message ?: ""))
+        }
+        return if (stdlib != null) {
+            val lib = StandardLibrary.fromFile(context.project, stdlib, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context), useBsp = true)
+            if (lib == null) {
+                TaskResult.Err(RsBundle.message("corrupted.standard.library.0", stdlib.presentableUrl))
+            } else {
+                TaskResult.Ok(lib)
+            }
+        } else {
+            TaskResult.Err(RsBundle.message("failed.to.fetch.standard.library.from.bsp"))
+        }
+    }
     return when (val download = UnitTestRustcCacheService.cached(rustcInfo?.version) { downloadStdlib() }) {
         is DownloadResult.Ok -> {
             val lib = StandardLibrary.fromFile(context.project, download.value, rustcInfo, cargoConfig, listener = SyncProcessAdapter(context))

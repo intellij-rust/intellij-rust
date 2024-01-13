@@ -39,6 +39,8 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
+import org.rust.bsp.BspConstants
+import org.rust.bsp.service.BspConnectionService
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
@@ -72,10 +74,12 @@ import java.util.concurrent.CompletionException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.exists
 
-@State(name = "CargoProjects", storages = [
-    Storage(StoragePathMacros.WORKSPACE_FILE),
-    Storage("misc.xml", deprecated = true)
-])
+@State(
+    name = "CargoProjects", storages = [
+        Storage(StoragePathMacros.WORKSPACE_FILE),
+        Storage("misc.xml", deprecated = true)
+    ]
+)
 open class CargoProjectsServiceImpl(
     final override val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element>, Disposable {
@@ -248,6 +252,7 @@ open class CargoProjectsServiceImpl(
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
         val guessManifest = suggestManifests().firstOrNull()
+            ?: suggestBspWorkspace().firstOrNull()
             ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
@@ -255,6 +260,12 @@ open class CargoProjectsServiceImpl(
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
         }
     }
+
+    private fun suggestBspWorkspace(): Sequence<VirtualFile> =
+        project.modules
+            .asSequence()
+            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
+            .mapNotNull { it.findChild(BspConstants.BSP_WORKSPACE) }
 
     override fun suggestManifests(): Sequence<VirtualFile> =
         project.modules
@@ -530,6 +541,14 @@ data class CargoProjectImpl(
     override val project get() = projectService.project
 
     override val procMacroExpanderPath: Path? = rustcInfo?.sysroot?.let { sysroot ->
+        val bspService = project.service<BspConnectionService>()
+        if (bspService.hasBspServer()) {
+            try {
+                return@let bspService.getMacroResolverPath()
+            } catch (e: NoSuchElementException) {
+                return@let null
+            }
+        }
         val toolchain = project.toolchain ?: return@let null
         ProcMacroServerPool.findExpanderExecutablePath(toolchain, sysroot)
     }
@@ -537,12 +556,12 @@ data class CargoProjectImpl(
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy if (!userDisabledFeatures.isEmpty() && isUnitTestMode) {
-            rawWorkspace.withDisabledFeatures(userDisabledFeatures)
+            rawWorkspace.withDisabledFeatures(userDisabledFeatures, project)
         } else {
             rawWorkspace
         }
         rawWorkspace.withStdlib(stdlib, rawWorkspace.cfgOptions, rustcInfo)
-            .withDisabledFeatures(userDisabledFeatures)
+            .withDisabledFeatures(userDisabledFeatures, project)
     }
 
     override val presentableName: String by lazy {
