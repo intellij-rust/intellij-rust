@@ -14,10 +14,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.RsBundle
 import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.*
 
 class RsInspectionSuppressor : InspectionSuppressor {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<out SuppressQuickFix> = arrayOf(
@@ -26,15 +24,18 @@ class RsInspectionSuppressor : InspectionSuppressor {
     )
 
     override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean =
-        element.ancestors.filterIsInstance<RsItemElement>()
-            .any { isSuppressedByComment(it, toolId) }
+        if (element is RsFile) {
+            element.childrenOfType<PsiComment>().asSequence().isSuppressedByComment(toolId)
+        } else {
+            element.ancestors.filterIsInstance<RsItemElement>()
+                .any { it.leadingComments().isSuppressedByComment(toolId) }
+        }
 
-    private fun isSuppressedByComment(element: RsItemElement, toolId: String): Boolean {
-        return element.leadingComments().any { comment ->
+    private fun Sequence<PsiComment>.isSuppressedByComment(toolId: String): Boolean =
+        this.any { comment ->
             val matcher = SuppressionUtil.SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(comment.text)
             matcher.matches() && SuppressionUtil.isInspectionToolIdMentioned(matcher.group(1), toolId)
         }
-    }
 
     private class SuppressInspectionFix(id: String) : AbstractBatchSuppressByNoInspectionCommentFix(id, id == SuppressionUtil.ALL) {
 
@@ -49,6 +50,6 @@ class RsInspectionSuppressor : InspectionSuppressor {
     }
 }
 
-private fun RsItemElement.leadingComments(): Sequence<PsiComment>
-    = generateSequence(firstChild) { psi -> psi.nextSibling.takeIf { it.elementType in RS_COMMENTS || it is PsiWhiteSpace } }
-    .filterIsInstance<PsiComment>()
+private fun RsItemElement.leadingComments(): Sequence<PsiComment> =
+    generateSequence(firstChild) { psi -> psi.nextSibling.takeIf { it.elementType in RS_COMMENTS || it is PsiWhiteSpace } }
+        .filterIsInstance<PsiComment>()
