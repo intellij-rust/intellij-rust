@@ -19,6 +19,8 @@ class RsLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(RsLanguageRu
 
     var localBuildArgs: String = ""
 
+    var useProjectPath: Boolean = false
+
     override fun getState() = MyState().also {
         it.rustcPath = this.rustcPath
         it.rustcVersion = this.rustcVersion
@@ -27,6 +29,8 @@ class RsLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(RsLanguageRu
         it.cargoVersion = this.cargoVersion
 
         it.localBuildArgs = this.localBuildArgs
+
+        it.useProjectPath = this.useProjectPath
     }
 
     override fun loadState(state: MyState) {
@@ -37,6 +41,8 @@ class RsLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(RsLanguageRu
         this.cargoVersion = state.cargoVersion.orEmpty()
 
         this.localBuildArgs = state.localBuildArgs.orEmpty()
+
+        this.useProjectPath = state.useProjectPath.or(false)
     }
 
     class MyState : BaseState() {
@@ -47,5 +53,7 @@ class RsLanguageRuntimeConfiguration : LanguageRuntimeConfiguration(RsLanguageRu
         var cargoVersion by string()
 
         var localBuildArgs by string()
+
+        var useProjectPath by property(false)
     }
 }
