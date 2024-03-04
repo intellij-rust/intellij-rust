@@ -7,4 +7,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.lineMarkerProvider language="Rust" implementationClass="org.rust.js.RsWasmBindgenLineMarkerProvider"/>
     </extensions>
+
+    <extensions defaultExtensionNs="JavaScript.JsonSchema">
+        <ProviderFactory implementation="org.rust.js.toml.schema.RsSchemaProviderFactory"/>
+    </extensions>
 </idea-plugin>
