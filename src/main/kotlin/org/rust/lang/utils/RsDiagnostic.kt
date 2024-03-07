@@ -2188,6 +2188,15 @@ sealed class RsDiagnostic(
             fixes = listOfFixes(fix)
         )
     }
+
+    class VisOnMacroRules(private val vis: RsVis) : RsDiagnostic(vis) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            null,
+            "Visibility modifiers are not applicable to `macro_rules`",
+            fixes = listOfFixes(ChangeVisToMacroExportFix(vis))
+        )
+    }
 }
 
 enum class RsErrorCode {
