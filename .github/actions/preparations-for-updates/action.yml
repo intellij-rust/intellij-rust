@@ -8,12 +8,10 @@ runs:
     using: composite
     steps:
         - name: Set up Rust
-          uses: actions-rs/toolchain@v1
-          with:
-              profile: minimal
-              toolchain: ${{ inputs.toolchain }}
-              components: rust-src, rustfmt, clippy # should be synchronized with `check` workflow
-              default: true
+          run: |
+              rustup set profile minimal
+              rustup toolchain install ${{ inputs.toolchain }} --component rust-src rustfmt clippy  # should be synchronized with `check` workflow
+              rustup default ${{ inputs.toolchain }}
 
         - name: Set up git user
           run: |
