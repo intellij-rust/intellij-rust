@@ -13,7 +13,7 @@ import org.rust.fileTree
 import org.rust.ide.actions.ui.CargoNewCrateSettings
 import org.rust.ide.actions.ui.CargoNewCrateUI
 import org.rust.ide.actions.ui.withMockCargoNewCrateUi
-import org.rust.launchAction
+import org.rust.launchAnAction
 
 class RsCreateCrateActionTest : RsWithToolchainTestBase() {
     fun `test create with file context`() {
@@ -39,7 +39,7 @@ class RsCreateCrateActionTest : RsWithToolchainTestBase() {
                 return CargoNewCrateSettings(binary, name)
             }
         }) {
-            myFixture.launchAction("Rust.NewCargoCrate", CommonDataKeys.VIRTUAL_FILE to file)
+            myFixture.launchAnAction("Rust.NewCargoCrate", CommonDataKeys.VIRTUAL_FILE to file)
         }
 
         val src = if (binary) "main" else "lib"

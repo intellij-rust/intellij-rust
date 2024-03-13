@@ -6,6 +6,7 @@
 package org.rust.ide.navigation.goto
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.codeInsight.navigation.getPsiElementPopup
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.RsBundle
-import org.rust.ide.navigation.getPsiElementPopup
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.toPsiFile

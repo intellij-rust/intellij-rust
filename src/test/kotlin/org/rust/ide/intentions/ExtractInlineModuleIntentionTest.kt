@@ -128,27 +128,14 @@ class ExtractInlineModuleIntentionTest : RsIntentionTestBase(ExtractInlineModule
         )
     }
 
-    fun `test invalid extract inline module`() {
-        doTest(fileTree {
-            rust("main.rs", """
-                mod foo {
-                    // function
-                    fn a() {}
-                }
+    fun `test invalid extract inline module`() = doUnavailableTest("""
+        mod foo {
+            // function
+            fn a() {}
+        }
 
-                fn /*caret*/main() {}
-            """)
-        }, fileTree {
-            rust("main.rs", """
-                mod foo {
-                    // function
-                    fn a() {}
-                }
-
-                fn main() {}
-            """)
-        })
-    }
+        fn /*caret*/main() {}
+    """)
 
     private fun doTest(before: FileTree, after: FileTree) {
         val testProject = before.create()

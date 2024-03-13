@@ -248,7 +248,8 @@ class ImplLookup(
     private val containingCrate: Crate,
     val items: KnownItems,
     private val paramEnv: ParamEnv,
-    context: RsElement? = null
+    context: RsElement? = null,
+    options: TypeInferenceOptions = TypeInferenceOptions.DEFAULT
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val traitSelectionCache: MutableMap<TraitRef, SelectionResult<SelectionCandidate>> = hashMapOf()
@@ -284,8 +285,47 @@ class ImplLookup(
         ancestorItem.implsFromNestedMacros
     }
 
+    /**
+     * Returns `ImplsFilter.ConstBodyInsideImplSignatureFilter` during type inference in such const bodies:
+     *
+     * ```rust
+     * impl Foo< {0} > for Bar< {0} > {}
+     * //        ~~~            ~~~
+     * ```
+     *
+     * TODO RUST-12502 this is a hack to deal with infinite recursion in const eval (issues like RUST-11763)
+     */
+    private val implsFilter: ImplsFilter by lazy(NONE) {
+        val contextPath = context?.inferenceContextOwner as? RsPath ?: return@lazy ImplsFilter.AllowAll
+        val ancestorImpl = contextPath.contexts.withPrevious().find { (it, prev) ->
+            it is RsImplItem && (prev is RsTraitRef || prev == it.typeReference)
+        }?.first as? RsImplItem ?: return@lazy ImplsFilter.AllowAll
+
+        val isInsideTraitImpl = ancestorImpl.traitRef != null
+        ImplsFilter.ConstBodyInsideImplSignatureFilter(containingCrate, allowInherentImpls = isInsideTraitImpl)
+    }
+
+    // TODO RUST-12502 this is a hack to deal with infinite recursion in const eval (issues like RUST-11763)
+    private sealed interface ImplsFilter {
+        fun canProcessImpl(impl: RsCachedImplItem): Boolean
+
+        class ConstBodyInsideImplSignatureFilter(
+            private val containingCrate: Crate,
+            private val allowInherentImpls: Boolean,
+        ) : ImplsFilter {
+            override fun canProcessImpl(impl: RsCachedImplItem): Boolean {
+                return allowInherentImpls && impl.isInherent
+                    || containingCrate !in impl.containingCrates
+            }
+        }
+
+        data object AllowAll : ImplsFilter {
+            override fun canProcessImpl(impl: RsCachedImplItem): Boolean = true
+        }
+    }
+
     val ctx: RsInferenceContext by lazy(NONE) {
-        RsInferenceContext(project, this, items)
+        RsInferenceContext(project, this, items, options)
     }
 
     fun getEnvBoundTransitivelyFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
@@ -398,6 +438,7 @@ class ImplLookup(
             .asSequence()
             .filter { useImplsFromCrate(it.containingCrates) }
             .plus(implsFromNestedMacros[tyf].orEmpty())
+            .filter(implsFilter::canProcessImpl)
 
     private fun findPotentialAliases(tyf: TyFingerprint): List<String> =
         indexCache.findPotentialAliases(tyf)
@@ -494,18 +535,18 @@ class ImplLookup(
 
     private fun selectCandidate(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         if (ref.selfTy is TyInfer.TyVar) {
-            return SelectionResult.Ambiguous
+            return SelectionResult.Ambiguous()
         }
         if (ref.selfTy is TyReference && ref.selfTy.referenced is TyInfer.TyVar) {
             // This condition is related to TyFingerprint internals: TyFingerprint should not be created for
             // TyInfer.TyVar, and TyReference is a single special case: it unwraps during TyFingerprint creation
-            return SelectionResult.Ambiguous
+            return SelectionResult.Ambiguous()
         }
 
         val candidateSet = assembleCandidates(ref)
 
         if (candidateSet.ambiguous) {
-            return SelectionResult.Ambiguous
+            return SelectionResult.Ambiguous()
         }
         val candidates = candidateSet.list.filter { it !is ImplCandidate.ExplicitImpl || !it.isNegativeImpl }
 
@@ -531,13 +572,13 @@ class ImplLookup(
                             } else {
                                 i++
                                 if (i > 1) {
-                                    return SelectionResult.Ambiguous
+                                    return SelectionResult.Ambiguous(filtered)
                                 }
                             }
                         }
                         filtered.singleOrNull()
                             ?.let { SelectionResult.Ok(it) }
-                            ?: SelectionResult.Ambiguous
+                            ?: SelectionResult.Ambiguous(filtered)
                     }
                 }
             }
@@ -1414,7 +1455,9 @@ private class SelectionCandidateSet(
 
 sealed class SelectionResult<out T> {
     object Err : SelectionResult<Nothing>()
-    object Ambiguous : SelectionResult<Nothing>()
+    class Ambiguous(
+        val candidates: List<SelectionCandidate> = emptyList()
+    ) : SelectionResult<Nothing>()
     data class Ok<out T>(
         val result: T
     ) : SelectionResult<T>()
@@ -1425,13 +1468,13 @@ sealed class SelectionResult<out T> {
 
     inline fun <R> map(action: (T) -> R): SelectionResult<R> = when (this) {
         is Err -> Err
-        is Ambiguous -> Ambiguous
+        is Ambiguous -> this
         is Ok -> Ok(action(result))
     }
 
     inline fun <R> andThen(action: (T) -> SelectionResult<R>): SelectionResult<R> = when (this) {
         is Err -> Err
-        is Ambiguous -> Ambiguous
+        is Ambiguous -> this
         is Ok -> action(result)
     }
 }
@@ -1442,7 +1485,7 @@ data class Selection(
     val subst: Substitution = emptySubstitution
 )
 
-private sealed class SelectionCandidate {
+sealed class SelectionCandidate {
     data class BuiltinCandidate(
         /** `false` if there are no *further* obligations */
         val hasNested: Boolean

@@ -15,6 +15,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 import com.intellij.openapi.util.text.StringUtil.unquoteString
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.text.SemVer
+import com.intellij.util.text.nullize
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.allPackages
@@ -22,6 +24,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.test.CargoTestEventsConverter.State.*
+import org.rust.cargo.util.parseSemVer
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.stdext.removeLast
 import java.io.File
@@ -30,7 +33,8 @@ private typealias NodeId = String
 
 class CargoTestEventsConverter(
     testFrameworkName: String,
-    consoleProperties: TestConsoleProperties
+    consoleProperties: TestConsoleProperties,
+    private val rustcVersion: SemVer?
 ) : OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties) {
     private val project: Project = consoleProperties.project
     private var converterState: State = START_MESSAGE
@@ -165,7 +169,7 @@ class CargoTestEventsConverter(
                 val duration = getTestDuration(testMessage.name)
                 val (stdout, failedMessage) = parseFailedTestOutput(testMessage.stdout ?: "")
                 if (stdout.isNotEmpty()) messages.add(createTestStdOutMessage(testMessage.name, stdout + '\n'))
-                messages.add(createTestFailedMessage(testMessage.name, failedMessage))
+                messages.add(createTestFailedMessage(testMessage.name, failedMessage, rustcVersion))
                 messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)
@@ -268,6 +272,8 @@ class CargoTestEventsConverter(
     }
 
     companion object {
+        private val RUSTC_1_73_BETA: SemVer = "1.73.0-beta".parseSemVer()
+
         private const val TARGET_PATH_PART: String = "/target/"
 
         private const val ROOT_SUITE: String = "0"
@@ -278,8 +284,12 @@ class CargoTestEventsConverter(
 
         private val LINE_NUMBER_RE: Regex = """\s+\(line\s+(?<line>\d+)\)\s*""".toRegex()
 
+        private val ERROR_MESSAGE_RE_OLD: Regex =
+            """thread '.*' panicked at '(?<fullMessage>(assertion failed: `\(left (?<sign>.*) right\)`\s*left: `(?<left>.*?)`,\s*right: `(?<right>.*?)`(: )?)?(?<message>.*))',"""
+                .toRegex(setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+
         private val ERROR_MESSAGE_RE: Regex =
-            """thread '.*' panicked at '(assertion failed: `\(left (?<sign>.*) right\)`\s*left: `(?<left>.*?)`,\s*right: `(?<right>.*?)`(: )?)?(?<message>.*)',"""
+            """thread '.*' panicked at (\S*)\n(?<fullMessage>(assertion `left (?<sign>.*) right` failed(: )?)?(?<message>.*?)\n\s*(left: (?<left>.*?)\n\s*right: (?<right>.*?)\n)?)(note|stack backtrace):"""
                 .toRegex(setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
 
         private val NodeId.name: String
@@ -321,12 +331,12 @@ class CargoTestEventsConverter(
                 .addAttribute("locationHint", CargoTestLocator.getTestUrl(name))
         }
 
-        private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder {
+        private fun createTestFailedMessage(test: NodeId, failedMessage: String, rustcVersion: SemVer?): ServiceMessageBuilder {
             val builder = ServiceMessageBuilder.testFailed(test.name)
                 .addAttribute("nodeId", test)
                 // TODO: pass backtrace here
                 .addAttribute("details", failedMessage)
-            val parseResult = parseErrorMessage(failedMessage)
+            val parseResult = parseErrorMessage(failedMessage, rustcVersion)
             if (parseResult == null) {
                 builder.addAttribute("message", "")
             } else {
@@ -366,9 +376,11 @@ class CargoTestEventsConverter(
             return FailedTestOutput(stdout, failedMessage)
         }
 
-        private fun parseErrorMessage(failedMessage: String): ErrorMessage? {
-            val groups = ERROR_MESSAGE_RE.find(failedMessage)?.groups ?: return null
-            val message = groups["message"]?.value ?: error("Failed to find `message` capturing group")
+        private fun parseErrorMessage(failedMessage: String, rustcVersion: SemVer?): ErrorMessage? {
+            val regex = if (rustcVersion == null || rustcVersion < RUSTC_1_73_BETA) ERROR_MESSAGE_RE_OLD else ERROR_MESSAGE_RE
+            val groups = regex.find(failedMessage)?.groups ?: return null
+            val message = groups["message"]?.value.nullize() ?: groups["fullMessage"]?.value
+                ?: error("Failed to find `message` or `fullMessage` capturing group")
 
             val diff = if (groups["sign"]?.value == "==") {
                 val left = groups["left"]?.value?.let(::unescape)

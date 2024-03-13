@@ -24,6 +24,8 @@ sealed class Predicate : TypeFoldable<Predicate> {
 
         override fun superVisitWith(visitor: TypeVisitor): Boolean =
             trait.visitWith(visitor)
+
+        override fun toString(): String = trait.toString()
     }
 
     /** where <T as TraitRef>::Name == X */
@@ -86,7 +88,9 @@ data class PendingPredicateObligation(
  * [registerObligationAt] and to remove satisfied obligations
  * as a side effect of [processObligations].
  */
-class ObligationForest {
+class ObligationForest(
+    private val traceObligations: Boolean
+) {
     enum class NodeState {
         /** Obligations for which selection had not yet returned a non-ambiguous result */
         Pending,
@@ -110,13 +114,27 @@ class ObligationForest {
     private val nodes: MutableList<Node> = mutableListOf()
     private val doneCache: MutableSet<Predicate> = HashSet()
 
+    /** Filled only if [traceObligations] == `true` */
+    val roots: MutableList<Node> = mutableListOf()
+    /** Filled only if [traceObligations] == `true` */
+    val parentToChildren: HashMap<Node, MutableList<Node>> = hashMapOf()
+
     val pendingObligations: Sequence<PendingPredicateObligation> =
         nodes.asSequence().filter { it.state == NodeState.Pending }.map { it.obligation }
 
-    @Suppress("UNUSED_PARAMETER") // TODO use `parent`
     fun registerObligationAt(obligation: PendingPredicateObligation, parent: Node?) {
-        if (doneCache.add(obligation.obligation.predicate))
-            nodes.add(Node(obligation))
+        if (doneCache.add(obligation.obligation.predicate)) {
+            val node = Node(obligation)
+            nodes.add(node)
+
+            if (traceObligations) {
+                if (parent == null) {
+                    roots += node
+                } else {
+                    parentToChildren.getOrPut(parent) { mutableListOf() } += node
+                }
+            }
+        }
     }
 
     fun processObligations(
@@ -156,12 +174,23 @@ class ObligationForest {
     }
 }
 
-class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
+class FulfillmentContext(
+    val ctx: RsInferenceContext,
+    val lookup: ImplLookup,
+    traceObligations: Boolean = false,
+) {
 
-    private val obligations: ObligationForest = ObligationForest()
+    private val obligations: ObligationForest = ObligationForest(traceObligations)
 
     val pendingObligations: Sequence<PendingPredicateObligation> =
         obligations.pendingObligations
+
+    /** Non-empty only if `traceObligations == true` */
+    val rootNodes: List<ObligationForest.Node> get() = obligations.roots
+
+    /** Non-empty only if `traceObligations == true` */
+    val parentToChildren: Map<ObligationForest.Node, List<ObligationForest.Node>>
+        get() = obligations.parentToChildren
 
     fun registerPredicateObligation(obligation: Obligation) {
         obligations.registerObligationAt(

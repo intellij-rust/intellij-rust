@@ -24,6 +24,7 @@ import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager
+import com.jetbrains.cidr.execution.debugger.backend.bin.UrlProvider
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.RsBundle
 import org.rust.openapiext.RsPathManager
@@ -152,12 +153,12 @@ class RsDebuggerToolchainService {
     }
 
     private fun lldbUrls(): Pair<URL, URL>? {
-        val lldb = RsDebuggerUrlProvider.lldb(OS.CURRENT, CpuArch.CURRENT) ?: return null
-        val lldbFrontend = RsDebuggerUrlProvider.lldbFrontend(OS.CURRENT, CpuArch.CURRENT) ?: return null
+        val lldb = UrlProvider.lldb(OS.CURRENT, CpuArch.CURRENT) ?: return null
+        val lldbFrontend = UrlProvider.lldbFrontend(OS.CURRENT, CpuArch.CURRENT) ?: return null
         return lldb to lldbFrontend
     }
 
-    private fun gdbUrl(): URL? = RsDebuggerUrlProvider.gdb(OS.CURRENT, CpuArch.CURRENT)
+    private fun gdbUrl(): URL? = UrlProvider.gdb(OS.CURRENT, CpuArch.CURRENT)
 
     @Throws(IOException::class)
     private fun downloadAndUnarchive(baseDir: Path, binariesToDownload: List<DownloadableDebuggerBinary>) {

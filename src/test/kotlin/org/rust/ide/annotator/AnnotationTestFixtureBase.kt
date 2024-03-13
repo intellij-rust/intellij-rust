@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.SuppressIntentionActionFromFix
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.ExtensionTestUtil
@@ -195,6 +196,13 @@ abstract class AnnotationTestFixtureBase(
         checkInfo: Boolean = false,
         checkWeakWarn: Boolean = false,
     ) {
+        if (ApplicationInfo.getInstance().build.baselineVersion == 233) {
+            // BACKCOMPAT: 2023.2; in 233 a quick-fix is available withing the whole line, so
+            //   `checkFixAvailableInSelectionOnly` tests start behaving differently.
+            //   Also, because of that we probably should stop care about QF availability ranges
+            //   and just remove all tests that use `checkFixAvailableInSelectionOnly`
+            return // Pass
+        }
         configureByText(before.replace("<selection>", "<selection><caret>"))
         checkHighlighting(checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting = false)
         val selections = codeInsightFixture.editor.selectionModel.let { model ->

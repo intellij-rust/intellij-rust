@@ -319,8 +319,13 @@ fun Project.runWithCancelableProgress(
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, true, this)
 }
 
-inline fun <T : Any> UserDataHolderEx.getOrPut(key: Key<T>, defaultValue: () -> T): T =
-    getUserData(key) ?: putUserDataIfAbsent(key, defaultValue())
+inline fun <T : Any> UserDataHolder.getOrPut(key: Key<T>, defaultValue: () -> T): T {
+    val data = getUserData(key)
+    if (data != null) return data
+    val value = defaultValue()
+    putUserData(key, value)
+    return value
+}
 
 const val PLUGIN_ID: String = "org.rust.lang"
 

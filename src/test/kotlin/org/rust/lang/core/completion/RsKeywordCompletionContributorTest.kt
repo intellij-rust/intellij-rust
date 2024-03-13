@@ -5,22 +5,14 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.openapi.project.DumbServiceImpl
 import org.intellij.lang.annotations.Language
+import org.rust.WithDumbMode
+import org.rust.WithDumbMode.SmartDumbMode.DUMB
+import org.rust.WithDumbMode.SmartDumbMode.SMART
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
+@WithDumbMode(DUMB)
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
-
-    override fun setUp() {
-        super.setUp()
-        DumbServiceImpl.getInstance(project).isDumb = true
-    }
-
-    override fun tearDown() {
-        DumbServiceImpl.getInstance(project).isDumb = false
-        super.tearDown()
-    }
-
     fun `test break in for loop`() = checkCompletion("break", """
         fn foo() {
             for _ in 0..4 {
@@ -63,6 +55,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test break not applied if doesnt start stmt`() = checkNoCompletion("""
         fn foo() {
             while true {
@@ -71,12 +64,14 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test break not applied outside loop`() = checkNoCompletion("""
         fn foo() {
             bre/*caret*/
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test break not applied within closure`() = checkNoCompletion("""
         fn bar() {
             loop {
@@ -141,6 +136,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test continue expression outside loop`() = checkNoCompletion("""
         fn foo() {
             let x = cont/*caret*/;
@@ -218,18 +214,21 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test enum not applied if doesnt start stmt within fn`() = checkNoCompletion("""
         fn foo() {
             let en/*caret*/
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test enum not applied within struct`() = checkNoCompletion("""
         struct Foo {
             en/*caret*/
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test enum not applied if doesnt start stmt`() = checkNoCompletion("""
         mod en/*caret*/
     """)
@@ -422,18 +421,22 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test return not applied on file level`() = checkNoCompletion("""
         retu/*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test return not applied within parameters list`() = checkNoCompletion("""
         fn foo(retu/*caret*/) {}
     """)
 
+    @WithDumbMode(SMART)
     fun `test return not applied before block`() = checkNoCompletion("""
         fn foo() retu/*caret*/ {}
     """)
 
+    @WithDumbMode(SMART)
     fun `test return not applied if doesnt start statement`() = checkNoCompletion("""
         const retu/*caret*/
     """)
@@ -556,12 +559,14 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test let else after semicolon`() = checkNoCompletion("""
         fn main() {
             let x = 0; els/*caret*/
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test let else without expression`() = checkNoCompletion("""
         fn main() {
             let x = els/*caret*/
@@ -595,10 +600,12 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         fn foo<T>(t: T) -> i32 where /*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in not generic function`() = checkNoCompletion("""
         fn foo() whe/*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in not generic function with ret type`() = checkNoCompletion("""
         fn foo() -> i32 whe/*caret*/
     """)
@@ -635,6 +642,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         struct Foo<T>(T) where /*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in not generic struct`() = checkNoCompletion("""
         struct Foo whe/*caret*/
     """)
@@ -645,6 +653,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         enum Foo<T> where /*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in not generic enum`() = checkNoCompletion("""
         enum Foo whe/*caret*/
     """)
@@ -655,16 +664,19 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         type Foo<T> where /*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in not generic type alias`() = checkNoCompletion("""
         type Foo whe/*caret*/
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in trait assoc type`() = checkNoCompletion("""
         trait Foo {
             type Bar whe/*caret*/
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test where in impl block assoc type`() = checkNoCompletion("""
         impl Foo for Bar {
             type FooBar whe/*caret*/
@@ -762,12 +774,14 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "fn foo<const /*caret*/>() {}"
     )
 
+    @WithDumbMode(SMART)
     fun `test const parameter before lifetime parameter`() = checkNoCompletion("""
-        "fn foo</*caret*/, 'a>() {}"
+        fn foo</*caret*/, 'a>() {}
     """)
 
+    @WithDumbMode(SMART)
     fun `test const parameter before type parameter`() = checkNoCompletion("""
-        "fn foo</*caret*/, A>() {}"
+        fn foo</*caret*/, A>() {}
     """)
 
     fun `test const parameter before const parameter`() = checkCompletion("const",
@@ -790,8 +804,9 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "fn foo<const C: i32, const /*caret*/>() {}"
     )
 
+    @WithDumbMode(SMART)
     fun `test const parameter before comma`() = checkNoCompletion("""
-        "fn foo<T /*caret*/>() {}"
+        fn foo<T /*caret*/>() {}
     """)
 
     fun `test inside trait`() = checkCompletion(MEMBERS_KEYWORDS, """
@@ -818,12 +833,14 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test enum inside trait`() = checkNoCompletion("""
         pub trait Bar {
             en/*caret*/
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test trait inside trait`() = checkNoCompletion("""
         pub trait Bar {
             tra/*caret*/
@@ -854,6 +871,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    @WithDumbMode(SMART)
     fun `test impl inside impl`() = checkNoCompletion("""
         impl Bar for Foo {
             imp/*caret*/
@@ -890,6 +908,7 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "pub union /*caret*/"
     )
 
+    @WithDumbMode(SMART)
     fun `test no union in expr`() = checkNoCompletion("""
         fn foo() {
             let x = 42 + unio/*caret*/;
@@ -1312,18 +1331,15 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    // Smart mode is used for not completion tests to disable additional results
-    // from language agnostic `com.intellij.codeInsight.completion.WordCompletionContributor`
-    override fun checkNoCompletion(@Language("Rust") code: String) {
-        val dumbService = DumbServiceImpl.getInstance(project)
-        val oldValue = dumbService.isDumb
-        try {
-            dumbService.isDumb = false
-            super.checkNoCompletion(code)
-        } finally {
-            dumbService.isDumb = oldValue
+    fun `test keyword completion triggered by spacebar adds only 1 space`() = checkCompletion("l", """
+        fn main() {
+            le/*caret*/;
         }
-    }
+    """, """
+        fn main() {
+            let /*caret*/;
+        }
+    """, completionChar = ' ')
 
     private fun checkCompletion(
         lookupStrings: List<String>,

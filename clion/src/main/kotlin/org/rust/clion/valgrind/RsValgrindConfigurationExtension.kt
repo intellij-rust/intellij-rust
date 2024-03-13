@@ -28,11 +28,6 @@ import com.intellij.psi.search.ExecutionSearchScopes
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Consumer
 import com.intellij.util.ui.StatusText
-import com.jetbrains.cidr.cpp.CLionProfilingBundle
-import com.jetbrains.cidr.cpp.profiling.*
-import com.jetbrains.cidr.cpp.profiling.ui.MemoryProfileOutputPanel
-import com.jetbrains.cidr.cpp.valgrind.*
-import com.jetbrains.cidr.cpp.valgrind.actions.EditValgrindSettingsAction
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
 import org.rust.RsBundle
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
@@ -87,7 +82,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
             val valgrindParameters = parametersBuilder.build(outputFilePath)
             valgrindParameters.add(programPath)
             cmdLine.parametersList.prependAll(*ArrayUtil.toStringArray(valgrindParameters))
-            toolchain.patchCommandLine(cmdLine)
+            toolchain.patchCommandLine(cmdLine, withSudo = false)
             putUserData<File>(OUTPUT_FILE_PATH_KEY, outputFile, configuration, context)
         } catch (e: IOException) {
             throw ExecutionException(e)

@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.import
 
+import com.intellij.codeInsight.navigation.hidePopupIfDumbModeStarts
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -20,7 +21,6 @@ import org.rust.RsBundle
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
-import org.rust.ide.navigation.hidePopupIfDumbModeStarts
 import org.rust.ide.utils.import.ImportCandidate
 import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout

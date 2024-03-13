@@ -18,7 +18,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import org.rust.ide.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.settings.RsCodeInsightSettings
@@ -69,8 +68,8 @@ class RsTextBlockTransferableData(val importMap: ImportMap) : TextBlockTransfera
 
     override fun getOffsetCount(): Int = 0
 
-    override fun getOffsets(offsets: IntArray?, index: Int): Int = index
-    override fun setOffsets(offsets: IntArray?, index: Int): Int = index
+    override fun getOffsets(offsets: IntArray, index: Int): Int = index
+    override fun setOffsets(offsets: IntArray, index: Int): Int = index
 }
 
 class RsImportCopyPasteProcessor : CopyPastePostProcessor<RsTextBlockTransferableData>() {
@@ -124,12 +123,12 @@ class RsImportCopyPasteProcessor : CopyPastePostProcessor<RsTextBlockTransferabl
             ?.containingModOrSelf ?: return
         val importCtx = containingMod.firstItem ?: return
 
-        val importOffset = bounds.range.startOffset
+        val importOffset = bounds.textRange.startOffset
 
         val processor = ImportingProcessor(importOffset, data.importMap)
 
         runWriteAction {
-            processElementsInRange(file, bounds.range, processor)
+            processElementsInRange(file, bounds.textRange, processor)
             // We need to import the candidates after visiting all elements, otherwise the relative offsets could be
             // invalidated after an import has been added
             for (candidate in processor.importCandidates) {

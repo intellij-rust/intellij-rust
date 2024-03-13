@@ -1,3 +1,7 @@
+# Deprecation notice
+
+This project is officially deprecated. If you are using [RustRover](https://jetbrains.com/rust) or [new Rust plugin for IntelliJ IDEA Ultimate or CLion](https://plugins.jetbrains.com/plugin/22407-rust) please report your issue at the official tracker: https://youtrack.jetbrains.com/issues/RUST. See [our announcement](https://blog.jetbrains.com/rust/2023/09/13/introducing-rustrover-a-standalone-rust-ide-by-jetbrains/#existing-open-source-plugin) for more details.
+
 # Rust plugin for the IntelliJ Platform
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)

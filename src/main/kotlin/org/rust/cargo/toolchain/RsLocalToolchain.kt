@@ -19,7 +19,7 @@ open class RsLocalToolchain(location: Path) : RsToolchainBase(location) {
 
     override val executionTimeoutInMilliseconds: Int = 1000
 
-    override fun patchCommandLine(commandLine: GeneralCommandLine): GeneralCommandLine = commandLine
+    override fun patchCommandLine(commandLine: GeneralCommandLine, withSudo: Boolean): GeneralCommandLine = commandLine
 
     override fun toLocalPath(remotePath: String): String = remotePath
 

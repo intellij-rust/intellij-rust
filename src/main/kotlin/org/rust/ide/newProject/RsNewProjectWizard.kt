@@ -14,8 +14,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.rust.ide.module.RsModuleBuilder
 import org.rust.stdext.toPathOrNull
 import java.nio.file.Path
@@ -35,9 +35,9 @@ class RsNewProjectWizard : LanguageNewProjectWizard {
             with(builder) {
                 row {
                     cell(peer.component)
-                        .horizontalAlign(HorizontalAlign.FILL)
+                        .align(AlignX.FILL)
                         .validationRequestor { peer.checkValid = Runnable(it) }
-                        .validation { peer.validate() }
+                        .validationInfo { peer.validate() }
                 }
             }
         }

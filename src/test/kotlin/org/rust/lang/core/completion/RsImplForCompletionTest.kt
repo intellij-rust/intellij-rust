@@ -5,13 +5,12 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.openapi.project.DumbServiceImpl
 import org.intellij.lang.annotations.Language
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 import org.rust.RsJUnit4ParameterizedTestRunner
-import java.util.concurrent.atomic.AtomicBoolean
+import org.rust.WithDumbMode
 
 @RunWith(RsJUnit4ParameterizedTestRunner::class)
 @Parameterized.UseParametersRunnerFactory(RsJUnit4ParameterizedTestRunner.RsRunnerForParameters.Factory::class)
@@ -21,24 +20,12 @@ class RsImplForCompletionTest : RsCompletionTestBase() {
         @JvmStatic
         @Parameterized.Parameters
         fun data(): Iterable<Any> {
-            return listOf(AtomicBoolean(false), AtomicBoolean(true))
+            return listOf(WithDumbMode.SmartDumbMode.SMART, WithDumbMode.SmartDumbMode.DUMB)
         }
     }
 
-    // @Parameter doesn't work properly for primitive Kotlin types,
-    // throws `can't assign to a private member` exception even when the field is public
     @Parameter(0)
-    lateinit var isDumbMode: AtomicBoolean
-
-    override fun setUp() {
-        super.setUp()
-        DumbServiceImpl.getInstance(project).isDumb = isDumbMode.get()
-    }
-
-    override fun tearDown() {
-        DumbServiceImpl.getInstance(project).isDumb = false
-        super.tearDown()
-    }
+    override lateinit var runInMode: WithDumbMode.SmartDumbMode
 
     fun `test impl trait for completion`() = checkCompletion("for", """
         trait A {}
@@ -200,7 +187,7 @@ class RsImplForCompletionTest : RsCompletionTestBase() {
         @Language("Rust") after: String,
         completionChar: Char = '\n'
     )  {
-        if (isDumbMode.get()) {
+        if (runInMode == WithDumbMode.SmartDumbMode.DUMB) {
             checkCompletion(lookupString, before, after, completionChar)
         } else {
             checkNotContainsCompletion(lookupString, before)

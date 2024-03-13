@@ -66,6 +66,9 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     private var shouldSkipTestWithCurrentWrapping: Boolean = false
     protected var testWrappingUnwrapper: TestUnwrapper? = null
 
+    open val runInMode: WithDumbMode.SmartDumbMode get() = WithDumbMode.SmartDumbMode.SMART
+    private var dumbModeToken: DumbModeTestUtil.Token? = null
+
     override fun isWriteActionRequired(): Boolean = false
 
     open val dataPath: String = ""
@@ -90,6 +93,11 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
                 mgr.setMacroExpansionEnabled(true)
             }
         }
+        val mode = findAnnotationInstance<WithDumbMode>()?.mode ?: runInMode
+        if (mode == WithDumbMode.SmartDumbMode.DUMB) {
+            dumbModeToken = DumbModeTestUtil.startEternalDumbModeTask(project)
+        }
+
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         tempDirRoot = myFixture.findFileInTempDir(".")
         tempDirRootUrl = tempDirRoot?.url
@@ -100,6 +108,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         val newTempDirRootUrl = tempDirRoot?.url
 
         com.intellij.testFramework.common.runAll(
+            { dumbModeToken?.close() },
             {
                 // Fixes flaky tests
                 (ProjectLevelVcsManagerEx.getInstance(project) as ProjectLevelVcsManagerImpl).waitForInitialized()

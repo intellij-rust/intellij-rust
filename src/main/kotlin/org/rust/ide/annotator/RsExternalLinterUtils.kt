@@ -31,7 +31,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.MessageBus
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 import org.jetbrains.annotations.Nls
 import org.rust.RsBundle
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -277,7 +277,7 @@ private data class RsExternalLinterFilteredMessage(
             val textRange = span.toTextRange(document) ?: return null
 
             @NlsSafe val tooltip = buildString {
-                append(formatMessage(StringEscapeUtils.escapeHtml(message.message)).escapeUrls())
+                append(formatMessage(StringEscapeUtils.escapeHtml4(message.message)).escapeUrls())
                 val code = message.code.formatAsLink()
                 if (code != null) {
                     append(" [$code]")
@@ -285,12 +285,12 @@ private data class RsExternalLinterFilteredMessage(
 
                 with(mutableListOf<String>()) {
                     if (span.label != null && !message.message.startsWith(span.label)) {
-                        add(StringEscapeUtils.escapeHtml(span.label))
+                        add(StringEscapeUtils.escapeHtml4(span.label))
                     }
 
                     message.children
                         .filter { it.message.isNotBlank() }
-                        .map { "${it.level.capitalized()}: ${StringEscapeUtils.escapeHtml(it.message)}" }
+                        .map { "${it.level.capitalized()}: ${StringEscapeUtils.escapeHtml4(it.message)}" }
                         .forEach { add(it) }
 
                     append(joinToString(prefix = "<br>", separator = "<br>") { formatMessage(it) }.escapeUrls())

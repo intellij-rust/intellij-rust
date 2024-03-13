@@ -13,6 +13,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.ANSI_24_BIT_COLOR_FORMAT
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.ANSI_8_BIT_COLOR_FORMAT
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.CSI
+import org.rust.escapeSequence
 
 class RsAnsiEscapeDecoderTest : HeavyPlatformTestCase() {
 
@@ -277,7 +278,7 @@ class RsAnsiEscapeDecoderTest : HeavyPlatformTestCase() {
             val decoder = RsAnsiEscapeDecoder()
             val actualColoredChunks = mutableListOf<Pair<String, String>>()
             val acceptor = AnsiEscapeDecoder.ColoredTextAcceptor { s, attrs ->
-                actualColoredChunks.add(Pair(s, attrs.toString()))
+                actualColoredChunks.add(Pair(s, attrs.escapeSequence))
             }
             decoder.escapeText(text.rawText, text.outputType, acceptor)
             val expectedColoredChunks = mutableListOf<Pair<String, String>>()

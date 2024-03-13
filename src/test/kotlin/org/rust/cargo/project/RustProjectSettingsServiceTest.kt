@@ -20,10 +20,7 @@ class RustProjectSettingsServiceTest : RsProjectSettingsServiceTestBase() {
               <option name="compileAllTargets" value="false" />
               <option name="doctestInjectionEnabled" value="false" />
               <option name="explicitPathToStdlib" value="/stdlib" />
-              <option name="externalLinter" value="Clippy" />
-              <option name="externalLinterArguments" value="--no-default-features" />
               <option name="macroExpansionEngine" value="DISABLED" />
-              <option name="runExternalLinterOnTheFly" value="true" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
             </RustProjectSettings>
@@ -49,10 +46,8 @@ class RustProjectSettingsServiceTest : RsProjectSettingsServiceTestBase() {
               <option name="externalLinterArguments" value="--no-default-features" />
               <option name="macroExpansionEngine" value="DISABLED" />
               <option name="runExternalLinterOnTheFly" value="true" />
-              <option name="runRustfmtOnSave" value="true" /> <!-- Old field -->
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
-              <option name="useRustfmt" value="true" /> <!-- Old field -->
             </RustProjectSettings>
         """, """
             <RustProjectSettings>
@@ -60,10 +55,7 @@ class RustProjectSettingsServiceTest : RsProjectSettingsServiceTestBase() {
               <option name="compileAllTargets" value="false" />
               <option name="doctestInjectionEnabled" value="false" />
               <option name="explicitPathToStdlib" value="/stdlib" />
-              <option name="externalLinter" value="Clippy" />
-              <option name="externalLinterArguments" value="--no-default-features" />
               <option name="macroExpansionEngine" value="DISABLED" />
-              <option name="runExternalLinterOnTheFly" value="true" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
             </RustProjectSettings>

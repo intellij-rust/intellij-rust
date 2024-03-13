@@ -5,6 +5,8 @@
 
 package org.rust.ide.idea
 
+import org.junit.Ignore
 import org.rustSlowTests.RsProjectViewTestBase
 
+@Ignore // TODO RUST-12027 doesn't work on 233
 class RsIdeaProjectViewTest : RsProjectViewTestBase()
