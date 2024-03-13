@@ -1,25 +1,10 @@
 <!--
-Hello and thank you for the issue!
-If you would like to report a bug, we have added some points below that you can fill out.
-Consider using "Help | Create New Issue" action that fills out all necessary information automatically.
-Feel free to remove all the irrelevant text to request a new feature.
--->
+Due to the Rust Support portal launch, we'll no longer be providing support via GitHub.
+Please take a look at this post for more information https://github.com/intellij-rust/intellij-rust/issues/10867.
 
-## Environment
+With the launch of RustRover and the Support Portal, we're no longer working with new tickets on GitHub.
+Please don't worry – all previously created tickets have been transferred to our YouTrack https://youtrack.jetbrains.com/issues/RUST.
 
-* **IntelliJ Rust plugin version:**
-* **Rust toolchain version:**
-* **IDE name and version:**
-* **Operating system:**
-
-## Problem description
-
-
-## Steps to reproduce
-
-<!--
-Please include as much of your codebase as needed to reproduce the error.
-If the relevant files are large, please provide a link to a public repository or a [Gist](https://gist.github.com/).
-
-If you provide a screenshot of some code, please also copy-paste the corresponding code snippet here.
+If you can't find your ticket or have any questions, please let us know.
+rustrover-support@jetbrains.com 
 -->

@@ -18,7 +18,6 @@ import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Cargo.Companion.GeneratedFilesHolder
-import org.rust.ide.statistics.RsCounterUsagesCollector
 import org.rust.openapiext.RsProcessResult
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.stdext.toPath
@@ -31,7 +30,6 @@ fun Cargo.makeProject(
     template: RsProjectTemplate,
     vcs: String? = null
 ): RsProcessResult<GeneratedFilesHolder> {
-    RsCounterUsagesCollector.newProjectCreation(template)
     return when (template) {
         is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary, vcs)
         is RsCustomTemplate -> generate(project, module, baseDir, name, template.url, vcs)

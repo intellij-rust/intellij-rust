@@ -28,7 +28,7 @@ import org.toml.lang.psi.*
 fun Crate.addCargoDependency(name: String, version: String, features: List<String> = emptyList()) {
     checkWriteAccessAllowed()
 
-    val cargoToml = cargoTarget?.pkg?.getPackageCargoTomlFile(project) ?: return
+    val cargoToml = tomlFile ?: return
     val factory = TomlPsiFactory(project)
 
     val featuresArray = features.joinToString(prefix = "[", separator = ", ", postfix = "]") { "\"$it\"" }
@@ -63,15 +63,26 @@ fun Crate.addCargoDependency(name: String, version: String, features: List<Strin
     }
 }
 
+val Crate.tomlFile: TomlFile? get() = cargoTarget?.pkg?.getPackageCargoTomlFile(project)
+
 private fun updateDependencyFeatures(factory: TomlPsiFactory, table: TomlKeyValueOwner, features: List<String>) {
     val featuresEntry = table.entries.find { entry -> entry.key.stringValue == "features" }
     if (featuresEntry == null) {
         val featuresArray = features.joinToString(prefix = "[", separator = ", ", postfix = "]") { "\"$it\"" }
         val newEntry = factory.createKeyValue("features", featuresArray)
-        val newTable = (table.entries + listOf(newEntry)).joinToString(separator=", ") {
-            """${it.key.text} = ${it.value?.text}"""
+        when (table) {
+            is TomlTable -> {
+                table.add(factory.createWhitespace("\n"))
+                table.add(newEntry)
+            }
+            is TomlInlineTable -> {
+                val newTable = (table.entries + listOf(newEntry)).joinToString(separator=", ") {
+                    """${it.key.text} = ${it.value?.text}"""
+                }
+                table.replace(factory.createInlineTable(newTable))
+            }
         }
-        table.replace(factory.createInlineTable(newTable))
+
     } else {
         val existingFeatures = (featuresEntry.value as? TomlArray)?.elements
             ?.mapNotNull { value -> value.stringValue }

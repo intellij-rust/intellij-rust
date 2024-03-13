@@ -150,6 +150,6 @@ class RsVisibilityCompletionTest : RsCompletionTestBase() {
     """)
 
     companion object {
-        private val DEFAULT_VISIBILITIES = listOf("pub", "pub(crate)", "pub()")
+        private val DEFAULT_VISIBILITIES = listOf("pub", "pub(crate)", "pub(super)", "pub()")
     }
 }

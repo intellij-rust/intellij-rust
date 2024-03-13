@@ -51,6 +51,11 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         // This set will contain the names of all paths that have been added to the `result` by this provider.
         val processedPathElements = MultiMap<String, RsElement>()
 
+        val parent = element.context
+        if (parent is RsVisRestriction && element is RsPath && parent.`in` == null) {
+            return
+        }
+
         val context = RsCompletionContext(
             element,
             getExpectedTypeForEnclosingPathOrDotExpr(element),

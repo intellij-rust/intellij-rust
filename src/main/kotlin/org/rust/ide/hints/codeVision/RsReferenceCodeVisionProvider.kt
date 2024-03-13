@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import org.rust.RsBundle
-import org.rust.ide.statistics.RsCodeVisionUsageCollector.Companion.logUsagesClicked
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -80,10 +79,6 @@ class RsReferenceCodeVisionProvider : ReferencesCodeVisionProvider() {
         if (usageCount == 0) return null
 
         return RsBundle.message("rust.code.vision.usage.hint", usageCount)
-    }
-
-    override fun logClickToFUS(element: PsiElement, hint: String) {
-        logUsagesClicked(element)
     }
 
     override val relativeOrderings: List<CodeVisionRelativeOrdering> = emptyList()

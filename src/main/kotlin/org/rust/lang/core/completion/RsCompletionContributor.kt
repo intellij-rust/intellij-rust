@@ -37,6 +37,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsPartialMacroArgumentCompletionProvider)
         extend(CompletionType.BASIC, RsFullMacroArgumentCompletionProvider)
         extend(CompletionType.BASIC, RsCfgAttributeCompletionProvider)
+        extend(CompletionType.BASIC, RsCfgPanicCompletionProvider)
         extend(CompletionType.BASIC, RsAwaitCompletionProvider)
         extend(CompletionType.BASIC, RsStructPatRestCompletionProvider)
         extend(CompletionType.BASIC, RsClippyLintCompletionProvider)
@@ -52,6 +53,7 @@ class RsCompletionContributor : CompletionContributor() {
         extend(CompletionType.BASIC, RsExternAbiCompletionProvider)
         extend(CompletionType.BASIC, RsStaticLifetimeCompletionProvider)
         extend(CompletionType.BASIC, RsBuildScriptCargoInstructionCompletionProvider)
+        extend(CompletionType.BASIC, RsChronoFormatCompletionProvider)
     }
 
     fun extend(type: CompletionType?, provider: RsCompletionProvider) {

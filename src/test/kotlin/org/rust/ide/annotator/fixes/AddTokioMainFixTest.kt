@@ -175,6 +175,31 @@ class AddTokioMainFixTest : RsInspectionsTestBase(RsAsyncMainFunctionInspection:
         tokio = { version = "1.2.9", features = ["rt", "rt-multi-thread", "macros"] }
     """)
 
+    fun `test fix add tokio with full features`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["full"] }
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        tokio = { version = "1.2.9", features = ["full"] }
+    """)
+
     fun `test fix add missing tokio features preserves old order`() = checkFixByFileTree("Add `#[tokio::main]`", """
     //- main.rs
         /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
@@ -198,6 +223,34 @@ class AddTokioMainFixTest : RsInspectionsTestBase(RsAsyncMainFunctionInspection:
 
         [dependencies]
         tokio = { version = "1.2.9", features = ["fs", "rt-multi-thread", "rt", "macros"] }
+    """)
+
+    fun `test fix add missing tokio features with inline value and no features`() = checkFixByFileTree("Add `#[tokio::main]`", """
+    //- main.rs
+        /*error descr="`main` function is not allowed to be `async` [E0752]"*/async/*caret*//*error**/ fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        [dependencies.tokio]
+        version = "1.0.0"
+    """, """
+    //- main.rs
+        #[tokio::main]
+        async fn main() {}
+    //- Cargo.toml
+        [package]
+        name = "rustsandbox"
+        version = "0.1.0"
+        edition = "2021"
+
+        [dependencies]
+        [dependencies.tokio]
+        version = "1.0.0"
+        features = ["rt", "rt-multi-thread", "macros"]
     """)
 
     fun `test fix add missing tokio features with inline value`() = checkFixByFileTree("Add `#[tokio::main]`", """

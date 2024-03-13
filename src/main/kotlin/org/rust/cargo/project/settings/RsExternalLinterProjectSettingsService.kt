@@ -29,16 +29,6 @@ class RsExternalLinterProjectSettingsService(
     val envs: Map<String, String> get() = state.envs
     val runOnTheFly: Boolean get() = state.runOnTheFly
 
-    override fun noStateLoaded() {
-        val rustSettings = project.rustSettings
-        state.tool = rustSettings.state.externalLinter
-        rustSettings.state.externalLinter = ExternalLinter.DEFAULT
-        state.additionalArguments = rustSettings.state.externalLinterArguments
-        rustSettings.state.externalLinterArguments = ""
-        state.runOnTheFly = rustSettings.state.runExternalLinterOnTheFly
-        rustSettings.state.runExternalLinterOnTheFly = false
-    }
-
     class RsExternalLinterProjectSettings : RsProjectSettingsBase<RsExternalLinterProjectSettings>() {
         @AffectsHighlighting
         var tool by enum(ExternalLinter.DEFAULT)

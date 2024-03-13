@@ -3,10 +3,9 @@ import org.gradle.api.JavaVersion.VERSION_17
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.intellij.tasks.PatchPluginXmlTask
-import org.jetbrains.intellij.tasks.PrepareSandboxTask
-import org.jetbrains.intellij.tasks.PublishPluginTask
-import org.jetbrains.intellij.tasks.RunIdeTask
+import org.jetbrains.intellij.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
 import java.io.Writer
@@ -21,16 +20,15 @@ val isTeamcity = System.getenv("TEAMCITY_VERSION") != null
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion").toInt()
 val baseIDE = prop("baseIDE")
+val ideToRun = prop("ideToRun").ifEmpty { baseIDE }
 val ideaVersion = prop("ideaVersion")
 val clionVersion = prop("clionVersion")
-val baseVersion = when (baseIDE) {
-    "idea" -> ideaVersion
-    "clion" -> clionVersion
-    else -> error("Unexpected IDE name: `$baseIDE`")
-}
+val rustRoverVersion = prop("rustRoverVersion")
+val baseVersion = versionForIde(baseIDE)
+val baseVersionForRun = versionForIde(ideToRun)
 
 val tomlPlugin = "org.toml.lang"
-val nativeDebugPlugin: String by project
+val nativeDebugPlugin = if (baseIDE == "idea") prop("nativeDebugPlugin") else "com.intellij.nativeDebug"
 val graziePlugin = "tanvd.grazi"
 val psiViewerPlugin: String by project
 val intelliLangPlugin = "org.intellij.intelliLang"
@@ -38,7 +36,7 @@ val copyrightPlugin = "com.intellij.copyright"
 val javaPlugin = "com.intellij.java"
 val javaIdePlugin = "com.intellij.java.ide"
 val javaScriptPlugin = "JavaScript"
-val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion")
+val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion", nativeDebugPlugin)
 val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 val compileNativeCodeTaskName = "compileNativeCode"
@@ -49,8 +47,8 @@ val basePluginArchiveName = "intellij-rust"
 
 plugins {
     idea
-    kotlin("jvm") version "1.8.22"
-    id("org.jetbrains.intellij") version "1.13.1"
+    kotlin("jvm") version "1.9.0"
+    id("org.jetbrains.intellij") version "1.16.1"
     id("org.jetbrains.grammarkit") version "2022.3.1"
     id("net.saliman.properties") version "1.5.2"
     id("org.gradle.test-retry") version "1.5.3"
@@ -91,7 +89,7 @@ allprojects {
         updateSinceUntilBuild.set(true)
         instrumentCode.set(false)
         ideaDependencyCachePath.set(dependencyCachePath)
-        sandboxDir.set("$buildDir/$baseIDE-sandbox-$platformVersion")
+        sandboxDir.set(layout.buildDirectory.dir("$ideToRun-sandbox-$platformVersion").map { it.asFile.absolutePath })
     }
 
     configure<JavaPluginExtension> {
@@ -101,12 +99,12 @@ allprojects {
 
     tasks {
         withType<KotlinCompile> {
-            kotlinOptions {
-                jvmTarget = VERSION_17.toString()
-                languageVersion = "1.8"
+            compilerOptions {
+                jvmTarget.set(JvmTarget.JVM_17)
+                languageVersion.set(KotlinVersion.DEFAULT)
                 // see https://plugins.jetbrains.com/docs/intellij/using-kotlin.html#kotlin-standard-library
-                apiVersion = "1.7"
-                freeCompilerArgs = listOf("-Xjvm-default=all")
+                apiVersion.set(KotlinVersion.KOTLIN_1_8)
+                freeCompilerArgs.set(listOf("-Xjvm-default=all"))
             }
         }
         withType<PatchPluginXmlTask> {
@@ -248,15 +246,28 @@ val Project.dependencyCachePath
 val pluginProjects: List<Project>
     get() = rootProject.allprojects.filter { it.name != grammarKitFakePsiDeps }
 
-val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
-val versionSuffix = "-$platformVersion$channelSuffix"
-val majorVersion = "0.4"
-val patchVersion = prop("patchVersion").toInt()
-
-// Special module with run, build and publish tasks
+// Special module with run, build, and publish tasks
 project(":plugin") {
-    version = "$majorVersion.$patchVersion.${prop("buildNumber")}$versionSuffix"
+    val pluginVersion = System.getenv("BUILD_NUMBER") ?: "${platformVersion}.${prop("buildNumber")}"
+    version = if (pluginVersion.contains(".")) {
+        val split = pluginVersion.split(".").toMutableList()
+        split[0] = platformVersion.toString()
+        // From 232 branch, plugin version `232.9921` and `233.9921` were published
+        // These versions were based on IJ platform `232.9921` build
+        //
+        // From 233 branch, plugin versions are `233.8264` and `232.8264`, which are based on IJ platform `233.8264` build
+        // Since we publish versions for 2 platform versions from a single branch, plugin versions has to be hacked this way,
+        // Otherwise newly published `233.8264` version would be considered lower than `233.9921` published earlier
+        //
+        // TODO: For `241`, come up with new plugin versioning to avoid this problem
+        split[1] = (split[1].toIntOrNull()?.plus(10000))?.toString() ?: split[1]
+        split.joinToString(".")
+    } else {
+        pluginVersion
+    }
+
     intellij {
+        version.set(baseVersionForRun)
         pluginName.set("intellij-rust")
         val pluginList = mutableListOf(
             tomlPlugin,
@@ -266,7 +277,7 @@ project(":plugin") {
             javaScriptPlugin,
             mlCompletionPlugin
         )
-        if (baseIDE == "idea") {
+        if (ideToRun == "idea") {
             pluginList += listOf(
                 copyrightPlugin,
                 javaPlugin,
@@ -354,11 +365,16 @@ project(":plugin") {
             finalizedBy(mergePluginJarTask)
             enabled = true
         }
-        buildSearchableOptions {
-            // Force `mergePluginJarTask` be executed before `buildSearchableOptions`
-            // Otherwise, `buildSearchableOptions` task can't load the plugin and searchable options are not built.
+        withType<RunIdeBase> {
+            // Force `mergePluginJarTask` be executed before any task based on `RunIdeBase` (for example, `runIde` or `buildSearchableOptions`).
+            // Otherwise, these tasks fail because of implicit dependency.
             // Should be dropped when jar merging is implemented in `gradle-intellij-plugin` itself
             dependsOn(mergePluginJarTask)
+        }
+        verifyPlugin {
+            dependsOn(mergePluginJarTask)
+        }
+        buildSearchableOptions {
             enabled = prop("enableBuildSearchableOptions").toBoolean()
         }
         withType<PrepareSandboxTask> {
@@ -407,10 +423,10 @@ project(":plugin") {
     task<RunIdeTask>("buildEventsScheme") {
         dependsOn(tasks.prepareSandbox)
         args("buildEventsScheme", "--outputFile=${buildDir.resolve("eventScheme.json").absolutePath}", "--pluginId=org.rust.lang")
-        // BACKCOMPAT: 2023.1. Update value to 232 and this comment
+        // BACKCOMPAT: 2023.2. Update value to 233 and this comment
         // `IDEA_BUILD_NUMBER` variable is used by `buildEventsScheme` task to write `buildNumber` to output json.
         // It will be used by TeamCity automation to set minimal IDE version for new events
-        environment("IDEA_BUILD_NUMBER", "231")
+        environment("IDEA_BUILD_NUMBER", "232")
     }
 }
 
@@ -739,6 +755,12 @@ fun prop(name: String): String =
     extra.properties[name] as? String
         ?: error("Property `$name` is not defined in gradle.properties")
 
+fun versionForIde(ideName: String): String = when (ideName) {
+    "idea" -> ideaVersion
+    "clion" -> clionVersion
+    "rustRover" -> rustRoverVersion
+    else -> error("Unexpected IDE name: `$baseIDE`")
+}
 
 inline operator fun <T : Task> T.invoke(a: T.() -> Unit): T = apply(a)
 

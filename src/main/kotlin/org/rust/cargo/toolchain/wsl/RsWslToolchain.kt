@@ -28,7 +28,7 @@ class RsWslToolchain(
 
     override val executionTimeoutInMilliseconds: Int = 5000
 
-    override fun patchCommandLine(commandLine: GeneralCommandLine): GeneralCommandLine {
+    override fun patchCommandLine(commandLine: GeneralCommandLine, withSudo: Boolean): GeneralCommandLine {
         commandLine.exePath = toRemotePath(commandLine.exePath)
 
         val parameters = commandLine.parametersList.list.map { toRemotePath(it) }
@@ -49,6 +49,7 @@ class RsWslToolchain(
         val remoteWorkDir = commandLine.workDirectory?.absolutePath
             ?.let { toRemotePath(it) }
         val options = WSLCommandLineOptions()
+            .setSudo(withSudo)
             .setRemoteWorkingDirectory(remoteWorkDir)
             .addInitCommand("export PATH=\"${linuxPath.systemIndependentPath}:\$PATH\"")
         return distribution.patchCommandLine(commandLine, null, options)

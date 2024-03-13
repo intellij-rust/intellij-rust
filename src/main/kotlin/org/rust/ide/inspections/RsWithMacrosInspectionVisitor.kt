@@ -15,7 +15,7 @@ import org.rust.stdext.removeLast
  * expanded from the macro. This visitor is intended to be used in [RsLocalInspectionTool] implementations.
  */
 abstract class RsWithMacrosInspectionVisitor : RsVisitor() {
-    private var processingMacros: Boolean = false
+    private var processingMacros: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
 
     final override fun visitConstant(o: RsConstant) {
         visitConstant2(o)
@@ -153,12 +153,13 @@ abstract class RsWithMacrosInspectionVisitor : RsVisitor() {
     }
 
     private fun visitMacroExpansion(item: RsAttrProcMacroOwner) {
-        if (processingMacros) return
+        if (processingMacros.get()) return
 
         val preparedMacro = item.procMacroAttribute?.attr?.prepareForExpansionHighlighting() ?: return
         val macros = mutableListOf(preparedMacro)
 
-        processingMacros = true
+        processingMacros.set(true)
+        println(Thread.currentThread().name)
 
         while (macros.isNotEmpty()) {
             val macro = macros.removeLast()
@@ -170,6 +171,6 @@ abstract class RsWithMacrosInspectionVisitor : RsVisitor() {
             }
         }
 
-        processingMacros = false
+        processingMacros.set(false)
     }
 }

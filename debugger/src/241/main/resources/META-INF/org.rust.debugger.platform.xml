@@ -1,0 +1,10 @@
+<idea-plugin >
+    <extensions defaultExtensionNs="com.intellij">
+        <registryKey key="org.rust.debugger.gdb.windows"
+                     defaultValue="true"
+                     description="Enables Rust debugging with GDB on Windows"/>
+        <registryKey key="org.rust.debugger.gdb.wsl"
+                     defaultValue="true"
+                     description="Enables Rust debugging with GDB on WSL"/>
+    </extensions>
+</idea-plugin>

@@ -1268,7 +1268,11 @@
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
 
         <notificationGroup id="Rust Plugin" displayType="BALLOON" bundle="messages.RsBundle" key="notification.group.rust.plugin"/>
+        <notificationGroup id="Rust Plugin Promotion" displayType="BALLOON" bundle="messages.RsBundle"
+                           key="notification.group.rust.promotion.plugin"/>
         <notificationGroup id="Rust Build Log" displayType="NONE" key="notification.group.rust.plugin"/>
+
+        <postStartupActivity implementation="org.rust.ide.notifications.RsIdePromotionStartupActivity"/>
 
         <!-- Editor Tab Title Providers -->
 
@@ -1338,23 +1342,6 @@
         <!-- Listeners -->
 
         <fileDocumentManagerListener implementation="org.rust.cargo.RustfmtWatcher$RustfmtListener"/>
-
-        <!-- Statistics -->
-        <fileTypeStatisticProvider implementation="org.rust.ide.statistics.RsFileTypeStatisticProvider"/>
-        <!--suppress PluginXmlValidity -->
-        <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsToolchainUsagesCollector"/>
-        <!--suppress PluginXmlValidity -->
-        <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsProjectUsagesCollector"/>
-        <!--suppress PluginXmlValidity -->
-        <statistics.projectUsagesCollector implementation="org.rust.ide.statistics.RsSettingsUsagesCollector"/>
-        <!--suppress PluginXmlValidity -->
-        <statistics.applicationUsagesCollector implementation="org.rust.ide.statistics.RsAdvancedSettingsUsagesCollector"/>
-        <statistics.collectorExtension implementation="org.rust.ide.statistics.CargoCommandUsagesCollector"/>
-        <statistics.collectorExtension implementation="org.rust.ide.statistics.CargoCommandTypeCollector"/>
-        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCounterUsagesCollector"/>
-        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsConvertJsonToStructUsagesCollector"/>
-        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.RsCodeVisionUsageCollector"/>
-        <statistics.counterUsagesCollector implementationClass="org.rust.ide.statistics.CargoErrorCodesCollector"/>
 
         <!-- Registry keys -->
 

@@ -174,31 +174,7 @@ object RsPsiPattern {
         psiElement<RsMetaItem>()
             .withSuperParent(2, cfgAttributeMeta or docCfgAttributeMeta)
 
-    val anyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
-        .withParent(metaItem("feature"))
-        .inside(anyCfgCondition)
-
-    /**
-     * A leaf literal inside [anyCfgFeature] or an identifier at the same place
-     * ```
-     * #[cfg(feature = "foo")] // Works for "foo" (leaf literal)
-     * #[cfg(feature = foo)]   // Works for "foo" (leaf identifier)
-     * ```
-     */
-    val insideAnyCfgFeature: PsiElementPattern.Capture<PsiElement> = psiElement().withParent(anyCfgFeature) or
-        psiElement(IDENTIFIER)
-            .withParent(
-                psiElement<RsCompactTT>()
-                    .withParent(
-                        psiElement<RsMetaItem>()
-                            .inside(anyCfgCondition)
-                    )
-            )
-            .with("feature") { it, _ ->
-                val eq = it.getPrevNonCommentSibling()
-                val feature = eq?.getPrevNonCommentSibling()
-                eq?.elementType == EQ && feature?.textMatches("feature") == true
-            }
+    val anyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = anyCfgKeyValueFlag("feature")
 
     val insideCrateTypeAttrValue: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>().withParent(
             rootMetaItem("crate_type")
@@ -237,6 +213,32 @@ object RsPsiPattern {
     val lifetimeIdentifier: ElementPattern<PsiElement> = psiElement(QUOTE_IDENTIFIER).withParent(
         psiElement<RsLifetime>()
     )
+
+    fun anyCfgKeyValueFlag(flag: String): PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+        .withParent(metaItem(flag))
+        .inside(anyCfgCondition)
+
+    /**
+     * A leaf literal inside [anyCfgKeyValueFlag] or an identifier at the same place
+     * ```
+     * #[cfg(some_flag = "foo")] // Works for "foo" (leaf literal)
+     * #[cfg(some_flag = foo)]   // Works for "foo" (leaf identifier)
+     * ```
+     */
+    fun insideAnyCfgFlagValue(flag: String): PsiElementPattern.Capture<PsiElement> = psiElement().withParent(anyCfgKeyValueFlag(flag)) or
+        psiElement(IDENTIFIER)
+            .withParent(
+                psiElement<RsCompactTT>()
+                    .withParent(
+                        psiElement<RsMetaItem>()
+                            .inside(anyCfgCondition)
+                    )
+            )
+            .with(flag) { it, _ ->
+                val eq = it.getPrevNonCommentSibling()
+                val flagEl = eq?.getPrevNonCommentSibling()
+                eq?.elementType == EQ && flagEl?.textMatches(flag) == true
+            }
 
     private fun identifierStatementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement(IDENTIFIER).and(onStatementBeginning(*startWords))

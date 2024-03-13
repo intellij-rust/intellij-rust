@@ -156,7 +156,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         mod foo { }
 
-        use self::foo::{self::/*caret*/};
+        use self::foo::{self/*caret*/};
     """)
 
     fun `test use glob global`() = doSingleCompletion("""

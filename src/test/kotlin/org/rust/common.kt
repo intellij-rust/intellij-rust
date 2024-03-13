@@ -201,7 +201,7 @@ fun CargoWorkspace.Package.checkFeatureState(featureName: FeatureName, expectedS
 }
 
 
-fun CodeInsightTestFixture.launchAction(
+fun CodeInsightTestFixture.launchAnAction(
     actionId: String,
     vararg context: Pair<DataKey<*>, *>,
     shouldBeEnabled: Boolean = true

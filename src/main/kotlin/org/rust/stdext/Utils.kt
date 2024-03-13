@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path

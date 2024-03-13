@@ -123,7 +123,7 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
     }
 
     private fun actionLauncher() {
-        myFixture.launchAction("Rust.ShareInPlayground")
+        myFixture.launchAnAction("Rust.ShareInPlayground")
     }
 
     companion object {

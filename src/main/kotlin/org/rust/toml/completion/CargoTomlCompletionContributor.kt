@@ -23,6 +23,7 @@ class CargoTomlCompletionContributor : CompletionContributor() {
         if (tomlPluginIsAbiCompatible()) {
             extend(BASIC, inKey, CargoTomlKeysCompletionProvider())
             extend(BASIC, inValueWithKey("edition"), CargoTomlKnownValuesCompletionProvider(listOf("2015", "2018", "2021")))
+            extend(BASIC, inValueWithKey("license"), CargoTomlKnownValuesCompletionProvider(popularSpdxLicenses))
             extend(BASIC, inFeatureDependencyArray, CargoTomlFeatureDependencyCompletionProvider())
             extend(BASIC, inDependencyPackageFeatureArray, CargoTomlDependencyFeaturesCompletionProvider())
             extend(BASIC, inDependencyTableKey, CargoTomlDependencyKeysCompletionProvider())
@@ -37,3 +38,18 @@ class CargoTomlCompletionContributor : CompletionContributor() {
         }
     }
 }
+
+private val popularSpdxLicenses = listOf(
+    "AGPL-3",
+    "Apache-2.0",
+    "BSD-2",
+    "BSD-3",
+    "BSL-1",
+    "CC0-1",
+    "EPL-2",
+    "GPL-2",
+    "GPL-3",
+    "LGPL-2",
+    "MIT",
+    "MPL-2"
+)

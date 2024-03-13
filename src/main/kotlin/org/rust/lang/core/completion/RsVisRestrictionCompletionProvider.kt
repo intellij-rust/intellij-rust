@@ -32,11 +32,7 @@ object RsVisRestrictionCompletionProvider : RsCompletionProvider() {
                     .with("hasOneSegment") { item, _ ->
                         item.qualifier == null && item.typeQual == null && !item.hasColonColon
                     }
-            )
-            .withSuperParent(2,
-                psiElement<RsVisRestriction>()
-                    .with("hasNoIn") { item, _ -> item.`in` == null }
-            )
+            ).withSuperParent(2, psiElement<RsVisRestriction>())
 
     override fun addCompletions(
         parameters: CompletionParameters,
@@ -52,6 +48,8 @@ object RsVisRestrictionCompletionProvider : RsCompletionProvider() {
                     .toKeywordElement()
             )
         }
-        result.addElement(LookupElementBuilder.create("in ").withPresentableText("in"))
+        if ((parameters.position.parent?.parent as? RsVisRestriction)?.`in` == null) {
+            result.addElement(LookupElementBuilder.create("in ").withPresentableText("in"))
+        }
     }
 }

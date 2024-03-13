@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.rust.FileTree
 import org.rust.RsTestBase
 import org.rust.fileTree
-import org.rust.launchAction
+import org.rust.launchAnAction
 
 class RsPromoteModuleToDirectoryActionTest : RsTestBase() {
 
@@ -159,7 +159,7 @@ class RsPromoteModuleToDirectoryActionTest : RsTestBase() {
     }
 
     private fun testActionOnElement(element: PsiElement, shouldBeEnabled: Boolean) {
-        myFixture.launchAction(
+        myFixture.launchAnAction(
             "Rust.RsPromoteModuleToDirectoryAction",
             CommonDataKeys.PSI_ELEMENT to element,
             shouldBeEnabled = shouldBeEnabled

@@ -7,7 +7,7 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.launchAction
+import org.rust.launchAnAction
 
 class RsExtractEnumVariantTest : RsTestBase() {
     fun `test not available on empty variant`() = doUnavailableTest("""
@@ -644,6 +644,6 @@ class RsExtractEnumVariantTest : RsTestBase() {
 
     private fun doUnavailableTest(@Language("Rust") code: String) {
         InlineFile(code.trimIndent()).withCaret()
-        myFixture.launchAction("Rust.RsExtractEnumVariant", shouldBeEnabled = false)
+        myFixture.launchAnAction("Rust.RsExtractEnumVariant", shouldBeEnabled = false)
     }
 }

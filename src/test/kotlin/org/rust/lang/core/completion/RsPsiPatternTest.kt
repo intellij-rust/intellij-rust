@@ -481,81 +481,105 @@ class RsPsiPatternTest : RsTestBase() {
         fn foo() {}   //^
     """, RsPsiPattern.anyCfgFeature)
 
-    fun `test inner attribute cfg feature`() = testPattern("""
-        fn foo() {
-            #![cfg(feature = "foo")]
-        }                   //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test nested cfg feature`() = testPattern("""
-        #[cfg(not(feature = "foo"))]
-        fn foo() {}        //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test not a cfg feature`() = testPatternNegative("""
-        #[zfg(feature = "foo")]
-        fn foo() {}    //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test cfg not a feature`() = testPatternNegative("""
-        #[cfg(not_a_feature = "foo")]
-        fn foo() {}          //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test cfg_attr feature`() = testPattern("""
-        #[cfg_attr(feature = "foo", allow(all))]
-        fn foo() {}          //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test not right part of cfg_attr 1`() = testPatternNegative("""
-        #[cfg_attr(windows, foo(feature = "foo"))]
-        fn foo() {}                      //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test not right part of cfg_attr 2`() = testPatternNegative("""
-        #[cfg_attr(windows, foo(cfg(feature = "foo")))]
-        fn foo() {}                          //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test cfg at right part of cfg_attr`() = testPattern("""
-        #[cfg_attr(windows, cfg(feature = "foo"))]
-        fn foo() {}                      //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test nested cfg_attr feature`() = testPattern("""
-        #[cfg_attr(windows, cfg_attr(feature = "foo", allow(all)))]
-        fn foo() {}                           //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test nested cfg_attr cfg feature`() = testPattern("""
-        #[cfg_attr(windows, cfg_attr(foobar, cfg(feature = "foo")))]
-        fn foo() {}                                       //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test doc cfg`() = testPattern("""
-        #[doc(cfg(feature = "foo"))]
-        fn foo() {}        //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test doc cfg at right part of cfg_attr`() = testPattern("""
-        #[cfg_attr(windows, doc(cfg(feature = "foo")))]
-        fn foo() {}                          //^
-    """, RsPsiPattern.anyCfgFeature)
-
-    fun `test in cfg feature`() = testPattern("""
+    fun `test in cfg feature`() = testPattern(
+        """
         #[cfg(feature = "foo")]
         fn foo() {}    //^
-    """, RsPsiPattern.insideAnyCfgFeature)
+    """, RsPsiPattern.insideAnyCfgFlagValue("feature")
+    )
 
-    fun `test in cfg feature without literal`() = testPattern("""
-        #[cfg(feature = foo)]
-        fn foo() {}    //^
-    """, RsPsiPattern.insideAnyCfgFeature)
+    fun `test cfg panic`() = testPattern("""
+        #[cfg(panic = "unwind")]
+        fn foo() {} //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("panic"))
 
-    fun `test not in cfg feature without literal`() = testPatternNegative("""
+    fun `test in cfg panic`() = testPattern(
+        """
+        #[cfg(panic = "unwind")]
+        fn foo() {}  //^
+    """, RsPsiPattern.insideAnyCfgFlagValue("panic")
+    )
+
+    fun `test cfg flag`() = testPattern("""
+        #[cfg(example_flag = "foo")]
+        fn foo() {}        //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test inner attribute cfg flag`() = testPattern("""
+        fn foo() {
+            #![cfg(example_flag = "foo")]
+        }                        //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test nested cfg flag`() = testPattern("""
+        #[cfg(not(example_flag = "foo"))]
+        fn foo() {}             //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test not a cfg flag`() = testPatternNegative("""
+        #[zfg(example_flag = "foo")]
+        fn foo() {}         //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test cfg not a flag`() = testPatternNegative("""
+        #[cfg(different_flag = "foo")]
+        fn foo() {}           //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test cfg_attr flag`() = testPattern("""
+        #[cfg_attr(example_flag = "foo", allow(all))]
+        fn foo() {}              //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test not right part of cfg_attr 1`() = testPatternNegative("""
+        #[cfg_attr(windows, foo(example_flag = "foo"))]
+        fn foo() {}                           //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test not right part of cfg_attr 2`() = testPatternNegative("""
+        #[cfg_attr(windows, foo(cfg(example_flag = "foo")))]
+        fn foo() {}                               //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test cfg at right part of cfg_attr`() = testPattern("""
+        #[cfg_attr(windows, cfg(example_flag = "foo"))]
+        fn foo() {}                           //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test nested cfg_attr flag`() = testPattern("""
+        #[cfg_attr(windows, cfg_attr(example_flag = "foo", allow(all)))]
+        fn foo() {}                                //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test nested cfg_attr cfg flag`() = testPattern("""
+        #[cfg_attr(windows, cfg_attr(foobar, cfg(example_flag = "foo")))]
+        fn foo() {}                                            //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test doc cfg flag`() = testPattern("""
+        #[doc(cfg(example_flag = "foo"))]
+        fn foo() {}             //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test doc cfg at right part of cfg_attr`() = testPattern("""
+        #[cfg_attr(windows, doc(cfg(example_flag = "foo")))]
+        fn foo() {}                               //^
+    """, RsPsiPattern.anyCfgKeyValueFlag("example_flag"))
+
+    fun `test in cfg flag`() = testPattern("""
+        #[cfg(example_flag = "foo")]
+        fn foo() {}         //^
+    """, RsPsiPattern.insideAnyCfgFlagValue("example_flag"))
+
+    fun `test in cfg flag without literal`() = testPattern("""
+        #[cfg(example_flag = foo)]
+        fn foo() {}        //^
+    """, RsPsiPattern.insideAnyCfgFlagValue("example_flag"))
+
+    fun `test not in cfg flag without literal`() = testPatternNegative("""
         #[cfg( f = foo)]
         fn foo() {}//^
-    """, RsPsiPattern.insideAnyCfgFeature)
+    """, RsPsiPattern.insideAnyCfgFlagValue("example_flag"))
 
     private inline fun <reified T : PsiElement> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)

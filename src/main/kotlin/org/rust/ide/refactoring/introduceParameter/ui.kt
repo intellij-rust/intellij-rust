@@ -4,13 +4,13 @@
  */
 package org.rust.ide.refactoring.introduceParameter
 
+import com.intellij.codeInsight.navigation.hidePopupIfDumbModeStarts
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import org.rust.RsBundle
-import org.rust.ide.navigation.hidePopupIfDumbModeStarts
 import org.rust.ide.refactoring.MOCK
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.title

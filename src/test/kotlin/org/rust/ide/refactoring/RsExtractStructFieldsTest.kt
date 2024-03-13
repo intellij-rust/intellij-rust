@@ -13,7 +13,7 @@ import org.rust.ide.refactoring.extractStructFields.withMockExtractFieldsUi
 import org.rust.ide.refactoring.generate.RsStructMemberChooserObject
 import org.rust.ide.refactoring.generate.StructMemberChooserUi
 import org.rust.ide.refactoring.generate.withMockStructMemberChooserUi
-import org.rust.launchAction
+import org.rust.launchAnAction
 
 class RsExtractStructFieldsTest : RsTestBase() {
     fun `test unavailable on tuple struct`() = doUnavailableTest("""
@@ -607,6 +607,6 @@ class RsExtractStructFieldsTest : RsTestBase() {
 
     private fun doUnavailableTest(@Language("Rust") code: String) {
         InlineFile(code.trimIndent()).withCaret()
-        myFixture.launchAction("Rust.RsExtractStructFields", shouldBeEnabled = false)
+        myFixture.launchAnAction("Rust.RsExtractStructFields", shouldBeEnabled = false)
     }
 }

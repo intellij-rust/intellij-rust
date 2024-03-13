@@ -113,6 +113,14 @@ abstract class RsCompletionTestBase(private val defaultFileName: String = "main.
         completionChar: Char = '\n'
     ) = completionFixture.checkCompletion(lookupString, before, after, completionChar)
 
+    protected fun checkCompletion(
+        lookupString: String,
+        tailText: String,
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        completionChar: Char = '\n'
+    ) = completionFixture.checkCompletion(lookupString, tailText, before, after, completionChar)
+
     fun checkCompletionWithLiveTemplate(
         lookupString: String,
         @Language("Rust") before: String,

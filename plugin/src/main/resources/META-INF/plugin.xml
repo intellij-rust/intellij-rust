@@ -1,12 +1,12 @@
 <idea-plugin package="org.rust" xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <id>org.rust.lang</id>
-    <name>Rust</name>
+    <name>[Deprecated] Rust</name>
 
     <vendor>JetBrains</vendor>
 
     <change-notes><![CDATA[
-        <a href="https://intellij-rust.github.io/2023/07/24/changelog-199.html">
-                 https://intellij-rust.github.io/2023/07/24/changelog-199.html
+        <a href="https://intellij-rust.github.io/2023/07/24/changelog-200.html">
+                 https://intellij-rust.github.io/2023/07/24/changelog-200.html
     ]]>
     </change-notes>
 
