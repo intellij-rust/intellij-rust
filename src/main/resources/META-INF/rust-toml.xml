@@ -84,6 +84,12 @@
             <language>TOML</language>
         </intentionAction>
 
+        <intentionAction>
+            <bundleName>messages.RsBundle</bundleName>
+            <className>org.rust.toml.intentions.AddCrateDependencyIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+
         <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
                             serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
                             testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>

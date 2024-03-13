@@ -1,0 +1,5 @@
+// src/lib.rs
+use foo;
+
+// Cargo.toml
+[dependencies]

@@ -1,0 +1,6 @@
+// src/lib.rs
+use foo;
+
+// Cargo.toml
+[dependencies]
+foo = "1.0.0"
